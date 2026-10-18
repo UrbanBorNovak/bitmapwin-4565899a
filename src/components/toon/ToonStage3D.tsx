@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import { Box3, CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
+import { CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
 import { EMOTES, type Emote } from "@/lib/toon-script";
 
 /** Comic emote bubble drawn once to a canvas texture so it bakes into exports. */
@@ -18,25 +18,17 @@ function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject
     const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; return t;
   }, [emote]);
   useEffect(() => () => tex.dispose(), [tex]);
-  const top = useRef<number | null>(null);
   useFrame(() => {
-    const o = sp.current, t = timeRef.current, parent = o?.parent;
-    if (!o || !parent) return;
-    // Measure the Guardian's real head height once so the bubble sits just above it.
-    if (top.current === null) {
-      o.visible = false; parent.updateWorldMatrix(true, true);
-      const b = new Box3().setFromObject(parent);
-      o.visible = true;
-      top.current = b.isEmpty() ? 1 : Math.max(0.4, (b.max.y - parent.position.y) / (parent.scale.y || 1));
-    }
-    let s = 0.38, y = top.current + 0.25;
+    const o = sp.current, t = timeRef.current;
+    if (!o) return;
+    let s = 0.34, y = 1.15;
     if (emote === "love" || emote === "happy") s *= 1 + Math.abs(Math.sin(t * 4)) * 0.18;
-    if (emote === "terrified" || emote === "afraid") o.position.x = Math.sin(t * 40) * 0.03;
+    if (emote === "terrified" || emote === "afraid") o.position.x = 0.5 + Math.sin(t * 40) * 0.03;
     if (emote === "sad" || emote === "lonely" || emote === "sleepy") y += Math.sin(t * 1.2) * 0.06;
     if (emote === "surprised" || emote === "angry") s *= 1 + Math.max(0, Math.sin(t * 6)) * 0.25;
     o.position.y = y; o.scale.setScalar(s);
   });
-  return <sprite ref={sp} position={[0, 1.5, 0]}><spriteMaterial map={tex} depthTest={false} transparent /></sprite>;
+  return <sprite ref={sp} position={[0.5, 1.15, 0]}><spriteMaterial map={tex} depthTest={false} transparent /></sprite>;
 }
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { forgeBuildQuery } from "@/lib/forge";
