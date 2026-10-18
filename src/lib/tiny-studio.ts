@@ -8,6 +8,8 @@
 import { BLOCKS } from "@/lib/voxel-world";
 
 export const STUDIO_SPAN = 64;
+/** On-chain LiveOCI sat cache module (getBitmapInscriptionId), imported by relative path on ordinals.com. */
+const OCI_MODULE = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0";
 
 /** Deterministic starter ground for a block height (same maths as the inline JS). */
 export function seedTerrain(height: number): number[][] {
@@ -45,7 +47,7 @@ export function buildTinyStudioHtml(opts: { height?: number; payload?: string } 
 html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monospace;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}
 #u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:96vw}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
-</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
+</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><input id="q" placeholder="block # or inscription id" style="width:150px"><button id="f">FETCH ON-CHAIN</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"></script><script>
 const P=${pal},S=64,C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
 let V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
@@ -99,6 +101,12 @@ function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.
 $('n').onclick=()=>{W^=1;if(W){wx=32;wz=32;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 $('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 $('g').onclick=()=>{H=Math.max(0,+$('h').value|0);seed(H)};
+const say=t=>{$('i').textContent=t},J=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
+function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script id="bwvx"[^>]*data-format="BWVX1"[^>]*>([A-Za-z0-9+/=\s]+)<\/script>/);return m?m[1].replace(/\s/g,''):null}
+async function fetchBuild(){const q=$('q').value.trim();try{let id=q;if(!/^[0-9a-f]{64}i\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
+const m=await import('/content/${OCI_MODULE}');const bid=await m.getBitmapInscriptionId(H);if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');id=at.id;if(!id||id==bid){seed(H);say(H+'.bitmap has no build yet · starter ground loaded');return}}
+const t=await(await fetch('/content/'+id)).text(),b=grab(t);if(!b){say('no Tiny Studio / Land Forge build in '+id.slice(0,10)+'…');return}load(b);say('loaded on-chain build '+id.slice(0,10)+'… · edit and SAVE')}catch(e){say('could not reach the chain here (open on ordinals.com) · starter ground kept')}}
+$('f').onclick=fetchBuild;
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
 $('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX1;\\d+/,'content="BWVX1;'+H);save(html,H+'.bitmap-build.html','text/html')};
