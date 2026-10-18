@@ -232,11 +232,13 @@ function ToonPage() {
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_420px]">
         <div>
           <div ref={stageRef} className={`relative mx-auto overflow-hidden rounded-lg border border-border bg-card ${vertical ? "aspect-[9/16] max-h-[78vh]" : "aspect-video"}`}>
+            <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
             <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
               <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
                 <ToonStage3D episode={episode} time={time} />
               </Suspense>
             </ClientOnly>
+            </div>
             <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
