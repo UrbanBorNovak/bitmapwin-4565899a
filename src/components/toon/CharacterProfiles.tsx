@@ -46,7 +46,7 @@ export function CharacterProfiles({ characters, castHeights, onChange }: { chara
 }
 
 /** Compact read-only card shown next to a dialogue line. */
-export function CharacterHint({ c }: { c?: ToonCharacter }) {
+export function CharacterHint({ c }: { c: ToonCharacter | undefined }) {
   if (!c || !(c.nickname || c.personality || c.voice || c.relationships)) return null;
   return (
     <div className="border-l-2 border-bitcoin bg-background/60 px-2 py-1 text-[11px] text-muted-foreground">
