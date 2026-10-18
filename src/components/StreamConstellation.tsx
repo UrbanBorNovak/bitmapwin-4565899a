@@ -329,7 +329,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
         </div>
       )}
       <div className="flex items-center gap-2 border-t border-signal/30 px-3 py-2 font-mono text-[10px]">
-        <button type="button" onClick={() => { if (step >= ordered.length) setStep(0); setPlaying((p) => !p); }} className="btn-term-ghost shrink-0">{playing ? "[ PAUSE ]" : step >= ordered.length ? "[ REPLAY ]" : "[ PLAY ]"}</button>
+        <button type="button" onClick={() => { if (step >= ordered.length) setStep(0); if (!playing) beep(300, 900, 180, 0.04); setPlaying((p) => !p); }} className="btn-term-ghost shrink-0">{playing ? "[ PAUSE ]" : step >= ordered.length ? "[ REPLAY ]" : "[ PLAY ]"}</button>
         <div className="relative h-5 flex-1">
           <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[repeating-linear-gradient(90deg,var(--signal)_0_1px,transparent_1px_10px)] opacity-40" />
           <div className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 bg-signal shadow-[0_0_10px_var(--signal)]" style={{ width: `${pct}%` }} />
