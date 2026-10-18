@@ -185,7 +185,12 @@ function ToonPage() {
     const r = c.getBoundingClientRect();
     if (c.width !== Math.round(r.width) || c.height !== Math.round(r.height)) { c.width = Math.round(r.width); c.height = Math.round(r.height); }
     const ctx = c.getContext("2d");
-    if (ctx) drawOverlay(ctx, c.width, c.height, episode, time);
+    if (!ctx) return;
+    drawOverlay(ctx, c.width, c.height, episode, time);
+    // Redraw once the 3D stage has rendered this time, so bubbles use fresh head positions (scrubbing).
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => drawOverlay(ctx, c.width, c.height, episode, timeRef.current)); });
+    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
   }, [episode, time]);
 
   const [lastFile, setLastFile] = useState<File | null>(null);
