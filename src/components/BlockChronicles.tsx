@@ -266,6 +266,7 @@ export function BlockChronicles() {
           </div>
         )}
       </div>
+      </div>
       <Dialog open={current != null} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
           {current && (
