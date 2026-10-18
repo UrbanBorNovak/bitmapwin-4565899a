@@ -121,6 +121,7 @@ function ApiPage() {
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <DataBadge kind="live" note="SERVING NOW" />
+        <Link to="/bot" className="btn-term-ghost">[ MARKET BOT ]</Link>
         <Link to="/sdk" className="btn-term-ghost">[ IN-WORLD SDK ]</Link>
         <Link to="/dev-tools" className="btn-term-ghost">[ DEVELOPER TOOLS ]</Link>
       </div>

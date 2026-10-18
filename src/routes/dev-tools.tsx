@@ -58,6 +58,13 @@ const TOOLS = [
     body: "HTTP endpoints for block metadata, offers, registry resolution and the on-chain trade crawler.",
   },
   {
+    to: "/bot" as const,
+    title: "MARKET BOT",
+    kind: "live" as const,
+    note: "LISTING ALERTS",
+    body: "Set a rule and get alerted when a matching BITMAP lists. Export it to the open-source bot starter for 24/7 alerts.",
+  },
+  {
     to: "/builds" as const,
     title: "MODEL REGISTRY",
     kind: "live" as const,
