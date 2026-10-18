@@ -33,7 +33,32 @@ export function EvPricePicker({
   const ev = sales.data ? computeEv(height, sales.data) : null;
 
   if (sales.isLoading) return <p className="mt-2 font-mono text-[10px] text-muted-foreground">&gt; READING ON-CHAIN SALES…</p>;
-  if (!ev) return null;
+  if (sales.isError) {
+    return (
+      <div className="mt-3 border border-border p-2">
+        <p className="label">PRICE GUIDE · UNAVAILABLE</p>
+        <p className="mt-1 font-mono text-[10px] text-bitcoin">
+          ⚠ INSUFFICIENT DATA: CONFIRMED SALES COULDN&apos;T BE READ RIGHT NOW, SO EV−, EV AND EV+ ARE HIDDEN.
+        </p>
+        <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+          &gt; SET YOUR OWN ASK BELOW. TRY AGAIN LATER FOR A PRICE GUIDE.
+        </p>
+      </div>
+    );
+  }
+  if (!ev) {
+    return (
+      <div className="mt-3 border border-border p-2">
+        <p className="label">PRICE GUIDE · NO DATA</p>
+        <p className="mt-1 font-mono text-[10px] text-bitcoin">
+          ⚠ INSUFFICIENT DATA: NO CONFIRMED SALES TO PRICE AGAINST, SO EV−, EV AND EV+ ARE HIDDEN.
+        </p>
+        <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+          &gt; SET YOUR OWN ASK BELOW. WITHOUT CONFIRMED SALES THERE IS NO FAIR-VALUE GUIDE OR ASK LABEL.
+        </p>
+      </div>
+    );
+  }
 
   const bands = [
     { key: "EV−", sats: ev.low, hint: "FASTER SALE (NOT GUARANTEED)" },

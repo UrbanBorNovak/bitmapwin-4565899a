@@ -36,6 +36,10 @@ describe("listing EV", () => {
   it("ignores zero-price transfers", () => {
     expect(computeEv(1, [{ bitmap_height: 1, price_sats: 0 }])).toBeNull();
   });
+  it("returns no bands when there are no confirmed sales, so suggestions are hidden", () => {
+    expect(computeEv(55_000, [])).toBeNull();
+    expect(computeEv(null, [])).toBeNull();
+  });
   it("tiers by height", () => {
     expect(evTierOf(9_999).key).toBe("sub10k");
     expect(evTierOf(840_000).key).toBe("modern");
