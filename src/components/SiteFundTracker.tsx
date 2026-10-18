@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { siteFundQuery } from "@/lib/forge-collection.functions";
@@ -9,14 +10,20 @@ import { siteFundQuery } from "@/lib/forge-collection.functions";
  */
 export function SiteFundTracker() {
   const { data } = useQuery(siteFundQuery());
-  const now = new Date();
-  const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
-  const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
-  // Snap to the hour so server render and hydration draw identical sand.
-  const hour = Math.floor(now.getTime() / 3_600_000) * 3_600_000;
-  const p = Math.min(1, Math.max(0, (hour - start) / (end - start)));
-  const month = now.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).toUpperCase();
-  const daysLeft = Math.ceil((end - now.getTime()) / 86_400_000);
+  // Clock is read only after hydration, so server and browser HTML always match
+  // (even across an hour, day or month boundary between render and load).
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    setNowMs(Date.now());
+    const t = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const now = nowMs == null ? null : new Date(nowMs);
+  const start = now ? Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) : 0;
+  const end = now ? Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1) : 1;
+  const p = now ? Math.min(1, Math.max(0, (now.getTime() - start) / (end - start))) : 0;
+  const month = now ? now.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).toUpperCase() : "THIS MONTH";
+  const daysLeft = now ? Math.ceil((end - now.getTime()) / 86_400_000) : null;
   // Chamber geometry (viewBox 60x100): top chamber y 8..48, bottom 52..92.
   const topY = 8 + 40 * p; // sand surface in top chamber drops
   const botY = 92 - 40 * p; // sand pile rises
@@ -45,7 +52,7 @@ export function SiteFundTracker() {
           {data ? `${data.monthPayments} SHARES THIS MONTH` : "READING THE CHAIN…"}
         </div>
         {data?.pendingSats ? <div className="text-[10px] text-signal">+{data.pendingSats.toLocaleString("en-US")} SATS CONFIRMING</div> : null}
-        <div className="text-[10px] text-muted-foreground">{daysLeft} DAYS UNTIL THE GLASS TURNS</div>
+        <div className="text-[10px] text-muted-foreground">{daysLeft ?? "—"} DAYS UNTIL THE GLASS TURNS</div>
         <Link to="/donate" className="mt-1 inline-flex text-xs font-bold text-bitcoin hover:text-foreground">SHARE & FUEL →</Link>
       </div>
     </div>
