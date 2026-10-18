@@ -20,12 +20,19 @@ describe("toon script", () => {
 describe("actorPositionAt", () => {
   const a = { height: 1, name: "1.bitmap", x: -10, z: 0, pose: "walk" as const, to: { x: 10, z: 6 } };
   it("starts at start, ends at end, halfway in the middle", () => {
-    expect(apa(a, 0)).toMatchObject({ x: -10, z: 0 });
-    expect(apa(a, 1)).toMatchObject({ x: 10, z: 6 });
-    expect(apa(a, 0.5)).toMatchObject({ x: 0, z: 3, moving: true });
+    expect(apa(a, 0, 1)).toMatchObject({ x: -10, z: 0 });
+    expect(apa(a, 1, 1)).toMatchObject({ x: 10, z: 6 });
+    expect(apa(a, 0.5, 1)).toMatchObject({ x: 0, z: 3, moving: true });
   });
   it("stays put without an end position", () => {
     const { to: _t, ...still } = a;
-    expect(apa(still, 0.7)).toEqual({ x: -10, z: 0, moving: false });
+    expect(apa(still, 0.7, 1)).toEqual({ x: -10, z: 0, moving: false });
   });
+});
+
+describe("movement timing", () => {
+  const a = { height: 1, name: "1.bitmap", x: 0, z: 0, pose: "walk" as const, to: { x: 10, z: 0 }, moveStart: 2, moveEnd: 6 };
+  it("waits until the start time", () => expect(apa(a, 1.5, 10)).toMatchObject({ x: 0, moving: false }));
+  it("is halfway midway through the window", () => expect(apa(a, 4, 10).x).toBeCloseTo(5));
+  it("has arrived and holds after the stop time", () => expect(apa(a, 8, 10)).toMatchObject({ x: 10, moving: false }));
 });

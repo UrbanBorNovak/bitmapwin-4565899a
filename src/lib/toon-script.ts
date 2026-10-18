@@ -4,12 +4,14 @@
 export type Pose = "idle" | "walk" | "talk" | "jump" | "combat";
 export type Shot = "wide" | "orbit" | "dolly" | "dutch" | "crane";
 
-export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; to?: { x: number; z: number }; }
+export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; to?: { x: number; z: number }; moveStart?: number; moveEnd?: number; }
 
-/** Where an actor stands at scene progress p (0–1): eased glide from start (x,z) to `to`; static when no `to`. */
-export function actorPositionAt(a: ToonActor, p: number): { x: number; z: number; moving: boolean } {
+/** Where an actor stands at scene-local time `local` (s) in a scene of `dur` s: eased glide from (x,z) to `to`
+ * between moveStart and moveEnd seconds (default: whole scene); waits before, holds after; static when no `to`. */
+export function actorPositionAt(a: ToonActor, local: number, dur: number): { x: number; z: number; moving: boolean } {
   if (!a.to) return { x: a.x, z: a.z, moving: false };
-  const q = Math.max(0, Math.min(1, p)), e = q * q * (3 - 2 * q);
+  const t0 = Math.max(0, Math.min(dur, a.moveStart ?? 0)), t1 = Math.max(t0, Math.min(dur, a.moveEnd ?? dur));
+  const q = t1 <= t0 ? (local >= t1 ? 1 : 0) : Math.max(0, Math.min(1, (local - t0) / (t1 - t0))), e = q * q * (3 - 2 * q);
   return { x: a.x + (a.to.x - a.x) * e, z: a.z + (a.to.z - a.z) * e, moving: q > 0 && q < 1 };
 }
 export interface ToonLine { at: number; dur: number; speaker: number; text: string; style: "speech" | "shout" | "thought"; }
