@@ -51,6 +51,15 @@ function reverb(ctx: OfflineAudioContext, out: AudioNode, seconds = 2.2) {
   return conv;
 }
 
+/** Sustained pad tone: slow swell, held, then a gentle linear release (no early exponential fade-out). */
+function pad(ctx: OfflineAudioContext, out: AudioNode, f: number, t: number, d: number, vol: number) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "sine"; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.4);
+  g.gain.setValueAtTime(vol, t + d * 0.7); g.gain.linearRampToValueAtTime(0, t + d);
+  o.connect(g).connect(out); o.start(t); o.stop(t + d + 0.05);
+}
+
 /** Bell / chime: sine with a soft inharmonic partial, long decay. */
 function bell(ctx: OfflineAudioContext, out: AudioNode, f: number, t: number, d: number, vol: number) {
   note(ctx, out, f, t, d, vol, "sine");
@@ -75,7 +84,7 @@ export async function renderSoundtrack(ep: ToonEpisode): Promise<AudioBuffer | n
       const bar = Math.floor(i / 4), chord = m.steps[bar % m.steps.length] ?? 0;
       if (i % 4 === 0) {
         note(ctx, tone, hz(m.root / 2, chord), t, beat * 3.8, 0.45, "sine"); // bass
-        for (const s of [0, 4, 7]) note(ctx, tone, hz(m.root, chord + s), t, beat * 4, 0.08, "sine"); // soft pad
+        for (const s of [0, 4, 7]) pad(ctx, tone, hz(m.root, chord + s), t, beat * 4.6, 0.07); // sustained pad, crossfades into the next bar so the bed never drops out
       }
       if (r() < 0.55) bell(ctx, tone, hz(m.root * 2, (m.steps[Math.floor(r() * m.steps.length)] ?? 0) + chord), t, beat * 1.4, 0.16); // kalimba pluck
       else if (r() < 0.3) note(ctx, tone, hz(m.root * 2, chord + 7), t, beat * 0.8, 0.1, lead);
@@ -102,21 +111,21 @@ export async function renderSoundtrack(ep: ToonEpisode): Promise<AudioBuffer | n
       } else {
         const o = ctx.createOscillator(), g = ctx.createGain();
         o.type = "sine"; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.5);
-        g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.4, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
         o.connect(g).connect(fx); o.start(t); o.stop(t + 0.7);
-        noise(ctx, fx, t, 0.15, 0.25, 600);
+        noise(ctx, fx, t, 0.12, 0.1, 500);
       }
     }
     if (ep.voices !== false) for (const l of s.lines) {
       const who = s.cast[l.speaker]?.height ?? 0, base = 190 + (who % 7) * 28, r = rng(who + Math.round(l.at * 100));
       const sylls = Math.min(40, Math.max(2, Math.round(l.text.length / 4))), step = Math.min(0.15, l.dur / sylls);
-      const vol = l.style === "shout" ? 0.22 : l.style === "thought" ? 0.08 : 0.14;
+      const vol = l.style === "shout" ? 0.18 : l.style === "thought" ? 0.14 : 0.15;
       const question = l.text.trim().endsWith("?");
       const scale = [0, 2, 4, 7, 9];
       for (let k = 0; k < sylls; k++) {
         const last = k === sylls - 1;
         const f = hz(base, scale[Math.floor(r() * scale.length)] ?? 0);
-        syllable(ctx, l.style === "thought" ? verb : master, f, start + l.at + k * step, step * 0.85, vol, last ? (question ? 1.25 : 0.85) : 0.97 + r() * 0.06);
+        syllable(ctx, master, f, start + l.at + k * step, step * 0.85, vol, last ? (question ? 1.25 : 0.85) : 0.97 + r() * 0.06);
       }
     }
     start += s.duration;

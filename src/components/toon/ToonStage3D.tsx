@@ -143,8 +143,15 @@ function Land({ block }: { block: number }) {
   const sizes = useQuery({ ...blockSizeMapQuery(block), staleTime: Infinity });
   const build = useQuery(forgeBuildQuery(block));
   const parcels = useMemo(() => parcelRects(sizes.data?.classes, FORGE_SPAN).filter((r) => r.x1 - r.x0 >= 2).slice(0, 300), [sizes.data]);
+  // Guardians perform on an open sand plaza; the land and its build sit just behind them so voxels never swallow the cast.
+  const back = build.data?.data ? -(FORGE_SPAN / 2 + 6) : 0;
   return (
     <group>
+      <mesh position={[0, -0.62, 0]}>
+        <boxGeometry args={[FORGE_SPAN * 3, 1.2, FORGE_SPAN * 3]} />
+        <meshStandardMaterial color="#e3c48a" roughness={1} />
+      </mesh>
+      <group position={[0, 0, back]}>
       <mesh position={[0, -0.6, 0]}>
         <boxGeometry args={[FORGE_SPAN, 1.2, FORGE_SPAN]} />
         <meshStandardMaterial color="#d9b77a" roughness={1} />
@@ -159,6 +166,7 @@ function Land({ block }: { block: number }) {
         );
       })}
       {build.data?.data && <ForgeBuild3D height={block} position={[0, 0, 0]} cell={40} />}
+      </group>
     </group>
   );
 }
