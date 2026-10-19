@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { AgentKit } from "@/components/bot/AgentKit";
 
 type Cost = "free" | "onchain";
 type Cat = "create" | "media" | "trade" | "data";
@@ -147,6 +148,7 @@ function ToolsPage() {
         ))}
         {list.length === 0 && <p className="text-muted-foreground">No tools match that search.</p>}
       </div>
+      <div className="mt-8"><AgentKit /></div>
     </main>
   );
 }
