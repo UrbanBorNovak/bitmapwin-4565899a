@@ -238,7 +238,7 @@ export const TRANSMISSION: ToonEpisode = {
 
 /** Land Forge promo: "Every block can become a world." Original 30-second spot shot on real BITMAP land. */
 const forger = (name: string, x: number, z: number, pose: Pose, extra: object = {}) =>
-  ({ height: 0, name, x, z, pose, avatar: { model: "runner" as const, skin: "pixel" as const }, ...extra });
+  ({ height: 0, name, x, z, pose, avatar: { model: "runner" as const, skin: (name === "Maker" ? "hoodie" : "cyber") as "hoodie" | "cyber" }, ...extra });
 const L = { block: 840000 };
 export const FORGE_PROMO: ToonEpisode = {
   title: "LAND FORGE: BUILD ON BITCOIN", aspect: "16:9", music: "epic", voices: false, style: "ghibli",
