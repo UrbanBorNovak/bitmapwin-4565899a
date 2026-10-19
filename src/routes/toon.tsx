@@ -3,6 +3,7 @@ import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, transitionAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
 import { TOON_STYLES, paintStyle, styleFilter, type ToonStyle } from "@/lib/toon-style";
+import { EffectsPanel } from "@/components/toon/EffectsPanel";
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
@@ -240,6 +241,7 @@ function ToonPage() {
           <SceneEditor episode={episode} characters={characters} notes={notes}
             onChange={(e) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setScriptError(null); setTime((t) => Math.min(t, episodeLength(e))); }}
             onSeek={(t) => { setPlaying(false); setTime(t + 0.01); }} />
+          <EffectsPanel episode={episode} time={time} onChange={(e) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setScriptError(null); }} />
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="label text-signal">SCRIPT (JSON · ADVANCED)</div>
             <p className="mt-1 text-[11px] text-muted-foreground">Edit scenes, shots (wide, orbit, dolly, dutch, crane), poses (idle, walk, talk, jump, combat) and lines, then apply.</p>

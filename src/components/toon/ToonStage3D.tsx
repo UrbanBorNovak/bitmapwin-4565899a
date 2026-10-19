@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import { Box3, CanvasTexture, Color, Object3D, SRGBColorSpace, Vector3, type Group, type InstancedMesh, type Sprite } from "three";
@@ -11,6 +11,8 @@ const SEAL_GEOMS = new Set(["TorusGeometry", "OctahedronGeometry", "RingGeometry
 import type { Emote } from "@/lib/toon-script";
 import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
 import { BeachSet } from "@/components/toon/BeachSet";
+import { ToonVFXLayer } from "@/components/toon/ToonVFXLayer";
+import { loadCustomVFX, shakeAt, vfxLibrary, type ToonVFX } from "@/lib/toon-vfx";
 
 /** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
 function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
@@ -287,7 +289,7 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   return [mx + px * span, h * 0.75, mz + pz * span, mx, h * 0.5, mz];
 }
 
-function Director({ scene, local }: { scene: ToonScene; local: number }) {
+function Director({ scene, local, lib }: { scene: ToonScene; local: number; lib: Map<string, ToonVFX> }) {
   const { camera } = useThree();
   const cur = useRef<number[] | null>(null), last = useRef(local);
   useFrame(() => {
@@ -303,7 +305,8 @@ function Director({ scene, local }: { scene: ToonScene; local: number }) {
     if (!cur.current || !scene.cutBlend || jumped) cur.current = [...target];
     else for (let i = 0; i < 6; i++) cur.current[i]! += (target[i]! - cur.current[i]!) * 0.12;
     const c = cur.current;
-    camera.position.set(c[0]!, c[1]!, c[2]!);
+    const sh = shakeAt(scene.fx, lib, local);
+    camera.position.set(c[0]! + sh * 0.8, c[1]! + sh * 0.5, c[2]!);
     camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
     camera.lookAt(c[3]!, c[4]!, c[5]!);
   });
@@ -319,6 +322,12 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
   progressRef.current = local;
   const durRef = useRef(1);
   durRef.current = episode.scenes[index]?.duration ?? 1;
+  const [custom, setCustom] = useState<ToonVFX[]>([]);
+  useEffect(() => {
+    const read = () => setCustom(loadCustomVFX());
+    read(); window.addEventListener("bitmapwin-vfx", read); return () => window.removeEventListener("bitmapwin-vfx", read);
+  }, []);
+  const lib = useMemo(() => vfxLibrary(custom), [custom]);
   const scene = episode.scenes[index];
   if (!scene) return null;
   return (
@@ -329,7 +338,8 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       <directionalLight position={[40, 80, 30]} intensity={scene.set === "beach" ? 1.1 : 1.8} />
       {scene.set === "beach" ? <BeachSet timeRef={timeRef} /> : <Land key={scene.block} block={scene.block} />}
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
-      <Director key={index} scene={scene} local={local} />
+      <ToonVFXLayer cues={scene.fx} lib={lib} scene={index} timeRef={progressRef} />
+      <Director key={index} scene={scene} local={local} lib={lib} />
     </SafeCanvas>
   );
 }
