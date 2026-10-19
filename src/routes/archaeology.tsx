@@ -5,6 +5,7 @@ import { ALL_OFFICIAL_TRAITS, traitsOf } from "@/lib/traits";
 import { ArchaeologyLedger } from "@/components/ArchaeologyLedger";
 import { InscribedSpacesArchive } from "@/components/archaeology/InscribedSpacesArchive";
 import { FieldNotesDesk } from "@/components/archaeology/FieldNotesDesk";
+import { BlockRecords } from "@/components/archaeology/BlockRecords";
 
 const TAB_IDS = ["timeline", "spaces", "traits", "ledger"] as const;
 type ArchTab = (typeof TAB_IDS)[number];
@@ -200,6 +201,8 @@ function ArchaeologyFacts() {
       {tab === "spaces" && <InscribedSpacesArchive />}
 
       {tab === "ledger" && <><FieldNotesDesk /><ArchaeologyLedger /></>}
+
+      <BlockRecords />
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link to="/traits" className="btn-term-ghost">OFFICIAL TRAIT INDEX →</Link>
