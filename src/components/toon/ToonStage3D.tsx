@@ -107,8 +107,8 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
       case "surprised": y += Math.max(0, Math.sin(t * 4)) * 1.2; sy = 1.08; break;
       case "sleepy": rz += Math.sin(t * 0.9) * 0.15; rx = 0.2; break;
     }
-    // Measure the body only until it has loaded (first ~10 samples), never mid-playback.
-    if (o.children.length && frames.current < 300 && frames.current++ % 30 === 0) {
+    // Measure the body once after it loads (lock afterwards), never mid-playback.
+    if (!unitH.current && o.children.length && frames.current < 300 && frames.current++ % 30 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.
       const b = new Box3(), tmp = new Box3();
@@ -116,14 +116,15 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
         // InstancedMesh caches its bounds before the voxels are written; refresh them.
         (m as { computeBoundingBox?: () => void }).computeBoundingBox?.();
         b.union(tmp.setFromObject(m)); });
-      if (!b.isEmpty()) { unitH.current = Math.max(0.2, b.max.y); unitS.current = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z); }
+      if (!b.isEmpty() && b.max.y > 0.05) { unitH.current = Math.max(0.2, b.max.y); unitS.current = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z); }
     }
     // Apply the pose after any measurement so the renderer never sees the zeroed transform.
     o.position.set(x, y, pos.z);
     o.rotation.set(rx, ry, rz);
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
     const bodyH = (unitH.current || 1.2) * 10;
-    actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10 * s));
+    // Framing uses the static body size so squash/stretch never shakes the camera.
+    actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10));
     // Publish the head's screen position for the speech-bubble overlay.
     if (dna.data) {
       head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
