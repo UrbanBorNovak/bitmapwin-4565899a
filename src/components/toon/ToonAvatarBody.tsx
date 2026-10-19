@@ -39,7 +39,7 @@ export function ToonAvatarBody({ avatar, pose, timeRef, movingRef }: { avatar: T
   });
   const [tw, th, td] = sh.torso, hipY = sh.leg, shY = hipY + th, armLen = th * 0.95;
   const cloth = <meshStandardMaterial map={tex} roughness={0.8} />;
-  const skin = <meshStandardMaterial color={avatar.model === "bot" ? "#9aa5b1" : s.skin} roughness={0.7} metalness={avatar.model === "bot" ? 0.5 : 0} />;
+  const skin = <meshStandardMaterial color={avatar.model === "bot" ? "#9aa5b1" : s.skin} roughness={0.7} metalness={avatar.model === "bot" ? 0.15 : 0} />;
   return (
     <group>
       {[-1, 1].map((side) => (

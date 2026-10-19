@@ -114,8 +114,8 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     if (actor.pose === "jump") y = Math.max(0, Math.sin(t * 3.5)) * 4;
     if (actor.pose === "combat") { rz = Math.sin(t * 10) * 0.08; s = 1.08; }
     if (actor.pose === "dance") { ry += Math.sin(t * 3) * 0.7; y = Math.abs(Math.sin(t * 6)) * 0.5; }
-    // Avatars face the camera-side (+z) when greeting so the wave reads.
-    if (actor.pose === "wave" && !pos.moving) ry = 0;
+    // Greeting turns toward the live camera so the wave always reads (never the actor's back).
+    if (actor.pose === "wave" && !pos.moving) ry = Math.atan2(camera.position.x - pos.x, camera.position.z - pos.z);
     let rx = 0, sy = 1;
     switch (actor.emote) {
       case "love": rz += Math.sin(t * 2) * 0.1; y += Math.sin(t * 3) * 0.3 + 0.3; break;
