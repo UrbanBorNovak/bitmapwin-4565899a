@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
 import { styleFilter } from "@/lib/toon-style";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
-import { CITADEL_TEASER } from "@/lib/toon-teaser";
+import { CITADEL_TEASER, PIXELS_HOMECOMING } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { useQuery } from "@tanstack/react-query";
 import { canEncodeMp4, createXRecorder, X_SIZES } from "@/lib/x-video";
@@ -15,6 +15,7 @@ const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
 type Reel = { id: string; tag: string; make: () => ToonEpisode; by?: string | null };
 const REELS: Reel[] = [
+  { id: "pixels-home", tag: "NEW TRAILER", make: () => structuredClone(PIXELS_HOMECOMING) },
   { id: "citadel", tag: "FEATURED TEASER", make: () => structuredClone(CITADEL_TEASER) },
   { id: "halving", tag: "EPISODE", make: () => generateEpisode(840000, 77819) },
   { id: "hermit", tag: "EPISODE", make: () => generateEpisode(208, 715093) },

@@ -48,3 +48,31 @@ export function limbPose(pose: string, t: number, moving: boolean) {
   if (pose === "idle" && !walk) { armL = Math.sin(t * 1.6) * 0.06; armR = -armL; }
   return { armL, armR, legL, legR, head };
 }
+
+/** Which of the on-chain rig's baked clips plays for a pose, and at what speed.
+ * The stock GLB bakes Idle, Walking and Falling; every pose drives the real skeleton through one of them. */
+export function rigClipFor(names: string[], pose: string, moving: boolean): { name: string | undefined; speed: number } {
+  const find = (re: RegExp) => names.find((n) => re.test(n));
+  const idle = find(/idle|stand/i) ?? names[0], walk = find(/walk|run/i) ?? idle, fall = find(/jump|fall/i) ?? idle;
+  if (moving || pose === "walk") return { name: walk, speed: 1 };
+  switch (pose) {
+    case "jump": return { name: fall, speed: 1 };
+    case "dance": return { name: find(/dance/i) ?? walk, speed: find(/dance/i) ? 1 : 1.6 };
+    case "combat": return { name: find(/attack|punch|fight/i) ?? walk, speed: find(/attack|punch|fight/i) ? 1 : 2.2 };
+    case "wave": return { name: find(/wave/i) ?? idle, speed: 1 };
+    case "talk": return { name: find(/talk/i) ?? idle, speed: 1.4 };
+    default: return { name: idle, speed: 1 };
+  }
+}
+
+/** Extra bone rotations (radians, about each bone's local X) layered on top of the baked clip
+ * for gestures the rig never baked: waving arm, talking head, dancing arms, guard-up fists. Pure in t. */
+export function rigGesture(pose: string, t: number, moving: boolean): { armL: number; armR: number; head: number } {
+  if (moving) return { armL: 0, armR: 0, head: 0 };
+  if (pose === "wave") return { armL: 0, armR: -2.5 + Math.sin(t * 9) * 0.4, head: 0.08 };
+  if (pose === "talk") return { armL: 0, armR: -0.5 + Math.sin(t * 5) * 0.3, head: Math.sin(t * 4) * 0.12 };
+  if (pose === "dance") { const s = Math.sin(t * 6); return { armL: -1.4 - s * 0.6, armR: -1.4 + s * 0.6, head: s * 0.15 }; }
+  if (pose === "combat") return { armL: -1.3 + Math.sin(t * 12) * 0.4, armR: -1.3 - Math.sin(t * 12) * 0.4, head: 0 };
+  if (pose === "jump") return { armL: -2.4, armR: -2.4, head: 0 };
+  return { armL: 0, armR: 0, head: 0 };
+}

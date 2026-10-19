@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isAvatar, isPixelSkin, limbPose, pixelSkin } from "./toon-avatars";
+import { isAvatar, isPixelSkin, limbPose, pixelSkin, rigClipFor, rigGesture } from "./toon-avatars";
+import { PIXELS_HOMECOMING } from "./toon-teaser";
 import { parseEpisode } from "./toon-script";
 
 const ep = (avatar: unknown, pose = "wave") => JSON.stringify({ title: "t", aspect: "16:9", scenes: [{ block: 1, duration: 3, shot: "wide", lines: [], cast: [{ height: 1, name: "a", x: 0, z: 0, pose, avatar }] }] });
@@ -29,5 +30,25 @@ describe("BITMAP Pixel skins", () => {
     expect(pixelSkin(id.toUpperCase())).toBe(`px:${id}`);
     for (const bad of ["px:", "px:abc", `px:${id}x`, `px:../${id}`, id]) expect(isPixelSkin(bad)).toBe(false);
     expect(parseEpisode(ep({ model: "runner", skin: "px:nope" })).scenes[0]!.cast[0]!.avatar).toBeUndefined();
+  });
+});
+
+describe("on-chain rig poses", () => {
+  const names = ["Armature|Falling", "Armature|Idle", "Armature|Walking"];
+  it("maps poses to the baked clips", () => {
+    expect(rigClipFor(names, "idle", false).name).toBe("Armature|Idle");
+    expect(rigClipFor(names, "walk", false).name).toBe("Armature|Walking");
+    expect(rigClipFor(names, "idle", true).name).toBe("Armature|Walking");
+    expect(rigClipFor(names, "jump", false).name).toBe("Armature|Falling");
+    expect(rigClipFor(names, "dance", false)).toEqual({ name: "Armature|Walking", speed: 1.6 });
+    expect(rigClipFor(names, "talk", false).name).toBe("Armature|Idle");
+  });
+  it("raises the arm when waving and never while walking", () => {
+    expect(rigGesture("wave", 0, false).armR).toBeLessThan(-2);
+    expect(rigGesture("wave", 0, true)).toEqual({ armL: 0, armR: 0, head: 0 });
+  });
+  it("pixels trailer is longer than four scenes and parses intact", () => {
+    expect(PIXELS_HOMECOMING.scenes.length).toBeGreaterThan(4);
+    expect(parseEpisode(JSON.stringify(PIXELS_HOMECOMING))?.scenes.length).toBe(PIXELS_HOMECOMING.scenes.length);
   });
 });
