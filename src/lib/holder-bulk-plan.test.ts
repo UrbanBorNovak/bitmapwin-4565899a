@@ -62,3 +62,29 @@ describe("bulk list: Same Price is confirmation only with a valid price", () => 
       expect(planPrice({ mode: "floor", override: bad, ev: evFor(1), floorSats: FLOOR, ladder: 0, rung: 0 }).price).toBeNull();
   });
 });
+
+describe("bulk list: clearing or breaking a price never leaves the old one signable", () => {
+  const thin = evFor(1);
+  // Simulates the seller editing one field over time; each step re-plans from the current text only.
+  const steps = ["250000", "", "250000", "0", "250000", "-5", "250000", "abc", "250000", "545", "250000", " "];
+  for (const ladder of [0, 2]) {
+    it(`Same Price edits (ladder ${ladder}): only valid steps are priced`, () => {
+      for (const uniform of steps) {
+        const r = planPrice({ mode: "uniform", uniform, ev: thin, floorSats: FLOOR, ladder, rung: 0 });
+        expect(r.price).toBe(uniform === "250000" ? 250_000 : null);
+      }
+    });
+    it(`per-BITMAP edits (ladder ${ladder}) fall back to the confirm-first rule, not the old price`, () => {
+      for (const mode of MODES)
+        for (const override of steps) {
+          const r = planPrice({ mode, override, ev: thin, floorSats: FLOOR, ladder, rung: 0 });
+          if (override === "250000") expect(r.price).toBe(250_000);
+          else { expect(r.price).toBeNull(); expect(r.needsChoice).toBe(true); }
+        }
+    });
+  }
+  it("cleared per-BITMAP price on a well-sampled BITMAP returns to the preset, not 250000", () => {
+    const r = planPrice({ mode: "floor", override: "", ev: evFor(3), floorSats: FLOOR, ladder: 0, rung: 0 });
+    expect(r.price).toBe(131_112);
+  });
+});
