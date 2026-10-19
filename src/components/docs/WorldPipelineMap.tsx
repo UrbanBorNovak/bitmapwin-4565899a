@@ -20,7 +20,7 @@ const STAGES: Stage[] = [
 ];
 
 // Persistent "atoms" inside the bedrock cube — fixed positions (x,y,z in 0..1)
-const ATOMS = [
+const ATOMS: [number, number, number][] = [
   [0.22, 0.3, 0.2], [0.46, 0.4, 0.34], [0.7, 0.25, 0.6], [0.3, 0.7, 0.5],
   [0.62, 0.62, 0.2], [0.8, 0.75, 0.8], [0.15, 0.55, 0.85], [0.5, 0.15, 0.75],
 ];
@@ -33,8 +33,8 @@ function iso(x: number, y: number, z: number) {
 export function WorldPipelineMap() {
   const [active, setActive] = useState("atoms");
   const stage = STAGES.find((s) => s.id === active)!;
-  const corners = [[0,0,0],[1,0,0],[1,0,1],[0,0,1],[0,1,0],[1,1,0],[1,1,1],[0,1,1]].map(([x,y,z]) => iso(x,y,z));
-  const edges = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  const corners = ([[0,0,0],[1,0,0],[1,0,1],[0,0,1],[0,1,0],[1,1,0],[1,1,1],[0,1,1]] as [number, number, number][]).map(([x,y,z]) => iso(x,y,z));
+  const edges: [number, number][] = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
 
   return (
     <section className="border border-border bg-card/60 p-5 backdrop-blur md:p-6">
@@ -64,7 +64,7 @@ export function WorldPipelineMap() {
         <div className="flex flex-col">
           <svg viewBox="0 0 400 300" className="w-full" role="img" aria-label="Bedrock cube with persistent world atoms">
             {edges.map(([a, b], i) => (
-              <line key={i} x1={corners[a].px} y1={corners[a].py} x2={corners[b].px} y2={corners[b].py} className="stroke-border-strong" strokeWidth={1} strokeDasharray={i >= 8 ? "3 3" : undefined} />
+              <line key={i} x1={corners[a]!.px} y1={corners[a]!.py} x2={corners[b]!.px} y2={corners[b]!.py} className="stroke-border-strong" strokeWidth={1} strokeDasharray={i >= 8 ? "3 3" : undefined} />
             ))}
             {ATOMS.map(([x, y, z], i) => {
               const p = iso(x, y, z);
