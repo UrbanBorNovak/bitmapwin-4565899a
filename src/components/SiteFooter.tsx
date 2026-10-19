@@ -113,8 +113,9 @@ export function SiteFooter() {
               </g>
             </svg>
           </span>
-          <div className="label text-[0.65rem]">
-            PROPS TO <span className="text-bitcoin">DEV9</span> &amp; <span className="text-bitcoin">BILL 9</span> · BUILT WITH LOVE FOR THE BITMAP COMMUNITY
+          <div className="label max-w-4xl text-[0.65rem] leading-relaxed">
+            PROPS TO <span className="text-bitcoin">DEV9</span> · <span className="text-signal">BOP</span> · <span className="text-bitcoin">BILL</span> · <span className="text-bitcoin">9</span> · <span className="text-foreground">TORNADO H. THOMPSON</span> · <span className="text-signal">ELEVATED DABBER</span> · <span className="text-foreground">BITLODO</span> · <span className="text-foreground">MONONAUT</span> · <span className="text-foreground">BITMAP SUNSET BY BITMAPS</span> · <span className="text-bitcoin">TRULY URBAN</span>
+            <br />BUILT WITH LOVE FOR THE BITMAP COMMUNITY
           </div>
         </div>
       </div>
