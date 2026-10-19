@@ -166,7 +166,7 @@ function WatchPage() {
               <div className="label mt-3">STARRING</div>
               <div className="mt-1 flex flex-wrap gap-2 font-mono text-xs">
                 {cast.map((c) => (
-                  <Link key={c.height} to="/bitmap/$block" params={{ block: String(c.height) }} className="border border-border px-2 py-1 text-primary hover:border-primary">GUARDIAN {c.height}</Link>
+                  <Link key={c.height} to="/bitmap/$block" params={{ block: String(c.height) }} className="border border-border px-2 py-1 text-signal hover:border-signal">GUARDIAN {c.height}</Link>
                 ))}
               </div>
             </div>
