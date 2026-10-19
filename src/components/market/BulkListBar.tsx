@@ -8,7 +8,7 @@ import { signListingPsbt, signMessageWithWallet, xOnlyPubKeyHex } from "@/lib/br
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
-import { confirmKey, freezeQueue, isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
+import { confirmKey, retryQueue, isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
 import { computeEv } from "@/lib/listing-ev";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,6 +40,7 @@ export function BulkListBar({
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Record<string, Status>>({});
   const [running, setRunning] = useState(false);
+  const [listedAt, setListedAt] = useState<Record<string, number>>({});
   const [confirmedKey, setConfirmedKey] = useState<string | null>(null);
   const stop = useRef(false);
   const skip = useRef(false);
@@ -94,7 +95,7 @@ export function BulkListBar({
     setRunning(true);
     stop.current = false;
     const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
-    const queue = freezeQueue(listable);
+    const queue = retryQueue(listable, listedAt);
     const byOut = new Map(listable.map((p) => [p.b.outpoint, p]));
     for (const q of queue) {
       const p = { ...byOut.get(q.outpoint)!, price: q.price };
@@ -119,12 +120,15 @@ export function BulkListBar({
             await cancelOfferFn({ data: { offerId: p.offer.id, signature: sig } });
           } catch { toast(`OLD ASK ON ${p.b.bitmapHeight}.BITMAP STILL OPEN`); }
         }
+        setListedAt((m) => ({ ...m, [q.outpoint]: q.price }));
         setStatus((s) => ({ ...s, [p.b.outpoint]: "done" }));
       } catch {
         setStatus((s) => ({ ...s, [p.b.outpoint]: "failed" }));
       }
     }
     setRunning(false);
+    // A finished, cancelled or rejected run never carries its warning tick into a retry.
+    setConfirmedKey(null);
     invalidate();
   }
 

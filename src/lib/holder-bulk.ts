@@ -100,3 +100,14 @@ export function freezeQueue(plan: { b: { outpoint: string }; price: number | nul
 export function confirmKey(items: { b: { outpoint: string }; price: number | null }[]): string {
   return items.map((p) => `${p.b.outpoint}=${p.price}`).sort().join("|");
 }
+
+/**
+ * Queue for a (re)try: re-planned from current prices, minus anything already
+ * listed at that exact price this session, so a completed item is never signed twice.
+ */
+export function retryQueue(
+  plan: { b: { outpoint: string }; price: number | null }[],
+  listedAt: Readonly<Record<string, number>>,
+): readonly QueueItem[] {
+  return freezeQueue(plan).filter((q) => listedAt[q.outpoint] !== q.price);
+}
