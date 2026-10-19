@@ -56,7 +56,7 @@ function WatchPage() {
     for (const a of approved.data ?? []) {
       try { out.push({ id: a.id, tag: "COMMUNITY EPISODE", episode: parseEpisode(a.episode), by: a.creator_name }); } catch { /* skip invalid */ }
     }
-    const built = REELS.map((r) => ({ id: r.id, tag: r.tag, episode: r.make() }));
+    const built: typeof out = REELS.map((r) => ({ id: r.id, tag: r.tag, episode: r.make(), by: null }));
     return [built[0]!, ...out, ...built.slice(1), ...(privateReel && !out.some((o) => o.id === privateReel.id) ? [privateReel] : [])];
   }, [approved.data, privateReel]);
   useEffect(() => {
