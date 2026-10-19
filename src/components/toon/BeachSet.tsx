@@ -67,8 +67,8 @@ export function BeachSet({ timeRef }: { timeRef: MutableRefObject<number> }) {
       ))}
       {/* landing craft */}
       <group ref={boats}>
-        {[[-40, 40], [-8, 52], [26, 44], [60, 62]].map(([x, z]) => (
-          <group key={x} position={[x!, 0, z!]}>
+        {([[-40, 40], [-8, 52], [26, 44], [60, 62]] as const).map(([x, z]) => (
+          <group key={x} position={[x, 0, z]}>
             <group position={[0, 0, 0]}>
               <mesh position={[0, 1.6, 0]}><boxGeometry args={[9, 3.2, 16]} /><meshStandardMaterial color="#5a6550" roughness={0.9} /></mesh>
               <mesh position={[0, 2.4, -8.2]}><boxGeometry args={[9, 4.8, 0.6]} /><meshStandardMaterial color="#4c5644" /></mesh>
