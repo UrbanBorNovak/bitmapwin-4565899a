@@ -236,7 +236,7 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   if (line.cam === "establish") {
     // Guardian + build: the build sits behind the sand plaza (see Land), so stand in front of the speaker and look past them toward it.
     const bz = -(FORGE_SPAN / 2 + 6), tz = (sp.z + bz) / 2, d = Math.max(FORGE_SPAN * 0.9, hs * 3);
-    return [sp.x + d * 0.35, Math.max(FORGE_SPAN * 0.35, hs * 1.3), sp.z + d, sp.x * 0.5, Math.max(6, hs * 0.5), tz];
+    return [sp.x + d * 0.35, Math.max(FORGE_SPAN * 0.35, hs * 1.3), sp.z + d, sp.x * 0.5, 0, tz];
   }
   if (line.cam === "ots") { const d = Math.max(so, ss) * 0.8; return [ot.x - dx * d + px * d * 0.6, ho * 1.1, ot.z - dz * d + pz * d * 0.6, sp.x, hs * 0.55, sp.z]; }
   const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 2.2, Math.max(ss, so) * 1.6, L * 1.4);
