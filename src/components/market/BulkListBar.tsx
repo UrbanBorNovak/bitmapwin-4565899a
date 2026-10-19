@@ -68,14 +68,15 @@ export function BulkListBar({
       let manual = false;
       if (ov && Number(ov) > 0) { price = Math.round(Number(ov)); manual = true; }
       else if (mode === "uniform") price = Number(uniform) > 0 ? Math.round(Number(uniform)) : null;
-      else if (mode === "ev" || mode === "evlow" || mode === "evhigh") price = ev ? (mode === "ev" ? ev.mid : mode === "evlow" ? ev.low : ev.high) : null;
+      else if (mode === "ev" || mode === "evlow" || mode === "evhigh") price = ev && !ev.fallback ? (mode === "ev" ? ev.mid : mode === "evlow" ? ev.low : ev.high) : null;
       else if (floor) price = matchPrice(floor.floorSats, mode);
       if (price !== null && !manual && ladder > 0) price = ladderPrice(price, rung++, ladder);
       if (price !== null && price < DUST_SATS) price = null;
       const c = checks.get(b.bitmapHeight);
       const guards = listingGuards(b.bitmapHeight, !!c && c.status !== "unverified");
       const lowball = price !== null && (isFarBelowFloor(price, ev?.mid ?? null) || isFarBelowFloor(price, floor?.floorSats ?? null));
-      return { b, floor, ev, price, guards, lowball, offer: openByOutpoint.get(b.outpoint) ?? null };
+      const needsChoice = !manual && (mode === "ev" || mode === "evlow" || mode === "evhigh") && (!ev || ev.fallback);
+      return { b, floor, ev, price, guards, lowball, needsChoice, offer: openByOutpoint.get(b.outpoint) ?? null };
     });
   }, [items, asks.data, sales.data, wallet?.ordinalsAddress, overrides, mode, uniform, ladder, checks, openByOutpoint]);
 
@@ -167,7 +168,7 @@ export function BulkListBar({
             {[0, 1, 2, 5, 10].map((v) => <option key={v} value={v}>{v === 0 ? "OFF" : `+${v}% EACH`}</option>)}
           </select>
         </label>
-        <span className="label ml-auto">{listable.length} PRICED · TOTAL {formatSats(total)}</span>
+        <span className="label ml-auto">{listable.length} PRICED · TOTAL {formatSats(total)}{plan.some((p) => p.needsChoice) ? ` · ${plan.filter((p) => p.needsChoice).length} NEED YOUR PRICE (NOT SIGNED)` : ""}</span>
       </div>
 
       <ul className="mt-3 max-h-56 divide-y divide-border overflow-auto border border-border">
@@ -177,13 +178,24 @@ export function BulkListBar({
             <li key={p.b.outpoint} className="flex flex-wrap items-center gap-2 px-3 py-2 font-mono text-[10px]">
               <span className="w-28 font-bold text-foreground">{p.b.bitmapHeight}.BITMAP</span>
               <span className="text-muted-foreground">
-                {p.ev ? `EV ${p.ev.mid.toLocaleString("en-US")} (${p.ev.sampleSize} SALES${p.ev.fallback ? ", BROAD" : ""}) · ` : sales.isLoading ? "READING SALES… · " : "NO EV DATA · "}{p.floor ? `${p.floor.scope.toUpperCase()} FLOOR ${p.floor.floorSats.toLocaleString("en-US")} SATS` : asks.isLoading ? "READING FLOORS…" : "NO COMPARABLE ASKS"}
+                {p.ev && !p.ev.fallback ? `EV ${p.ev.mid.toLocaleString("en-US")} · ${p.ev.sampleSize} ${p.ev.scope} · ` : sales.isLoading ? "READING SALES… · " : ""}{p.floor ? `${p.floor.scope.toUpperCase()} FLOOR ${p.floor.floorSats.toLocaleString("en-US")} SATS` : asks.isLoading ? "READING FLOORS…" : "NO COMPARABLE ASKS"}
               </span>
               {p.guards.map((g) => <span key={g.id} className="border border-primary/60 px-1 text-primary">⚠ {g.label}</span>)}
               {p.lowball && <span className="border border-destructive px-1 text-destructive">⚠ UNDER HALF OF EV/FLOOR</span>}
+              {p.needsChoice && !sales.isLoading && (
+                <span className="flex w-full flex-wrap items-center gap-2 border border-bitcoin/60 px-2 py-1 text-bitcoin" data-testid="ev-fallback">
+                  ⚠ UNDER 3 COMPARABLE SALES IN THIS TIER{p.ev ? ` · ALL-BITMAP EV ${p.ev.mid.toLocaleString("en-US")} (${p.ev.sampleSize} SALES) NOT USED` : ""} · CONFIRM A PRICE TO LIST
+                  {p.floor && (
+                    <button type="button" disabled={running} className="btn-term-ghost !px-2 !py-0.5"
+                      onClick={() => setOverrides((o) => ({ ...o, [p.b.outpoint]: String(p.floor!.floorSats) }))}>
+                      [ USE {p.floor.scope.toUpperCase()} FLOOR {p.floor.floorSats.toLocaleString("en-US")} ]
+                    </button>
+                  )}
+                </span>
+              )}
               <input value={overrides[p.b.outpoint] ?? ""} disabled={running}
                 onChange={(e) => setOverrides((o) => ({ ...o, [p.b.outpoint]: e.target.value.replace(/[^0-9]/g, "") }))}
-                placeholder={p.price ? p.price.toLocaleString("en-US") : "SATS"} aria-label={`Price for ${p.b.bitmapHeight}.bitmap`}
+                placeholder={p.price ? p.price.toLocaleString("en-US") : p.needsChoice ? "YOUR PRICE" : "SATS"} aria-label={`Price for ${p.b.bitmapHeight}.bitmap`}
                 className="ml-auto w-28 border border-border bg-background px-2 py-0.5 text-right text-foreground focus:border-foreground focus:outline-none" />
               <span className={`w-16 text-right ${st === "done" ? "text-accent" : st === "failed" ? "text-destructive" : "text-muted-foreground"}`}>
                 {st === "signing" ? "SIGNING…" : st ? st.toUpperCase() : p.offer ? "LISTED" : ""}
