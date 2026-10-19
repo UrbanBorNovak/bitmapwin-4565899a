@@ -20,6 +20,7 @@ import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CharacterRouteImport } from './routes/character'
 import { Route as ChurchRouteImport } from './routes/church'
+import { Route as CinemaQueueRouteImport } from './routes/cinema-queue'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as ClipsRouteImport } from './routes/clips'
 import { Route as CoForgeRouteImport } from './routes/co-forge'
@@ -188,6 +189,11 @@ const CharacterRoute = CharacterRouteImport.update({
 const ChurchRoute = ChurchRouteImport.update({
   id: '/church',
   path: '/church',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CinemaQueueRoute = CinemaQueueRouteImport.update({
+  id: '/cinema-queue',
+  path: '/cinema-queue',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CitiesRoute = CitiesRouteImport.update({
@@ -777,6 +783,7 @@ export interface FileRoutesByFullPath {
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
   '/church': typeof ChurchRoute
+  '/cinema-queue': typeof CinemaQueueRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
@@ -904,6 +911,7 @@ export interface FileRoutesByTo {
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
   '/church': typeof ChurchRoute
+  '/cinema-queue': typeof CinemaQueueRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
@@ -1028,6 +1036,7 @@ export interface FileRoutesById {
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
   '/church': typeof ChurchRoute
+  '/cinema-queue': typeof CinemaQueueRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
@@ -1157,6 +1166,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/character'
     | '/church'
+    | '/cinema-queue'
     | '/cities'
     | '/clips'
     | '/co-forge'
@@ -1284,6 +1294,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/character'
     | '/church'
+    | '/cinema-queue'
     | '/cities'
     | '/clips'
     | '/co-forge'
@@ -1407,6 +1418,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/character'
     | '/church'
+    | '/cinema-queue'
     | '/cities'
     | '/clips'
     | '/co-forge'
@@ -1535,6 +1547,7 @@ export interface RootRouteChildren {
   BuildsRoute: typeof BuildsRoute
   CharacterRoute: typeof CharacterRoute
   ChurchRoute: typeof ChurchRoute
+  CinemaQueueRoute: typeof CinemaQueueRoute
   CitiesRoute: typeof CitiesRoute
   ClipsRoute: typeof ClipsRoute
   CoForgeRoute: typeof CoForgeRoute
@@ -1688,6 +1701,13 @@ declare module '@tanstack/react-router' {
       path: '/church'
       fullPath: '/church'
       preLoaderRoute: typeof ChurchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cinema-queue': {
+      id: '/cinema-queue'
+      path: '/cinema-queue'
+      fullPath: '/cinema-queue'
+      preLoaderRoute: typeof CinemaQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cities': {
@@ -2638,6 +2658,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuildsRoute: BuildsRoute,
   CharacterRoute: CharacterRoute,
   ChurchRoute: ChurchRoute,
+  CinemaQueueRoute: CinemaQueueRoute,
   CitiesRoute: CitiesRoute,
   ClipsRoute: ClipsRoute,
   CoForgeRoute: CoForgeRoute,

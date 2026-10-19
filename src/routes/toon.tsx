@@ -9,6 +9,7 @@ import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
 import { CITADEL_TEASER } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
+import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -182,6 +183,7 @@ function ToonPage() {
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
           </div>
+          <div className="mt-3"><CinemaSubmitPanel episode={episode} /></div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
             <span className="label text-signal">ART STYLE</span>
             {TOON_STYLES.map((s) => (

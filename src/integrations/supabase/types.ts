@@ -4272,6 +4272,42 @@ export type Database = {
         }
         Relationships: []
       }
+      toon_submissions: {
+        Row: {
+          created_at: string
+          creator_name: string | null
+          episode: Json
+          id: string
+          review_note: string | null
+          reviewed_at: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_name?: string | null
+          episode: Json
+          id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_name?: string | null
+          episode?: Json
+          id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trade_crawl_state: {
         Row: {
           block_height: number
@@ -4395,6 +4431,24 @@ export type Database = {
           source?: string
           source_key?: string
           translated?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -4788,6 +4842,13 @@ export type Database = {
         Args: { _capability_key: string; _user_id: string }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_clan_member: {
         Args: { _clan_id: string; _user_id: string }
         Returns: boolean
@@ -5072,6 +5133,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       extender_monetization: "free" | "paid" | "lease"
       extender_status: "draft" | "published" | "archived"
       land_permission:
@@ -5210,6 +5272,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       extender_monetization: ["free", "paid", "lease"],
       extender_status: ["draft", "published", "archived"],
       land_permission: [
