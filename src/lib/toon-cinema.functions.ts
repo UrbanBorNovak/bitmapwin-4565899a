@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-export interface ApprovedEpisode { id: string; title: string; creator_name: string | null; episode: unknown; reviewed_at: string | null }
+export interface ApprovedEpisode { id: string; title: string; creator_name: string | null; episode: string; reviewed_at: string | null }
 
 /** Approved cinema episodes, read as the public (anon) role so no account data is exposed. */
 export const listApprovedEpisodes = createServerFn({ method: "GET" }).handler(async (): Promise<ApprovedEpisode[]> => {
@@ -19,5 +19,5 @@ export const listApprovedEpisodes = createServerFn({ method: "GET" }).handler(as
   const { data, error } = await db.from("toon_submissions").select("id, title, creator_name, episode, reviewed_at")
     .eq("status", "approved").order("reviewed_at", { ascending: false }).limit(50);
   if (error) throw new Error(error.message);
-  return (data ?? []) as ApprovedEpisode[];
+  return (data ?? []).map((r) => ({ ...r, episode: JSON.stringify(r.episode) }));
 });

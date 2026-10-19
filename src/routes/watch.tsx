@@ -54,7 +54,7 @@ function WatchPage() {
   const reels = useMemo(() => {
     const out: { id: string; tag: string; episode: ToonEpisode; by?: string | null }[] = [];
     for (const a of approved.data ?? []) {
-      try { out.push({ id: a.id, tag: "COMMUNITY EPISODE", episode: parseEpisode(JSON.stringify(a.episode)), by: a.creator_name }); } catch { /* skip invalid */ }
+      try { out.push({ id: a.id, tag: "COMMUNITY EPISODE", episode: parseEpisode(a.episode), by: a.creator_name }); } catch { /* skip invalid */ }
     }
     const built = REELS.map((r) => ({ id: r.id, tag: r.tag, episode: r.make() }));
     return [built[0]!, ...out, ...built.slice(1), ...(privateReel && !out.some((o) => o.id === privateReel.id) ? [privateReel] : [])];
