@@ -166,3 +166,18 @@ export async function downloadPayloadGlb(b64: string, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
   return { boxes, bytes: glb.byteLength };
 }
+
+/** App-side twin of the published loadBWVX (same boxes, same colours, one InstancedMesh). */
+export function loadBwvxMesh(THREE: typeof import("three"), b64: string) {
+  const boxes = bwvxBoxes(b64);
+  const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.75 }), boxes.length);
+  const m = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+  const colors = PALETTE_HEX.map((h) => new THREE.Color(h));
+  boxes.forEach(({ x0, y0, z0, x1, y1, z1, k }, i) => {
+    const sx = x1 - x0 + 1, sy = y1 - y0 + 1, sz = z1 - z0 + 1;
+    p.set(x0 + sx / 2, y0 + sy / 2, z0 + sz / 2); sc.set(sx, sy, sz);
+    mesh.setMatrixAt(i, m.compose(p, q, sc)); mesh.setColorAt(i, colors[k]!);
+  });
+  mesh.computeBoundingSphere();
+  return mesh;
+}
