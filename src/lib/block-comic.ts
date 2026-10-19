@@ -103,16 +103,46 @@ export async function fetchComicBlocks(): Promise<ComicBlock[]> {
   }));
 }
 
-/** Real block facts for specific heights (used for BITMAPs whose Guardian child was inscribed). */
+const BLOCK_CACHE_KEY = "bitmapwin.comic.blocks.v1";
+const BLOCK_FETCH_CONCURRENCY = 4;
+
+/** Mined blocks deeper than a few confirmations never change, so their facts are cached per device. */
+function readBlockCache(): Record<number, ComicBlock> {
+  try { return JSON.parse(localStorage.getItem(BLOCK_CACHE_KEY) ?? "{}") as Record<number, ComicBlock>; } catch { return {}; }
+}
+function writeBlockCache(c: Record<number, ComicBlock>) {
+  try { localStorage.setItem(BLOCK_CACHE_KEY, JSON.stringify(c)); } catch { /* storage full or blocked */ }
+}
+
+async function fetchOneBlock(h: number): Promise<ComicBlock | null> {
+  try {
+    const hash = await fetch(`https://mempool.space/api/block-height/${h}`).then((r) => (r.ok ? r.text() : null));
+    if (!hash) return null;
+    const x = (await fetch(`https://mempool.space/api/v1/block/${hash.trim()}`).then((r) => (r.ok ? r.json() : null))) as RawBlock | null;
+    if (!x) return null;
+    return { id: x.id, height: x.height, timestamp: x.timestamp, txCount: x.tx_count, size: x.size, pool: x.extras?.pool?.name ?? null, medianFee: x.extras?.medianFee ?? null, totalFees: x.extras?.totalFees ?? null, reward: x.extras?.reward ?? null } satisfies ComicBlock;
+  } catch { return null; }
+}
+
+/**
+ * Real block facts for specific heights (used for BITMAPs whose Guardian child was inscribed).
+ * Fetches a few at a time to stay under mempool.space rate limits; throws when nothing could be
+ * loaded so the caller retries instead of caching an empty result.
+ */
 export async function fetchComicBlocksAt(heights: number[]): Promise<ComicBlock[]> {
-  const out = await Promise.all(heights.map(async (h) => {
-    try {
-      const hash = await fetch(`https://mempool.space/api/block-height/${h}`).then((r) => (r.ok ? r.text() : null));
-      if (!hash) return null;
-      const x = (await fetch(`https://mempool.space/api/v1/block/${hash.trim()}`).then((r) => (r.ok ? r.json() : null))) as RawBlock | null;
-      if (!x) return null;
-      return { id: x.id, height: x.height, timestamp: x.timestamp, txCount: x.tx_count, size: x.size, pool: x.extras?.pool?.name ?? null, medianFee: x.extras?.medianFee ?? null, totalFees: x.extras?.totalFees ?? null, reward: x.extras?.reward ?? null } satisfies ComicBlock;
-    } catch { return null; }
-  }));
-  return out.filter((b): b is ComicBlock => b != null);
+  const cache = typeof localStorage === "undefined" ? {} : readBlockCache();
+  const missing = heights.filter((h) => !cache[h]);
+  let i = 0;
+  const worker = async () => {
+    while (i < missing.length) {
+      const h = missing[i++]!;
+      const b = await fetchOneBlock(h);
+      if (b) cache[h] = b;
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(BLOCK_FETCH_CONCURRENCY, missing.length) }, worker));
+  if (typeof localStorage !== "undefined") writeBlockCache(cache);
+  const out = heights.map((h) => cache[h]).filter((b): b is ComicBlock => b != null);
+  if (heights.length > 0 && out.length === 0) throw new Error("block facts unavailable");
+  return out;
 }

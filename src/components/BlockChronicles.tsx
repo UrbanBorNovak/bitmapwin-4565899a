@@ -190,7 +190,7 @@ function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; 
 
 /** THE BLOCK CHRONICLES — top-of-page banner: one comic issue per mined block, newest on the left. */
 export function BlockChronicles() {
-  const { data, isError } = useQuery({ queryKey: ["block-comic"], queryFn: fetchComicBlocks, refetchInterval: 30_000, staleTime: 20_000 });
+  const { data, isError: liveError } = useQuery({ queryKey: ["block-comic"], queryFn: fetchComicBlocks, refetchInterval: 30_000, staleTime: 20_000 });
   const { data: inhabited } = useQuery(inhabitedQuery());
   const live = useMemo(() => (data ?? []).map(buildIssue), [data]);
   // Every BITMAP with an inscribed Guardian child gets its own issue too (newest children first).
@@ -206,8 +206,18 @@ export function BlockChronicles() {
     [inhabited, liveHeights, builtList],
   );
   // Every BITMAP with an inscribed Guardian child also gets its issue, built from its real block.
-  const { data: gBlocks } = useQuery({ queryKey: ["block-comic-guardians", guardianHeights], queryFn: () => fetchComicBlocksAt(guardianHeights), enabled: guardianHeights.length > 0, staleTime: Infinity });
-  const issues = useMemo(() => (gBlocks ?? []).filter((b) => inhabited?.has(b.height)).sort((a, b) => b.height - a.height).map(buildIssue), [gBlocks, inhabited]);
+  const { data: gBlocks, isError: gError } = useQuery({
+    queryKey: ["block-comic-guardians", guardianHeights],
+    queryFn: () => fetchComicBlocksAt(guardianHeights),
+    enabled: guardianHeights.length > 0,
+    staleTime: Infinity,
+    retry: 4,
+    retryDelay: (n) => Math.min(30_000, 2_000 * 2 ** n),
+  });
+  const guardianIssues = useMemo(() => (gBlocks ?? []).filter((b) => inhabited?.has(b.height)).sort((a, b) => b.height - a.height).map(buildIssue), [gBlocks, inhabited]);
+  // Until Guardian issues arrive (or if they can't load), show the latest mined blocks instead of an empty strip.
+  const issues = guardianIssues.length > 0 ? guardianIssues : live;
+  const isError = liveError && (gError || guardianIssues.length === 0);
   const insOf = (h: number) => inhabited?.get(h) ?? null;
   const [open, setOpen] = useState<number | null>(null);
   // Only ISSUES_PER_PAGE covers at a time; older issues sit on the next page.
@@ -238,6 +248,7 @@ export function BlockChronicles() {
           </div>
         )}
         {issues.length === 0 && !isError && <div className="self-center font-mono text-xs text-muted-foreground">PRINTING LATEST ISSUES…</div>}
+        {issues.length === 0 && isError && <div className="self-center font-mono text-xs text-muted-foreground">BLOCK FEED BUSY — RETRYING AUTOMATICALLY…</div>}
         {shown.map((iss, i) => {
           const at = cur * ISSUES_PER_PAGE + i;
           return (
