@@ -10,6 +10,7 @@ import {
   RightsInfographic,
 } from "@/components/docs/Infographics";
 import { ChainStackInfographic } from "@/components/docs/ChainStackInfographic";
+import { WorldPipelineMap } from "@/components/docs/WorldPipelineMap";
 import { ForgeBuildInfographic, GuardianLifecycleInfographic } from "@/components/docs/ProtocolInfographics";
 import { BWVX_SPEC } from "@/lib/protocol-sdk";
 
@@ -94,6 +95,9 @@ function DocsPage() {
       </div>
 
       <div className="mt-8">
+        <WorldPipelineMap />
+      </div>
+      <div className="mt-6">
         <ChainStackInfographic />
       </div>
       <div className="mt-6">
