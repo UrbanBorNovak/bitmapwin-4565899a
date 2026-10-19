@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { DataBadge } from "@/components/extenders/DataBadge";
+import { SpiderHunter } from "@/components/bot/SpiderHunter";
 import {
   BOT_PRESETS,
   POLL_MS,
@@ -160,6 +161,27 @@ function BotPage() {
         <Link to="/marketplace" className="btn-term-ghost">[ MARKETPLACE ]</Link>
         <Link to="/api" className="btn-term-ghost">[ API ]</Link>
       </div>
+
+      <section className="mt-8 border border-border bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
+          <span className="label text-bitcoin">TRADING HUNTER</span>
+          <span className="label text-signal" data-no-translate>
+            {running ? "● ACTIVE PATROL" : "○ IDLE PATROL"} · NODES {Math.min(listings.length, 12)} · TARGETS {current.length}
+          </span>
+        </div>
+        <SpiderHunter
+          running={running}
+          targets={listings.slice(0, 12).map((l) => ({
+            id: l.id,
+            label: `${l.bitmap_height}.bitmap`,
+            price: l.price_sats,
+            hot: matches(rule, l),
+          }))}
+        />
+        <p className="label border-t border-border px-4 py-2 text-muted-foreground">
+          The hunter scans real open listings; orange nodes match your rule. It only points — you buy in your own wallet.
+        </p>
+      </section>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[360px_1fr]">
         <section className="border border-border bg-surface p-5">
