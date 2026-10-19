@@ -46,7 +46,7 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
       {picks.length > 0 && (
         <ol className="mt-3 grid gap-1">
           {picks.map((p, i) => (
-            <li key={p.inscriptionId} className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 border-t border-border pt-1 font-mono text-[11px]" data-no-translate>
+            <li key={p.inscriptionId} className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] sm:grid-cols-[2rem_minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-1 border-t border-border pt-1 font-mono text-[11px]" data-no-translate>
               <span className="text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
               <Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="hover:text-signal">{p.bitmapHeight}.BITMAP</Link>
               <span className="text-bitcoin">{formatSats(p.listedSats)}</span>
