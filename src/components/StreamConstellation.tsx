@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProvenanceEvent } from "@/lib/passport";
+import { CHAIN_RECORDS } from "@/lib/chain-records";
 
 /**
  * "Grapes" view of the World Stream: each BITMAP is a vine node, each real
