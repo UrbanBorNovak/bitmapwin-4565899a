@@ -7,8 +7,8 @@ export const CITADEL_TEASER: ToonEpisode = {
     { block: 715093, duration: 6.5, shot: "crane", sfx: "SATS!",
       cast: [{ height: 840000, name: "840000.bitmap", x: -2, z: 1, pose: "idle", emote: "surprised" }],
       lines: [
-        { at: 1, dur: 2.6, speaker: 0, text: "Block 715093. Something hums beneath the towers...", style: "thought", cam: "close" },
-        { at: 3.8, dur: 2.4, speaker: 0, text: "A signal from older builds. I must follow it.", style: "speech", cam: "two" },
+        { at: 1, dur: 2.6, speaker: 0, text: "Block 715093. Something hums beneath the towers...", style: "thought", cam: "establish" },
+        { at: 3.8, dur: 2.4, speaker: 0, text: "A signal from older builds. I must follow it.", style: "speech", cam: "establish" },
       ] },
     { block: 819245, duration: 7, shot: "dolly", transition: "iris", cutBlend: true, sfx: "WHOOSH!",
       cast: [
