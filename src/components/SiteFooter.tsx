@@ -99,6 +99,24 @@ export function SiteFooter() {
           <span aria-hidden>·</span>
           <Link to="/docs" hash="tiny-tools" className="text-signal hover:text-foreground">TOOL DOCS</Link>
         </div>
+        <div className="mt-3 flex items-center gap-3 border-t border-border pt-3">
+          <span className="grid size-10 shrink-0 place-items-center bg-bitcoin" aria-label="Giraffe logo">
+            <svg viewBox="0 0 16 16" className="size-7" shapeRendering="crispEdges" aria-hidden="true">
+              <g fill="var(--background)">
+                <rect x="9" y="1" width="1" height="1" /><rect x="11" y="1" width="1" height="1" />
+                <rect x="9" y="2" width="4" height="2" /><rect x="12" y="3" width="2" height="1" />
+                <rect x="9" y="4" width="2" height="5" />
+                <rect x="3" y="8" width="8" height="3" />
+                <rect x="3" y="11" width="1" height="4" /><rect x="5" y="11" width="1" height="4" />
+                <rect x="8" y="11" width="1" height="4" /><rect x="10" y="11" width="1" height="4" />
+                <rect x="2" y="8" width="1" height="2" />
+              </g>
+            </svg>
+          </span>
+          <div className="label text-[0.65rem]">
+            PROPS TO <span className="text-bitcoin">DEV9</span> &amp; <span className="text-bitcoin">BILL 9</span> · BUILT WITH LOVE FOR THE BITMAP COMMUNITY
+          </div>
+        </div>
       </div>
     </footer>
   );
