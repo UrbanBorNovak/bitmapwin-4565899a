@@ -19,4 +19,10 @@ describe("exported watch agent", () => {
     expect(src).toContain("const MAX_SATS = 500000;");
     expect(src).toContain("const MAX_HEIGHT = 840000;");
   });
+
+  it("listings-only mode returns before any wallet call", () => {
+    expect(src).toContain('process.argv.includes("--listings-only")');
+    const fn = src.slice(src.indexOf("function balanceSats"));
+    expect(fn.indexOf("if (LISTINGS_ONLY) return null;")).toBeLessThan(fn.indexOf("execFileSync("));
+  });
 });

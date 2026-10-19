@@ -161,6 +161,8 @@ const GUIDE: { title: string; steps: string[]; code?: string[] }[] = [
     code: [INSTALL, "xverse-wallet wallet create", "read -s XVERSE_PASSWORD && export XVERSE_PASSWORD", "xverse-wallet bitcoin balance --json"] },
   { title: "3 · RUN THE WATCH AGENT", steps: ["Set your rule above, then press Download watch agent.", "In the same terminal, go to the folder with the file and start it.", "Every 30 seconds it prints how many listings it checked, any new matches, and whether your spendable balance covers them. Press Ctrl+C to stop."],
     code: ["bun bitmap-xverse-agent.ts"] },
+  { title: "NO WALLET? LISTINGS-ONLY MODE", steps: ["Skip step 2 entirely: you only need Bun.", "Add --listings-only and the agent never calls Xverse, so no wallet is created, unlocked or read.", "Matches are printed the same way, marked \"listings-only\" instead of a balance check."],
+    code: ["bun bitmap-xverse-agent.ts --listings-only"] },
   { title: "4 · TROUBLESHOOTING", steps: [
     "\"Vault not initialised\": no wallet yet. Run xverse-wallet wallet create.",
     "\"Vault is locked\": the password isn't set in this terminal. Run the read -s line again, then restart the agent.",
