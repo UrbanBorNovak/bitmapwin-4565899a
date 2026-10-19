@@ -109,6 +109,7 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
           )}
         </div>
       </div>
+      {showExport && <SetupGuide />}
       <p className="label border-t border-border px-4 py-2 text-muted-foreground">
         The downloaded agent only reports matching listings. It never signs, buys or broadcasts — you buy in your own wallet.
       </p>
