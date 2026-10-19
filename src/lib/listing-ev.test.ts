@@ -45,9 +45,27 @@ describe("listing EV", () => {
     expect(evTierOf(840_000).key).toBe("modern");
   });
   it("labels asks against the bands", () => {
-    const ev = { low: 100, mid: 200, high: 300, sampleSize: 4, scope: "", fallback: false, lowConfidence: false, from: null, to: null };
+    const ev = { low: 100, mid: 200, high: 300, sampleSize: 4, peerCount: 4, tierLabel: null, scope: "", fallback: false, lowConfidence: false, from: null, to: null };
     expect(evVerdict(50, ev)).toBe("BELOW FLOOR");
     expect(evVerdict(200, ev)).toBe("FAIR MARKET");
     expect(evVerdict(1000, ev)).toBe("ABOVE MARKET");
+  });
+});
+
+describe("EV tier peer count", () => {
+  const base = Array.from({ length: 5 }, (_, i) => ({ bitmap_height: 900_000 + i, price_sats: 10_000 }));
+  for (const n of [0, 1, 2]) {
+    it(`reports exactly ${n} same-tier sale(s) and falls back`, () => {
+      const peers = Array.from({ length: n }, (_, i) => ({ bitmap_height: 50_000 + i, price_sats: 200_000 }));
+      const ev = computeEv(55_000, [...base, ...peers])!;
+      expect(ev.peerCount).toBe(n);
+      expect(ev.fallback).toBe(true);
+    });
+  }
+  it("3 same-tier sales are enough to use the tier", () => {
+    const peers = Array.from({ length: 3 }, (_, i) => ({ bitmap_height: 50_000 + i, price_sats: 200_000 }));
+    const ev = computeEv(55_000, [...base, ...peers])!;
+    expect(ev.peerCount).toBe(3);
+    expect(ev.fallback).toBe(false);
   });
 });

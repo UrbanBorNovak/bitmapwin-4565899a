@@ -34,6 +34,9 @@ export type EvBands = {
   mid: number;
   high: number;
   sampleSize: number;
+  /** Confirmed sales in this BITMAP's own height tier (may be below EV_MIN_PEERS). */
+  peerCount: number;
+  tierLabel: string | null;
   scope: string;
   /** True when the tier had too few sales and all BITMAP sales were used. */
   fallback: boolean;
@@ -60,6 +63,8 @@ export function computeEv(height: number | null, sales: EvSale[]): EvBands | nul
     mid: quantile(pool, 0.5),
     high: quantile(pool, 0.8),
     sampleSize: pool.length,
+    peerCount: peers.length,
+    tierLabel: tier?.label ?? null,
     scope: useTier ? `${tier!.label} SALES` : "ALL BITMAP SALES",
     fallback: !useTier,
     lowConfidence: pool.length < EV_LOW_CONFIDENCE,
