@@ -88,3 +88,21 @@ describe("bulk list: clearing or breaking a price never leaves the old one signa
     expect(r.price).toBe(131_112);
   });
 });
+
+import { confirmKey, freezeQueue } from "./holder-bulk";
+describe("bulk list: an active signing queue is frozen", () => {
+  const item = (o: string, price: number | null) => ({ b: { outpoint: o }, price });
+  it("edits, preset switches and deselection after List never change queued prices", () => {
+    const plan = [item("a:0", 250_000), item("b:0", 131_112), item("c:0", null)];
+    const queue = freezeQueue(plan);
+    plan[0]!.price = 1_000; plan[1]!.price = 129_800; plan[2]!.price = 600; plan.pop();
+    expect(queue).toEqual([{ outpoint: "a:0", price: 250_000 }, { outpoint: "b:0", price: 131_112 }]);
+    expect(() => { (queue[0] as { price: number }).price = 1; }).toThrow();
+  });
+  it("a changed flagged price needs a fresh confirmation", () => {
+    const ok = confirmKey([item("a:0", 250_000)]);
+    expect(confirmKey([item("a:0", 250_000)])).toBe(ok);
+    expect(confirmKey([item("a:0", 249_999)])).not.toBe(ok);
+    expect(confirmKey([item("a:0", 250_000), item("b:0", 600)])).not.toBe(ok);
+  });
+});

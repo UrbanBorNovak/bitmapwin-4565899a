@@ -88,3 +88,15 @@ export function planPrice(o: {
   if (price !== null && price < DUST_SATS) price = null;
   return { price, manual: false, needsChoice, usedRung };
 }
+
+export type QueueItem = Readonly<{ outpoint: string; price: number }>;
+
+/** Freezes the priced items at the moment List is pressed; later edits never reach this queue. */
+export function freezeQueue(plan: { b: { outpoint: string }; price: number | null }[]): readonly QueueItem[] {
+  return Object.freeze(plan.filter((p) => p.price !== null).map((p) => Object.freeze({ outpoint: p.b.outpoint, price: p.price! })));
+}
+
+/** Fingerprint of the exact prices a seller confirmed; any change means confirmation must be given again. */
+export function confirmKey(items: { b: { outpoint: string }; price: number | null }[]): string {
+  return items.map((p) => `${p.b.outpoint}=${p.price}`).sort().join("|");
+}
