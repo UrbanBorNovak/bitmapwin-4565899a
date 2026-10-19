@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import { Box3, CanvasTexture, Color, Object3D, SRGBColorSpace, Vector3, type Group, type InstancedMesh, type Sprite } from "three";
-import { blockParcelSizes } from "@/lib/bitmap-layout";
 
 /** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
 const actorHeights = new Map<number, number>();
@@ -70,7 +69,7 @@ function EmoteIcon({ emote, timeRef, slot, scene }: { emote: Emote; timeRef: Mut
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { forgeBuildQuery } from "@/lib/forge";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
-import { parcelRects } from "@/lib/forge-parcels";
+import { parcelTiles } from "@/lib/forge-parcels";
 import { FORGE_SPAN } from "@/lib/voxel-populate";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
