@@ -53,6 +53,7 @@ describe("BWVX GLB export", () => {
       for (let i = 0; i < pos.count; i++) if (pos.getX(i) >= x && pos.getX(i) <= x + 1 && pos.getY(i) >= y && pos.getY(i) <= y + 1 && pos.getZ(i) >= z && pos.getZ(i) <= z + 1) return new THREE.Color(col.getX(i), col.getY(i), col.getZ(i));
       return null;
     };
+    console.log("DBG", pos.count, Array.from(pos.array.slice(0,9)), Array.from(col.array.slice(0,6)));
     expect(close(at(10, 0, 10)!, hex("glass"))).toBe(true);
     expect(close(at(6, 1, 0)!, hex("gold"))).toBe(true);
     expect(close(at(1, 1, 0)!, hex("stone"))).toBe(true);
