@@ -11,6 +11,18 @@ export function canEncodeMp4() {
   return typeof window !== "undefined" && "VideoEncoder" in window && "VideoFrame" in window;
 }
 
+/** True only when this browser can really save an X-ready H.264 MP4 at the given size (same checks the recorder uses). */
+export async function probeMp4(width = 1280, height = 720): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (canEncodeMp4()) {
+    for (const c of ["avc1.4d0028", "avc1.640028", "avc1.42002a", "avc1.42001f"]) {
+      const ok = await VideoEncoder.isConfigSupported({ codec: c, width, height, bitrate: 6_000_000, framerate: 30 }).catch(() => null);
+      if (ok?.supported) return true;
+    }
+  }
+  return typeof MediaRecorder !== "undefined" && ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1"].some((m) => MediaRecorder.isTypeSupported(m));
+}
+
 import { playSoundtrack, sharedCtx } from "@/lib/toon-audio";
 
 async function aacSupported(sr: number) {

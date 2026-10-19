@@ -6,7 +6,7 @@ import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
-import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
+import { canEncodeMp4, createXRecorder, probeMp4, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
 import { CITADEL_TEASER, PIXELS_HOMECOMING } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
@@ -99,7 +99,7 @@ function ToonPage() {
   const [lastFile, setLastFile] = useState<File | null>(null);
   // Label the button with the format this browser will really save (checked after hydration).
   const [mp4Ok, setMp4Ok] = useState<boolean | null>(null);
-  useEffect(() => { setMp4Ok(canEncodeMp4()); }, []);
+  useEffect(() => { let live = true; void probeMp4().then((ok) => { if (live) setMp4Ok(ok); }); return () => { live = false; }; }, []);
 
   const record = async () => {
     const gl = stageRef.current?.querySelector("canvas");
