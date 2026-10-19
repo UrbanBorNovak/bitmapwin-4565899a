@@ -15,7 +15,7 @@ EP = {"title": "Limbs", "aspect": "16:9", "scenes": [
 
 def diff(a, b):
   d = ImageChops.difference(Image.open(a).convert("L"), Image.open(b).convert("L"))
-  return sum(1 for p in d.getdata() if p > 24)
+  return sum(1 for p in d.get_flattened_data() if p > 24)
 
 async def main():
   ok = []

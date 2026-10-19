@@ -1,4 +1,4 @@
-import { Component, Suspense, useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useMemo, type MutableRefObject, type ReactNode } from "react";
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
