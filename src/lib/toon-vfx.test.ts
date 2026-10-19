@@ -22,6 +22,6 @@ describe("toon vfx", () => {
   });
   it("episode parser keeps valid cues and drops out-of-scene ones", () => {
     const e = parseEpisode(JSON.stringify({ title: "t", scenes: [{ block: 1, duration: 5, shot: "wide", cast: [], lines: [], fx: [{ id: "a/b-v1", at: 2 }, { id: "a/b-v1", at: 9 }] }] }));
-    expect(e.scenes[0].fx).toEqual([{ id: "a/b-v1", at: 2 }]);
+    expect(e.scenes[0]?.fx).toEqual([{ id: "a/b-v1", at: 2 }]);
   });
 });

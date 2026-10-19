@@ -100,8 +100,8 @@ export function hash01(seed: number, i: number, c: number): number {
 }
 
 export function sampleKeys(keys: VfxKey[], u: number): { scale: number; color: string; opacity: number; a: VfxKey; b: VfxKey; f: number } {
-  let a = keys[0], b = keys[keys.length - 1];
-  for (let i = 0; i < keys.length - 1; i++) if (u >= keys[i].t && u <= keys[i + 1].t) { a = keys[i]; b = keys[i + 1]; break; }
+  let a = keys[0]!, b = keys[keys.length - 1]!;
+  for (let i = 0; i < keys.length - 1; i++) { const p = keys[i]!, q = keys[i + 1]!; if (u >= p.t && u <= q.t) { a = p; b = q; break; } }
   const f = b.t > a.t ? Math.min(1, Math.max(0, (u - a.t) / (b.t - a.t))) : 0;
   return { scale: a.scale + (b.scale - a.scale) * f, opacity: a.opacity + (b.opacity - a.opacity) * f, color: f < 0.5 ? a.color : b.color, a, b, f };
 }
