@@ -6,6 +6,7 @@ import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { CITADEL_TEASER } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { useQuery } from "@tanstack/react-query";
+import { canEncodeMp4, createXRecorder, X_SIZES } from "@/lib/x-video";
 import { parseEpisode } from "@/lib/toon-script";
 import { listApprovedEpisodes } from "@/lib/toon-cinema.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,10 +122,61 @@ function WatchPage() {
   const vertical = episode.aspect === "9:16";
 
   const fullscreen = () => { const el = screenRef.current; if (!el) return; if (document.fullscreenElement) void document.exitFullscreen(); else void el.requestFullscreen?.(); };
-  const share = () => {
-    const url = `https://bitmapwin.app/watch?ep=${current.id}`;
-    const text = `Watching "${episode.title}" — a cartoon filmed on real Bitcoin blocks #Bitmap #Ordinals`;
-    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
+  const shareText = `Watching "${episode.title}" — a cartoon filmed on real Bitcoin blocks ${blocks.map((b) => `${b}.bitmap`).join(" → ")} #Bitmap #Ordinals`;
+  const shareUrl = `https://bitmapwin.app/watch?ep=${current.id}`;
+  const share = async () => {
+    const file = clipFile?.id === current.id ? clipFile.file : null;
+    if (file && matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: episode.title, text: `${shareText} ${shareUrl}` }); return; } catch { /* fall through */ }
+    }
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, "_blank", "noopener");
+  };
+
+  const [recording, setRecording] = useState(false);
+  const [clipNote, setClipNote] = useState<string | null>(null);
+  const [clipFile, setClipFile] = useState<{ id: string; file: File } | null>(null);
+  const exportClip = async () => {
+    const gl = screenRef.current?.querySelector("canvas");
+    if (!gl || recording) return;
+    if (typeof MediaRecorder === "undefined" && !canEncodeMp4()) return setClipNote("THIS BROWSER CAN'T RECORD VIDEO.");
+    const [W, H] = X_SIZES[episode.aspect];
+    const out = document.createElement("canvas"); out.width = W; out.height = H;
+    const ctx = out.getContext("2d")!;
+    const over = document.createElement("canvas"); over.width = W; over.height = H;
+    const octx = over.getContext("2d")!;
+    setClipNote("RECORDING… KEEP THIS TAB OPEN.");
+    const audio = muted ? null : await renderSoundtrack(episode).catch(() => null);
+    const rec = await createXRecorder(out, audio);
+    const id = current.id;
+    let stopped = false;
+    const paint = async () => {
+      const s = Math.max(W / gl.width, H / gl.height), dw = gl.width * s, dh = gl.height * s;
+      ctx.fillStyle = "#0a0e14"; ctx.fillRect(0, 0, W, H);
+      ctx.filter = styleFilter(episode.style);
+      ctx.drawImage(gl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      ctx.filter = "none";
+      octx.clearRect(0, 0, W, H);
+      drawOverlay(octx, W, H, episode, timeRef.current, (nx, ny) => [(W - dw) / 2 + nx * dw, (H - dh) / 2 + ny * dh]);
+      ctx.drawImage(over, 0, 0);
+      rec.addFrame(out, timeRef.current);
+      if (timeRef.current >= total && !stopped) {
+        stopped = true;
+        const blob = await rec.finish();
+        setRecording(false);
+        const name = `${episode.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-x.${rec.kind}`;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 30_000);
+        setClipFile({ id, file: new File([blob], name, { type: blob.type }) });
+        setClipNote(rec.kind === "mp4" ? "X-READY MP4 SAVED. PRESS SHARE TO X AND ATTACH IT." : "SAVED AS WEBM — X NEEDS MP4. USE CHROME, EDGE OR SAFARI FOR AN X-READY FILE.");
+        return;
+      }
+      requestAnimationFrame(paint);
+    };
+    setTime(0); timeRef.current = 0;
+    setRecording(true); setPlaying(true);
+    requestAnimationFrame(paint);
   };
 
   return (
@@ -173,9 +225,11 @@ function WatchPage() {
                 </div>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
-                <button className="btn-term" onClick={share}>[ SHARE TO X ]</button>
+                <button className="btn-term" onClick={() => void exportClip()} disabled={recording}>[ {recording ? "● RECORDING…" : "⬇ EXPORT CLIP FOR X"} ]</button>
+                <button className="btn-term" onClick={() => void share()}>[ SHARE TO X ]</button>
                 <Link to="/toon" className="btn-term-ghost">[ MAKE YOUR OWN IN TOON STUDIO ]</Link>
               </div>
+              {clipNote && <p className="mt-2 font-mono text-[0.7rem] text-signal" role="status">{clipNote}</p>}
             </div>
             <div>
               <div className="label">FILMED ON</div>

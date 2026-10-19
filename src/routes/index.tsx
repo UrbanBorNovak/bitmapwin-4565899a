@@ -1,3 +1,4 @@
+import { CinemaPremiere } from "@/components/home/CinemaPremiere";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GeoTransfers } from "@/components/GeoTransfers";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -93,6 +94,7 @@ function Index() {
   return (
     <div className="pb-10">
       <BlockChronicles />
+      <CinemaPremiere />
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="grid overflow-hidden border border-border-strong lg:min-h-[560px] lg:grid-cols-12">
           <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-4 lg:order-1 lg:col-span-3 lg:border-r lg:border-t-0 lg:p-5">
