@@ -23,6 +23,23 @@ export const Route = createFileRoute("/builders")({
   component: BuildersPage,
 });
 
+const EARN_STEPS = [
+  { title: "CREATE", onchain: false, body: "Design voxel pieces, kits, extenders or episodes in free browser studios.", proof: "NO WALLET NEEDED" },
+  { title: "PUBLISH A PIECE", onchain: false, body: "Publish a Forge module. Every stamp by another builder pays you a BIT royalty.", proof: "LINEAGE STORED WITH THE PIECE" },
+  { title: "GET PAID IN SATS", onchain: true, body: "When a build using your piece is inscribed, the reveal transaction pays you directly (min 546 sats).", proof: "VERIFIABLE IN THE TX OUTPUTS" },
+  { title: "HOST & EARN", onchain: false, body: "Host an experience on your BITMAP and share the daily visitor dividend.", proof: "LIVE OWNERSHIP CHECKED" },
+];
+
+const TOOLBELT = [
+  { to: "/forge", name: "LAND FORGE", free: false, hook: "Build and inscribe on your BITMAP.", earns: "SAT ROYALTIES" },
+  { to: "/tiny-studio", name: "TINY STUDIO", free: true, hook: "3D voxel modeler and walker.", earns: "PIECES TO PUBLISH" },
+  { to: "/co-forge", name: "CO-FORGE", free: true, hook: "Build together in shared rooms.", earns: "SHARED LINEAGE" },
+  { to: "/toon", name: "TOON STUDIO", free: true, hook: "Cartoon episodes with your Guardians.", earns: "AUDIENCE ON X" },
+  { to: "/store-kit", name: "STORE KIT", free: true, hook: "Sovereign shop you inscribe once.", earns: "DIRECT SALES" },
+  { to: "/create", name: "EXTENDER STUDIO", free: true, hook: "Ship experiences with AI.", earns: "HOST & EARN BIT" },
+] as const;
+
+
 function BuildersPage() {
   const catalogue = useQuery(extendersQuery({}));
   const stats = useQuery(extenderStatsQuery());
@@ -55,6 +72,52 @@ function BuildersPage() {
         <Link to="/create" className="btn-term">[ BECOME A BUILDER — CREATE WITH AI ]</Link>
       </div>
 
+      <section className="mt-10">
+        <div className="label text-signal">HOW BUILDERS EARN</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">FROM BLOCK TO INCOME — PAID BY BITCOIN ITSELF</h2>
+        <ol className="mt-6 grid gap-3 md:grid-cols-4">
+          {EARN_STEPS.map((s, i) => (
+            <li key={s.title} className="relative border border-border bg-surface p-5">
+              <div className="flex items-center justify-between">
+                <span className="display text-3xl text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
+                <span className={`label border px-2 py-1 ${s.onchain ? "border-bitcoin text-bitcoin" : "border-signal text-signal"}`}>
+                  {s.onchain ? "ON-CHAIN · SATS" : "BIT · OFF-CHAIN"}
+                </span>
+              </div>
+              <h3 className="display mt-4 text-lg">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              <p className="label mt-3 text-signal">{s.proof}</p>
+              {i < EARN_STEPS.length - 1 && (
+                <span aria-hidden className="display absolute -right-3 top-1/2 hidden -translate-y-1/2 text-xl text-bitcoin md:block">→</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <div className="label text-signal">BUILDER TOOLBELT</div>
+            <h2 className="display mt-2 text-2xl md:text-3xl">TOOLS AVAILABLE</h2>
+          </div>
+          <Link to="/tools" className="btn-term-ghost">[ ALL TOOLS → ]</Link>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {TOOLBELT.map((t) => (
+            <Link key={t.to} to={t.to} className="group border border-border bg-surface p-5 hover:border-bitcoin">
+              <div className="flex items-center justify-between">
+                <span className="display text-lg group-hover:text-bitcoin">{t.name}</span>
+                <span className={`label ${t.free ? "text-signal" : "text-bitcoin"}`}>{t.free ? "FREE" : "ON-CHAIN"}</span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{t.hook}</p>
+              <p className="label mt-3 text-muted-foreground">EARNS: {t.earns}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <h2 className="display mt-12 text-2xl md:text-3xl">LEADERBOARD</h2>
       {catalogue.isLoading ? (
         <p className="mt-8 label">COUNTING BUILDERS…</p>
       ) : rows.length === 0 ? (
