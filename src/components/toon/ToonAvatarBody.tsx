@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CanvasTexture, NearestFilter, SRGBColorSpace, type Group } from "three";
-import { AVATAR_SKINS, MODEL_SHAPE, limbPose, type ToonAvatar } from "@/lib/toon-avatars";
+import { AVATAR_SKINS, MODEL_SHAPE, isPixelSkin, limbPose, type ToonAvatar } from "@/lib/toon-avatars";
 
 /** Pixel texture for a skin, drawn once per skin so exports bake the same pattern. */
 function useSkinTexture(skinId: string) {
+  const [pixel, setPixel] = useState<{ t: CanvasTexture; s: (typeof AVATAR_SKINS)[number] } | null>(null);
   const tex = useMemo(() => {
     const s = AVATAR_SKINS.find((k) => k.v === skinId) ?? AVATAR_SKINS[0]!;
     const c = document.createElement("canvas"); c.width = c.height = 32;
@@ -21,7 +22,30 @@ function useSkinTexture(skinId: string) {
     return { t, s };
   }, [skinId]);
   useEffect(() => () => tex.t.dispose(), [tex]);
-  return tex;
+  // On-chain BITMAP Pixel: paint the real inscription image, and take skin/accent tones from its own pixels.
+  useEffect(() => {
+    setPixel(null);
+    if (!isPixelSkin(skinId)) return;
+    let live = true, made: CanvasTexture | null = null;
+    const img = new Image(); img.crossOrigin = "anonymous";
+    img.onload = () => {
+      if (!live) return;
+      const c = document.createElement("canvas"); c.width = c.height = 64;
+      const x = c.getContext("2d")!; x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 64, 64);
+      let accent = "#f7931a", skin = "#e8b48a";
+      try {
+        const d = x.getImageData(0, 0, 64, 64).data, counts = new Map<string, number>();
+        for (let i = 0; i < d.length; i += 16) if (d[i + 3]! > 200) { const k = `${d[i]! >> 4},${d[i + 1]! >> 4},${d[i + 2]! >> 4}`; counts.set(k, (counts.get(k) ?? 0) + 1); }
+        const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => { const [r, g, b] = k.split(",").map((n) => Number(n) * 16 + 8); return `rgb(${r},${g},${b})`; });
+        if (top[0]) skin = top[0]; if (top[1]) accent = top[1];
+      } catch { /* tainted canvas: keep defaults */ }
+      made = new CanvasTexture(c); made.magFilter = made.minFilter = NearestFilter; made.colorSpace = SRGBColorSpace;
+      setPixel({ t: made, s: { ...AVATAR_SKINS[0]!, base: skin, accent, skin } });
+    };
+    img.src = `/api/public/inscription/${skinId.slice(3)}`;
+    return () => { live = false; made?.dispose(); };
+  }, [skinId]);
+  return pixel ?? tex;
 }
 
 /** Voxel avatar with pivoted limbs, animated per pose from the shared time ref. */
