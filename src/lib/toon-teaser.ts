@@ -72,9 +72,9 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
         { at: 3.8, dur: 2.4, speaker: 0, text: "Check the chain. Every pixel is an inscription.", style: "speech", cam: "two" },
       ] },
     { block: 486145, duration: 6, shot: "dutch", transition: "fade", sfx: "HODL!",
-      cast: [px(PX.fred, "#006 Fred the Frog", -2, 0, "jump"), px(PX.bot, "#009 Bitmap Bot", 2, 0, "combat", { emote: "angry" })],
+      cast: [px(PX.fred, "#006 Fred the Frog", -4, 0, "jump"), px(PX.bot, "#009 Bitmap Bot", 4, 0, "combat", { emote: "angry" })],
       lines: [
-        { at: 0.8, dur: 2.4, speaker: 1, text: "Bastion defence online. Fists up, Fred!", style: "shout", cam: "two" },
+        { at: 0.8, dur: 2.4, speaker: 1, text: "Bastion defence online. Fists up, Fred!", style: "shout", cam: "establish" },
         { at: 3.4, dur: 2.3, speaker: 0, text: "Ribbit. I jump higher than any fee spike.", style: "speech", cam: "two" },
       ] },
     { block: 819245, duration: 6.5, shot: "orbit", transition: "iris", sfx: "SATS!",
