@@ -8,7 +8,7 @@ import { signListingPsbt, signMessageWithWallet, xOnlyPubKeyHex } from "@/lib/br
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
-import { isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
+import { confirmKey, freezeQueue, isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
 import { computeEv } from "@/lib/listing-ev";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,7 +40,7 @@ export function BulkListBar({
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Record<string, Status>>({});
   const [running, setRunning] = useState(false);
-  const [confirmRisk, setConfirmRisk] = useState(false);
+  const [confirmedKey, setConfirmedKey] = useState<string | null>(null);
   const stop = useRef(false);
   const skip = useRef(false);
   const sales = useQuery({
@@ -75,6 +75,9 @@ export function BulkListBar({
 
   const listable = plan.filter((p) => p.price !== null);
   const risky = listable.filter((p) => p.guards.length > 0 || p.lowball);
+  const riskKey = confirmKey(risky);
+  // A tick only covers the exact flagged prices it was given for; any change needs a fresh tick.
+  const confirmRisk = confirmedKey !== null && confirmedKey === riskKey;
   const total = listable.reduce((s, p) => s + p.price!, 0);
   const unlistable = plan.filter((p) => p.offer);
 
@@ -91,7 +94,10 @@ export function BulkListBar({
     setRunning(true);
     stop.current = false;
     const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
-    for (const p of listable) {
+    const queue = freezeQueue(listable);
+    const byOut = new Map(listable.map((p) => [p.b.outpoint, p]));
+    for (const q of queue) {
+      const p = { ...byOut.get(q.outpoint)!, price: q.price };
       if (stop.current) { setStatus((s) => ({ ...s, [p.b.outpoint]: "cancelled" })); continue; }
       if (p.offer && p.offer.priceSats === p.price) { setStatus((s) => ({ ...s, [p.b.outpoint]: "skipped" })); continue; }
       skip.current = false;
@@ -152,7 +158,7 @@ export function BulkListBar({
           <button key={m} disabled={running} className={mode === m ? "btn-term !px-2 !py-1" : "btn-term-ghost !px-2 !py-1"} onClick={() => setMode(m)}>{l}</button>
         ))}
         {mode === "uniform" && (
-          <input value={uniform} onChange={(e) => setUniform(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="SATS EACH" aria-label="Same price in sats"
+          <input value={uniform} disabled={running} onChange={(e) => setUniform(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="SATS EACH" aria-label="Same price in sats"
             className="w-32 border border-border bg-background px-2 py-1 font-mono text-[11px] text-foreground focus:border-foreground focus:outline-none" />
         )}
         <label className="label flex items-center gap-1">LADDER
@@ -200,7 +206,7 @@ export function BulkListBar({
 
       {risky.length > 0 && (
         <label className="mt-2 flex items-center gap-2 font-mono text-[10px] text-primary">
-          <input type="checkbox" checked={confirmRisk} onChange={(e) => setConfirmRisk(e.target.checked)} />
+          <input type="checkbox" checked={confirmRisk} onChange={(e) => setConfirmedKey(e.target.checked ? riskKey : null)} />
           I CHECKED THE {risky.length} FLAGGED BITMAP{risky.length > 1 ? "S" : ""} AND WANT TO LIST AT THESE PRICES
         </label>
       )}
