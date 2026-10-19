@@ -67,15 +67,19 @@ export function BulkListBar({
       let price: number | null = null;
       let manual = false;
       if (ov && Number(ov) > 0) { price = Math.round(Number(ov)); manual = true; }
+      // Every automatic preset (EV and floor) needs ≥3 comparable sales; otherwise the seller must confirm.
+      const thin = !ev || ev.fallback;
+      const needsChoice = !manual && mode !== "uniform" && thin;
+      if (ov && Number(ov) > 0) { /* manual price set above */ }
       else if (mode === "uniform") price = Number(uniform) > 0 ? Math.round(Number(uniform)) : null;
-      else if (mode === "ev" || mode === "evlow" || mode === "evhigh") price = ev && !ev.fallback ? (mode === "ev" ? ev.mid : mode === "evlow" ? ev.low : ev.high) : null;
+      else if (needsChoice) price = null;
+      else if (mode === "ev" || mode === "evlow" || mode === "evhigh") price = mode === "ev" ? ev!.mid : mode === "evlow" ? ev!.low : ev!.high;
       else if (floor) price = matchPrice(floor.floorSats, mode);
       if (price !== null && !manual && ladder > 0) price = ladderPrice(price, rung++, ladder);
       if (price !== null && price < DUST_SATS) price = null;
       const c = checks.get(b.bitmapHeight);
       const guards = listingGuards(b.bitmapHeight, !!c && c.status !== "unverified");
       const lowball = price !== null && (isFarBelowFloor(price, ev?.mid ?? null) || isFarBelowFloor(price, floor?.floorSats ?? null));
-      const needsChoice = !manual && (mode === "ev" || mode === "evlow" || mode === "evhigh") && (!ev || ev.fallback);
       return { b, floor, ev, price, guards, lowball, needsChoice, offer: openByOutpoint.get(b.outpoint) ?? null };
     });
   }, [items, asks.data, sales.data, wallet?.ordinalsAddress, overrides, mode, uniform, ladder, checks, openByOutpoint]);
