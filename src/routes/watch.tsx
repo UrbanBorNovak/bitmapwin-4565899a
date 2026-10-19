@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
 import { styleFilter } from "@/lib/toon-style";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
-import { BEACH_LANDING, CITADEL_TEASER, PIXELS_HOMECOMING, TRANSMISSION } from "@/lib/toon-teaser";
+import { BEACH_LANDING, CITADEL_TEASER, FORGE_PROMO, PIXELS_HOMECOMING, TRANSMISSION } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { useQuery } from "@tanstack/react-query";
 import { canEncodeMp4, createXRecorder, X_SIZES } from "@/lib/x-video";
@@ -16,6 +16,7 @@ const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
 type Reel = { id: string; tag: string; make: () => ToonEpisode; by?: string | null };
 const REELS: Reel[] = [
+  { id: "forge-promo", tag: "PROMO · LAND FORGE", make: () => structuredClone(FORGE_PROMO) },
   { id: "transmission", tag: "TRIBUTE SHORT · PORTAL", make: () => structuredClone(TRANSMISSION) },
   { id: "tide-of-iron", tag: "SHORT FILM · 3 MIN", make: () => structuredClone(BEACH_LANDING) },
   { id: "pixels-home", tag: "NEW TRAILER", make: () => structuredClone(PIXELS_HOMECOMING) },
