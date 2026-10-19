@@ -7,7 +7,7 @@ const C = { bg: "#07090d", panel: "#0d1218", line: "#1f2a35", orange: "#f7931a",
 const STEPS = [
   { n: "01", t: "CREATE", b: ["Voxel pieces, kits, extenders,", "episodes — in free studios."], tag: "FREE", c: C.cyan },
   { n: "02", t: "PUBLISH", b: ["Each stamp of your Forge", "module pays a BIT royalty."], tag: "BIT", c: C.cyan },
-  { n: "03", t: "GET PAID IN SATS", b: ["Builds that use your piece pay", "you in the reveal tx, ≥546 sats."], tag: "ON-CHAIN", c: C.orange },
+  { n: "03", t: "GET PAID IN SATS", b: ["Builds using your piece pay", "you in the tx — ≥546 sats."], tag: "ON-CHAIN", c: C.orange },
   { n: "04", t: "HOST & EARN", b: ["Host on your BITMAP, share", "the daily visitor dividend."], tag: "BIT", c: C.cyan },
 ];
 
