@@ -50,3 +50,8 @@ export function listingGuards(height: number, bitmonInscribed: boolean): Guard[]
 export function isFarBelowFloor(priceSats: number, floorSats: number | null): boolean {
   return floorSats !== null && floorSats > 0 && priceSats < floorSats * 0.5;
 }
+
+/** Ladder: the nth listed item (0-based) is priced base × (1 + stepPct/100)^n, never below dust. */
+export function ladderPrice(baseSats: number, n: number, stepPct: number): number {
+  return Math.max(DUST_SATS, Math.round(baseSats * Math.pow(1 + stepPct / 100, n)));
+}

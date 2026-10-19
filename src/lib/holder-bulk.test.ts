@@ -27,3 +27,15 @@ describe("holder bulk tools", () => {
     expect(isFarBelowFloor(5_000, 10_000)).toBe(false);
   });
 });
+
+import { ladderPrice as _ladder } from "./holder-bulk";
+describe("bulk ladder pricing", () => {
+  it("first item at base, then +2% compounding per step", () => {
+    expect(_ladder(100_000, 0, 2)).toBe(100_000);
+    expect(_ladder(100_000, 1, 2)).toBe(102_000);
+    expect(_ladder(100_000, 2, 2)).toBe(104_040);
+  });
+  it("never goes below 546 sats dust", () => {
+    expect(_ladder(100, 0, 2)).toBe(546);
+  });
+});
