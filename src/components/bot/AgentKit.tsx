@@ -12,36 +12,58 @@ export const MCP_CONFIG = JSON.stringify(
 
 const INSTALL = "npx @secretkeylabs/xverse-agent-wallet --install";
 
+// The only wallet command the exported agent may run. Read-only.
+export const AGENT_WALLET_ARGS = ["bitcoin", "balance", "--json"] as const;
+
 export function agentScript(maxSats: number, maxHeight: number) {
   return `// bitmap-xverse-agent.ts — run with: bun bitmap-xverse-agent.ts
-// Watches open BITMAP listings on bitmapwin and checks your local Xverse Agent Wallet
+// Watches open BITMAP listings on bitmapwin and reads your local Xverse Agent Wallet
 // balance. It ONLY reports matches — it never signs, buys or broadcasts.
+// The single wallet command it runs is: xverse-wallet ${AGENT_WALLET_ARGS.join(" ")}
 // Buy matches yourself at ${SITE}/marketplace.
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const MAX_SATS = ${Math.max(0, Math.floor(maxSats))};
 const MAX_HEIGHT = ${Math.max(0, Math.floor(maxHeight))};
 const seen = new Set<string>();
+let warned = false;
 
+// Spendable (native segwit, confirmed) balance in sats, or null if the wallet
+// is missing or locked (set XVERSE_PASSWORD in this terminal to unlock reads).
 function balanceSats(): number | null {
   try {
-    const out = JSON.parse(execSync("xverse-wallet bitcoin balance --json", { encoding: "utf8" }));
-    const btc = Number(out?.native ?? out?.total ?? 0);
-    return Math.round(btc * 1e8);
-  } catch { return null; }
+    const raw = execFileSync("xverse-wallet", ${JSON.stringify(AGENT_WALLET_ARGS)}, {
+      encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 20_000,
+    });
+    const sats = Number(JSON.parse(raw)?.native?.confirmed);
+    return Number.isFinite(sats) ? sats : null;
+  } catch (e: any) {
+    if (!warned) {
+      warned = true;
+      const msg = String(e?.stderr || e?.stdout || e?.message || e).trim().split("\\n")[0];
+      console.error("[wallet] balance unknown: " + msg);
+    }
+    return null;
+  }
 }
 
 async function tick() {
-  const res = await fetch("${SITE}/api/public/market/listings?sort=recent");
-  const body = await res.json();
-  const rows: any[] = body.listings ?? body.data ?? body ?? [];
-  const bal = balanceSats();
-  for (const l of rows) {
-    if (seen.has(l.id)) continue;
-    seen.add(l.id);
-    if (l.price_sats > MAX_SATS || l.bitmap_height > MAX_HEIGHT) continue;
-    const afford = bal == null ? "balance unknown" : bal >= l.price_sats ? "affordable" : "not enough in wallet";
-    console.log(JSON.stringify({ match: \`\${l.bitmap_height}.bitmap\`, price_sats: l.price_sats, afford, open: "${SITE}/map/" + l.bitmap_height }));
+  try {
+    const res = await fetch("${SITE}/api/public/market/listings?sort=recent");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const body = await res.json();
+    const rows: any[] = Array.isArray(body?.listings) ? body.listings : [];
+    const fresh = rows.filter((l) => !seen.has(l.id));
+    fresh.forEach((l) => seen.add(l.id));
+    const hits = fresh.filter((l) => l.price_sats <= MAX_SATS && l.bitmap_height <= MAX_HEIGHT);
+    const bal = hits.length ? balanceSats() : null;
+    console.log(\`[\${new Date().toISOString()}] checked \${rows.length} listings, \${hits.length} new matches\`);
+    for (const l of hits) {
+      const afford = bal == null ? "balance unknown" : bal >= l.price_sats ? "affordable" : "not enough in wallet";
+      console.log(JSON.stringify({ match: \`\${l.bitmap_height}.bitmap\`, price_sats: l.price_sats, afford, open: "${SITE}/map/" + l.bitmap_height }));
+    }
+  } catch (e: any) {
+    console.error("[network] " + (e?.message ?? e) + " — retrying in 30s");
   }
 }
 
