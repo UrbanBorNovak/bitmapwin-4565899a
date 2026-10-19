@@ -235,3 +235,30 @@ export const TRANSMISSION: ToonEpisode = {
       lines: [{ at: 1, dur: 4, speaker: 0, text: "For Ian Curtis, 1956–1980. A fan tribute.", style: "thought", cam: "close" }] },
   ],
 };
+
+/** Land Forge promo: "Every block can become a world." Original 30-second spot shot on real BITMAP land. */
+const forger = (name: string, x: number, z: number, pose: Pose, extra: object = {}) =>
+  ({ height: 0, name, x, z, pose, avatar: { model: "runner" as const, skin: "pixel" as const }, ...extra });
+const L = { block: 840000 };
+export const FORGE_PROMO: ToonEpisode = {
+  title: "LAND FORGE: BUILD ON BITCOIN", aspect: "16:9", music: "epic", voices: false, style: "ghibli",
+  scenes: [
+    { ...L, duration: 5, shot: "wide",
+      cast: [forger("Maker", 0, 2, "idle")],
+      lines: [{ at: 0.5, dur: 4, speaker: 0, text: "Bitcoin gave every block a place.", style: "thought", cam: "establish" }] },
+    { ...L, duration: 5, shot: "crane", transition: "cut",
+      cast: [forger("Maker", -3, 3, "walk", { to: { x: 3, z: 0 }, moveStart: 0, moveEnd: 5 })],
+      lines: [{ at: 0.5, dur: 4, speaker: 0, text: "BITMAP gave that place coordinates.", style: "thought", cam: "two" }] },
+    { ...L, duration: 7, shot: "orbit", transition: "cut", sfx: "BUILD!",
+      cast: [forger("Maker", 0, 2, "dance"), forger("Friend", 4, 2, "wave")],
+      fx: [{ id: "bitmapwin/sparks-v1", at: 1 }, { id: "bitmapwin/embers-v1", at: 2 }],
+      lines: [{ at: 1, dur: 5, speaker: 0, text: "Land Forge gives it structure. Piece by piece.", style: "speech", cam: "close" }] },
+    { ...L, duration: 6, shot: "dolly", transition: "fade",
+      cast: [forger("Friend", 0, 2, "talk")],
+      lines: [{ at: 0.5, dur: 5, speaker: 0, text: "Your build becomes an inscription, made to travel.", style: "speech", cam: "ots" }] },
+    { ...L, duration: 7, shot: "wide", transition: "iris", sfx: "SATS!",
+      cast: [forger("Maker", -2, 2, "wave"), forger("Friend", 2, 2, "wave")],
+      fx: [{ id: "bitmapwin/embers-v1", at: 0, scale: 1.4 }],
+      lines: [{ at: 1, dur: 5, speaker: 0, text: "BUILD ON BITCOIN. BITMAPWIN.APP", style: "shout", cam: "two" }] },
+  ],
+};
