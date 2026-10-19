@@ -78,7 +78,7 @@ export function BulkListBar({
   const listable = plan.filter((p) => p.price !== null);
   const risky = listable.filter((p) => p.guards.length > 0 || p.lowball);
   const riskKey = confirmKey(risky);
-  const pendingRelist = new Set(needsRelist(plan, listedAt, relistOk));
+  const pendingRelist = new Set(needsRelist(plan, listedAt));
   // A tick only covers the exact flagged prices it was given for; any change needs a fresh tick.
   const confirmRisk = confirmedKey !== null && confirmedKey === riskKey;
   const total = listable.reduce((s, p) => s + p.price!, 0);
@@ -189,7 +189,7 @@ export function BulkListBar({
               {p.guards.map((g) => <span key={g.id} className="border border-primary/60 px-1 text-primary">⚠ {g.label}</span>)}
               {pendingRelist.has(p.b.outpoint) && (
                 <label className="flex items-center gap-1 border border-primary/60 px-1 text-primary" data-testid="relist-confirm">
-                  <input type="checkbox" disabled={running} onChange={(e) => setRelistOk((m) => { const n = { ...m }; if (e.target.checked && p.price !== null) n[p.b.outpoint] = p.price; else delete n[p.b.outpoint]; return n; })} />
+                  <input type="checkbox" disabled={running} checked={relistOk[p.b.outpoint] === p.price} onChange={(e) => setRelistOk((m) => { const n = { ...m }; if (e.target.checked && p.price !== null) n[p.b.outpoint] = p.price; else delete n[p.b.outpoint]; return n; })} />
                   LISTED AT {listedAt[p.b.outpoint]!.toLocaleString("en-US")} · RELIST AT {p.price!.toLocaleString("en-US")}?
                 </label>
               )}
