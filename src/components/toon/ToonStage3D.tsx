@@ -81,7 +81,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
   const head = useMemo(() => new Vector3(), []);
-  const unitH = useRef(0), unitS = useRef(0), frames = useRef(0);
+  const unitH = useRef(0), unitS = useRef(0), frames = useRef(0), locked = useRef(false);
   useEffect(() => () => { toonHeads.delete(slot); actorHeights.delete(slot); actorSizes.delete(slot); }, [slot]);
   useFrame(({ camera }) => {
     const t = timeRef.current, o = g.current;
@@ -107,9 +107,9 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
       case "surprised": y += Math.max(0, Math.sin(t * 4)) * 1.2; sy = 1.08; break;
       case "sleepy": rz += Math.sin(t * 0.9) * 0.15; rx = 0.2; break;
     }
-    // Measure the body once after it loads (lock afterwards), never mid-playback.
-    // Only the real body counts — never the loading silhouette, or framing locks to the placeholder.
-    if (dna.data && !unitH.current && o.children.length && frames.current < 300 && frames.current++ % 30 === 0) {
+    // Measure the real body (never the loading silhouette) until two readings agree, then lock —
+    // voxels can still be streaming in on the first reading, which would freeze the wrong framing.
+    if (dna.data && !locked.current && o.children.length && frames.current < 600 && frames.current++ % 20 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.
       const b = new Box3(), tmp = new Box3();
@@ -117,7 +117,11 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
         // InstancedMesh caches its bounds before the voxels are written; refresh them.
         (m as { computeBoundingBox?: () => void }).computeBoundingBox?.();
         b.union(tmp.setFromObject(m)); });
-      if (!b.isEmpty() && b.max.y > 0.05) { unitH.current = Math.max(0.2, b.max.y); unitS.current = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z); }
+      if (!b.isEmpty() && b.max.y > 0.05) {
+        const h = Math.max(0.2, b.max.y), sz = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z);
+        if (Math.abs(h - unitH.current) < 1e-3 && Math.abs(sz - unitS.current) < 1e-3) locked.current = true;
+        unitH.current = h; unitS.current = sz;
+      }
     }
     // Apply the pose after any measurement so the renderer never sees the zeroed transform.
     o.position.set(x, y, pos.z);
