@@ -18,14 +18,17 @@ export function ReleasePanel({ episode, file, onAspect }: { episode: ToonEpisode
   const meta = TABS.find((t) => t.id === tab)!;
   const title = releaseTitle(episode, tab);
   const desc = releaseDescription(episode, tab, ch);
+  const kind = file ? (file.type.includes("mp4") ? "MP4" : "WEBM") : null;
   const aspectOk = (episode.aspect ?? "16:9") === meta.aspect;
 
   const copy = async (s: string, what: string) => { await navigator.clipboard.writeText(s); toast(`${what} COPIED`); };
   const setField = (k: keyof Channels, v: string) => { const n = { ...ch, [k]: v }; setCh(n); saveChannels(n); };
   const share = async () => {
     if (file && navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title, text: desc.slice(0, 500) }); return; } catch { /* cancelled */ }
+      try { await navigator.share({ files: [file], title, text: desc.slice(0, 500) }); toast("VIDEO HANDED TO YOUR SHARE SHEET"); return; }
+      catch (e) { if ((e as Error)?.name === "AbortError") { toast("SHARE CANCELLED"); return; } }
     }
+    if (file) toast("THIS BROWSER CAN'T SHARE FILES — UPLOAD THE SAVED FILE ON THE PAGE THAT OPENED");
     window.open(UPLOAD_URL[tab], "_blank", "noopener");
   };
 
@@ -50,7 +53,8 @@ export function ReleasePanel({ episode, file, onAspect }: { episode: ToonEpisode
         <button className="btn-term-ghost" onClick={() => void copy(desc, "TEXT")}>[ COPY TEXT ]</button>
         <button className="btn-term" onClick={() => void share()}>[ {file ? "SHARE VIDEO / OPEN UPLOAD" : "OPEN UPLOAD PAGE"} ]</button>
       </div>
-      <p className="mt-2 text-muted-foreground">{file ? `READY: ${file.name}. ` : "Export the video first. "}Nothing is posted for you — you choose the file and press post on {tab === "tiktok" ? "TikTok" : tab === "x" ? "X" : "YouTube"} yourself.</p>
+      {kind === "WEBM" && tab === "x" && <p className="mt-2 text-bitcoin">YOUR FILE IS WEBM — X ONLY ACCEPTS MP4. EXPORT IN CHROME, EDGE OR SAFARI.</p>}
+      <p className="mt-2 text-muted-foreground">{file ? `READY: ${file.name} (${kind}). ` : "Export the video first. "}Nothing is posted for you — you choose the file and press post on {tab === "tiktok" ? "TikTok" : tab === "x" ? "X" : "YouTube"} yourself.</p>
 
       <div className="label mt-4 text-signal">YOUR CHANNELS</div>
       <p className="mt-1 text-muted-foreground">Saved on this device and added as creator credits.</p>
