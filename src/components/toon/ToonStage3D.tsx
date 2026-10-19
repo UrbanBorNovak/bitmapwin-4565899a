@@ -10,6 +10,7 @@ const actorSizes = new Map<number, number>();
 const SEAL_GEOMS = new Set(["TorusGeometry", "OctahedronGeometry", "RingGeometry"]);
 import type { Emote } from "@/lib/toon-script";
 import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
+import { BeachSet } from "@/components/toon/BeachSet";
 
 /** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
 function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
@@ -316,11 +317,11 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
   if (!scene) return null;
   return (
     <SafeCanvas dpr={[1, 1.5]} camera={{ fov: 40, position: [40, 30, 40] }} gl={{ antialias: true, preserveDrawingBuffer: true }}>
-      <color attach="background" args={["#7fc8e8"]} />
-      <fog attach="fog" args={["#7fc8e8", 90, 220]} />
-      <hemisphereLight args={["#ffffff", "#d9b77a", 0.9]} />
-      <directionalLight position={[40, 80, 30]} intensity={1.8} />
-      <Land key={scene.block} block={scene.block} />
+      <color attach="background" args={[scene.set === "beach" ? "#8f9aa3" : "#7fc8e8"]} />
+      <fog attach="fog" args={scene.set === "beach" ? ["#8f9aa3", 60, 200] : ["#7fc8e8", 90, 220]} />
+      <hemisphereLight args={scene.set === "beach" ? ["#c9d2d8", "#6b5a40", 0.8] : ["#ffffff", "#d9b77a", 0.9]} />
+      <directionalLight position={[40, 80, 30]} intensity={scene.set === "beach" ? 1.1 : 1.8} />
+      {scene.set === "beach" ? <BeachSet timeRef={timeRef} /> : <Land key={scene.block} block={scene.block} />}
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
       <Director key={index} scene={scene} local={local} />
     </SafeCanvas>

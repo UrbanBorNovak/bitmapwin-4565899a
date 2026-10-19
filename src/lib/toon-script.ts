@@ -26,7 +26,7 @@ export interface ToonLine { at: number; dur: number; speaker: number; text: stri
 export type LineCam = "auto" | "close" | "two" | "ots" | "establish";
 export type Transition = "cut" | "fade" | "wipe" | "iris";
 export const TRANSITION_SECONDS = 0.45;
-export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; }
+export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; /** Voxel film set instead of the BITMAP land. */ set?: "beach"; }
 
 /** The dialogue line whose camera framing is active at scene-local time (latest started line with a non-auto cam). */
 export function activeCut(s: ToonScene, local: number): ToonLine | null {
@@ -128,6 +128,7 @@ export function parseEpisode(json: string): ToonEpisode {
     for (const c of s.cast) if (!okBlock(c.height) || !POSES.includes(c.pose)) throw new Error("Each actor needs a valid block and pose.");
     for (const c of s.cast) if (c.emote && !EMOTES.some((x) => x.v === c.emote)) delete c.emote;
     for (const c of s.cast) if (c.avatar !== undefined && !isAvatar(c.avatar)) delete c.avatar;
+    if (s.set !== undefined && s.set !== "beach") delete s.set;
     if (!Array.isArray(s.lines)) s.lines = [];
     if (s.transition && !["cut", "fade", "wipe", "iris"].includes(s.transition)) delete s.transition;
     for (const l of s.lines) if (l.cam && !["auto", "close", "two", "ots", "establish"].includes(l.cam)) delete l.cam;
