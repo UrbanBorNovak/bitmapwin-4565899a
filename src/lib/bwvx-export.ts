@@ -11,13 +11,20 @@ export type BwvxBox = { x0: number; y0: number; z0: number; x1: number; y1: numb
 
 /** Decode a base64 BWVX1 or BWVX2 payload into inclusive boxes (BWVX1 = 1×1×1 boxes). */
 export function bwvxBoxes(b64: string): BwvxBox[] {
-  const raw = atob(b64);
+  let raw: string;
+  try { raw = atob(b64); } catch { throw new Error("BWVX: payload is not valid base64"); }
   const b = Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  const v2 = b[0] === 66 && b[1] === 87 && b[2] === 50 && b[3] === 0;
+  const body = v2 ? b.length - 4 : b.length, stride = v2 ? 7 : 4;
+  if (body <= 0 || body % stride !== 0) throw new Error(`BWVX: truncated payload (${body} bytes is not a multiple of ${stride})`);
   const out: BwvxBox[] = [];
-  if (b[0] === 66 && b[1] === 87 && b[2] === 50 && b[3] === 0) {
-    for (let i = 4; i + 6 < b.length; i += 7) out.push({ x0: b[i]!, y0: b[i + 1]!, z0: b[i + 2]!, x1: b[i + 3]!, y1: b[i + 4]!, z1: b[i + 5]!, k: b[i + 6]! });
-  } else {
-    for (let i = 0; i + 3 < b.length; i += 4) out.push({ x0: b[i]!, y0: b[i + 1]!, z0: b[i + 2]!, x1: b[i]!, y1: b[i + 1]!, z1: b[i + 2]!, k: b[i + 3]! });
+  for (let i = v2 ? 4 : 0; i < b.length; i += stride) {
+    const box = v2
+      ? { x0: b[i]!, y0: b[i + 1]!, z0: b[i + 2]!, x1: b[i + 3]!, y1: b[i + 4]!, z1: b[i + 5]!, k: b[i + 6]! }
+      : { x0: b[i]!, y0: b[i + 1]!, z0: b[i + 2]!, x1: b[i]!, y1: b[i + 1]!, z1: b[i + 2]!, k: b[i + 3]! };
+    if (box.x1 < box.x0 || box.y1 < box.y0 || box.z1 < box.z0) throw new Error(`BWVX: reversed box bounds at byte ${i}`);
+    if (box.k >= BLOCKS.length) throw new Error(`BWVX: invalid palette index ${box.k} at byte ${i}`);
+    out.push(box);
   }
   return out;
 }
@@ -32,12 +39,18 @@ import * as THREE from "three";
 export const BWVX_PALETTE = ${JSON.stringify(PALETTE_HEX)};
 
 export function bwvxBoxes(b64) {
-  const b = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  let raw;
+  try { raw = atob(b64); } catch { throw new Error("BWVX: payload is not valid base64"); }
+  const b = Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  const v2 = b[0] === 66 && b[1] === 87 && b[2] === 50 && b[3] === 0;   // "BW2\\0": greedy boxes, 7 bytes each; else BWVX1, 4 bytes per voxel
+  const body = v2 ? b.length - 4 : b.length, stride = v2 ? 7 : 4;
+  if (body <= 0 || body % stride !== 0) throw new Error("BWVX: truncated payload");
   const out = [];
-  if (b[0] === 66 && b[1] === 87 && b[2] === 50 && b[3] === 0) {        // "BW2\\0": greedy boxes, 7 bytes each
-    for (let i = 4; i + 6 < b.length; i += 7) out.push([b[i], b[i+1], b[i+2], b[i+3], b[i+4], b[i+5], b[i+6]]);
-  } else {                                                                // BWVX1: 4 bytes per voxel
-    for (let i = 0; i + 3 < b.length; i += 4) out.push([b[i], b[i+1], b[i+2], b[i], b[i+1], b[i+2], b[i+3]]);
+  for (let i = v2 ? 4 : 0; i < b.length; i += stride) {
+    const box = v2 ? [b[i], b[i+1], b[i+2], b[i+3], b[i+4], b[i+5], b[i+6]] : [b[i], b[i+1], b[i+2], b[i], b[i+1], b[i+2], b[i+3]];
+    if (box[3] < box[0] || box[4] < box[1] || box[5] < box[2]) throw new Error("BWVX: reversed box bounds at byte " + i);
+    if (box[6] >= BWVX_PALETTE.length) throw new Error("BWVX: invalid palette index " + box[6] + " at byte " + i);
+    out.push(box);
   }
   return out; // [x0, y0, z0, x1, y1, z1, kindIndex] inclusive, y is up
 }
@@ -56,7 +69,7 @@ export function loadBWVX(b64, { blockSize = 1 } = {}) {
     p.set((x0 + sx / 2) * blockSize, (y0 + sy / 2) * blockSize, (z0 + sz / 2) * blockSize);
     s.set(sx * blockSize, sy * blockSize, sz * blockSize);
     mesh.setMatrixAt(i, m.compose(p, q, s));
-    mesh.setColorAt(i, colors[k] ?? colors[3]);
+    mesh.setColorAt(i, colors[k]);
   });
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;

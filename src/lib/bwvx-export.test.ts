@@ -94,3 +94,31 @@ describe("SDK BWVXLoader.js", () => {
     expect(sdkBoxes(p)).toEqual(bwvxBoxes(p).map((b) => [b.x0, b.y0, b.z0, b.x1, b.y1, b.z1, b.k]));
   });
 });
+
+const b64 = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
+const V2 = [66, 87, 50, 0];
+
+describe("BWVX loaders reject bad payloads safely", () => {
+  const both = () => {
+    const sdk = sdkLoader();
+    return [(p: string) => bwvxBoxes(p), (p: string) => sdk.bwvxBoxes(p), (p: string) => sdk.loadBWVX(p)];
+  };
+  const good = [...V2, 0, 0, 0, 1, 1, 1, 3];
+  it("accepts the valid fixture", () => { for (const f of both()) expect(() => f(b64(good))).not.toThrow(); });
+  it("rejects a BWVX2 payload cut mid-box", () => { for (const f of both()) expect(() => f(b64(good.slice(0, -2)))).toThrow(/truncated/); });
+  it("rejects a BWVX2 header with no boxes", () => { for (const f of both()) expect(() => f(b64(V2))).toThrow(/truncated/); });
+  it("rejects a BWVX1 payload cut mid-voxel", () => { for (const f of both()) expect(() => f(b64([1, 2, 3, 4, 5, 6]))).toThrow(/truncated/); });
+  it("rejects non-base64 input", () => { for (const f of both()) expect(() => f("%%%")).toThrow(/base64/); });
+  for (const [axis, box] of [["x", [5, 0, 0, 4, 1, 1, 3]], ["y", [0, 5, 0, 1, 4, 1, 3]], ["z", [0, 0, 5, 1, 1, 4, 3]]] as const) {
+    it(`rejects reversed ${axis} bounds`, () => { for (const f of both()) expect(() => f(b64([...V2, ...box]))).toThrow(/reversed/); });
+  }
+  it("rejects a BWVX2 palette index past the palette", () => {
+    for (const f of both()) expect(() => f(b64([...V2, 0, 0, 0, 0, 0, 0, BLOCKS.length]))).toThrow(/palette index/);
+  });
+  it("rejects a BWVX1 palette index past the palette", () => {
+    for (const f of both()) expect(() => f(b64([0, 0, 0, 255]))).toThrow(/palette index/);
+  });
+  it("accepts the last valid palette index", () => {
+    for (const f of both()) expect(() => f(b64([...V2, 0, 0, 0, 0, 0, 0, BLOCKS.length - 1]))).not.toThrow();
+  });
+});
