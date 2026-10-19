@@ -51,6 +51,7 @@ import { BitmonsShelf } from "@/components/market/BitmonsShelf";
 import { BitmonPatternFilter } from "@/components/market/BitmonPatternFilter";
 import { patternHeightsQuery } from "@/lib/block-stats";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
+import { MarketStatsStrip } from "@/components/market/MarketStatsStrip";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
 import { QuickClubPills } from "@/components/market/QuickClubPills";
 import { TradeSlip } from "@/components/market/TradeSlip";
@@ -480,6 +481,7 @@ function Marketplace() {
       </header>
 
       <div className="mt-4">
+        <MarketStatsStrip />
         <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
       </div>
 
