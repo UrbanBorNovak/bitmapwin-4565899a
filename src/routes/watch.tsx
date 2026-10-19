@@ -141,7 +141,7 @@ function WatchPage() {
             <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
               <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCREEN…</div>}>
                 <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCREEN…</div>}>
-                  <ToonStage3D key={current.id} episode={episode} time={time} />
+                  <ToonStage3D episode={episode} time={time} />
                 </Suspense>
               </ClientOnly>
             </div>

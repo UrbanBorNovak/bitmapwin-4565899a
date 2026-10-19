@@ -133,7 +133,17 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     }
   });
   const d = dna.data;
-  if (!d) return null;
+  if (!d) {
+    // Loading silhouette while the Guardian's block DNA is fetched.
+    return (
+      <group ref={g}>
+        <mesh position={[0, 0.6, 0]}>
+          <capsuleGeometry args={[0.3, 0.6, 4, 8]} />
+          <meshStandardMaterial color="#f7931a" transparent opacity={0.45} />
+        </mesh>
+      </group>
+    );
+  }
   return (
     <group ref={g}>
       <GuardianBody species={d.species} rarity={d.rarity} body={d.body} accent={d.accent} height={actor.height} inscribed />
