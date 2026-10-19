@@ -13,7 +13,7 @@ export function EffectsPanel({ episode, time, onChange }: { episode: ToonEpisode
   const all = [...HOUSE_VFX, ...custom];
 
   const persist = (list: ToonVFX[]) => { setCustom(list); saveCustomVFX(list); window.dispatchEvent(new Event("bitmapwin-vfx")); };
-  const setFx = (fx: NonNullable<typeof scene>["fx"]) => onChange({ ...episode, scenes: episode.scenes.map((s, i) => (i === index ? { ...s, fx } : s)) });
+  const setFx = (fx: import("@/lib/toon-vfx").VfxCue[]) => onChange({ ...episode, scenes: episode.scenes.map((s, i) => (i === index ? { ...s, fx } : s)) });
   const add = (id: string) => {
     if (!scene) return;
     const cur = scene.fx ?? [];
