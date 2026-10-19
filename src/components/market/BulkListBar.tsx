@@ -184,7 +184,7 @@ export function BulkListBar({
               {p.lowball && <span className="border border-destructive px-1 text-destructive">⚠ UNDER HALF OF EV/FLOOR</span>}
               {p.needsChoice && !sales.isLoading && (
                 <span className="flex w-full flex-wrap items-center gap-2 border border-bitcoin/60 px-2 py-1 text-bitcoin" data-testid="ev-fallback">
-                  ⚠ 0 COMPARABLE SALES IN THIS TIER{p.ev ? ` · ALL-BITMAP EV ${p.ev.mid.toLocaleString("en-US")} (${p.ev.sampleSize} SALES) NOT USED` : ""} · CONFIRM A PRICE TO LIST
+                  ⚠ UNDER 3 COMPARABLE SALES IN THIS TIER{p.ev ? ` · ALL-BITMAP EV ${p.ev.mid.toLocaleString("en-US")} (${p.ev.sampleSize} SALES) NOT USED` : ""} · CONFIRM A PRICE TO LIST
                   {p.floor && (
                     <button type="button" disabled={running} className="btn-term-ghost !px-2 !py-0.5"
                       onClick={() => setOverrides((o) => ({ ...o, [p.b.outpoint]: String(p.floor!.floorSats) }))}>
