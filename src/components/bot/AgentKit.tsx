@@ -25,12 +25,16 @@ import { execFileSync } from "node:child_process";
 
 const MAX_SATS = ${Math.max(0, Math.floor(maxSats))};
 const MAX_HEIGHT = ${Math.max(0, Math.floor(maxHeight))};
+// --listings-only: never runs xverse-wallet at all. No wallet needed.
+const LISTINGS_ONLY = process.argv.includes("--listings-only");
 const seen = new Set<string>();
 let warned = false;
+if (LISTINGS_ONLY) console.log("[mode] listings-only: Xverse is never called");
 
 // Spendable (native segwit, confirmed) balance in sats, or null if the wallet
 // is missing or locked (set XVERSE_PASSWORD in this terminal to unlock reads).
 function balanceSats(): number | null {
+  if (LISTINGS_ONLY) return null;
   try {
     const raw = execFileSync("xverse-wallet", ${JSON.stringify(AGENT_WALLET_ARGS)}, {
       encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 20_000,
@@ -56,10 +60,10 @@ async function tick() {
     const fresh = rows.filter((l) => !seen.has(l.id));
     fresh.forEach((l) => seen.add(l.id));
     const hits = fresh.filter((l) => l.price_sats <= MAX_SATS && l.bitmap_height <= MAX_HEIGHT);
-    const bal = hits.length ? balanceSats() : null;
+    const bal = hits.length && !LISTINGS_ONLY ? balanceSats() : null;
     console.log(\`[\${new Date().toISOString()}] checked \${rows.length} listings, \${hits.length} new matches\`);
     for (const l of hits) {
-      const afford = bal == null ? "balance unknown" : bal >= l.price_sats ? "affordable" : "not enough in wallet";
+      const afford = LISTINGS_ONLY ? "listings-only" : bal == null ? "balance unknown" : bal >= l.price_sats ? "affordable" : "not enough in wallet";
       console.log(JSON.stringify({ match: \`\${l.bitmap_height}.bitmap\`, price_sats: l.price_sats, afford, open: "${SITE}/map/" + l.bitmap_height }));
     }
   } catch (e: any) {
