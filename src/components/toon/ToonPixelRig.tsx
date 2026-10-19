@@ -8,6 +8,7 @@ import { DEFAULT_AVATAR_MODEL } from "@/lib/map-identity";
 const MODEL_URL = `https://ordinals.com/content/${DEFAULT_AVATAR_MODEL}`;
 /** Same body height as the voxel avatars, so framing and bubbles stay put. */
 const RIG_HEIGHT = 1.25;
+const skinUrl = (id: string, attempt: number) => `/api/public/inscription/${id}${attempt ? `?retry=${attempt}` : ""}`;
 
 /** Pick the rig's own baked clip for a toon pose (same idea as the Oasis clipFor). */
 function clipForPose(names: string[], pose: string, moving: boolean): string | undefined {
@@ -15,17 +16,17 @@ function clipForPose(names: string[], pose: string, moving: boolean): string | u
   if (moving || pose === "walk") return find(/walk|run/i) ?? names[0];
   if (pose === "jump") return find(/jump|fall/i) ?? find(/idle|stand/i) ?? names[0];
   if (pose === "dance") return find(/dance/i) ?? find(/walk/i) ?? names[0];
-  if (pose === "combat") return find(/attack|punch|fight/i) ?? find(/run/i) ?? names[0];
+  if (pose === "combat") return find(/attack|punch|fight/i) ?? find(/run|walk/i) ?? find(/idle|stand/i) ?? names[0];
   if (pose === "wave") return find(/wave/i) ?? find(/idle|stand/i) ?? names[0];
   return find(/idle|stand/i) ?? names[0];
 }
 
 /** The canonical on-chain GLB rig wearing a BITMAP Pixel inscription on its own UVs — the Oasis pipeline. */
-function Rig({ inscriptionId, pose, movingRef }: { inscriptionId: string; pose: string; movingRef: MutableRefObject<boolean> }) {
+function Rig({ inscriptionId, pose, movingRef, attempt }: { inscriptionId: string; pose: string; movingRef: MutableRefObject<boolean>; attempt: number }) {
   const gltf = useGLTF(MODEL_URL);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const { actions, names } = useAnimations(gltf.animations, scene);
-  const texture = useTexture(`/api/public/inscription/${inscriptionId}`);
+  const texture = useTexture(skinUrl(inscriptionId, attempt));
 
   useEffect(() => {
     texture.flipY = false;
@@ -87,19 +88,37 @@ function Rig({ inscriptionId, pose, movingRef }: { inscriptionId: string; pose: 
 }
 
 /** A failed rig/skin load falls back to the voxel body instead of blanking the actor. */
-class RigBoundary extends Component<{ fallback: ReactNode; children: ReactNode; resetKey: string }, { failed: boolean }> {
-  override state = { failed: false };
+const MAX_RETRIES = 3;
+class RigBoundary extends Component<{ fallback: ReactNode; children: (attempt: number) => ReactNode; resetKey: string; onFail: (attempt: number) => void }, { failed: boolean; attempt: number }> {
+  override state = { failed: false, attempt: 0 };
+  timer: ReturnType<typeof setTimeout> | undefined;
   static getDerivedStateFromError() { return { failed: true }; }
-  override componentDidUpdate(prev: { resetKey: string }) { if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false }); }
-  override render() { return this.state.failed ? this.props.fallback : this.props.children; }
+  override componentDidCatch() {
+    const a = this.state.attempt;
+    this.props.onFail(a);
+    if (a >= MAX_RETRIES) return;
+    // Retry the model/skin after a backoff; the voxel body stands in meanwhile.
+    this.timer = setTimeout(() => this.setState({ failed: false, attempt: a + 1 }), 900 * (a + 1));
+  }
+  override componentDidUpdate(prev: { resetKey: string }) {
+    if (prev.resetKey !== this.props.resetKey && (this.state.failed || this.state.attempt)) { clearTimeout(this.timer); this.setState({ failed: false, attempt: 0 }); }
+  }
+  override componentWillUnmount() { clearTimeout(this.timer); }
+  override render() { return this.state.failed ? this.props.fallback : this.props.children(this.state.attempt); }
 }
 
 export function ToonPixelRig({ inscriptionId, pose, movingRef, fallback }: { inscriptionId: string; pose: string; movingRef: MutableRefObject<boolean>; fallback: ReactNode }) {
   return (
-    <RigBoundary fallback={fallback} resetKey={inscriptionId}>
-      <Suspense fallback={fallback}>
-        <Rig inscriptionId={inscriptionId} pose={pose} movingRef={movingRef} />
-      </Suspense>
+    <RigBoundary
+      fallback={fallback}
+      resetKey={inscriptionId}
+      onFail={(a) => { useGLTF.clear(MODEL_URL); useTexture.clear(skinUrl(inscriptionId, a)); }}
+    >
+      {(attempt) => (
+        <Suspense fallback={fallback}>
+          <Rig inscriptionId={inscriptionId} pose={pose} movingRef={movingRef} attempt={attempt} />
+        </Suspense>
+      )}
     </RigBoundary>
   );
 }
