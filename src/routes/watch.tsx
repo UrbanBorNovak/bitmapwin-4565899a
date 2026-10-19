@@ -248,7 +248,7 @@ function WatchPage() {
               </div>
             </div>
           </section>
-          <div className="mt-4"><ReleasePanel episode={episode} /></div>
+          <div className="mt-4"><ReleasePanel episode={episode} file={clipFile?.id === current.id ? clipFile.file : null} /></div>
         </div>
 
         <aside>

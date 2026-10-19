@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { channelUrl, cleanHandle, loadChannels, releaseDescription, releaseTitle, saveChannels, UPLOAD_URL, type Channels, type Platform } from "@/lib/release-kit";
+import { youtubeChaptersValid, channelUrl, cleanHandle, loadChannels, releaseDescription, releaseTitle, saveChannels, UPLOAD_URL, type Channels, type Platform } from "@/lib/release-kit";
 
 const TABS: { id: Platform; label: string; aspect: "16:9" | "9:16" }[] = [
   { id: "youtube", label: "YOUTUBE", aspect: "16:9" },
@@ -37,19 +37,20 @@ export function ReleasePanel({ episode, file, onAspect }: { episode: ToonEpisode
       </div>
       <div className="mt-3 text-muted-foreground">
         FORMAT {meta.aspect} · {meta.aspect === "16:9" ? "1280×720" : "720×1280"} MP4 ·{" "}
-        {aspectOk ? <span className="text-signal">EPISODE MATCHES</span> : (
+        {aspectOk ? <span className="text-signal">EPISODE MATCHES</span> : !onAspect ? <span className="text-bitcoin">THIS EPISODE IS {episode.aspect ?? "16:9"}</span> : (
           <button className="text-bitcoin underline" onClick={() => onAspect?.(meta.aspect)}>SWITCH EPISODE TO {meta.aspect}</button>
         )}
       </div>
       <label className="mt-3 block label">TITLE</label>
       <div className="mt-1 flex gap-2"><input readOnly value={title} className="w-full border border-border bg-background px-2 py-1" /><button className="btn-term-ghost" onClick={() => void copy(title, "TITLE")}>[ COPY ]</button></div>
-      <label className="mt-3 block label">{tab === "youtube" ? "DESCRIPTION + CHAPTERS" : "CAPTION"}</label>
+      <label className="mt-3 block label">{tab === "youtube" ? "DESCRIPTION + TIMESTAMPS" : "CAPTION"}</label>
       <textarea readOnly value={desc} rows={tab === "youtube" ? 8 : 4} className="mt-1 w-full border border-border bg-background px-2 py-1" />
+      {tab === "youtube" && !youtubeChaptersValid(episode) && <p className="mt-1 text-muted-foreground">YouTube shows chapters only with 3+ scenes of 10 s or more; these stay plain timestamps.</p>}
       <div className="mt-2 flex flex-wrap gap-2">
         <button className="btn-term-ghost" onClick={() => void copy(desc, "TEXT")}>[ COPY TEXT ]</button>
         <button className="btn-term" onClick={() => void share()}>[ {file ? "SHARE VIDEO / OPEN UPLOAD" : "OPEN UPLOAD PAGE"} ]</button>
       </div>
-      {!file && <p className="mt-2 text-muted-foreground">Export the video first, then upload the saved file.</p>}
+      <p className="mt-2 text-muted-foreground">{file ? `READY: ${file.name}. ` : "Export the video first. "}Nothing is posted for you — you choose the file and press post on {tab === "tiktok" ? "TikTok" : tab === "x" ? "X" : "YouTube"} yourself.</p>
 
       <div className="label mt-4 text-signal">YOUR CHANNELS</div>
       <p className="mt-1 text-muted-foreground">Saved on this device and added as creator credits.</p>
