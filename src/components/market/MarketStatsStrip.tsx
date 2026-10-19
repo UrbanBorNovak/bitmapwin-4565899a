@@ -17,7 +17,7 @@ export function MarketStatsStrip() {
   });
   const s = q.data;
   const pct = s?.floor7dPct ?? null;
-  const cells: { label: string; value: string; tone?: string }[] = [
+  const cells: { label: string; value: string; tone?: string | undefined }[] = [
     { label: "MEMPOOL", value: fees.data ? `${fees.data.fastestFee} SAT/VB` : "—" },
     { label: "FLOOR", value: btc(s?.floorSats ?? null) },
     { label: "7D CHANGE", value: pct == null ? "—" : `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`, tone: pct == null ? undefined : pct < 0 ? "text-destructive" : "text-signal" },
