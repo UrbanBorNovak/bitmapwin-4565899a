@@ -5,10 +5,14 @@ import { styleFilter } from "@/lib/toon-style";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { CITADEL_TEASER } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
+import { useQuery } from "@tanstack/react-query";
+import { parseEpisode } from "@/lib/toon-script";
+import { listApprovedEpisodes } from "@/lib/toon-cinema.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
-type Reel = { id: string; tag: string; make: () => ToonEpisode };
+type Reel = { id: string; tag: string; make: () => ToonEpisode; by?: string | null };
 const REELS: Reel[] = [
   { id: "citadel", tag: "FEATURED TEASER", make: () => structuredClone(CITADEL_TEASER) },
   { id: "halving", tag: "EPISODE", make: () => generateEpisode(840000, 77819) },
@@ -44,7 +48,24 @@ function fmt(s: number) {
 function WatchPage() {
   const { ep } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const reels = useMemo(() => REELS.map((r) => ({ ...r, episode: r.make() })), []);
+  const approved = useQuery({ queryKey: ["toon-cinema-approved"], queryFn: () => listApprovedEpisodes(), staleTime: 60_000 });
+  // Pending/rejected episodes are only visible to their creator or a reviewer (preview from the queue).
+  const [privateReel, setPrivateReel] = useState<{ id: string; tag: string; episode: ToonEpisode; by: string | null } | null>(null);
+  const reels = useMemo(() => {
+    const out: { id: string; tag: string; episode: ToonEpisode; by?: string | null }[] = [];
+    for (const a of approved.data ?? []) {
+      try { out.push({ id: a.id, tag: "COMMUNITY EPISODE", episode: parseEpisode(JSON.stringify(a.episode)), by: a.creator_name }); } catch { /* skip invalid */ }
+    }
+    const built = REELS.map((r) => ({ id: r.id, tag: r.tag, episode: r.make() }));
+    return [built[0]!, ...out, ...built.slice(1), ...(privateReel && !out.some((o) => o.id === privateReel.id) ? [privateReel] : [])];
+  }, [approved.data, privateReel]);
+  useEffect(() => {
+    if (!ep || REELS.some((r) => r.id === ep) || approved.isLoading || (approved.data ?? []).some((a) => a.id === ep)) return;
+    void supabase.from("toon_submissions").select("id, title, creator_name, episode, status").eq("id", ep).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      try { setPrivateReel({ id: data.id, tag: `PREVIEW · ${String(data.status).toUpperCase()}`, episode: parseEpisode(JSON.stringify(data.episode)), by: data.creator_name }); } catch { /* invalid */ }
+    });
+  }, [ep, approved.isLoading, approved.data]);
   const current = reels.find((r) => r.id === ep) ?? reels[0]!;
   const episode = current.episode;
   const total = useMemo(() => episodeLength(episode), [episode]);
@@ -184,6 +205,7 @@ function WatchPage() {
                     className={`w-full border p-3 text-left transition-colors ${active ? "border-bitcoin bg-secondary" : "border-border hover:border-bitcoin/60"}`}>
                     <div className={`label ${active ? "text-bitcoin" : ""}`}>{active ? "▶ NOW PLAYING" : r.tag}</div>
                     <div className="display mt-1 text-base">{r.episode.title}</div>
+                    {r.by && <div className="font-mono text-[0.65rem] text-bitcoin">BY {r.by}</div>}
                     <div className="mt-1 font-mono text-[0.65rem] text-muted-foreground">
                       {fmt(episodeLength(r.episode))} · {r.episode.scenes.length} SCENES · {[...new Set(r.episode.scenes.map((s) => s.block))].join(" → ")}
                     </div>
