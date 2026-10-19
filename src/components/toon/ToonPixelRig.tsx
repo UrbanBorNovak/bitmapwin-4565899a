@@ -17,7 +17,7 @@ const skinUrl = (id: string, attempt: number) => `/api/public/inscription/${id}$
 function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscriptionId: string; tint?: string | undefined; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number> | undefined; attempt: number }) {
   const gltf = useGLTF(MODEL_URL);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions, names } = useAnimations(gltf.animations, scene);
+  const { actions, names, mixer } = useAnimations(gltf.animations, scene);
   const texture = useTexture(skinUrl(inscriptionId, attempt));
   const bones = useMemo(() => {
     const by = (n: string) => scene.getObjectByName(n) ?? null;
@@ -58,47 +58,31 @@ function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscr
     return { fit: RIG_HEIGHT / Math.max(size.y, 0.0001), c, minY: b.min.y };
   }, [scene]);
 
-  // Cross-fade between baked clips (Oasis style: stop every other clip so bones never fight).
-  const active = useRef<THREE.AnimationAction | null>(null);
-  const moving = useRef(false);
-  useEffect(() => {
-    const apply = () => {
-      const pick = rigClipFor(names, pose, moving.current);
-      const next = pick.name ? actions[pick.name] : null;
-      if (!next) return;
-      next.setEffectiveTimeScale(pick.speed);
-      if (next === active.current) return;
-      next.enabled = true;
-      next.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
-      if (active.current) active.current.crossFadeTo(next, 0.2, false);
-      for (const [k, a] of Object.entries(actions)) if (a && a !== next && a !== active.current && k) a.stop();
-      active.current = next;
-    };
-    apply();
-    const id = setInterval(() => {
-      if (moving.current !== movingRef.current) { moving.current = movingRef.current; apply(); }
-    }, 150);
-    return () => clearInterval(id);
-  }, [actions, names, pose, movingRef]);
-
-  // Rest pose per bone, so gestures are applied absolutely when no clip writes the bone (never accumulate).
+  // Rest pose per bone: every frame starts from it, so gestures never accumulate while looping or scrubbing.
   const rest = useMemo(() => {
     const m = new Map<THREE.Object3D, THREE.Quaternion>();
     for (const b of Object.values(bones)) if (b) m.set(b, b.quaternion.clone());
     return m;
   }, [bones]);
-  // Subscribed after useAnimations, so this runs once the mixer wrote the clip pose; layer the gesture onto the real bones.
   const q = useMemo(() => new THREE.Quaternion(), []), ax = useMemo(() => new THREE.Vector3(1, 0, 0), []);
+  // Baked clips are sampled at the episode clock (not wall-clock), so playback, scrubbing and export show the same frame.
+  // Subscribed after useAnimations, so this overrides its wall-clock update each frame.
   useFrame(() => {
-    const a = active.current;
-    if (a && !a.isRunning()) { a.enabled = true; a.setEffectiveWeight(1).play(); }
-    const driven = !!a && a.isRunning();
-    const g = rigGesture(pose, timeRef?.current ?? performance.now() / 1000, movingRef.current);
-    const layer = (b: THREE.Object3D | null, r: number) => {
-      if (!b) return;
-      if (!driven) b.quaternion.copy(rest.get(b)!);
-      if (r) b.quaternion.multiply(q.setFromAxisAngle(ax, r));
-    };
+    const t = timeRef?.current ?? performance.now() / 1000;
+    const moving = movingRef.current;
+    const pick = rigClipFor(names, pose, moving);
+    const next = pick.name ? actions[pick.name] : null;
+    for (const b of rest.keys()) b.quaternion.copy(rest.get(b)!);
+    if (next) {
+      for (const n of names) { const a = actions[n]; if (a && a !== next && a.isRunning()) a.stop(); }
+      if (!next.isRunning()) next.reset().setLoop(THREE.LoopRepeat, Infinity).play();
+      next.enabled = true; next.setEffectiveWeight(1); next.setEffectiveTimeScale(1);
+      const d = next.getClip().duration || 1;
+      next.time = ((t * pick.speed) % d + d) % d;
+      mixer.update(0);
+    }
+    const g = rigGesture(pose, t, moving);
+    const layer = (b: THREE.Object3D | null, r: number) => { if (b && r) b.quaternion.multiply(q.setFromAxisAngle(ax, r)); };
     layer(bones.armL, g.armL); layer(bones.armR, g.armR); layer(bones.head, g.head);
     layer(bones.legL, g.legL); layer(bones.legR, g.legR);
   });
