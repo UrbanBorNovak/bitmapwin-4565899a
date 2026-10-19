@@ -3,6 +3,7 @@ import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { ContinuityHint } from "@/components/toon/ContinuityNotebook";
 import { CharacterHint } from "@/components/toon/CharacterProfiles";
 import { EMOTES, MAX_SCENE_SECONDS, MAX_SCENES, type Emote, type Pose, type Shot, type ToonEpisode, type ToonLine, type ToonScene } from "@/lib/toon-script";
+import { AVATAR_MODELS, AVATAR_SKINS, type AvatarModel, type AvatarSkin } from "@/lib/toon-avatars";
 
 const SHOTS: { v: Shot; label: string }[] = [
   { v: "wide", label: "Wide sweep" }, { v: "orbit", label: "Orbit" }, { v: "dolly", label: "Dolly in" },
@@ -10,7 +11,7 @@ const SHOTS: { v: Shot; label: string }[] = [
 ];
 const POSES: { v: Pose; label: string }[] = [
   { v: "idle", label: "Idle" }, { v: "walk", label: "Walk" }, { v: "talk", label: "Talk" },
-  { v: "jump", label: "Jump" }, { v: "combat", label: "Combat" },
+  { v: "jump", label: "Jump" }, { v: "combat", label: "Combat" }, { v: "wave", label: "Wave" }, { v: "dance", label: "Dance" },
 ];
 const SFX = ["", "BAM!", "HODL!", "SATS!", "WHOOSH!", "POW!"];
 const field = "w-full border border-border bg-background px-2 py-1 font-mono text-[11px] text-foreground";
@@ -86,8 +87,26 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
       <div className="label mt-4 text-signal">GUARDIANS</div>
       {s.cast.map((a, k) => (
         <div key={k} className="mt-2 grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
+          <div className="col-span-3 grid grid-cols-2 gap-2">
+            <select className={field} aria-label="Character model" value={a.avatar?.model ?? ""} onChange={(e) => patch({ cast: s.cast.map((c, j) => {
+              if (j !== k) return c;
+              if (!e.target.value) { const { avatar: _a, ...rest } = c; return { ...rest, name: `${c.height}.bitmap` }; }
+              const model = e.target.value as AvatarModel;
+              return { ...c, avatar: { model, skin: c.avatar?.skin ?? "hoodie" }, name: AVATAR_MODELS.find((m) => m.v === model)!.label };
+            }) })}>
+              <option value="">On-chain Guardian</option>
+              {AVATAR_MODELS.map((m) => <option key={m.v} value={m.v}>Avatar · {m.label}</option>)}
+            </select>
+            {a.avatar ? (
+              <select className={field} aria-label="Avatar texture" value={a.avatar.skin} onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k && c.avatar ? { ...c, avatar: { ...c.avatar, skin: e.target.value as AvatarSkin } } : c)) })}>
+                {AVATAR_SKINS.map((sk) => <option key={sk.v} value={sk.v}>{sk.label}</option>)}
+              </select>
+            ) : <span className="self-center font-mono text-[10px] text-muted-foreground">VERIFIED BLOCK BODY</span>}
+          </div>
+          <span />
+          {a.avatar ? <span className="self-center font-mono text-[10px] text-signal">AVATAR</span> : (
           <input className={field} inputMode="numeric" aria-label="Guardian block" value={a.height}
-            onChange={(e) => { const h = num(e.target.value.replace(/\D/g, ""), 0, 1_999_999); patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, height: h, name: `${h}.bitmap` } : c)) }); }} />
+            onChange={(e) => { const h = num(e.target.value.replace(/\D/g, ""), 0, 1_999_999); patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, height: h, name: `${h}.bitmap` } : c)) }); }} />)}
           <div className="grid gap-1">
             <select className={field} value={a.pose} aria-label="Guardian action" onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, pose: e.target.value as Pose } : c)) })}>
               {POSES.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
@@ -129,7 +148,10 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
         </div>
       ))}
       {s.cast.length < 4 && (
-        <button className="mt-2 font-mono text-[11px] text-signal" onClick={() => patch({ cast: [...s.cast, { height: s.block, name: `${s.block}.bitmap`, x: s.cast.length % 2 ? 6 : -6, z: 0, pose: "idle" }] })}>+ ADD GUARDIAN</button>
+        <div className="mt-2 flex gap-4">
+          <button className="font-mono text-[11px] text-signal" onClick={() => patch({ cast: [...s.cast, { height: s.block, name: `${s.block}.bitmap`, x: s.cast.length % 2 ? 6 : -6, z: 0, pose: "idle" }] })}>+ ADD GUARDIAN</button>
+          <button className="font-mono text-[11px] text-bitcoin" onClick={() => patch({ cast: [...s.cast, { height: s.block, name: "Runner", avatar: { model: "runner", skin: "hoodie" }, x: s.cast.length % 2 ? 6 : -6, z: 0, pose: "wave" }] })}>+ ADD AVATAR</button>
+        </div>
       )}
 
       <div className="label mt-4 text-signal">DIALOGUE</div>
