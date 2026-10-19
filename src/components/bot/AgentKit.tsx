@@ -140,17 +140,23 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
 }
 
 const GUIDE: { title: string; steps: string[]; code?: string[] }[] = [
-  { title: "1 · PREREQUISITES", steps: ["A computer with a terminal (macOS, Linux or Windows).", "Node.js 18 or newer, plus Bun to run the agent file."],
+  { title: "1 · PREREQUISITES", steps: ["A computer with a terminal. Commands below are for macOS and Linux; on Windows, use WSL.", "Node.js 18 or newer, plus Bun to run the agent file."],
     code: ["node --version", "curl -fsSL https://bun.sh/install | bash"] },
-  { title: "2 · SET UP THE XVERSE WALLET", steps: ["Install the Xverse Agent Wallet on your own computer.", "Create a new wallet, or restore one, in your terminal only. Write the recovery words on paper.", "Use a separate wallet with a small balance just for watching."],
-    code: [INSTALL, "xverse-wallet --help", "xverse-wallet bitcoin balance --json"] },
-  { title: "3 · RUN THE WATCH AGENT", steps: ["Set your rule above, then press Download watch agent.", "Open a terminal in the folder with the file and start it.", "Every 30 seconds it prints matching BITMAPs and whether your wallet balance covers them. Press Ctrl+C to stop."],
+  { title: "2 · SET UP THE XVERSE WALLET", steps: [
+    "Install the Xverse Agent Wallet on your own computer (tested with version 1.0.1).",
+    "Create a wallet in your terminal only. It asks you to choose a password. Write the recovery words on paper.",
+    "Use a separate wallet with a small balance just for watching.",
+    "The balance check only works when the wallet is unlocked: type your password into this terminal (it stays hidden) before starting the agent."],
+    code: [INSTALL, "xverse-wallet wallet create", "read -s XVERSE_PASSWORD && export XVERSE_PASSWORD", "xverse-wallet bitcoin balance --json"] },
+  { title: "3 · RUN THE WATCH AGENT", steps: ["Set your rule above, then press Download watch agent.", "In the same terminal, go to the folder with the file and start it.", "Every 30 seconds it prints how many listings it checked, any new matches, and whether your spendable balance covers them. Press Ctrl+C to stop."],
     code: ["bun bitmap-xverse-agent.ts"] },
   { title: "4 · TROUBLESHOOTING", steps: [
-    "\"balance unknown\": the xverse-wallet command isn't found or the wallet is locked. Run xverse-wallet bitcoin balance --json on its own to check.",
-    "Nothing prints: no new listing matches your rule yet. Raise the max price or the block range and download again.",
+    "\"Vault not initialised\": no wallet yet. Run xverse-wallet wallet create.",
+    "\"Vault is locked\": the password isn't set in this terminal. Run the read -s line again, then restart the agent.",
+    "\"xverse-wallet: not found\": the install didn't finish. Run the install command again, then open a new terminal.",
+    "\"0 new matches\" every time: nothing listed matches your rule yet. Raise the max price or the block range and download again.",
     "\"bun: command not found\": open a new terminal after installing Bun.",
-    "Network errors: check your connection. The agent tries again on the next 30-second check."] },
+    "\"[network]\" lines: check your connection. The agent tries again on the next 30-second check."] },
 ];
 
 function SetupGuide() {
