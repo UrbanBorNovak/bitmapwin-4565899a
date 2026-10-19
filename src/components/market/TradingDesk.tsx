@@ -5,13 +5,14 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress, type RegistryParcel } from "@/lib/registry";
 import { sweepCheapest } from "@/lib/market-sweep";
 import { cart } from "@/lib/sweep-cart";
-import { CartToggle } from "@/components/market/TradeSlip";
+import { CartToggle, useFees } from "@/components/market/TradeSlip";
 import { FloorDelta } from "@/components/ParcelCard";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
 
 /** Floor sweeper: lines up the N cheapest open asks; each buy is still its own wallet-signed PSBT. */
 export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
   const [n, setN] = useState(3);
+  const fees = useFees();
   const { picks, totalSats } = useMemo(() => sweepCheapest(listed, n), [listed, n]);
   if (listed.length === 0) return null;
   return (
@@ -21,16 +22,19 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
           <h2 className="label text-bitcoin">FLOOR SWEEP</h2>
           <p className="mt-1 font-mono text-[10px] text-muted-foreground">CHEAPEST OPEN ASKS · EACH BUY IS SIGNED IN YOUR WALLET</p>
         </div>
-        <div className="flex items-center gap-1" role="group" aria-label="Sweep size">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Sweep size">
           {[1, 3, 5, 10].map((k) => (
             <button key={k} type="button" onClick={() => setN(k)} aria-pressed={n === k}
               className={`h-8 min-w-8 border px-2 font-mono text-[11px] ${n === k ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"}`}>{k}</button>
           ))}
+          <input type="range" min={1} max={15} value={n} onChange={(e) => setN(Number(e.target.value))} aria-label="Number of BITMAPs to sweep" className="w-28 accent-[hsl(var(--bitcoin))]" />
+          <span className="font-mono text-[11px] text-bitcoin" data-no-translate>{n}</span>
         </div>
         <div className="text-right font-mono" data-no-translate>
           <div className="text-base font-bold text-bitcoin">{totalSats ? `${(totalSats / 1e8).toFixed(8)} BTC` : "—"}</div>
           {totalSats > 0 && <div className="text-[10px] text-muted-foreground">{totalSats.toLocaleString("en-US")} SATS · BEFORE FEES</div>}
           <div className="text-[10px] text-muted-foreground">{picks.length} BITMAPS{picks.length ? ` · AVG ${formatSats(Math.round(totalSats / picks.length))}` : ""}</div>
+          {fees.data && picks.length > 0 && <div className="text-[10px] text-signal">NETWORK {fees.data.halfHourFee} SAT/VB · {picks.length} SEPARATE TXS · EXACT FEE QUOTED PER BUY</div>}
           {picks.length > 0 && (
             <button type="button" className="btn-term mt-1 !px-2 !py-1 text-[10px]"
               onClick={() => cart.add(picks.filter((p) => p.listedOfferId && p.listedSats).map((p) => ({ offerId: p.listedOfferId!, height: p.bitmapHeight, priceSats: p.listedSats!, inscriptionId: p.inscriptionId })))}>

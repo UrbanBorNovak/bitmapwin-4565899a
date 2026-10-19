@@ -52,6 +52,7 @@ import { BitmonPatternFilter } from "@/components/market/BitmonPatternFilter";
 import { patternHeightsQuery } from "@/lib/block-stats";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
+import { QuickClubPills } from "@/components/market/QuickClubPills";
 import { TradeSlip } from "@/components/market/TradeSlip";
 import { builtWorldQuery } from "@/lib/built-bitmaps";
 import { btcInputToSats, floorsBy, inPriceBand } from "@/lib/market-sweep";
@@ -556,6 +557,7 @@ function Marketplace() {
             </select>
           </label>
         </div>
+        <QuickClubPills listed={listed} active={club} onPick={(c) => { setClub(c); setPage(0); }} />
         {activeFilters > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
             {tab === "inhabited" && bitmonRarity !== "ALL" && <Chip label={`GUARDIANS ${bitmonRarity}`} onClear={() => setBitmonRarity("ALL")} />}
@@ -658,7 +660,7 @@ function Marketplace() {
         </aside>
 
         <section data-tour="market-grid" className="lg:col-span-9">
-          {tab === "listed" && <FloorSweeper listed={visible} />}
+          <FloorSweeper listed={tab === "listed" ? visible : listed} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
               READING THE REGISTRY FROM CHAIN…
