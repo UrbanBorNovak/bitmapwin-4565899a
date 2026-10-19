@@ -101,12 +101,12 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
 
 type Pose = ToonEpisode["scenes"][number]["cast"][number]["pose"];
 const sol = (skin: "camo" | "hoodie" | "midnight" | "gold", name: string, x: number, z: number, pose: Pose, extra: object = {}) =>
-  ({ height: 0, name, x, z, pose, avatar: { model: skin === "midnight" ? ("bruiser" as const) : ("runner" as const), skin }, ...extra });
+  ({ height: 0, name, x: x * 2.5, z, pose, avatar: { model: skin === "midnight" ? ("bruiser" as const) : ("runner" as const), skin }, ...("to" in extra ? { ...extra, to: { x: (extra as { to: { x: number; z: number } }).to.x * 2.5, z: (extra as { to: { x: number; z: number } }).to.z } } : extra) });
 const B = { block: 0, set: "beach" as const };
 
 /** Original 3-minute voxel short: a fictional squad lands on a stormy beach. General WWII-style setting only; no real people or events depicted. */
 export const BEACH_LANDING: ToonEpisode = {
-  title: "TIDE OF IRON", aspect: "16:9", music: "tension", voices: true, style: "noir",
+  title: "TIDE OF IRON", aspect: "16:9", music: "tension", voices: true, style: "ghibli",
   scenes: [
     { ...B, duration: 15, shot: "wide", sfx: "BOOM!",
       cast: [sol("camo", "Sgt. Vale", -4, 40, "idle", { emote: "afraid" }), sol("hoodie", "Pike", 4, 42, "idle", { emote: "terrified" })],

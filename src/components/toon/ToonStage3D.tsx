@@ -292,7 +292,13 @@ function Director({ scene, local }: { scene: ToonScene; local: number }) {
   const cur = useRef<number[] | null>(null), last = useRef(local);
   useFrame(() => {
     const p = Math.min(1, local / scene.duration), line = activeCut(scene, local);
-    const target = line ? cutPose(scene, line, local) : shotPose(scene.shot, p);
+    let target = line ? cutPose(scene, line, local) : shotPose(scene.shot, p);
+    // Film sets are larger than a BITMAP plot: frame the cast where it actually stands.
+    if (!line && scene.set && scene.cast.length) {
+      let cx = 0, cz = 0; for (const a of scene.cast) { const q = actorPositionAt(a, local, scene.duration); cx += q.x; cz += q.z; }
+      cx /= scene.cast.length; cz /= scene.cast.length;
+      target = [target[0] + cx, target[1], target[2] + cz, target[3] + cx, target[4], target[5] + cz];
+    }
     const jumped = Math.abs(local - last.current) > 0.5; last.current = local;
     if (!cur.current || !scene.cutBlend || jumped) cur.current = [...target];
     else for (let i = 0; i < 6; i++) cur.current[i]! += (target[i]! - cur.current[i]!) * 0.12;
