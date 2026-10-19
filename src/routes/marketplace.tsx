@@ -394,7 +394,7 @@ function Marketplace() {
   const clearAll = () => { setBitmonPattern(null); setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
-    <div className="marketplace-shell mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
+    <div className="marketplace-shell mx-auto w-full min-w-0 max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
       <header data-tour="market-header" className="border border-border bg-card/60 p-5 backdrop-blur-md sm:p-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>

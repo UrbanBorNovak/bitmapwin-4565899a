@@ -49,7 +49,7 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
   const loading = offers.isPending || bids.isPending;
 
   return (
-    <section className="rounded border border-border bg-card/60 backdrop-blur-sm" aria-label="Trait floor radar">
+    <section className="min-w-0 max-w-full rounded border border-border bg-card/60 backdrop-blur-sm" aria-label="Trait floor radar">
       <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 font-mono text-[11px]">
         <span className="tracking-widest text-accent">TRAIT FLOOR RADAR</span>
         <span className="text-muted-foreground">CLICK A ROW TO PIVOT BOOK · DEPTH · TAPE</span>
