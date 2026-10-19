@@ -98,9 +98,12 @@ export function assertExportableBuild(blocks: TplBlock[], span = 64) {
 export async function buildGlbMesh(blocks: TplBlock[], name = "bwvx") {
   if (!Array.isArray(blocks)) throw new Error("BWVX: build is not a block list");
   assertExportableBuild(blocks);
+  return meshFromBoxes(bwvxBoxes(encodeBuildV2(blocks)), name);
+}
+
+async function meshFromBoxes(boxes: BwvxBox[], name: string) {
   const THREE = await import("three");
   const { mergeGeometries } = await import("three/examples/jsm/utils/BufferGeometryUtils.js");
-  const boxes = bwvxBoxes(encodeBuildV2(blocks));
   const colors = PALETTE_HEX.map((h) => new THREE.Color(h));
   const parts = boxes.map(({ x0, y0, z0, x1, y1, z1, k }) => {
     const sx = x1 - x0 + 1, sy = y1 - y0 + 1, sz = z1 - z0 + 1;
@@ -133,6 +136,29 @@ export async function exportGlb(blocks: TplBlock[], name = "bwvx") {
 /** Build a .glb and download it. */
 export async function downloadBuildGlb(blocks: TplBlock[], name: string) {
   const { glb, boxes } = await exportGlb(blocks, name); // throws before any file is created
+  if (!(glb instanceof ArrayBuffer) || glb.byteLength < 20) throw new Error("BWVX: export produced no file");
+  const url = URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `${name}.glb`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return { boxes, bytes: glb.byteLength };
+}
+
+/** .GLB bytes straight from a base64 BWVX payload; throws on any malformed payload. */
+export async function exportPayloadGlb(b64: string, name = "bwvx") {
+  const boxes = bwvxBoxes(b64.trim());
+  const THREE = await import("three");
+  const { GLTFExporter } = await import("three/examples/jsm/exporters/GLTFExporter.js");
+  const { mesh } = await meshFromBoxes(boxes, name);
+  const scene = new THREE.Scene();
+  scene.add(mesh);
+  const glb = (await new GLTFExporter().parseAsync(scene, { binary: true })) as ArrayBuffer;
+  return { glb, boxes: boxes.length };
+}
+
+/** Download a payload as .glb; no file is created unless the whole export succeeds. */
+export async function downloadPayloadGlb(b64: string, name: string) {
+  const { glb, boxes } = await exportPayloadGlb(b64, name);
   if (!(glb instanceof ArrayBuffer) || glb.byteLength < 20) throw new Error("BWVX: export produced no file");
   const url = URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }));
   const a = document.createElement("a");
