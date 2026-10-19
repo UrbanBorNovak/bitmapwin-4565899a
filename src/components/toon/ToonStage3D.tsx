@@ -87,6 +87,8 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
+import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
+import { isPixelSkin } from "@/lib/toon-avatars";
 import { sceneAt, actorPositionAt, activeCut, type ToonActor, type ToonEpisode, type ToonLine, type ToonScene, type Shot } from "@/lib/toon-script";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
@@ -161,7 +163,16 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   if (actor.avatar) {
     return (
       <group ref={g}>
-        <ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />
+        {isPixelSkin(actor.avatar.skin) ? (
+          <ToonPixelRig
+            inscriptionId={actor.avatar.skin.slice(3)}
+            pose={actor.pose}
+            movingRef={movingRef}
+            fallback={<ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />}
+          />
+        ) : (
+          <ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />
+        )}
         {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} slot={slot} scene={scene} />}
       </group>
     );
