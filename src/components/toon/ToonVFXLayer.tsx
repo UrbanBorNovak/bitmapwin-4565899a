@@ -46,7 +46,7 @@ function Cue({ fx, cue, seed, timeRef }: { fx: ToonVFX; cue: VfxCue; seed: numbe
   return <instancedMesh ref={mesh} args={[geo, mat, fx.count]} frustumCulled={false} />;
 }
 
-export function ToonVFXLayer({ cues, lib, scene, timeRef }: { cues?: VfxCue[]; lib: Map<string, ToonVFX>; scene: number; timeRef: MutableRefObject<number> }) {
+export function ToonVFXLayer({ cues, lib, scene, timeRef }: { cues?: VfxCue[] | undefined; lib: Map<string, ToonVFX>; scene: number; timeRef: MutableRefObject<number> }) {
   return <>{(cues ?? []).map((c, i) => {
     const fx = lib.get(c.id);
     return fx ? <Cue key={`${scene}-${i}-${c.id}`} fx={fx} cue={c} seed={cueSeed(scene, i)} timeRef={timeRef} /> : null;

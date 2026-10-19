@@ -69,13 +69,13 @@ const vec = (v: unknown, lim: number): [number, number, number] =>
 
 /** Validates pasted/shared effect JSON into a safe effect; throws a readable message. */
 export function parseVFX(input: string | unknown): ToonVFX {
-  const o = (typeof input === "string" ? JSON.parse(input) : input) as Record<string, unknown>;
+  const o = (typeof input === "string" ? JSON.parse(input) : input) as { [K in keyof ToonVFX]?: unknown };
   if (!o || typeof o !== "object") throw new Error("Effect must be a JSON object.");
   if (o.format !== VFX_FORMAT) throw new Error(`Effect format must be "${VFX_FORMAT}".`);
   const id = String(o.id ?? "").trim();
   if (!/^[\w.\-/]{3,80}$/.test(id)) throw new Error("Effect id must be 3–80 letters, digits, - _ . or /.");
   if (!Array.isArray(o.keys) || o.keys.length < 1 || o.keys.length > 8) throw new Error("Effect needs 1–8 keys.");
-  const keys = (o.keys as Record<string, unknown>[]).map((x) => {
+  const keys = (o.keys as { t?: unknown; scale?: unknown; color?: unknown; opacity?: unknown }[]).map((x) => {
     if (!HEX.test(String(x?.color))) throw new Error("Key colors must be #rrggbb.");
     return k(clamp(x.t, 0, 1, 0), clamp(x.scale, 0, 20, 1), String(x.color), clamp(x.opacity, 0, 1, 1));
   }).sort((a, b) => a.t - b.t);

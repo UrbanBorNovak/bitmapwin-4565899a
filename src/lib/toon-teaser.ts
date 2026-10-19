@@ -199,4 +199,4 @@ export const BEACH_LANDING: ToonEpisode = {
   ],
 };
 
-BEACH_LANDING.scenes.forEach((s, i) => { s.fx = BEACH_FX[i]; });
+BEACH_LANDING.scenes.forEach((s, i) => { const f = BEACH_FX[i]; if (f) s.fx = f; });
