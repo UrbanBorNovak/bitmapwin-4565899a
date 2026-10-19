@@ -154,3 +154,49 @@ describe("malformed builds fail cleanly in the viewer and .GLB export", () => {
   }
   it("a valid fixture still exports", async () => { await expect(exportGlb(fixture)).resolves.toBeTruthy(); });
 });
+
+describe("recovery and rapid loads", () => {
+  const good = b64([...V2, 0, 0, 0, 1, 1, 1, 3]);
+  const good2 = encodeBuildV2(fixture);
+  const bad = b64([...V2, 5, 0, 0, 4, 1, 1, 3]);
+  it("viewer loads a valid build after a malformed one fails", () => {
+    const sdk = sdkLoader(); const scene = new THREE.Scene();
+    const f = sdk.showBWVX(scene, bad, null);
+    expect(f.error).toMatch(/reversed/);
+    const r = sdk.showBWVX(scene, good2, f.mesh);
+    expect(r.error).toBeNull(); expect(scene.children).toEqual([r.mesh]); expect(r.mesh!.count).toBe(3);
+  });
+  it("rapid successive loads keep only the latest result", () => {
+    const sdk = sdkLoader(); const scene = new THREE.Scene();
+    let cur: { mesh: THREE.InstancedMesh | null; error: string | null } = { mesh: null, error: null };
+    for (const p of [good, bad, good2, bad, bad, good, good2]) {
+      cur = sdk.showBWVX(scene, p, cur.mesh);
+      expect(scene.children.length).toBe(cur.mesh ? 1 : 0);
+      if (cur.mesh) { expect(cur.error).toBeNull(); expect(scene.children[0]).toBe(cur.mesh); } else expect(cur.error).toMatch(/BWVX/);
+    }
+    expect(cur.mesh!.count).toBe(3);
+  });
+  it(".GLB download works after a refused build, with intact geometry", async () => {
+    const files: Blob[] = []; const g = globalThis as Record<string, unknown>;
+    const prevDoc = g["document"]; const prevUrl = URL.createObjectURL; const prevRev = URL.revokeObjectURL;
+    g["document"] = { createElement: () => ({ click() {} }) };
+    URL.createObjectURL = (b: Blob) => { files.push(b); return "blob:x"; };
+    URL.revokeObjectURL = () => {};
+    try {
+      await expect(downloadBuildGlb([{ dx: 99, dy: 0, dz: 0, k: "stone" }], "bad")).rejects.toThrow();
+      expect(files).toHaveLength(0);
+      const r = await downloadBuildGlb(fixture, "ok");
+      expect(files).toHaveLength(1); expect(r.boxes).toBe(3);
+      const gltf = await new GLTFLoader().parseAsync(await files[0]!.arrayBuffer(), "");
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      expect(box.min.toArray()).toEqual([0, 0, 0]); expect(box.max.toArray()).toEqual([11, 3, 11]);
+    } finally { g["document"] = prevDoc; URL.createObjectURL = prevUrl; URL.revokeObjectURL = prevRev; }
+  });
+  it("concurrent exports of different builds each get their own correct result", async () => {
+    const small: TplBlock[] = [{ dx: 0, dy: 0, dz: 0, k: "gold" }];
+    const [a, b, c] = await Promise.allSettled([exportGlb(fixture), exportGlb([{ dx: -1, dy: 0, dz: 0, k: "stone" }]), exportGlb(small)]);
+    expect(a.status === "fulfilled" && a.value.boxes).toBe(3);
+    expect(b.status).toBe("rejected");
+    expect(c.status === "fulfilled" && c.value.boxes).toBe(1);
+  });
+});
