@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isAvatar, isPixelSkin, limbPose, pixelSkin } from "./toon-avatars";
+import { isAvatar, isPixelSkin, limbPose, pixelSkin, rigClipFor, rigGesture } from "./toon-avatars";
+import { PIXELS_HOMECOMING } from "./toon-teaser";
 import { parseEpisode } from "./toon-script";
 
 const ep = (avatar: unknown, pose = "wave") => JSON.stringify({ title: "t", aspect: "16:9", scenes: [{ block: 1, duration: 3, shot: "wide", lines: [], cast: [{ height: 1, name: "a", x: 0, z: 0, pose, avatar }] }] });
@@ -32,9 +33,6 @@ describe("BITMAP Pixel skins", () => {
   });
 });
 
-import { rigClipFor, rigGesture } from "./toon-avatars";
-import { PIXELS_HOMECOMING } from "./toon-teaser";
-import { parseEpisode } from "./toon-script";
 describe("on-chain rig poses", () => {
   const names = ["Armature|Falling", "Armature|Idle", "Armature|Walking"];
   it("maps poses to the baked clips", () => {
