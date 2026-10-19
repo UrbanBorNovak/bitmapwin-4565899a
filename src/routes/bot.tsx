@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
+import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { packParcels } from "@/components/TerritoryCanvas";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { SpiderHunter } from "@/components/bot/SpiderHunter";
 import {
@@ -119,6 +122,14 @@ function BotPage() {
   }, [rule, running]);
 
   const current = listings.filter((l) => matches(rule, l));
+  const huntList = listings.slice(0, 12);
+  const maps = useQueries({ queries: huntList.map((l) => blockSizeMapQuery(l.bitmap_height)) });
+  const mapKey = maps.map((m) => (m.data ? 1 : 0)).join("");
+  const packs = useMemo(
+    () => maps.map((m) => (m.data?.classes?.length ? packParcels(m.data.classes) : null)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mapKey, huntList.map((l) => l.id).join()],
+  );
 
   const start = async () => {
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
@@ -171,8 +182,10 @@ function BotPage() {
         </div>
         <SpiderHunter
           running={running}
-          targets={listings.slice(0, 12).map((l) => ({
+          targets={huntList.map((l, i) => ({
             id: l.id,
+            parcels: packs[i]?.parcels,
+            grid: packs[i]?.grid,
             label: `${l.bitmap_height}.bitmap`,
             price: l.price_sats,
             hot: matches(rule, l),
