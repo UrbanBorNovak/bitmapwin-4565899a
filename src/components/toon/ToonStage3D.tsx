@@ -340,7 +340,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
         <directionalLight position={[40, 80, 30]} intensity={scene.set === "beach" ? 1.1 : scene.set ? 0.35 : 1.8} />
       </>}
       {scene.set === "beach" ? <BeachSet timeRef={timeRef} />
-        : scene.set === "studio" || scene.set === "rift" ? <StudioSet key={index} timeRef={timeRef} localRef={progressRef} rift={scene.set === "rift"} />
+        : scene.set === "studio" || scene.set === "rift" ? <StudioSet key={`set-${index}`} timeRef={timeRef} localRef={progressRef} rift={scene.set === "rift"} />
         : scene.set === "oasis" ? <OasisWorld timeRef={timeRef} />
         : <Land key={scene.block} block={scene.block} />}
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
