@@ -234,10 +234,9 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   const ss = actorSizes.get(line.speaker) ?? hs, so = oi >= 0 ? actorSizes.get(oi) ?? ss : ss;
   if (line.cam === "close") { const d = ss * 1.6; return [sp.x - dx * d * 0.35 + px * d, hs * 0.8, sp.z - dz * d * 0.35 + pz * d, sp.x, hs * 0.5, sp.z]; }
   if (line.cam === "establish") {
-    // Guardian + build: the build sits at the land centre, so frame the speaker and the origin together from the speaker's far side.
-    const bx = -sp.x, bz = -sp.z, bl = Math.hypot(bx, bz) || 1, ux = bx / bl, uz = bz / bl;
-    const mx = sp.x * 0.45, mz = sp.z * 0.45, d = Math.max(46, hs * 3);
-    return [sp.x - ux * d * 0.55 - uz * d * 0.8, Math.max(18, hs * 1.4), sp.z - uz * d * 0.55 + ux * d * 0.8, mx, Math.max(8, hs * 0.6), mz];
+    // Guardian + build: the build sits behind the sand plaza (see Land), so stand in front of the speaker and look past them toward it.
+    const bz = -(FORGE_SPAN / 2 + 6), tz = (sp.z + bz) / 2, d = Math.max(FORGE_SPAN * 0.9, hs * 3);
+    return [sp.x + d * 0.35, Math.max(FORGE_SPAN * 0.35, hs * 1.3), sp.z + d, sp.x * 0.5, Math.max(6, hs * 0.5), tz];
   }
   if (line.cam === "ots") { const d = Math.max(so, ss) * 0.8; return [ot.x - dx * d + px * d * 0.6, ho * 1.1, ot.z - dz * d + pz * d * 0.6, sp.x, hs * 0.55, sp.z]; }
   const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 2.2, Math.max(ss, so) * 1.6, L * 1.4);
