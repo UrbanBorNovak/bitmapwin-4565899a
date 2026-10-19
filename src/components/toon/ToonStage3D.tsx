@@ -108,7 +108,8 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
       case "sleepy": rz += Math.sin(t * 0.9) * 0.15; rx = 0.2; break;
     }
     // Measure the body once after it loads (lock afterwards), never mid-playback.
-    if (!unitH.current && o.children.length && frames.current < 300 && frames.current++ % 30 === 0) {
+    // Only the real body counts — never the loading silhouette, or framing locks to the placeholder.
+    if (dna.data && !unitH.current && o.children.length && frames.current < 300 && frames.current++ % 30 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.
       const b = new Box3(), tmp = new Box3();
