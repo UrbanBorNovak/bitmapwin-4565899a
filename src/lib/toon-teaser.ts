@@ -241,7 +241,7 @@ const forger = (name: string, x: number, z: number, pose: Pose, extra: object = 
   ({ height: 0, name, x, z, pose, avatar: { model: "runner" as const, skin: (name === "Maker" ? "hoodie" : "cyber") as "hoodie" | "cyber" }, ...extra });
 const L = { block: 840000 };
 export const FORGE_PROMO: ToonEpisode = {
-  title: "LAND FORGE: BUILD ON BITCOIN", aspect: "16:9", music: "epic", voices: false, style: "ghibli",
+  title: "LAND FORGE: BUILD ON BITCOIN", aspect: "16:9", music: "adventure", voices: false, style: "ghibli",
   scenes: [
     { ...L, duration: 5, shot: "wide",
       cast: [forger("Maker", 0, 2, "idle")],
