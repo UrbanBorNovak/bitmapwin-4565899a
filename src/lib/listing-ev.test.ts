@@ -45,7 +45,7 @@ describe("listing EV", () => {
     expect(evTierOf(840_000).key).toBe("modern");
   });
   it("labels asks against the bands", () => {
-    const ev = { low: 100, mid: 200, high: 300, sampleSize: 4, scope: "", fallback: false, lowConfidence: false, from: null, to: null };
+    const ev = { low: 100, mid: 200, high: 300, sampleSize: 4, peerCount: 4, tierLabel: null, scope: "", fallback: false, lowConfidence: false, from: null, to: null };
     expect(evVerdict(50, ev)).toBe("BELOW FLOOR");
     expect(evVerdict(200, ev)).toBe("FAIR MARKET");
     expect(evVerdict(1000, ev)).toBe("ABOVE MARKET");
