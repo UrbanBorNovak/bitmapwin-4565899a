@@ -41,6 +41,11 @@ const PRINCIPLES = [
     title: "PERMISSIONS, NOT CUSTODY",
     body: "Land grants and leases give builders deployment rights without moving the deed. The owner keeps the inscription; the builder gets a revocable, on-record permission.",
   },
+  {
+    id: "05",
+    title: "BEDROCK + LIVEOCI",
+    body: "BITMAP is the umbrella and master inscription; BITMAP as land is the Bedrock — a permanent block grid with one owner per tile. LiveOCI resolves it: the on-chain index covers blocks 0–969,999, and newer blocks are parsed straight from Bitcoin.",
+  },
 ];
 
 function OwnershipPage() {
