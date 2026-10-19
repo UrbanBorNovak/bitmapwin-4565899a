@@ -6,6 +6,7 @@ import { RUNTIME_LIMITS, SDK_MODULES, SDK_TYPES, STARTER_TEMPLATES } from "@/lib
 import { ForgeBuildInfographic, GuardianLifecycleInfographic } from "@/components/docs/ProtocolInfographics";
 import { AGENT_TOOLS, BWVX_SPEC } from "@/lib/protocol-sdk";
 import { BWVX_LOADER_JS } from "@/lib/bwvx-export";
+import { BwvxTryViewer } from "@/components/sdk/BwvxTryViewer";
 
 export const Route = createFileRoute("/sdk")({
   head: () => {
@@ -111,6 +112,7 @@ function SdkPage() {
         </div>
         <p className="mt-2 text-sm text-muted-foreground">Render any Land Forge payload (BWVX1 or BWVX2) in your own Three.js viewer as a single InstancedMesh. Need Blender or Unreal? Use DOWNLOAD .GLB in Land Forge.</p>
         <pre className="mt-3 max-h-96 overflow-auto rounded border border-border bg-background p-3 font-mono text-xs"><code>{BWVX_LOADER_JS}</code></pre>
+        <BwvxTryViewer />
       </section>
 
       <section className="mt-12">
