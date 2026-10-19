@@ -116,3 +116,44 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
     </section>
   );
 }
+
+const GUIDE: { title: string; steps: string[]; code?: string[] }[] = [
+  { title: "1 · PREREQUISITES", steps: ["A computer with a terminal (macOS, Linux or Windows).", "Node.js 18 or newer, plus Bun to run the agent file."],
+    code: ["node --version", "curl -fsSL https://bun.sh/install | bash"] },
+  { title: "2 · SET UP THE XVERSE WALLET", steps: ["Install the Xverse Agent Wallet on your own computer.", "Create a new wallet, or restore one, in your terminal only. Write the recovery words on paper.", "Use a separate wallet with a small balance just for watching."],
+    code: [INSTALL, "xverse-wallet --help", "xverse-wallet bitcoin balance --json"] },
+  { title: "3 · RUN THE WATCH AGENT", steps: ["Set your rule above, then press Download watch agent.", "Open a terminal in the folder with the file and start it.", "Every 30 seconds it prints matching BITMAPs and whether your wallet balance covers them. Press Ctrl+C to stop."],
+    code: ["bun bitmap-xverse-agent.ts"] },
+  { title: "4 · TROUBLESHOOTING", steps: [
+    "\"balance unknown\": the xverse-wallet command isn't found or the wallet is locked. Run xverse-wallet bitcoin balance --json on its own to check.",
+    "Nothing prints: no new listing matches your rule yet. Raise the max price or the block range and download again.",
+    "\"bun: command not found\": open a new terminal after installing Bun.",
+    "Network errors: check your connection. The agent tries again on the next 30-second check."] },
+];
+
+function SetupGuide() {
+  return (
+    <div className="border-t border-border p-5">
+      <p className="label text-bitcoin">LOCAL SETUP GUIDE</p>
+      <div className="mt-3 border border-bitcoin p-3 text-sm">
+        <strong className="text-bitcoin">Safety:</strong> the watch agent never signs, buys or broadcasts anything. Never type your recovery words or private keys on this site or any website. They belong only in the Xverse wallet on your own computer.
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {GUIDE.map((g) => (
+          <div key={g.title} className="space-y-2 border border-border p-3">
+            <p className="label text-signal">{g.title}</p>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              {g.steps.map((s) => <li key={s}>{s}</li>)}
+            </ul>
+            {g.code?.map((c) => (
+              <div key={c} className="flex items-center gap-2">
+                <code className="block flex-1 break-all border border-border p-2 font-mono text-xs" data-no-translate>{c}</code>
+                <Copy text={c} label="COPY" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
