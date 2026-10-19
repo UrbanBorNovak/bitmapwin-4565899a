@@ -88,10 +88,10 @@ function Rig({ inscriptionId, pose, movingRef }: { inscriptionId: string; pose: 
 
 /** A failed rig/skin load falls back to the voxel body instead of blanking the actor. */
 class RigBoundary extends Component<{ fallback: ReactNode; children: ReactNode; resetKey: string }, { failed: boolean }> {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  componentDidUpdate(prev: { resetKey: string }) { if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false }); }
-  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+  override componentDidUpdate(prev: { resetKey: string }) { if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false }); }
+  override render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
 export function ToonPixelRig({ inscriptionId, pose, movingRef, fallback }: { inscriptionId: string; pose: string; movingRef: MutableRefObject<boolean>; fallback: ReactNode }) {
