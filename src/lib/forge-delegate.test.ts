@@ -28,3 +28,11 @@ describe("forge delegate metadata", () => {
     expect(isForgeMasterDelegate(null)).toBe(false);
   });
 });
+
+import { isForgeMasterDelegate as isMaster } from "./forge-delegate";
+import { describe as d2, it as i2, expect as e2 } from "vitest";
+d2("forge master delegates", () => {
+  i2("accepts the original V1 master used by Block 715093's build", () => {
+    e2(isMaster("adc48ccd4b2c429c24bf37f44979c22bf14315f39578dbe02c2f33729555c827i0")).toBe(true);
+  });
+});

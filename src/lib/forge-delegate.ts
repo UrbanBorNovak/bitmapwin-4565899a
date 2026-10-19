@@ -19,7 +19,7 @@ export const FORGE_MASTER_DELEGATE_ID = "d05d29638539d0ba8241b1e459de732011ffe0e
 export function isForgeMasterDelegate(id: string | null | undefined): boolean {
   if (!id) return false;
   if (id === FORGE_MASTER_DELEGATE_ID) return true;
-  return /^adc48ccd[0-9a-f]{56}c827i0$/.test(id);
+  return /^adc48ccd[0-9a-f]{52}c827i0$/.test(id);
 }
 
 export type ForgeMeta = { f: string; h: number; d: string; p?: string; l?: string };
