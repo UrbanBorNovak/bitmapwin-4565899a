@@ -2,7 +2,7 @@
 // Creative characters only — they carry no on-chain identity (Guardians stay the verified cast).
 
 export type AvatarModel = "runner" | "bruiser" | "bot" | "wizard";
-export type AvatarSkin = "hoodie" | "cyber" | "camo" | "gold" | "midnight" | "sakura";
+export type AvatarSkin = "hoodie" | "cyber" | "camo" | "gold" | "midnight" | "sakura" | "postpunk";
 /** On-chain BITMAP Pixel skin: "px:<inscriptionId>" from the Block 881,133 collection. */
 export type PixelSkin = `px:${string}`;
 export interface ToonAvatar { model: AvatarModel; skin: AvatarSkin | PixelSkin; }
@@ -20,6 +20,7 @@ export const AVATAR_SKINS: { v: AvatarSkin; label: string; base: string; accent:
   { v: "camo", label: "Field Camo", base: "#4f5d36", accent: "#2c3420", skin: "#b88a62", pattern: "camo" },
   { v: "gold", label: "Satoshi Gold", base: "#d9a520", accent: "#fff1b8", skin: "#f1c9a0", pattern: "solid" },
   { v: "midnight", label: "Midnight Check", base: "#20203a", accent: "#8b8bd8", skin: "#7a5238", pattern: "checker" },
+  { v: "postpunk", label: "Post-Punk Grey", base: "#3b3d40", accent: "#141414", skin: "#ead6c4", pattern: "solid" },
   { v: "sakura", label: "Sakura", base: "#f4b6c8", accent: "#c2456b", skin: "#f5d3b5", pattern: "petals" },
 ];
 

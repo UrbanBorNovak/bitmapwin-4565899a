@@ -200,3 +200,38 @@ export const BEACH_LANDING: ToonEpisode = {
 };
 
 BEACH_LANDING.scenes.forEach((s, i) => { const f = BEACH_FX[i]; if (f) s.fx = f; });
+
+/** Fan tribute short: a fictional, respectful homage to Ian Curtis (1956–1980). All dialogue is original —
+ * no lyrics, no real quotes, no events from his life depicted. A rift opens from a rehearsal room into the Oasis. */
+const ian = (x: number, z: number, pose: Pose, extra: object = {}) =>
+  ({ height: 0, name: "Ian", x, z, pose, avatar: { model: "runner" as const, skin: "postpunk" as const }, ...extra });
+const S = { block: 0, set: "studio" as const }, R = { block: 0, set: "rift" as const }, O = { block: 0, set: "oasis" as const };
+export const TRANSMISSION: ToonEpisode = {
+  title: "TRANSMISSION: INTO THE OASIS", aspect: "16:9", music: "tension", voices: false, style: "ghibli",
+  scenes: [
+    { ...S, duration: 12, shot: "wide",
+      cast: [ian(0, 2, "idle")],
+      lines: [{ at: 2, dur: 5, speaker: 0, text: "Manchester, 1979. A cold room, one bulb, one microphone.", style: "thought", cam: "two" }] },
+    { ...S, duration: 12, shot: "orbit", transition: "cut",
+      cast: [ian(0, 2, "dance")],
+      lines: [{ at: 6, dur: 4, speaker: 0, text: "The sound gets louder than the walls.", style: "thought", cam: "close" }] },
+    { ...R, duration: 12, shot: "dutch", transition: "cut", sfx: "WHOOSH!",
+      cast: [ian(0, 6, "idle", { emote: "surprised" })],
+      fx: [{ id: "bitmapwin/sparks-v1", at: 2, x: 0, y: 17, z: -26, scale: 2 }, { id: "bitmapwin/embers-v1", at: 3 }],
+      lines: [{ at: 6, dur: 4, speaker: 0, text: "The bricks are... opening?", style: "speech", cam: "close" }] },
+    { ...R, duration: 12, shot: "dolly", transition: "cut", cutBlend: true,
+      cast: [ian(-6, 4, "idle")],
+      fx: [{ id: "bitmapwin/embers-v1", at: 0 }],
+      lines: [{ at: 3, dur: 5, speaker: 0, text: "Green hills. Orange light. Somewhere that remembers everything.", style: "thought", cam: "ots" }] },
+    { ...R, duration: 12, shot: "crane", transition: "fade",
+      cast: [ian(0, 6, "walk", { to: { x: 0, z: -18 }, moveStart: 1, moveEnd: 10 })],
+      fx: [{ id: "bitmapwin/embers-v1", at: 0, scale: 1.4 }],
+      lines: [{ at: 2, dur: 4, speaker: 0, text: "One step. Then another.", style: "thought", cam: "two" }] },
+    { ...O, duration: 12, shot: "orbit", transition: "iris", sfx: "SATS!",
+      cast: [ian(0, -6, "idle", { emote: "happy" })],
+      lines: [{ at: 3, dur: 5, speaker: 0, text: "Warm. The sky is so wide here.", style: "speech", cam: "close" }] },
+    { ...O, duration: 12, shot: "wide", transition: "fade",
+      cast: [ian(0, -6, "dance")],
+      lines: [{ at: 1, dur: 4, speaker: 0, text: "For Ian Curtis, 1956–1980. A fan tribute.", style: "thought", cam: "close" }] },
+  ],
+};
