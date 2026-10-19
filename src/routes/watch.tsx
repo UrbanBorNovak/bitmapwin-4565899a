@@ -248,6 +248,7 @@ function WatchPage() {
               </div>
             </div>
           </section>
+          <div className="mt-4"><ReleasePanel episode={episode} /></div>
         </div>
 
         <aside>

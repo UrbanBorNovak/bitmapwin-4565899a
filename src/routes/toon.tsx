@@ -1,3 +1,4 @@
+import { ReleasePanel } from "@/components/toon/ReleasePanel";
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, transitionAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";

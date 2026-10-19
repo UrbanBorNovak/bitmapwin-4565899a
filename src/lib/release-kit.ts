@@ -15,7 +15,7 @@ export function saveChannels(c: Channels) { localStorage.setItem(KEY, JSON.strin
 
 /** Normalise a handle or URL to "@handle"; returns "" for anything unusable. */
 export function cleanHandle(v: string): string {
-  const s = v.trim().replace(/^https?:\/\/(www\.)?(youtube\.com|tiktok\.com|x\.com|twitter\.com)\//i, "").replace(/^@/, "").split(/[/?#]/)[0];
+  const s = v.trim().replace(/^https?:\/\/(www\.)?(youtube\.com|tiktok\.com|x\.com|twitter\.com)\//i, "").replace(/^@/, "").split(/[/?#]/)[0] ?? "";
   return /^[A-Za-z0-9._-]{2,40}$/.test(s) ? `@${s}` : "";
 }
 
