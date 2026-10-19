@@ -118,6 +118,9 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
         b.union(tmp.setFromObject(m)); });
       if (!b.isEmpty()) { unitH.current = Math.max(0.2, b.max.y); unitS.current = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z); }
     }
+    // Apply the pose after any measurement so the renderer never sees the zeroed transform.
+    o.position.set(x, y, pos.z);
+    o.rotation.set(rx, ry, rz);
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
     const bodyH = (unitH.current || 1.2) * 10;
     actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10 * s));
