@@ -187,6 +187,7 @@ function ToonPage() {
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
           </div>
           <div className="mt-3"><CinemaSubmitPanel episode={episode} /></div>
+          <div className="mt-3"><ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} /></div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
             <span className="label text-signal">ART STYLE</span>
             {TOON_STYLES.map((s) => (
