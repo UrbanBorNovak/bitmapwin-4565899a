@@ -74,6 +74,7 @@ import { Route as ToonRouteImport } from './routes/toon'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
 import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
@@ -459,6 +460,11 @@ const WalletRoute = WalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WatchRoute = WatchRouteImport.update({
+  id: '/watch',
+  path: '/watch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorldStatsRoute = WorldStatsRouteImport.update({
   id: '/world-stats',
   path: '/world-stats',
@@ -825,6 +831,7 @@ export interface FileRoutesByFullPath {
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
+  '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -947,6 +954,7 @@ export interface FileRoutesByTo {
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
+  '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -1074,6 +1082,7 @@ export interface FileRoutesById {
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
+  '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -1202,6 +1211,7 @@ export interface FileRouteTypes {
     | '/trading-post'
     | '/valuation'
     | '/wallet'
+    | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -1324,6 +1334,7 @@ export interface FileRouteTypes {
     | '/trading-post'
     | '/valuation'
     | '/wallet'
+    | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -1450,6 +1461,7 @@ export interface FileRouteTypes {
     | '/trading-post'
     | '/valuation'
     | '/wallet'
+    | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -1577,6 +1589,7 @@ export interface RootRouteChildren {
   TradingPostRoute: typeof TradingPostRoute
   ValuationRoute: typeof ValuationRoute
   WalletRoute: typeof WalletRoute
+  WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
@@ -2053,6 +2066,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch': {
+      id: '/watch'
+      path: '/watch'
+      fullPath: '/watch'
+      preLoaderRoute: typeof WatchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/world-stats': {
@@ -2672,6 +2692,7 @@ const rootRouteChildren: RootRouteChildren = {
   TradingPostRoute: TradingPostRoute,
   ValuationRoute: ValuationRoute,
   WalletRoute: WalletRoute,
+  WatchRoute: WatchRoute,
   WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
