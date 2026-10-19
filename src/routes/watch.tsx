@@ -17,7 +17,7 @@ const REELS: Reel[] = [
 ];
 
 export const Route = createFileRoute("/watch")({
-  validateSearch: (s: Record<string, unknown>) => ({ ep: typeof s.ep === "string" ? s.ep : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ ep: typeof s['ep'] === "string" ? s['ep'] : undefined }),
   head: () => {
     const title = "Toon Cinema — Watch BITMAP Guardian Cartoons";
     const description =
