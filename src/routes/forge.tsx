@@ -19,6 +19,7 @@ import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampIn
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
 import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
 import { KitBox } from "@/components/forge/KitBox";
+import { ProvenanceCard } from "@/components/forge/ProvenanceCard";
 import { CommunityKitShelf, PackageKit, useCommunityKits } from "@/components/forge/PackageKit";
 import { KitThumb } from "@/components/forge/KitThumb";
 import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
@@ -1033,6 +1034,15 @@ function ForgePage() {
                   </div>
                 );
               })()}
+              <ProvenanceCard
+                height={height}
+                blocks={parcelBlocks.length}
+                parents={[
+                  ...used.map((u) => ({ label: u.name, kind: "Community piece", creator: u.author ?? null, ref: u.id })),
+                  ...[...new Set(livePlacements.map((p) => p.part.id))].map((id) => ({ label: chainPieces.find((c) => c.id === `ins:${id}`)?.name ?? `${id.slice(0, 8)}…`, kind: "Inscribed piece", creator: makers[id] ?? null, ref: id })),
+                ]}
+                payouts={payouts}
+              />
               <ShadowInscriber
                 key={digest}
                 slug={`forge-${height}`}
