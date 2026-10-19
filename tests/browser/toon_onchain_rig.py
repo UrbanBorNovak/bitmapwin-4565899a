@@ -44,7 +44,7 @@ async def main():
     await pg.wait_for_timeout(5000)
     await st.screenshot(path=str(S/"2_recovered.png")); print("after recovery",dict(h))
     ok.append(("model retried",h["glb"]>=2)); ok.append(("skin retried",h["B"]>=2))
-    for t in ("1.0","2.2"):
+    for t in ("1","2.2"):
       await pg.get_by_label("Timeline",exact=True).fill(t); await pg.wait_for_timeout(900)
       await st.screenshot(path=str(S/f"3_scrub_{t}.png"))
     try:
