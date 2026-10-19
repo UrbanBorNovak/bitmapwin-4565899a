@@ -36,7 +36,8 @@ async def main():
       await tl.fill(f"{t:g}"); await pg.wait_for_timeout(1200); f = str(S / f"{name}.png"); await st.screenshot(path=f); return f
     await shot(0.5, "warm")
     for scene, (t1, t2) in (("s1", (1, 1.7)), ("s2", (5, 5.7))):
-      a = await shot(t1, f"{scene}_a"); bb = await shot(t2, f"{scene}_b")
+      await shot(t1, "pre"); a = await shot(t1, f"{scene}_a"); a0 = await shot(t1, f"{scene}_a_same"); bb = await shot(t2, f"{scene}_b")
+      print(scene, "same-time jitter px", diff(a, a0))
       # loop back and forth, then return: same time must give the same frame
       for _ in range(4): await shot(t2, "loop"); await shot(t1, "loop")
       a2 = await shot(t1, f"{scene}_a_again")
