@@ -82,7 +82,7 @@ export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; runn
         ctx.fillStyle = "#000"; ctx.fillRect(x0, y0, S, S);
         if (n.parcels && n.grid) {
           const u = S / n.grid;
-          ctx.fillStyle = n.hot ? ORANGE : "#f2f2f2";
+          ctx.fillStyle = "#f2f2f2";
           for (const p of n.parcels) ctx.fillRect(x0 + p.x * u + u * 0.08, y0 + p.y * u + u * 0.08, p.size * u - u * 0.16, p.size * u - u * 0.16);
         } else {
           ctx.fillStyle = TEXT; ctx.fillText("SYNC", n.x, n.y - 6);
