@@ -229,6 +229,7 @@ function WatchPage() {
                 <button className="btn-term" onClick={() => void share()}>[ SHARE TO X ]</button>
                 <Link to="/toon" className="btn-term-ghost">[ MAKE YOUR OWN IN TOON STUDIO ]</Link>
               </div>
+              {clipNote && <p className="mt-2 font-mono text-[0.7rem] text-signal" role="status">{clipNote}</p>}
             </div>
             <div>
               <div className="label">FILMED ON</div>
