@@ -5,6 +5,7 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { SpiderHunter } from "@/components/bot/SpiderHunter";
+import { AgentKit } from "@/components/bot/AgentKit";
 import {
   BOT_PRESETS,
   POLL_MS,
@@ -195,6 +196,10 @@ function BotPage() {
           The hunter scans real open listings; orange nodes match your rule. It only points — you buy in your own wallet.
         </p>
       </section>
+
+      <div className="mt-8">
+        <AgentKit showExport maxSats={rule.maxSats ?? 1_000_000_000} maxHeight={rule.maxHeight ?? 2_000_000} />
+      </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[360px_1fr]">
         <section className="border border-border bg-surface p-5">
