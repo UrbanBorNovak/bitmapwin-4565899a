@@ -39,3 +39,4 @@
 - Marketplace Bitmon pattern filter (BitmonPatternFilter + block-stats patternHeightsQuery) matches only verified block_stats.pattern records and is separate from Guardian species/rarity; groups above PATTERN_GROUP_MAX are refused, never truncated. Why: Bitmons are block shapes, Guardians are Oasis creatures.
 - Clips: @bitlodo studio vendored unmodified in public/tools/clips; rebuild from upstream. Why: full fidelity, no server state.
 - Marketplace ALL-tab filters use fetchRegistryScope: finite candidate sets intersected with height ranges, checked against bitmap_index. Why: exact totals without loading the 900k+ index.
+- Creator channel handles (src/lib/release-kit.ts) sync to creator_channels (owner-only RLS, clean @handles) for signed-in users, with localStorage as the signed-out fallback. Why: links follow the account across devices without exposing them publicly.
