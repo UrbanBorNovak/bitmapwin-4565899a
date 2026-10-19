@@ -120,11 +120,39 @@ describe("bulk list: retries after cancel or rejection", () => {
     const q = retryQueue([item("b:0", 140_000), item("c:0", null)], {});
     expect(q).toEqual([{ outpoint: "b:0", price: 140_000 }]);
   });
-  it("only a deliberately changed price relists a completed item", () => {
-    expect(retryQueue([item("a:0", 260_000)], { "a:0": 250_000 })).toEqual([{ outpoint: "a:0", price: 260_000 }]);
+  it("changing a completed item's price alone never requeues it", () => {
+    expect(retryQueue([item("a:0", 260_000)], { "a:0": 250_000 })).toEqual([]);
   });
   it("a warning tick from the failed run doesn't cover the retry", () => {
     const before = confirmKey([item("b:0", 131_112)]);
     expect(confirmKey([item("b:0", 140_000)])).not.toBe(before);
+  });
+});
+
+import { needsRelist } from "./holder-bulk";
+describe("bulk list: relisting a completed BITMAP needs explicit confirmation", () => {
+  const item = (o: string, price: number | null) => ({ b: { outpoint: o }, price });
+  const listed = { "a:0": 250_000 };
+  it("a new price asks for relist confirmation and is not queued", () => {
+    const plan = [item("a:0", 260_000)];
+    expect(needsRelist(plan, listed)).toEqual(["a:0"]);
+    expect(retryQueue(plan, listed)).toEqual([]);
+  });
+  it("confirming relist at 260000 queues exactly that price", () => {
+    const plan = [item("a:0", 260_000)];
+    expect(retryQueue(plan, listed, { "a:0": 260_000 })).toEqual([{ outpoint: "a:0", price: 260_000 }]);
+    expect(needsRelist(plan, listed, { "a:0": 260_000 })).toEqual([]);
+  });
+  it("editing the price again after confirming voids the confirmation", () => {
+    const plan = [item("a:0", 270_000)];
+    expect(retryQueue(plan, listed, { "a:0": 260_000 })).toEqual([]);
+    expect(needsRelist(plan, listed, { "a:0": 260_000 })).toEqual(["a:0"]);
+  });
+  it("a relist confirmation at the already-listed price never signs twice", () => {
+    expect(retryQueue([item("a:0", 250_000)], listed, { "a:0": 250_000 })).toEqual([]);
+  });
+  it("cleared or invalid price on a completed item is neither queued nor asked about", () => {
+    expect(retryQueue([item("a:0", null)], listed, { "a:0": 260_000 })).toEqual([]);
+    expect(needsRelist([item("a:0", null)], listed)).toEqual([]);
   });
 });

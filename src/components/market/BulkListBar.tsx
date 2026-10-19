@@ -8,7 +8,7 @@ import { signListingPsbt, signMessageWithWallet, xOnlyPubKeyHex } from "@/lib/br
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
-import { confirmKey, retryQueue, isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
+import { confirmKey, needsRelist, retryQueue, isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
 import { computeEv } from "@/lib/listing-ev";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,6 +41,7 @@ export function BulkListBar({
   const [status, setStatus] = useState<Record<string, Status>>({});
   const [running, setRunning] = useState(false);
   const [listedAt, setListedAt] = useState<Record<string, number>>({});
+  const [relistOk, setRelistOk] = useState<Record<string, number>>({});
   const [confirmedKey, setConfirmedKey] = useState<string | null>(null);
   const stop = useRef(false);
   const skip = useRef(false);
@@ -77,6 +78,7 @@ export function BulkListBar({
   const listable = plan.filter((p) => p.price !== null);
   const risky = listable.filter((p) => p.guards.length > 0 || p.lowball);
   const riskKey = confirmKey(risky);
+  const pendingRelist = new Set(needsRelist(plan, listedAt, relistOk));
   // A tick only covers the exact flagged prices it was given for; any change needs a fresh tick.
   const confirmRisk = confirmedKey !== null && confirmedKey === riskKey;
   const total = listable.reduce((s, p) => s + p.price!, 0);
@@ -95,7 +97,7 @@ export function BulkListBar({
     setRunning(true);
     stop.current = false;
     const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
-    const queue = retryQueue(listable, listedAt);
+    const queue = retryQueue(listable, listedAt, relistOk);
     const byOut = new Map(listable.map((p) => [p.b.outpoint, p]));
     for (const q of queue) {
       const p = { ...byOut.get(q.outpoint)!, price: q.price };
@@ -121,6 +123,7 @@ export function BulkListBar({
           } catch { toast(`OLD ASK ON ${p.b.bitmapHeight}.BITMAP STILL OPEN`); }
         }
         setListedAt((m) => ({ ...m, [q.outpoint]: q.price }));
+        setRelistOk((m) => { const n = { ...m }; delete n[q.outpoint]; return n; });
         setStatus((s) => ({ ...s, [p.b.outpoint]: "done" }));
       } catch {
         setStatus((s) => ({ ...s, [p.b.outpoint]: "failed" }));
@@ -184,6 +187,12 @@ export function BulkListBar({
                 {p.ev && !p.ev.fallback ? `EV ${p.ev.mid.toLocaleString("en-US")} · ${p.ev.sampleSize} ${p.ev.scope} · ` : sales.isLoading ? "READING SALES… · " : ""}{p.floor ? `${p.floor.scope.toUpperCase()} FLOOR ${p.floor.floorSats.toLocaleString("en-US")} SATS` : asks.isLoading ? "READING FLOORS…" : "NO COMPARABLE ASKS"}
               </span>
               {p.guards.map((g) => <span key={g.id} className="border border-primary/60 px-1 text-primary">⚠ {g.label}</span>)}
+              {pendingRelist.has(p.b.outpoint) && (
+                <label className="flex items-center gap-1 border border-primary/60 px-1 text-primary" data-testid="relist-confirm">
+                  <input type="checkbox" disabled={running} onChange={(e) => setRelistOk((m) => { const n = { ...m }; if (e.target.checked && p.price !== null) n[p.b.outpoint] = p.price; else delete n[p.b.outpoint]; return n; })} />
+                  LISTED AT {listedAt[p.b.outpoint]!.toLocaleString("en-US")} · RELIST AT {p.price!.toLocaleString("en-US")}?
+                </label>
+              )}
               {p.lowball && <span className="border border-destructive px-1 text-destructive">⚠ UNDER HALF OF EV/FLOOR</span>}
               {p.needsChoice && !sales.isLoading && (
                 <span className="flex w-full flex-wrap items-center gap-2 border border-bitcoin/60 px-2 py-1 text-bitcoin" data-testid="ev-fallback">

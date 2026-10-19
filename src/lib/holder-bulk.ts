@@ -102,12 +102,23 @@ export function confirmKey(items: { b: { outpoint: string }; price: number | nul
 }
 
 /**
- * Queue for a (re)try: re-planned from current prices, minus anything already
- * listed at that exact price this session, so a completed item is never signed twice.
+ * Queue for a (re)try: re-planned from current prices. Anything already listed
+ * this session is left out, even at a new price, unless the seller explicitly
+ * confirmed relisting it at exactly that new price.
  */
 export function retryQueue(
   plan: { b: { outpoint: string }; price: number | null }[],
   listedAt: Readonly<Record<string, number>>,
+  relistOk: Readonly<Record<string, number>> = {},
 ): readonly QueueItem[] {
-  return freezeQueue(plan).filter((q) => listedAt[q.outpoint] !== q.price);
+  return freezeQueue(plan).filter((q) => listedAt[q.outpoint] === undefined || (relistOk[q.outpoint] === q.price && q.price !== listedAt[q.outpoint]));
+}
+
+/** Completed BITMAPs whose current price differs from what was listed and still lack a relist confirmation. */
+export function needsRelist(
+  plan: { b: { outpoint: string }; price: number | null }[],
+  listedAt: Readonly<Record<string, number>>,
+  relistOk: Readonly<Record<string, number>> = {},
+): string[] {
+  return plan.filter((p) => p.price !== null && listedAt[p.b.outpoint] !== undefined && p.price !== listedAt[p.b.outpoint] && relistOk[p.b.outpoint] !== p.price).map((p) => p.b.outpoint);
 }
