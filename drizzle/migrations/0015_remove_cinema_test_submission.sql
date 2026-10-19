@@ -1,0 +1,1 @@
+DELETE FROM public.toon_submissions WHERE creator_name = 'URBAN TEST';
