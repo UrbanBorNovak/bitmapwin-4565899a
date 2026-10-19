@@ -40,7 +40,7 @@ export function LiveMarketTicker({
   const secs = syncedAt ? Math.max(0, Math.round((Date.now() - syncedAt) / 1000)) : null;
 
   return (
-    <div className="mt-6 flex items-stretch overflow-hidden border border-border bg-card" data-no-translate>
+    <div className="mt-6 flex min-w-0 max-w-full items-stretch overflow-hidden border border-border bg-card" data-no-translate>
       <div className="flex shrink-0 items-center gap-2 border-r border-border px-3 font-mono text-[10px] text-signal">
         <span className="relative flex size-2">
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-signal opacity-60" />
@@ -48,7 +48,7 @@ export function LiveMarketTicker({
         </span>
         LIVE{secs !== null ? ` · ${secs}S` : ""}
       </div>
-      <div className="group relative flex-1 overflow-hidden py-2">
+      <div className="group relative min-w-0 flex-1 overflow-hidden py-2">
         {items.length === 0 ? (
           <span className="px-4 font-mono text-[10px] text-muted-foreground">READING CHAIN…</span>
         ) : (

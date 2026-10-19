@@ -12,7 +12,7 @@ export function QuickClubPills({ listed, active, onPick }: { listed: RegistryPar
     return { c, count: asks.length, floor: asks.length ? Math.min(...asks) : null };
   }), [listed]);
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-border pt-2" role="group" aria-label="Quick height filters">
+    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5 border-t border-border pt-2" role="group" aria-label="Quick height filters">
       {stats.map(({ c, count, floor }) => {
         const on = active === c.id;
         return (
@@ -23,7 +23,7 @@ export function QuickClubPills({ listed, active, onPick }: { listed: RegistryPar
           </button>
         );
       })}
-      <span className="ml-auto font-mono text-[10px] text-signal" data-no-translate title="Live network fee rate from mempool.space">
+      <span className="w-full font-mono text-[10px] text-signal sm:ml-auto sm:w-auto" data-no-translate title="Live network fee rate from mempool.space">
         {fees.data ? `FEES ${fees.data.fastestFee} / ${fees.data.halfHourFee} / ${fees.data.economyFee} SAT/VB` : "FEES —"}
       </span>
     </div>
