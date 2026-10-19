@@ -10,6 +10,16 @@ export const MCP_CONFIG = JSON.stringify(
   2,
 );
 
+// Each app reads a slightly different config shape.
+export const CLIENT_CONFIGS: Record<string, { where: string; text: string }> = {
+  Claude: { where: "Terminal (Claude Code)", text: `claude mcp add --transport http bitmapwin ${SITE}/mcp` },
+  Cursor: { where: "~/.cursor/mcp.json", text: MCP_CONFIG },
+  Codex: { where: "~/.codex/config.toml", text: `[mcp_servers.bitmapwin]\nurl = "${SITE}/mcp"` },
+  Copilot: { where: ".vscode/mcp.json", text: JSON.stringify({ servers: { bitmapwin: { type: "http", url: `${SITE}/mcp` } } }, null, 2) },
+  Cline: { where: "Cline MCP settings", text: JSON.stringify({ mcpServers: { bitmapwin: { type: "streamableHttp", url: `${SITE}/mcp` } } }, null, 2) },
+  Windsurf: { where: "~/.codeium/windsurf/mcp_config.json", text: JSON.stringify({ mcpServers: { bitmapwin: { serverUrl: `${SITE}/mcp` } } }, null, 2) },
+};
+
 const INSTALL = "npx @secretkeylabs/xverse-agent-wallet --install";
 
 // The only wallet command the exported agent may run. Read-only.
@@ -95,6 +105,8 @@ function Copy({ text, label }: { text: string; label: string }) {
 }
 
 export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport = false }: { maxSats?: number; maxHeight?: number; showExport?: boolean }) {
+  const [client, setClient] = useState("Claude");
+  const cfg = CLIENT_CONFIGS[client]!;
   const download = () => {
     const blob = new Blob([agentScript(maxSats, maxHeight)], { type: "text/plain" });
     const a = document.createElement("a");
@@ -119,14 +131,15 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
           </div>
         </div>
         <div className="space-y-2">
-          <p className="label text-muted-foreground">2 · GIVE IT BITMAP KNOWLEDGE</p>
-          <pre className="overflow-x-auto border border-border p-2 font-mono text-xs" data-no-translate>{MCP_CONFIG}</pre>
-          <Copy text={MCP_CONFIG} label="COPY MCP CONFIG" />
+          <p className="label text-muted-foreground">2 · GIVE IT BITMAP KNOWLEDGE · {client.toUpperCase()}</p>
+          <p className="font-mono text-[10px] text-muted-foreground" data-no-translate>{cfg.where}</p>
+          <pre className="overflow-x-auto border border-border p-2 font-mono text-xs" data-no-translate>{cfg.text}</pre>
+          <Copy text={cfg.text} label="COPY CONFIG" />
         </div>
         <div className="space-y-2">
           <p className="label text-muted-foreground">3 · ASK IT</p>
           <p className="text-sm text-muted-foreground">
-            Paste the config into Claude, Cursor or another agent. It can search BITMAPs, read activity and builds, and check your Xverse balance.
+            On first use your app opens a bitmapwin sign-in page; approve it once. Then it can search BITMAPs, read activity and builds, and check your Xverse balance.
           </p>
           {showExport && (
             <button type="button" onClick={download} className="label border border-bitcoin px-3 py-2 text-bitcoin">
@@ -137,10 +150,11 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
       </div>
       <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3">
         <span className="label text-muted-foreground">WORKS WITH</span>
-        {["Claude", "Cursor", "Codex", "Copilot", "Cline", "Windsurf"].map((n) => (
-          <span key={n} className="border border-border px-2 py-1 font-mono text-[11px] text-foreground" data-no-translate>{n}</span>
+        {Object.keys(CLIENT_CONFIGS).map((n) => (
+          <button key={n} type="button" aria-pressed={client === n} onClick={() => setClient(n)}
+            className={`border px-2 py-1 font-mono text-[11px] ${client === n ? "border-bitcoin text-bitcoin" : "border-border text-foreground hover:border-signal"}`} data-no-translate>{n}</button>
         ))}
-        <span className="label text-muted-foreground">· ANY MCP CLIENT WITH REMOTE HTTP SERVERS</span>
+        <span className="label text-muted-foreground">· TAP ONE FOR ITS CONFIG</span>
       </div>
       {showExport && <SetupGuide />}
       <p className="label border-t border-border px-4 py-2 text-muted-foreground">
