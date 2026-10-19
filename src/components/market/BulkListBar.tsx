@@ -168,7 +168,7 @@ export function BulkListBar({
             {[0, 1, 2, 5, 10].map((v) => <option key={v} value={v}>{v === 0 ? "OFF" : `+${v}% EACH`}</option>)}
           </select>
         </label>
-        <span className="label ml-auto">{listable.length} PRICED · TOTAL {formatSats(total)}</span>
+        <span className="label ml-auto">{listable.length} PRICED · TOTAL {formatSats(total)}{plan.some((p) => p.needsChoice) ? ` · ${plan.filter((p) => p.needsChoice).length} NEED YOUR PRICE (NOT SIGNED)` : ""}</span>
       </div>
 
       <ul className="mt-3 max-h-56 divide-y divide-border overflow-auto border border-border">
