@@ -12,36 +12,58 @@ export const MCP_CONFIG = JSON.stringify(
 
 const INSTALL = "npx @secretkeylabs/xverse-agent-wallet --install";
 
+// The only wallet command the exported agent may run. Read-only.
+export const AGENT_WALLET_ARGS = ["bitcoin", "balance", "--json"] as const;
+
 export function agentScript(maxSats: number, maxHeight: number) {
   return `// bitmap-xverse-agent.ts — run with: bun bitmap-xverse-agent.ts
-// Watches open BITMAP listings on bitmapwin and checks your local Xverse Agent Wallet
+// Watches open BITMAP listings on bitmapwin and reads your local Xverse Agent Wallet
 // balance. It ONLY reports matches — it never signs, buys or broadcasts.
+// The single wallet command it runs is: xverse-wallet ${AGENT_WALLET_ARGS.join(" ")}
 // Buy matches yourself at ${SITE}/marketplace.
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const MAX_SATS = ${Math.max(0, Math.floor(maxSats))};
 const MAX_HEIGHT = ${Math.max(0, Math.floor(maxHeight))};
 const seen = new Set<string>();
+let warned = false;
 
+// Spendable (native segwit, confirmed) balance in sats, or null if the wallet
+// is missing or locked (set XVERSE_PASSWORD in this terminal to unlock reads).
 function balanceSats(): number | null {
   try {
-    const out = JSON.parse(execSync("xverse-wallet bitcoin balance --json", { encoding: "utf8" }));
-    const btc = Number(out?.native ?? out?.total ?? 0);
-    return Math.round(btc * 1e8);
-  } catch { return null; }
+    const raw = execFileSync("xverse-wallet", ${JSON.stringify(AGENT_WALLET_ARGS)}, {
+      encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 20_000,
+    });
+    const sats = Number(JSON.parse(raw)?.native?.confirmed);
+    return Number.isFinite(sats) ? sats : null;
+  } catch (e: any) {
+    if (!warned) {
+      warned = true;
+      const msg = String(e?.stderr || e?.stdout || e?.message || e).trim().split("\\n")[0];
+      console.error("[wallet] balance unknown: " + msg);
+    }
+    return null;
+  }
 }
 
 async function tick() {
-  const res = await fetch("${SITE}/api/public/market/listings?sort=recent");
-  const body = await res.json();
-  const rows: any[] = body.listings ?? body.data ?? body ?? [];
-  const bal = balanceSats();
-  for (const l of rows) {
-    if (seen.has(l.id)) continue;
-    seen.add(l.id);
-    if (l.price_sats > MAX_SATS || l.bitmap_height > MAX_HEIGHT) continue;
-    const afford = bal == null ? "balance unknown" : bal >= l.price_sats ? "affordable" : "not enough in wallet";
-    console.log(JSON.stringify({ match: \`\${l.bitmap_height}.bitmap\`, price_sats: l.price_sats, afford, open: "${SITE}/map/" + l.bitmap_height }));
+  try {
+    const res = await fetch("${SITE}/api/public/market/listings?sort=recent");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const body = await res.json();
+    const rows: any[] = Array.isArray(body?.listings) ? body.listings : [];
+    const fresh = rows.filter((l) => !seen.has(l.id));
+    fresh.forEach((l) => seen.add(l.id));
+    const hits = fresh.filter((l) => l.price_sats <= MAX_SATS && l.bitmap_height <= MAX_HEIGHT);
+    const bal = hits.length ? balanceSats() : null;
+    console.log(\`[\${new Date().toISOString()}] checked \${rows.length} listings, \${hits.length} new matches\`);
+    for (const l of hits) {
+      const afford = bal == null ? "balance unknown" : bal >= l.price_sats ? "affordable" : "not enough in wallet";
+      console.log(JSON.stringify({ match: \`\${l.bitmap_height}.bitmap\`, price_sats: l.price_sats, afford, open: "${SITE}/map/" + l.bitmap_height }));
+    }
+  } catch (e: any) {
+    console.error("[network] " + (e?.message ?? e) + " — retrying in 30s");
   }
 }
 
@@ -118,17 +140,23 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
 }
 
 const GUIDE: { title: string; steps: string[]; code?: string[] }[] = [
-  { title: "1 · PREREQUISITES", steps: ["A computer with a terminal (macOS, Linux or Windows).", "Node.js 18 or newer, plus Bun to run the agent file."],
+  { title: "1 · PREREQUISITES", steps: ["A computer with a terminal. Commands below are for macOS and Linux; on Windows, use WSL.", "Node.js 18 or newer, plus Bun to run the agent file."],
     code: ["node --version", "curl -fsSL https://bun.sh/install | bash"] },
-  { title: "2 · SET UP THE XVERSE WALLET", steps: ["Install the Xverse Agent Wallet on your own computer.", "Create a new wallet, or restore one, in your terminal only. Write the recovery words on paper.", "Use a separate wallet with a small balance just for watching."],
-    code: [INSTALL, "xverse-wallet --help", "xverse-wallet bitcoin balance --json"] },
-  { title: "3 · RUN THE WATCH AGENT", steps: ["Set your rule above, then press Download watch agent.", "Open a terminal in the folder with the file and start it.", "Every 30 seconds it prints matching BITMAPs and whether your wallet balance covers them. Press Ctrl+C to stop."],
+  { title: "2 · SET UP THE XVERSE WALLET", steps: [
+    "Install the Xverse Agent Wallet on your own computer (tested with version 1.0.1).",
+    "Create a wallet in your terminal only. It asks you to choose a password. Write the recovery words on paper.",
+    "Use a separate wallet with a small balance just for watching.",
+    "The balance check only works when the wallet is unlocked: type your password into this terminal (it stays hidden) before starting the agent."],
+    code: [INSTALL, "xverse-wallet wallet create", "read -s XVERSE_PASSWORD && export XVERSE_PASSWORD", "xverse-wallet bitcoin balance --json"] },
+  { title: "3 · RUN THE WATCH AGENT", steps: ["Set your rule above, then press Download watch agent.", "In the same terminal, go to the folder with the file and start it.", "Every 30 seconds it prints how many listings it checked, any new matches, and whether your spendable balance covers them. Press Ctrl+C to stop."],
     code: ["bun bitmap-xverse-agent.ts"] },
   { title: "4 · TROUBLESHOOTING", steps: [
-    "\"balance unknown\": the xverse-wallet command isn't found or the wallet is locked. Run xverse-wallet bitcoin balance --json on its own to check.",
-    "Nothing prints: no new listing matches your rule yet. Raise the max price or the block range and download again.",
+    "\"Vault not initialised\": no wallet yet. Run xverse-wallet wallet create.",
+    "\"Vault is locked\": the password isn't set in this terminal. Run the read -s line again, then restart the agent.",
+    "\"xverse-wallet: not found\": the install didn't finish. Run the install command again, then open a new terminal.",
+    "\"0 new matches\" every time: nothing listed matches your rule yet. Raise the max price or the block range and download again.",
     "\"bun: command not found\": open a new terminal after installing Bun.",
-    "Network errors: check your connection. The agent tries again on the next 30-second check."] },
+    "\"[network]\" lines: check your connection. The agent tries again on the next 30-second check."] },
 ];
 
 function SetupGuide() {
