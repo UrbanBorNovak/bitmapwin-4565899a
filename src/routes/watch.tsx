@@ -45,7 +45,7 @@ function WatchPage() {
   const { ep } = Route.useSearch();
   const navigate = Route.useNavigate();
   const reels = useMemo(() => REELS.map((r) => ({ ...r, episode: r.make() })), []);
-  const current = reels.find((r) => r.id === ep) ?? reels[0];
+  const current = reels.find((r) => r.id === ep) ?? reels[0]!;
   const episode = current.episode;
   const total = useMemo(() => episodeLength(episode), [episode]);
   const [time, setTime] = useState(0);
@@ -166,7 +166,7 @@ function WatchPage() {
               <div className="label mt-3">STARRING</div>
               <div className="mt-1 flex flex-wrap gap-2 font-mono text-xs">
                 {cast.map((c) => (
-                  <Link key={c.height} to="/bitmap/$block" params={{ block: String(c.height) }} className="border border-border px-2 py-1 text-signal hover:border-signal">GUARDIAN {c.height}</Link>
+                  <Link key={c.height} to="/bitmap/$block" params={{ block: String(c.height) }} className="border border-border px-2 py-1 text-primary hover:border-primary">GUARDIAN {c.height}</Link>
                 ))}
               </div>
             </div>
