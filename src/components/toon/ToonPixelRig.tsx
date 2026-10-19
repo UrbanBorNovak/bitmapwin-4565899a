@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
-import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
+import { DEFAULT_AVATAR_MODEL } from "@/lib/map-identity";
 import { rigClipFor, rigGesture } from "@/lib/toon-avatars";
 
 const MODEL_URL = `https://ordinals.com/content/${DEFAULT_AVATAR_MODEL}`;
@@ -117,7 +117,7 @@ class RigBoundary extends Component<{ fallback: ReactNode; children: (attempt: n
   override render() { return this.state.failed ? this.props.fallback : this.props.children(this.state.attempt); }
 }
 
-export function ToonPixelRig({ inscriptionId, pose, movingRef, fallback }: { inscriptionId: string; pose: string; movingRef: MutableRefObject<boolean>; fallback: ReactNode }) {
+export function ToonPixelRig({ inscriptionId, tint, pose, movingRef, timeRef, fallback }: { inscriptionId: string; tint?: string; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number>; fallback: ReactNode }) {
   return (
     <RigBoundary
       fallback={fallback}
@@ -126,7 +126,7 @@ export function ToonPixelRig({ inscriptionId, pose, movingRef, fallback }: { ins
     >
       {(attempt) => (
         <Suspense fallback={fallback}>
-          <Rig inscriptionId={inscriptionId} pose={pose} movingRef={movingRef} attempt={attempt} />
+          <Rig inscriptionId={inscriptionId} tint={tint} pose={pose} movingRef={movingRef} timeRef={timeRef} attempt={attempt} />
         </Suspense>
       )}
     </RigBoundary>
