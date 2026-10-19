@@ -55,3 +55,28 @@ export function isFarBelowFloor(priceSats: number, floorSats: number | null): bo
 export function ladderPrice(baseSats: number, n: number, stepPct: number): number {
   return Math.max(DUST_SATS, Math.round(baseSats * Math.pow(1 + stepPct / 100, n)));
 }
+
+export type PriceMode = "ev" | "evlow" | "evhigh" | "uniform" | "floor" | "under1";
+export type EvLike = { low: number; mid: number; high: number; fallback: boolean } | null;
+
+/**
+ * One BITMAP's bulk-list price. A typed/confirmed override always wins unchanged.
+ * Every automatic preset (EV and floor) needs a well-sampled EV; otherwise the
+ * BITMAP stays unpriced (needsChoice) and is never sent to signing.
+ * `rung` is this item's ladder position, consumed only when the ladder applies.
+ */
+export function planPrice(o: {
+  mode: PriceMode; override?: string | undefined; uniform?: string | undefined; ev: EvLike; floorSats: number | null; ladder: number; rung: number;
+}): { price: number | null; manual: boolean; needsChoice: boolean; usedRung: boolean } {
+  if (o.override && Number(o.override) > 0) return { price: Math.round(Number(o.override)), manual: true, needsChoice: false, usedRung: false };
+  const needsChoice = o.mode !== "uniform" && (!o.ev || o.ev.fallback);
+  let price: number | null = null;
+  if (o.mode === "uniform") price = Number(o.uniform) > 0 ? Math.round(Number(o.uniform)) : null;
+  else if (needsChoice) price = null;
+  else if (o.mode === "ev" || o.mode === "evlow" || o.mode === "evhigh") price = o.mode === "ev" ? o.ev!.mid : o.mode === "evlow" ? o.ev!.low : o.ev!.high;
+  else if (o.floorSats) price = matchPrice(o.floorSats, o.mode);
+  let usedRung = false;
+  if (price !== null && o.ladder > 0) { price = ladderPrice(price, o.rung, o.ladder); usedRung = true; }
+  if (price !== null && price < DUST_SATS) price = null;
+  return { price, manual: false, needsChoice, usedRung };
+}
