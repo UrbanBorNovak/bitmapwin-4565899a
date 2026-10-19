@@ -32,6 +32,10 @@ function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
 }
 
 /** Comic emote bubble drawn once to a canvas texture so it bakes into exports. */
+/** World z of the current scene's build centre (null = no build), so reaction bubbles sit on the side away from it. */
+const stageBuild: { z: number | null } = { z: null };
+const bp = new Vector3(), ap = new Vector3();
+
 function EmoteIcon({ emote, timeRef, slot, scene }: { emote: Emote; timeRef: MutableRefObject<number>; slot: number; scene: number }) {
   const sp = useRef<Sprite>(null);
   const wp = useMemo(() => new Vector3(), []), tp = useMemo(() => new Vector3(), []), ws = useMemo(() => new Vector3(), []);
@@ -53,7 +57,15 @@ function EmoteIcon({ emote, timeRef, slot, scene }: { emote: Emote; timeRef: Mut
     const dist = o.parent ? camera.position.distanceTo(o.parent.getWorldPosition(o.position.clone().set(0, 0, 0))) : 30;
     let s = 0.34 * Math.min(2.6, Math.max(1, dist / 32)), y = 0.95;
     if (emote === "love" || emote === "happy") s *= 1 + Math.abs(Math.sin(t * 4)) * 0.18;
-    if (emote === "terrified" || emote === "afraid") o.position.x = 0.75 + Math.sin(t * 40) * 0.03;
+    // Put the bubble on the screen side facing away from the build so it never covers the voxels.
+    let side = 1;
+    if (stageBuild.z !== null && o.parent) {
+      o.parent.getWorldPosition(ap); bp.set(0, ap.y, stageBuild.z);
+      ap.project(camera); bp.project(camera);
+      if (bp.x > ap.x) side = -1;
+    }
+    o.position.x = 0.75 * side;
+    if (emote === "terrified" || emote === "afraid") o.position.x = 0.75 * side + Math.sin(t * 40) * 0.03;
     if (emote === "sad" || emote === "lonely" || emote === "sleepy") y += Math.sin(t * 1.2) * 0.06;
     if (emote === "surprised" || emote === "angry") s *= 1 + Math.max(0, Math.sin(t * 6)) * 0.25;
     o.position.y = y; o.scale.setScalar(s);
@@ -194,6 +206,7 @@ function Land({ block }: { block: number }) {
   const classes = sizes.data?.classes;
   // Guardians perform on an open sand plaza; the land and its build sit just behind them so voxels never swallow the cast.
   const back = build.data?.data ? -(FORGE_SPAN / 2 + 6) : 0;
+  useEffect(() => { stageBuild.z = build.data?.data ? back : null; return () => { stageBuild.z = null; }; }, [build.data?.data, back]);
   return (
     <group>
       <mesh position={[0, -0.62, 0]}>
