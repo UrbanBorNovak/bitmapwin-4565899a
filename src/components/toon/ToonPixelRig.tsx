@@ -51,6 +51,7 @@ function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscr
     return () => made.forEach((m) => m.dispose());
   }, [scene, texture, tint]);
 
+  if (typeof window !== "undefined") ((window as any).__rigs ??= new Set()).add(scene);
   const fitted = useMemo(() => {
     scene.updateMatrixWorld(true);
     const b = new THREE.Box3().setFromObject(scene);
