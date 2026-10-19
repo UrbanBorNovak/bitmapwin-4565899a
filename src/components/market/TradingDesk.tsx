@@ -16,7 +16,7 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
   const { picks, totalSats } = useMemo(() => sweepCheapest(listed, n), [listed, n]);
   if (listed.length === 0) return null;
   return (
-    <section className="mb-4 border border-bitcoin/50 bg-card p-4" aria-label="Floor sweeper">
+    <section className="mb-4 min-w-0 max-w-full border border-bitcoin/50 bg-card p-3 sm:p-4" aria-label="Floor sweeper">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="label text-bitcoin">FLOOR SWEEP</h2>
@@ -30,7 +30,7 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
           <input type="range" min={1} max={15} value={n} onChange={(e) => setN(Number(e.target.value))} aria-label="Number of BITMAPs to sweep" className="w-28 accent-[hsl(var(--bitcoin))]" />
           <span className="font-mono text-[11px] text-bitcoin" data-no-translate>{n}</span>
         </div>
-        <div className="text-right font-mono" data-no-translate>
+        <div className="w-full text-left font-mono sm:w-auto sm:text-right" data-no-translate>
           <div className="text-base font-bold text-bitcoin">{totalSats ? `${(totalSats / 1e8).toFixed(8)} BTC` : "—"}</div>
           {totalSats > 0 && <div className="text-[10px] text-muted-foreground">{totalSats.toLocaleString("en-US")} SATS · BEFORE FEES</div>}
           <div className="text-[10px] text-muted-foreground">{picks.length} BITMAPS{picks.length ? ` · AVG ${formatSats(Math.round(totalSats / picks.length))}` : ""}</div>
@@ -46,11 +46,11 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
       {picks.length > 0 && (
         <ol className="mt-3 grid gap-1">
           {picks.map((p, i) => (
-            <li key={p.inscriptionId} className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 border-t border-border pt-1 font-mono text-[11px]" data-no-translate>
+            <li key={p.inscriptionId} className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 border-t border-border pt-1 font-mono text-[11px]" data-no-translate>
               <span className="text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
               <Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="hover:text-signal">{p.bitmapHeight}.BITMAP</Link>
               <span className="text-bitcoin">{formatSats(p.listedSats)}</span>
-              <BuyButton offerId={p.listedOfferId!} priceSats={p.listedSats!} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term whitespace-nowrap !px-2 !py-1" />
+              <BuyButton offerId={p.listedOfferId!} priceSats={p.listedSats!} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term col-span-3 whitespace-nowrap !px-2 !py-1 sm:col-span-1 sm:col-start-auto" />
             </li>
           ))}
         </ol>
