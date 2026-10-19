@@ -324,6 +324,12 @@ export function SiteHeader() {
                     <span className="label text-bitcoin">READY</span>
                   </div>
                 ) : null}
+                {group.id === "account" ? (
+                  <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3 min-[420px]:hidden">
+                    <span className="label">THEME</span>
+                    <ThemeToggle />
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
