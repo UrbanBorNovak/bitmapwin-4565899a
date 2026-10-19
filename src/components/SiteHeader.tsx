@@ -4,7 +4,7 @@ import {
   Layers, Sparkles, Globe, Swords, Radio, BookOpen, Building2, ArrowLeftRight, Backpack,
   Map as MapIcon, CalendarClock, History, Gift, Home, Users, Rocket, PenTool, Shield, Package,
   TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
-  FileText, Terminal, Wrench, ArrowRight, type LucideIcon,
+  FileText, Terminal, Wrench, ArrowRight, Clapperboard, type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
@@ -28,7 +28,7 @@ const ITEM_ICONS: Record<string, LucideIcon> = {
   "/explore": TrendingUp, "/codex": Library, "/ranks": Trophy, "/experiences": Boxes, "/builders": HardHat,
   "/world-stats": BarChart3, "/archaeology": Pickaxe, "/my-land": MapIcon, "/passport": IdCard,
   "/ownership": BadgeCheck, "/sdk": Code2, "/docs": FileText, "/api": Terminal, "/dev-tools": Wrench,
-  "/forge": Hammer, "/create": Sparkles, "/parcel": MapIcon, "/tools": Wrench,
+  "/forge": Hammer, "/watch": Clapperboard, "/create": Sparkles, "/parcel": MapIcon, "/tools": Wrench,
 };
 function ItemIcon({ to, active }: { to: string; active: boolean }) {
   const I = ITEM_ICONS[to] ?? ArrowRight;
@@ -81,6 +81,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/parcel", label: "PARCEL STUDIO", note: "Map and inscribe the real parcels of a BITMAP" },
       { to: "/clips", label: "BITMAP CLIPS", note: "Turn a BITMAP into a 3D video (by @bitlodo)" },
       { to: "/toon", label: "TOON STUDIO", note: "Script cartoon episodes starring your Guardians" },
+      { to: "/watch", label: "TOON CINEMA", note: "Watch cartoon episodes starring BITMAP Guardians" },
       { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians and inscribe their pet" },
       { to: "/kennels", label: "PARCEL FOUNDRY", note: "One Land Forge Outpost per transaction parcel" },
       { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
