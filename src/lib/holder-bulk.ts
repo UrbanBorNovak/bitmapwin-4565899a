@@ -56,6 +56,13 @@ export function ladderPrice(baseSats: number, n: number, stepPct: number): numbe
   return Math.max(DUST_SATS, Math.round(baseSats * Math.pow(1 + stepPct / 100, n)));
 }
 
+/** A typed price counts only as whole, finite sats at or above dust; anything else is no price. */
+export function validSats(v: string | undefined): number | null {
+  if (!v || !/^\s*\d+\s*$/.test(v)) return null;
+  const n = Number(v);
+  return Number.isSafeInteger(n) && n >= DUST_SATS ? n : null;
+}
+
 export type PriceMode = "ev" | "evlow" | "evhigh" | "uniform" | "floor" | "under1";
 export type EvLike = { low: number; mid: number; high: number; fallback: boolean } | null;
 
@@ -68,10 +75,11 @@ export type EvLike = { low: number; mid: number; high: number; fallback: boolean
 export function planPrice(o: {
   mode: PriceMode; override?: string | undefined; uniform?: string | undefined; ev: EvLike; floorSats: number | null; ladder: number; rung: number;
 }): { price: number | null; manual: boolean; needsChoice: boolean; usedRung: boolean } {
-  if (o.override && Number(o.override) > 0) return { price: Math.round(Number(o.override)), manual: true, needsChoice: false, usedRung: false };
+  const ov = validSats(o.override);
+  if (ov !== null) return { price: ov, manual: true, needsChoice: false, usedRung: false };
   const needsChoice = o.mode !== "uniform" && (!o.ev || o.ev.fallback);
   let price: number | null = null;
-  if (o.mode === "uniform") price = Number(o.uniform) > 0 ? Math.round(Number(o.uniform)) : null;
+  if (o.mode === "uniform") price = validSats(o.uniform);
   else if (needsChoice) price = null;
   else if (o.mode === "ev" || o.mode === "evlow" || o.mode === "evhigh") price = o.mode === "ev" ? o.ev!.mid : o.mode === "evlow" ? o.ev!.low : o.ev!.high;
   else if (o.floorSats) price = matchPrice(o.floorSats, o.mode);

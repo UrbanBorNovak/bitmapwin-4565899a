@@ -42,3 +42,23 @@ describe("bulk list: confirmed prices never change", () => {
           }
       });
 });
+
+describe("bulk list: Same Price is confirmation only with a valid price", () => {
+  const evOk = evFor(3);
+  for (const n of [0, 1, 2])
+    it(`valid 250000 lists a BITMAP with ${n} comparable sale(s) exactly`, () => {
+      const r = planPrice({ mode: "uniform", uniform: "250000", ev: evFor(n), floorSats: FLOOR, ladder: 0, rung: 0 });
+      expect(r.price).toBe(250_000);
+      expect(r.needsChoice).toBe(false);
+    });
+  for (const bad of [undefined, "", " ", "0", "-5", "-250000", "abc", "12abc", "1.5", "1e6", "Infinity", "NaN", "545", "99999999999999999999"])
+    for (const ev of [evFor(0), evOk])
+      it(`Same Price ${JSON.stringify(bad)} never reaches signing (${ev?.fallback ? "thin" : "sampled"})`, () => {
+        for (const ladder of [0, 2, 10])
+          expect(planPrice({ mode: "uniform", uniform: bad, ev, floorSats: FLOOR, ladder, rung: 2 }).price).toBeNull();
+      });
+  it("invalid per-BITMAP prices are not confirmations either", () => {
+    for (const bad of ["0", "-5", "abc", "Infinity", "545"])
+      expect(planPrice({ mode: "floor", override: bad, ev: evFor(1), floorSats: FLOOR, ladder: 0, rung: 0 }).price).toBeNull();
+  });
+});
