@@ -7,7 +7,7 @@ import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
-import { CITADEL_TEASER } from "@/lib/toon-teaser";
+import { CITADEL_TEASER, PIXELS_HOMECOMING } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
 
@@ -223,6 +223,9 @@ function ToonPage() {
               <button className="btn-term-ghost" disabled={recording} onClick={() => {
                 if (window.confirm("Replace your current episode with the Guardians of the Citadel teaser? Unsaved changes to this episode will be lost.")) load(structuredClone(CITADEL_TEASER));
               }}>[ LOAD TEASER ]</button>
+              <button className="btn-term-ghost" disabled={recording} onClick={() => {
+                if (window.confirm("Replace your current episode with the BITMAP Pixels: Coming Home trailer? Unsaved changes to this episode will be lost.")) load(structuredClone(PIXELS_HOMECOMING));
+              }}>[ PIXELS TRAILER ]</button>
               <button className="btn-term-ghost" onClick={() => load({ ...episode, aspect: vertical ? "16:9" : "9:16" })}>[ {vertical ? "16:9 TV" : "9:16 REEL"} ]</button>
             </div>
           </section>
