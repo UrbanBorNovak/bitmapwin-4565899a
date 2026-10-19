@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Object3D, type Group, type InstancedMesh } from "react-three-fiber-types-shim";
+import { Object3D, type Group, type InstancedMesh } from "three";
 
 /** Deterministic pseudo-random so the set is identical every play, scrub and export. */
 function rng(seed: number) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; }; }
