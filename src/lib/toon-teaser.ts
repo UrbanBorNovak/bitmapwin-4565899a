@@ -1,3 +1,4 @@
+import type { VfxCue } from "@/lib/toon-vfx";
 import type { ToonEpisode } from "@/lib/toon-script";
 
 /** Ready-made story teaser travelling across real inscribed Forge builds (715093 → 819245 → 486145 → 208) with Guardians 840000 and 208. */
@@ -105,6 +106,21 @@ const sol = (skin: "camo" | "hoodie" | "midnight" | "gold", name: string, x: num
 const B = { block: 0, set: "beach" as const };
 
 /** Original 3-minute voxel short: a fictional squad lands on a stormy beach. General WWII-style setting only; no real people or events depicted. */
+const BEACH_FX: VfxCue[][] = [
+  [{ id: "bitmapwin/rain-v1", at: 0 }, { id: "bitmapwin/blast-v1", at: 4, x: 30, z: -12, scale: 2 }],
+  [{ id: "bitmapwin/rain-v1", at: 0 }, { id: "bitmapwin/blast-v1", at: 6, x: -25, z: 8, scale: 2 }],
+  [{ id: "bitmapwin/blast-v1", at: 3, x: 20, z: 0, scale: 1.6 }, { id: "bitmapwin/sparks-v1", at: 8, x: 0, y: 3, z: 0 }],
+  [{ id: "bitmapwin/smoke-v1", at: 0, z: -6 }, { id: "bitmapwin/muzzle-v1", at: 5, x: -12, y: 8, z: -40, scale: 3 }],
+  [{ id: "bitmapwin/smoke-v1", at: 0 }, { id: "bitmapwin/blast-v1", at: 9, x: -30, z: -6, scale: 1.8 }],
+  [{ id: "bitmapwin/embers-v1", at: 0 }],
+  [{ id: "bitmapwin/smoke-v1", at: 0, scale: 1.5 }, { id: "bitmapwin/sparks-v1", at: 6, x: 10, y: 4, z: -20 }],
+  [{ id: "bitmapwin/smoke-v1", at: 0, scale: 2 }],
+  [{ id: "bitmapwin/dust-v1", at: 2, z: -10, scale: 3 }, { id: "bitmapwin/blast-v1", at: 10, x: 25, z: -30, scale: 1.5 }],
+  [{ id: "bitmapwin/embers-v1", at: 0 }, { id: "bitmapwin/muzzle-v1", at: 4, x: 0, y: 8, z: -55, scale: 3 }],
+  [{ id: "bitmapwin/embers-v1", at: 0 }],
+  [{ id: "bitmapwin/rain-v1", at: 0, scale: 0.6 }],
+];
+
 export const BEACH_LANDING: ToonEpisode = {
   title: "TIDE OF IRON", aspect: "16:9", music: "tension", voices: true, style: "ghibli",
   scenes: [
@@ -182,3 +198,5 @@ export const BEACH_LANDING: ToonEpisode = {
       ] },
   ],
 };
+
+BEACH_LANDING.scenes.forEach((s, i) => { s.fx = BEACH_FX[i]; });
