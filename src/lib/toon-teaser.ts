@@ -232,6 +232,6 @@ export const TRANSMISSION: ToonEpisode = {
       lines: [{ at: 3, dur: 5, speaker: 0, text: "Warm. The sky is so wide here.", style: "speech", cam: "close" }] },
     { ...O, duration: 12, shot: "wide", transition: "fade",
       cast: [ian(0, -6, "dance")],
-      lines: [{ at: 4, dur: 6, speaker: 0, text: "For Ian Curtis, 1956–1980. A fan tribute.", style: "thought", cam: "close" }] },
+      lines: [{ at: 1, dur: 4, speaker: 0, text: "For Ian Curtis, 1956–1980. A fan tribute.", style: "thought", cam: "close" }] },
   ],
 };
