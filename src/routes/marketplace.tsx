@@ -660,7 +660,7 @@ function Marketplace() {
         </aside>
 
         <section data-tour="market-grid" className="lg:col-span-9">
-          <FloorSweeper listed={tab === "listed" ? visible : listed} />
+          <FloorSweeper listed={tab === "inhabited" ? listed : visible.filter((p) => p.listedSats !== null)} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
               READING THE REGISTRY FROM CHAIN…
