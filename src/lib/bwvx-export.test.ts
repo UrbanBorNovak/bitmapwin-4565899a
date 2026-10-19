@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -6,6 +5,15 @@ import { BWVX_LOADER_JS, bwvxBoxes, exportGlb } from "./bwvx-export";
 import { encodeBuild, encodeBuildV2 } from "./voxel-populate";
 import { BLOCKS } from "./voxel-world";
 import type { TplBlock } from "./voxel-templates";
+
+// GLTFExporter's binary path uses FileReader; Node has Blob but not FileReader.
+if (typeof (globalThis as { FileReader?: unknown }).FileReader === "undefined") {
+  (globalThis as Record<string, unknown>).FileReader = class {
+    result: unknown = null; onloadend: (() => void) | null = null;
+    readAsArrayBuffer(b: Blob) { void b.arrayBuffer().then((r) => { this.result = r; this.onloadend?.(); }); }
+    readAsDataURL(b: Blob) { void b.arrayBuffer().then((r) => { this.result = `data:${b.type};base64,${Buffer.from(r).toString("base64")}`; this.onloadend?.(); }); }
+  };
+}
 
 // Fixture: 4×3×2 stone slab + a gold pillar of 3 + one glass voxel at (10,0,10).
 const fixture: TplBlock[] = [];
