@@ -83,7 +83,7 @@ export function BwvxTryViewer() {
           <button type="button" data-testid="bwvx-try-glb" disabled={busy} onClick={() => void download()} className="rounded border border-border px-3 py-1 font-mono text-xs hover:bg-card disabled:opacity-50">DOWNLOAD .GLB</button>
         </div>
         <p aria-live="polite" className="font-mono text-xs">
-          {status.kind === "ok" && <span data-testid="bwvx-try-ok" data-boxes={status.boxes} className="text-accent">LOADED · {status.boxes} BOXES · 1 DRAW CALL</span>}
+          {status.kind === "ok" && <span data-testid="bwvx-try-ok" data-boxes={status.boxes} className="text-foreground">LOADED · {status.boxes} BOXES · 1 DRAW CALL</span>}
           {status.kind === "error" && <span role="alert" data-testid="bwvx-try-error" className="text-destructive">{status.message}</span>}
         </p>
       </div>
