@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export type HuntTarget = { id: string; label: string; price: number; hot?: boolean; parcels?: { x: number; y: number; size: number }[]; grid?: number };
+export type HuntTarget = { id: string; label: string; price: number; hot?: boolean; parcels?: { x: number; y: number; size: number }[] | undefined; grid?: number | undefined };
 
 /** Procedural cyber-spider that patrols real listings: walks to each node, scans it, pounces on matches. Visual only. */
 export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; running: boolean }) {
