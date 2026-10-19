@@ -32,7 +32,8 @@ export function BulkListBar({
   const wallet = useWalletSession();
   const qc = useQueryClient();
   const asks = useQuery(openOffersQuery());
-  const [mode, setMode] = useState<"uniform" | "floor" | "under1">("floor");
+  const [mode, setMode] = useState<"ev" | "evlow" | "evhigh" | "uniform" | "floor" | "under1">("ev");
+  const [ladder, setLadder] = useState(0);
   const [uniform, setUniform] = useState("");
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Record<string, Status>>({});
@@ -40,24 +41,42 @@ export function BulkListBar({
   const [confirmRisk, setConfirmRisk] = useState(false);
   const stop = useRef(false);
   const skip = useRef(false);
+  const sales = useQuery({
+    queryKey: ["ev-sales"],
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trades")
+        .select("bitmap_height, price_sats, block_time")
+        .gt("price_sats", 0)
+        .order("block_height", { ascending: false, nullsFirst: false })
+        .limit(2000);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const plan = useMemo(
-    () =>
-      items.map((b) => {
-        const floor = suggestFloor(b.bitmapHeight, asks.data ?? [], wallet?.ordinalsAddress ?? "");
-        const ov = overrides[b.outpoint];
-        let price: number | null = null;
-        if (ov && Number(ov) > 0) price = Math.round(Number(ov));
-        else if (mode === "uniform") price = Number(uniform) > 0 ? Math.round(Number(uniform)) : null;
-        else if (floor) price = matchPrice(floor.floorSats, mode);
-        if (price !== null && price < DUST_SATS) price = null;
-        const c = checks.get(b.bitmapHeight);
-        const guards = listingGuards(b.bitmapHeight, !!c && c.status !== "unverified");
-        const lowball = price !== null && isFarBelowFloor(price, floor?.floorSats ?? null);
-        return { b, floor, price, guards, lowball, offer: openByOutpoint.get(b.outpoint) ?? null };
-      }),
-    [items, asks.data, wallet?.ordinalsAddress, overrides, mode, uniform, checks, openByOutpoint],
-  );
+  const plan = useMemo(() => {
+    let rung = 0;
+    return items.map((b) => {
+      const floor = suggestFloor(b.bitmapHeight, asks.data ?? [], wallet?.ordinalsAddress ?? "");
+      const ev = sales.data ? computeEv(b.bitmapHeight, sales.data) : null;
+      const ov = overrides[b.outpoint];
+      let price: number | null = null;
+      let manual = false;
+      if (ov && Number(ov) > 0) { price = Math.round(Number(ov)); manual = true; }
+      else if (mode === "uniform") price = Number(uniform) > 0 ? Math.round(Number(uniform)) : null;
+      else if (mode === "ev" || mode === "evlow" || mode === "evhigh") price = ev ? (mode === "ev" ? ev.mid : mode === "evlow" ? ev.low : ev.high) : null;
+      else if (floor) price = matchPrice(floor.floorSats, mode);
+      if (price !== null && !manual && ladder > 0) price = ladderPrice(price, rung++, ladder);
+      if (price !== null && price < DUST_SATS) price = null;
+      const c = checks.get(b.bitmapHeight);
+      const guards = listingGuards(b.bitmapHeight, !!c && c.status !== "unverified");
+      const ref = ev?.mid ?? floor?.floorSats ?? null;
+      const lowball = price !== null && isFarBelowFloor(price, ref);
+      return { b, floor, ev, price, guards, lowball, offer: openByOutpoint.get(b.outpoint) ?? null };
+    });
+  }, [items, asks.data, sales.data, wallet?.ordinalsAddress, overrides, mode, uniform, ladder, checks, openByOutpoint]);
 
   const listable = plan.filter((p) => p.price !== null);
   const risky = listable.filter((p) => p.guards.length > 0 || p.lowball);
