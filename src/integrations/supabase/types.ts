@@ -1514,6 +1514,30 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_channels: {
+        Row: {
+          tiktok: string
+          updated_at: string
+          user_id: string
+          x: string
+          youtube: string
+        }
+        Insert: {
+          tiktok?: string
+          updated_at?: string
+          user_id: string
+          x?: string
+          youtube?: string
+        }
+        Update: {
+          tiktok?: string
+          updated_at?: string
+          user_id?: string
+          x?: string
+          youtube?: string
+        }
+        Relationships: []
+      }
       crew_stash: {
         Row: {
           count: number

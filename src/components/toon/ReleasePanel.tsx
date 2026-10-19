@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { youtubeChaptersValid, channelUrl, cleanHandle, loadChannels, releaseDescription, releaseTitle, saveChannels, UPLOAD_URL, type Channels, type Platform } from "@/lib/release-kit";
+import { useAuthSession } from "@/lib/auth";
+import { fetchAccountChannels, saveAccountChannels, youtubeChaptersValid, channelUrl, cleanHandle, loadChannels, releaseDescription, releaseTitle, saveChannels, UPLOAD_URL, type Channels, type Platform } from "@/lib/release-kit";
 
 const TABS: { id: Platform; label: string; aspect: "16:9" | "9:16" }[] = [
   { id: "youtube", label: "YOUTUBE", aspect: "16:9" },
@@ -14,7 +15,22 @@ const TABS: { id: Platform; label: string; aspect: "16:9" | "9:16" }[] = [
 export function ReleasePanel({ episode, file, onAspect }: { episode: ToonEpisode; file?: File | null; onAspect?: (a: "16:9" | "9:16") => void }) {
   const [tab, setTab] = useState<Platform>("youtube");
   const [ch, setCh] = useState<Channels>({ youtube: "", tiktok: "", x: "" });
+  const { user } = useAuthSession();
+  const [sync, setSync] = useState<"local" | "loading" | "saved" | "saving" | "error">("local");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => setCh(loadChannels()), []);
+  useEffect(() => {
+    if (!user) { setSync("local"); return; }
+    let live = true; setSync("loading");
+    fetchAccountChannels(user.id).then(async (acc) => {
+      if (!live) return;
+      const local = loadChannels();
+      if (acc && (acc.youtube || acc.tiktok || acc.x)) { setCh(acc); saveChannels(acc); }
+      else if (local.youtube || local.tiktok || local.x) await saveAccountChannels(user.id, local);
+      if (live) setSync("saved");
+    }).catch(() => live && setSync("error"));
+    return () => { live = false; };
+  }, [user?.id]);
   const meta = TABS.find((t) => t.id === tab)!;
   const title = releaseTitle(episode, tab);
   const desc = releaseDescription(episode, tab, ch);
@@ -22,7 +38,11 @@ export function ReleasePanel({ episode, file, onAspect }: { episode: ToonEpisode
   const aspectOk = (episode.aspect ?? "16:9") === meta.aspect;
 
   const copy = async (s: string, what: string) => { await navigator.clipboard.writeText(s); toast(`${what} COPIED`); };
-  const setField = (k: keyof Channels, v: string) => { const n = { ...ch, [k]: v }; setCh(n); saveChannels(n); };
+  const setField = (k: keyof Channels, v: string) => { const n = { ...ch, [k]: v }; setCh(n); saveChannels(n);
+    if (!user) return;
+    setSync("saving"); if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => { saveAccountChannels(user.id, n).then(() => setSync("saved"), () => setSync("error")); }, 700);
+  };
   const share = async () => {
     if (file && navigator.canShare?.({ files: [file] })) {
       try { await navigator.share({ files: [file], title, text: desc.slice(0, 500) }); toast("VIDEO HANDED TO YOUR SHARE SHEET"); return; }
@@ -57,7 +77,11 @@ export function ReleasePanel({ episode, file, onAspect }: { episode: ToonEpisode
       <p className="mt-2 text-muted-foreground">{file ? `READY: ${file.name} (${kind}). ` : "Export the video first. "}Nothing is posted for you — you choose the file and press post on {tab === "tiktok" ? "TikTok" : tab === "x" ? "X" : "YouTube"} yourself.</p>
 
       <div className="label mt-4 text-signal">YOUR CHANNELS</div>
-      <p className="mt-1 text-muted-foreground">Saved on this device and added as creator credits.</p>
+      <p className="mt-1 text-muted-foreground" role="status">{
+        sync === "local" ? <>Saved on this device only. <a href="/auth" className="text-bitcoin hover:underline">Sign in</a> to keep them on every device.</>
+        : sync === "loading" ? "Loading from your account…" : sync === "saving" ? "Saving to your account…"
+        : sync === "error" ? <span className="text-destructive">Couldn't reach your account — kept on this device for now.</span>
+        : "Saved to your account — available on every device you sign in on."} Added as creator credits.</p>
       {(["youtube", "tiktok", "x"] as const).map((k) => (
         <div key={k} className="mt-2 flex items-center gap-2">
           <span className="w-16">{k.toUpperCase()}</span>

@@ -75,3 +75,18 @@ export const UPLOAD_URL: Record<Platform, string> = {
   tiktok: "https://www.tiktok.com/upload",
   x: "https://x.com/compose/post",
 };
+
+/** Signed-in sync: channels live in creator_channels (owner-only rows), stored as clean @handles. */
+export async function fetchAccountChannels(userId: string): Promise<Channels | null> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data, error } = await supabase.from("creator_channels").select("youtube, tiktok, x").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data ? { youtube: data.youtube, tiktok: data.tiktok, x: data.x } : null;
+}
+
+export async function saveAccountChannels(userId: string, c: Channels): Promise<void> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const row = { user_id: userId, youtube: cleanHandle(c.youtube), tiktok: cleanHandle(c.tiktok), x: cleanHandle(c.x), updated_at: new Date().toISOString() };
+  const { error } = await supabase.from("creator_channels").upsert(row);
+  if (error) throw error;
+}
