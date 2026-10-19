@@ -117,7 +117,7 @@ export function SiteFooter() {
             PROPS TO <span className="text-bitcoin">DEV9</span> · <span className="text-signal">BOP</span> · <span className="text-bitcoin">BILL</span> · <span className="text-bitcoin">9</span> · <span className="text-foreground">TORNADO H. THOMPSON</span> · <span className="text-signal">ELEVATED DABBER</span> · <span className="text-foreground">BITLODO</span> · <span className="text-foreground">MONONAUT</span> · <span className="text-foreground">BITMAP SUNSET</span>
             <br />BUILT WITH LOVE FOR THE BITMAP COMMUNITY
             <br />
-            <span className="text-bitcoin mt-1.5 inline-block">BITMAPS TRULY, URBAN</span>
+            <span className="text-bitcoin mt-1.5 inline-block italic">BITMAPS TRULY, URBAN</span>
           </div>
         </div>
       </div>
