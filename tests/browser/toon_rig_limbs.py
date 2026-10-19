@@ -30,7 +30,8 @@ async def main():
     await pg.add_style_tag(content="[role=dialog]{display:none!important}")
     await pg.get_by_label("Episode script").fill(json.dumps(EP))
     await pg.get_by_role("button", name="[ APPLY SCRIPT ]").click()
-    st = pg.locator("canvas").first; tl = pg.get_by_label("Timeline", exact=True)
+    await pg.evaluate("""()=>{let best=null,a=0;for(const c of document.querySelectorAll('canvas')){const r=c.getBoundingClientRect();if(r.width*r.height>a&&(c.getContext('webgl2')||c.getContext('webgl'))){a=r.width*r.height;best=c}}document.querySelectorAll('canvas').forEach(c=>c.removeAttribute('data-stage'));best&&best.setAttribute('data-stage','1')}""")
+    st = pg.locator("canvas[data-stage]"); tl = pg.get_by_label("Timeline", exact=True)
     async def shot(t, name):
       await tl.fill(f"{t:g}"); await pg.wait_for_timeout(1200); f = str(S / f"{name}.png"); await st.screenshot(path=f); return f
     await shot(0.5, "warm")
@@ -56,7 +57,8 @@ async def main():
     await pg.add_style_tag(content="[role=dialog]{display:none!important}")
     await pg.wait_for_timeout(3000)
     await pg.get_by_role("button", name=re.compile(r"\[ ▶ PLAY \]")).click()
-    w = pg.locator("canvas").first
+    await pg.evaluate("""()=>{let best=null,a=0;for(const c of document.querySelectorAll('canvas')){const r=c.getBoundingClientRect();if(r.width*r.height>a&&(c.getContext('webgl2')||c.getContext('webgl'))){a=r.width*r.height;best=c}}document.querySelectorAll('canvas').forEach(c=>c.removeAttribute('data-stage'));best&&best.setAttribute('data-stage','1')}""")
+    w = pg.locator("canvas[data-stage]")
     await pg.wait_for_timeout(1500); await w.screenshot(path=str(S / "watch_a.png"))
     await pg.wait_for_timeout(700); await w.screenshot(path=str(S / "watch_b.png"))
     seek = await pg.get_by_label("Seek").input_value(); print("watch seek", seek)
