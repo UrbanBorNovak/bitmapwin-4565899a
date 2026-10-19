@@ -74,3 +74,13 @@ describe("Oasis merge never lets a neighbour overwrite", () => {
     expect(out.map((b) => b.k)).toEqual(["early"]);
   });
 });
+
+describe("display tiles", () => {
+  it("one tile per transaction, even in dense blocks where small parcels own no ground", async () => {
+    const { parcelTiles } = await import("./forge-parcels");
+    const dense = Array.from({ length: 2248 }, (_, i) => (i % 7 === 0 ? 3 : 1));
+    const tiles = parcelTiles(dense, 64);
+    expect(tiles).toHaveLength(2248);
+    for (const t of tiles) { expect(t.x).toBeGreaterThanOrEqual(0); expect(t.x + t.w).toBeLessThanOrEqual(64 + 1e-9); }
+  });
+});

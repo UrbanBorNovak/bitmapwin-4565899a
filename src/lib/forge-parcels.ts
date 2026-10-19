@@ -52,6 +52,19 @@ export function parcelRects(classes: number[] | null | undefined, span = FORGE_S
   return rects;
 }
 
+/**
+ * Display-only tiles: one per transaction at its true (unrounded) Mondrian square on the
+ * canvas, so dense blocks show every parcel even where a tiny one owns no build ground.
+ */
+export type ParcelTile = { index: number; x: number; z: number; w: number; size: number };
+export function parcelTiles(classes: number[] | null | undefined, span = FORGE_SPAN): ParcelTile[] {
+  if (!classes?.length) return [];
+  const { width, height, parcels } = layoutFromSizeClasses(classes);
+  const side = Math.max(width, height), k = span / side;
+  const offX = (side - width) / 2, offY = (side - height) / 2;
+  return parcels.map((p, index) => ({ index, x: (p.position.x + offX) * k, z: (p.position.y + offY) * k, w: p.size * k, size: p.size }));
+}
+
 /** True when the cell lies in the parcel's deed rect AND the parcel owns it. */
 export const inRect = (r: ParcelRect, x: number, z: number) =>
   x >= r.x0 && x < r.x1 && z >= r.z0 && z < r.z1 && r.cells.has(x * r.span + z);

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import { Box3, CanvasTexture, Color, Object3D, SRGBColorSpace, Vector3, type Group, type InstancedMesh, type Sprite } from "three";
-import { blockParcelSizes } from "@/lib/bitmap-layout";
 
 /** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
 const actorHeights = new Map<number, number>();
@@ -70,7 +69,7 @@ function EmoteIcon({ emote, timeRef, slot, scene }: { emote: Emote; timeRef: Mut
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { forgeBuildQuery } from "@/lib/forge";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
-import { parcelRects } from "@/lib/forge-parcels";
+import { parcelTiles } from "@/lib/forge-parcels";
 import { FORGE_SPAN } from "@/lib/voxel-populate";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
@@ -153,19 +152,19 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   );
 }
 
-/** Every real transaction parcel of the block, drawn in one instanced mesh (no culling, no cap). */
+/** Every real transaction parcel of the block at its true Mondrian square, one instanced mesh (no culling, no cap). */
 function ParcelGrid({ classes }: { classes: number[] | undefined }) {
   const ref = useRef<InstancedMesh>(null);
-  const parcels = useMemo(() => parcelRects(classes, FORGE_SPAN).filter((r) => r.cells.size > 0), [classes]);
+  const parcels = useMemo(() => parcelTiles(classes, FORGE_SPAN), [classes]);
   useEffect(() => {
     const m = ref.current;
     if (!m) return;
     const o = new Object3D(), c = new Color();
     parcels.forEach((r, i) => {
-      const w = r.x1 - r.x0, d = r.z1 - r.z0, gap = Math.min(0.12, w * 0.08);
+      const w = r.w, gap = w * 0.1;
       const lift = 0.12 + Math.min(r.size, 5) * 0.05;
-      o.position.set(r.x0 + w / 2 - FORGE_SPAN / 2, lift / 2, r.z0 + d / 2 - FORGE_SPAN / 2);
-      o.scale.set(Math.max(0.05, w - gap), lift, Math.max(0.05, d - gap));
+      o.position.set(r.x + w / 2 - FORGE_SPAN / 2, lift / 2, r.z + w / 2 - FORGE_SPAN / 2);
+      o.scale.set(w - gap, lift, w - gap);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
       m.setColorAt(i, c.set(r.size >= 4 ? "#f7931a" : r.size === 3 ? "#e8a24a" : r.size === 2 ? "#d6b06e" : "#c9a466"));
@@ -186,8 +185,8 @@ function ParcelGrid({ classes }: { classes: number[] | undefined }) {
 function Land({ block }: { block: number }) {
   const sizes = useQuery({ ...blockSizeMapQuery(block), staleTime: Infinity });
   const build = useQuery(forgeBuildQuery(block));
-  // Real size map; while loading or if unavailable, the block's deterministic layout keeps the land true to its height.
-  const classes = useMemo(() => (sizes.data?.classes?.length ? sizes.data.classes : sizes.isFetched ? blockParcelSizes(block, sizes.data?.txCount) : undefined), [sizes.data, sizes.isFetched, block]);
+  // Only the real on-chain size map; if it is unavailable the land stays plain (never invented parcels).
+  const classes = sizes.data?.classes;
   // Guardians perform on an open sand plaza; the land and its build sit just behind them so voxels never swallow the cast.
   const back = build.data?.data ? -(FORGE_SPAN / 2 + 6) : 0;
   return (
