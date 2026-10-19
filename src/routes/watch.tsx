@@ -94,10 +94,12 @@ function WatchPage() {
 
   useEffect(() => {
     if (!playing) return;
-    let raf = 0, last = performance.now();
+    // Absolute clock so slow frames never lose time.
+    let raf = 0;
+    const t0 = timeRef.current, start = performance.now();
     const tick = (now: number) => {
-      const next = timeRef.current + (now - last) / 1000;
-      last = now;
+      const next = t0 + Math.max(0, now - start) / 1000;
+      timeRef.current = next;
       if (next >= total) { setTime(total); setPlaying(false); return; }
       setTime(next);
       raf = requestAnimationFrame(tick);
