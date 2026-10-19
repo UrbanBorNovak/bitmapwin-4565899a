@@ -8,7 +8,7 @@ import { signListingPsbt, signMessageWithWallet, xOnlyPubKeyHex } from "@/lib/br
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
-import { DUST_SATS, isFarBelowFloor, ladderPrice, listingGuards, matchPrice, suggestFloor } from "@/lib/holder-bulk";
+import { isFarBelowFloor, listingGuards, planPrice, suggestFloor } from "@/lib/holder-bulk";
 import { computeEv } from "@/lib/listing-ev";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -63,20 +63,9 @@ export function BulkListBar({
     return items.map((b) => {
       const floor = suggestFloor(b.bitmapHeight, asks.data ?? [], wallet?.ordinalsAddress ?? "");
       const ev = sales.data ? computeEv(b.bitmapHeight, sales.data) : null;
-      const ov = overrides[b.outpoint];
-      let price: number | null = null;
-      let manual = false;
-      if (ov && Number(ov) > 0) { price = Math.round(Number(ov)); manual = true; }
-      // Every automatic preset (EV and floor) needs ≥3 comparable sales; otherwise the seller must confirm.
-      const thin = !ev || ev.fallback;
-      const needsChoice = !manual && mode !== "uniform" && thin;
-      if (ov && Number(ov) > 0) { /* manual price set above */ }
-      else if (mode === "uniform") price = Number(uniform) > 0 ? Math.round(Number(uniform)) : null;
-      else if (needsChoice) price = null;
-      else if (mode === "ev" || mode === "evlow" || mode === "evhigh") price = mode === "ev" ? ev!.mid : mode === "evlow" ? ev!.low : ev!.high;
-      else if (floor) price = matchPrice(floor.floorSats, mode);
-      if (price !== null && !manual && ladder > 0) price = ladderPrice(price, rung++, ladder);
-      if (price !== null && price < DUST_SATS) price = null;
+      const r = planPrice({ mode, override: overrides[b.outpoint], uniform, ev, floorSats: floor?.floorSats ?? null, ladder, rung });
+      if (r.usedRung) rung++;
+      const { price, needsChoice } = r;
       const c = checks.get(b.bitmapHeight);
       const guards = listingGuards(b.bitmapHeight, !!c && c.status !== "unverified");
       const lowball = price !== null && (isFarBelowFloor(price, ev?.mid ?? null) || isFarBelowFloor(price, floor?.floorSats ?? null));
