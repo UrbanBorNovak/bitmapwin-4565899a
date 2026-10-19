@@ -5,6 +5,7 @@ import { LAND_PERMISSIONS, SDK_VERSION } from "@/lib/extenders";
 import { RUNTIME_LIMITS, SDK_MODULES, SDK_TYPES, STARTER_TEMPLATES } from "@/lib/extender-sdk";
 import { ForgeBuildInfographic, GuardianLifecycleInfographic } from "@/components/docs/ProtocolInfographics";
 import { AGENT_TOOLS, BWVX_SPEC } from "@/lib/protocol-sdk";
+import { BWVX_LOADER_JS } from "@/lib/bwvx-export";
 
 export const Route = createFileRoute("/sdk")({
   head: () => {
@@ -102,6 +103,15 @@ function SdkPage() {
           </section>
         ))}
       </div>
+
+      <section className="mt-12 border border-border bg-surface p-5" id="bwvx-loader">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="display text-2xl">BWVXLOADER.JS — ONE DRAW CALL</h2>
+          <button type="button" className="rounded border border-border px-3 py-1 font-mono text-xs hover:bg-card" onClick={() => void navigator.clipboard.writeText(BWVX_LOADER_JS)}>COPY LOADER</button>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">Render any Land Forge payload (BWVX1 or BWVX2) in your own Three.js viewer as a single InstancedMesh. Need Blender or Unreal? Use DOWNLOAD .GLB in Land Forge.</p>
+        <pre className="mt-3 max-h-96 overflow-auto rounded border border-border bg-background p-3 font-mono text-xs"><code>{BWVX_LOADER_JS}</code></pre>
+      </section>
 
       <section className="mt-12">
         <div className="flex flex-wrap items-center justify-between gap-2">
