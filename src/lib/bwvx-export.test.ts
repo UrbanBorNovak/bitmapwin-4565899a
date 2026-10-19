@@ -8,7 +8,7 @@ import type { TplBlock } from "./voxel-templates";
 
 // GLTFExporter's binary path uses FileReader; Node has Blob but not FileReader.
 if (typeof (globalThis as { FileReader?: unknown }).FileReader === "undefined") {
-  (globalThis as Record<string, unknown>).FileReader = class {
+  (globalThis as Record<string, unknown>)["FileReader"] = class {
     result: unknown = null; onloadend: (() => void) | null = null;
     readAsArrayBuffer(b: Blob) { void b.arrayBuffer().then((r) => { this.result = r; this.onloadend?.(); }); }
     readAsDataURL(b: Blob) { void b.arrayBuffer().then((r) => { this.result = `data:${b.type};base64,${Buffer.from(r).toString("base64")}`; this.onloadend?.(); }); }
