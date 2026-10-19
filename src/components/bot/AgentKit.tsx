@@ -105,6 +105,8 @@ function Copy({ text, label }: { text: string; label: string }) {
 }
 
 export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport = false }: { maxSats?: number; maxHeight?: number; showExport?: boolean }) {
+  const [client, setClient] = useState("Claude");
+  const cfg = CLIENT_CONFIGS[client]!;
   const download = () => {
     const blob = new Blob([agentScript(maxSats, maxHeight)], { type: "text/plain" });
     const a = document.createElement("a");
