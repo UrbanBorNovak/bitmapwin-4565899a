@@ -23,7 +23,7 @@ describe("forge delegate metadata", () => {
   });
   it("recognises both the V2 and original V1 master delegates", () => {
     expect(isForgeMasterDelegate(FORGE_MASTER_DELEGATE_ID)).toBe(true);
-    expect(isForgeMasterDelegate("adc48ccd" + "0".repeat(56) + "c827i0")).toBe(true);
+    expect(isForgeMasterDelegate("adc48ccd" + "0".repeat(52) + "c827i0")).toBe(true);
     expect(isForgeMasterDelegate("4bf943b16b00addd1d667dea9df048a05ad9146687893002cb21b2d0c075075di0")).toBe(false);
     expect(isForgeMasterDelegate(null)).toBe(false);
   });
