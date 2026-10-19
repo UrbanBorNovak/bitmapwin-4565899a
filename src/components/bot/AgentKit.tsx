@@ -10,6 +10,16 @@ export const MCP_CONFIG = JSON.stringify(
   2,
 );
 
+// Each app reads a slightly different config shape.
+export const CLIENT_CONFIGS: Record<string, { where: string; text: string }> = {
+  Claude: { where: "Terminal (Claude Code)", text: `claude mcp add --transport http bitmapwin ${SITE}/mcp` },
+  Cursor: { where: "~/.cursor/mcp.json", text: MCP_CONFIG },
+  Codex: { where: "~/.codex/config.toml", text: `[mcp_servers.bitmapwin]\nurl = "${SITE}/mcp"` },
+  Copilot: { where: ".vscode/mcp.json", text: JSON.stringify({ servers: { bitmapwin: { type: "http", url: `${SITE}/mcp` } } }, null, 2) },
+  Cline: { where: "Cline MCP settings", text: JSON.stringify({ mcpServers: { bitmapwin: { type: "streamableHttp", url: `${SITE}/mcp` } } }, null, 2) },
+  Windsurf: { where: "~/.codeium/windsurf/mcp_config.json", text: JSON.stringify({ mcpServers: { bitmapwin: { serverUrl: `${SITE}/mcp` } } }, null, 2) },
+};
+
 const INSTALL = "npx @secretkeylabs/xverse-agent-wallet --install";
 
 // The only wallet command the exported agent may run. Read-only.
