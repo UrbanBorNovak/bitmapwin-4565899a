@@ -106,3 +106,25 @@ describe("bulk list: an active signing queue is frozen", () => {
     expect(confirmKey([item("a:0", 250_000), item("b:0", 600)])).not.toBe(ok);
   });
 });
+
+import { retryQueue } from "./holder-bulk";
+describe("bulk list: retries after cancel or rejection", () => {
+  const item = (o: string, price: number | null) => ({ b: { outpoint: o }, price });
+  it("completed items are never queued again at the same price", () => {
+    // Run 1: a done, b rejected, c cancelled.
+    const listed = { "a:0": 250_000 };
+    const q = retryQueue([item("a:0", 250_000), item("b:0", 131_112), item("c:0", 129_800)], listed);
+    expect(q.map((x) => x.outpoint)).toEqual(["b:0", "c:0"]);
+  });
+  it("a retry uses the current prices, never the ones from the failed run", () => {
+    const q = retryQueue([item("b:0", 140_000), item("c:0", null)], {});
+    expect(q).toEqual([{ outpoint: "b:0", price: 140_000 }]);
+  });
+  it("only a deliberately changed price relists a completed item", () => {
+    expect(retryQueue([item("a:0", 260_000)], { "a:0": 250_000 })).toEqual([{ outpoint: "a:0", price: 260_000 }]);
+  });
+  it("a warning tick from the failed run doesn't cover the retry", () => {
+    const before = confirmKey([item("b:0", 131_112)]);
+    expect(confirmKey([item("b:0", 140_000)])).not.toBe(before);
+  });
+});
