@@ -1,32 +1,29 @@
 import { Component, Suspense, useEffect, useMemo, useRef, type MutableRefObject, type ReactNode } from "react";
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
-import { DEFAULT_AVATAR_MODEL } from "@/lib/map-identity";
+import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
+import { rigClipFor, rigGesture } from "@/lib/toon-avatars";
 
 const MODEL_URL = `https://ordinals.com/content/${DEFAULT_AVATAR_MODEL}`;
 /** Same body height as the voxel avatars, so framing and bubbles stay put. */
 const RIG_HEIGHT = 1.25;
 const skinUrl = (id: string, attempt: number) => `/api/public/inscription/${id}${attempt ? `?retry=${attempt}` : ""}`;
 
-/** Pick the rig's own baked clip for a toon pose (same idea as the Oasis clipFor). */
-function clipForPose(names: string[], pose: string, moving: boolean): string | undefined {
-  const find = (re: RegExp) => names.find((n) => re.test(n));
-  if (moving || pose === "walk") return find(/walk|run/i) ?? names[0];
-  if (pose === "jump") return find(/jump|fall/i) ?? find(/idle|stand/i) ?? names[0];
-  if (pose === "dance") return find(/dance/i) ?? find(/walk/i) ?? names[0];
-  if (pose === "combat") return find(/attack|punch|fight/i) ?? find(/run|walk/i) ?? find(/idle|stand/i) ?? names[0];
-  if (pose === "wave") return find(/wave/i) ?? find(/idle|stand/i) ?? names[0];
-  return find(/idle|stand/i) ?? names[0];
-}
-
-/** The canonical on-chain GLB rig wearing a BITMAP Pixel inscription on its own UVs — the Oasis pipeline. */
-function Rig({ inscriptionId, pose, movingRef, attempt }: { inscriptionId: string; pose: string; movingRef: MutableRefObject<boolean>; attempt: number }) {
+/** The canonical on-chain GLB rig wearing a BITMAP Pixel inscription on its own UVs — the Oasis pipeline.
+ * Poses play the rig's baked skeletal clips; gestures it never baked are layered onto its own arm/head bones. */
+function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscriptionId: string; tint?: string; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number>; attempt: number }) {
   const gltf = useGLTF(MODEL_URL);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions, names } = useAnimations(gltf.animations, scene);
+  const { actions, names, mixer } = useAnimations(gltf.animations, scene);
   const texture = useTexture(skinUrl(inscriptionId, attempt));
+  const bones = useMemo(() => {
+    const by = (n: string) => scene.getObjectByName(n) ?? null;
+    // Armature names are mirrored ("Arm.L" sits under "RightArm"); use the deforming bones.
+    return { armL: by("Arm.L"), armR: by("Arm.R"), head: by("Head") };
+  }, [scene]);
 
   useEffect(() => {
     texture.flipY = false;
@@ -39,7 +36,7 @@ function Rig({ inscriptionId, pose, movingRef, attempt }: { inscriptionId: strin
     const made: THREE.Material[] = [];
     const paint = (source: THREE.Material) => {
       const m = source.clone() as THREE.MeshStandardMaterial;
-      m.map = texture; m.color = new THREE.Color("#ffffff");
+      m.map = texture; m.color = new THREE.Color(tint ?? "#ffffff");
       m.metalness = 0; m.roughness = 0.85; m.envMapIntensity = 0.25;
       m.transparent = false; m.depthWrite = true; m.alphaTest = 0.5; m.side = THREE.FrontSide;
       m.needsUpdate = true; made.push(m);
@@ -52,7 +49,7 @@ function Rig({ inscriptionId, pose, movingRef, attempt }: { inscriptionId: strin
       mesh.material = Array.isArray(mesh.material) ? mesh.material.map(paint) : paint(mesh.material);
     });
     return () => made.forEach((m) => m.dispose());
-  }, [scene, texture]);
+  }, [scene, texture, tint]);
 
   const fitted = useMemo(() => {
     scene.updateMatrixWorld(true);
@@ -61,16 +58,20 @@ function Rig({ inscriptionId, pose, movingRef, attempt }: { inscriptionId: strin
     return { fit: RIG_HEIGHT / Math.max(size.y, 0.0001), c, minY: b.min.y };
   }, [scene]);
 
-  // Cross-fade between baked clips; re-check movement a few times a second (cheap, no per-frame React work).
+  // Cross-fade between baked clips (Oasis style: stop every other clip so bones never fight).
   const active = useRef<THREE.AnimationAction | null>(null);
   const moving = useRef(false);
   useEffect(() => {
     const apply = () => {
-      const name = clipForPose(names, pose, moving.current);
-      const next = name ? actions[name] : null;
-      if (!next || next === active.current) return;
-      next.reset().setLoop(pose === "jump" ? THREE.LoopRepeat : THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
+      const pick = rigClipFor(names, pose, moving.current);
+      const next = pick.name ? actions[pick.name] : null;
+      if (!next) return;
+      next.setEffectiveTimeScale(pick.speed);
+      if (next === active.current) return;
+      next.enabled = true;
+      next.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
       if (active.current) active.current.crossFadeTo(next, 0.2, false);
+      for (const [k, a] of Object.entries(actions)) if (a && a !== next && a !== active.current && k) a.stop();
       active.current = next;
     };
     apply();
@@ -79,6 +80,16 @@ function Rig({ inscriptionId, pose, movingRef, attempt }: { inscriptionId: strin
     }, 150);
     return () => clearInterval(id);
   }, [actions, names, pose, movingRef]);
+
+  // After the mixer writes the clip pose, layer the gesture onto the real bones.
+  const q = useMemo(() => new THREE.Quaternion(), []), ax = useMemo(() => new THREE.Vector3(1, 0, 0), []);
+  useFrame(() => {
+    mixer.update(0); // make sure this frame's clip pose is applied before layering
+    const g = rigGesture(pose, timeRef?.current ?? performance.now() / 1000, movingRef.current);
+    if (bones.armL && g.armL) bones.armL.quaternion.multiply(q.setFromAxisAngle(ax, g.armL));
+    if (bones.armR && g.armR) bones.armR.quaternion.multiply(q.setFromAxisAngle(ax, g.armR));
+    if (bones.head && g.head) bones.head.quaternion.multiply(q.setFromAxisAngle(ax, g.head));
+  }, 1);
 
   return (
     <group scale={fitted.fit} position={[-fitted.c.x * fitted.fit, -fitted.minY * fitted.fit, -fitted.c.z * fitted.fit]}>
