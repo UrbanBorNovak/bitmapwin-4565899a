@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export type HuntTarget = { id: string; label: string; price: number; hot?: boolean };
+export type HuntTarget = { id: string; label: string; price: number; hot?: boolean; parcels?: { x: number; y: number; size: number }[]; grid?: number };
 
 /** Procedural cyber-spider that patrols real listings: walks to each node, scans it, pounces on matches. Visual only. */
 export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; running: boolean }) {
@@ -75,20 +75,30 @@ export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; runn
 
       // nodes
       ctx.font = "10px 'Space Mono', monospace"; ctx.textAlign = "center";
+      const S = 56;
       ns.forEach((n, i) => {
         const active = i === targetIdx % Math.max(ns.length, 1);
+        const x0 = n.x - S / 2, y0 = n.y - S / 2 - 8;
+        ctx.fillStyle = "#000"; ctx.fillRect(x0, y0, S, S);
+        if (n.parcels && n.grid) {
+          const u = S / n.grid;
+          ctx.fillStyle = n.hot ? ORANGE : "#f2f2f2";
+          for (const p of n.parcels) ctx.fillRect(x0 + p.x * u + u * 0.08, y0 + p.y * u + u * 0.08, p.size * u - u * 0.16, p.size * u - u * 0.16);
+        } else {
+          ctx.fillStyle = TEXT; ctx.fillText("SYNC", n.x, n.y - 6);
+        }
         ctx.strokeStyle = n.hot ? ORANGE : active ? CYAN : LINE;
-        ctx.lineWidth = active ? 1.5 : 1;
-        ctx.strokeRect(n.x - 46, n.y - 16, 92, 32);
+        ctx.lineWidth = active ? 2 : 1;
+        ctx.strokeRect(x0 - 1, y0 - 1, S + 2, S + 2);
         ctx.fillStyle = n.hot ? ORANGE : TEXT;
-        ctx.fillText(n.label, n.x, n.y - 2);
+        ctx.fillText(n.label, n.x, y0 + S + 12);
         ctx.fillStyle = CYAN;
-        ctx.fillText(`${n.price.toLocaleString()} sats`, n.x, n.y + 10);
+        ctx.fillText(`${n.price.toLocaleString()} sats`, n.x, y0 + S + 24);
       });
 
       // brain: walk → scan → next
       const goal = ns.length ? ns[targetIdx % ns.length]! : { x: W / 2 + Math.cos(time * 0.4) * W * 0.3, y: H / 2 + Math.sin(time * 0.7) * H * 0.25, hot: false, label: "" };
-      const gx = goal.x, gy = goal.y - 34;
+      const gx = goal.x, gy = goal.y - 70;
       const dx = gx - body.x, dy = gy - body.y, dist = Math.hypot(dx, dy);
       const speed = live ? 140 : 55;
       if (dist > 4) {
@@ -107,15 +117,15 @@ export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; runn
       if (scan > 0 && ns.length) {
         ctx.strokeStyle = goal.hot ? ORANGE : CYAN;
         ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 30);
-        ctx.beginPath(); ctx.moveTo(body.x + Math.cos(body.a) * 14, body.y + Math.sin(body.a) * 14); ctx.lineTo(gx, gy + 34); ctx.stroke();
-        const sy = gy + 18 + (scan * 40) % 32;
-        ctx.beginPath(); ctx.moveTo(gx - 46, sy); ctx.lineTo(gx + 46, sy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(body.x + Math.cos(body.a) * 14, body.y + Math.sin(body.a) * 14); ctx.lineTo(gx, gy + 62); ctx.stroke();
+        const sy = gy + 34 + (scan * 50) % 56;
+        ctx.beginPath(); ctx.moveTo(gx - 28, sy); ctx.lineTo(gx + 28, sy); ctx.stroke();
         ctx.globalAlpha = 1;
       }
       if (pounce > 0) {
         const r = 20 + (0.6 - pounce) * 60;
         ctx.strokeStyle = ORANGE; ctx.globalAlpha = pounce / 0.6;
-        ctx.beginPath(); ctx.arc(gx, gy + 34, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(gx, gy + 62, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
       }
 
       // legs (two-segment IK, alternating gait)
@@ -134,20 +144,32 @@ export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; runn
         const hx = body.x + Math.cos(la) * 8, hy = body.y + Math.sin(la) * 8;
         const lift = l.t < 1 ? Math.sin(l.t * Math.PI) * 6 : 0;
         const mx = (hx + l.fx) / 2 + Math.cos(la) * 4, my = (hy + l.fy) / 2 - 10 - lift;
-        ctx.strokeStyle = TEXT; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(mx, my); ctx.lineTo(l.fx, l.fy); ctx.stroke();
-        ctx.fillStyle = ORANGE; ctx.fillRect(mx - 1.5, my - 1.5, 3, 3);
-        if (i === 0) ctx.lineWidth = 1;
+        const vox = (ax: number, ay: number, bx: number, by: number, sz: number, c: string) => {
+          const n = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) / (sz * 0.9)));
+          for (let k = 0; k <= n; k++) {
+            const px = ax + ((bx - ax) * k) / n, py = ay + ((by - ay) * k) / n;
+            ctx.fillStyle = c; ctx.fillRect(Math.round(px - sz / 2), Math.round(py - sz / 2), sz, sz);
+            ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.fillRect(Math.round(px - sz / 2), Math.round(py + sz / 2 - 1), sz, 1);
+          }
+        };
+        vox(hx, hy, mx, my, 4, ORANGE);
+        vox(mx, my, l.fx, l.fy, 3, "#c96d08");
+        void i;
       });
 
       // body
       ctx.save(); ctx.translate(body.x, body.y); ctx.rotate(body.a);
-      ctx.fillStyle = "rgba(10,14,20,0.95)"; ctx.strokeStyle = TEXT; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.ellipse(-8, 0, 13, 9, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(8, 0, 8, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = ORANGE; ctx.fillRect(-12, -1, 8, 2);
+      const B = 4;
+      const shape: [number, number, string][] = [];
+      for (let gx2 = -5; gx2 <= 1; gx2++) for (let gy2 = -2; gy2 <= 2; gy2++)
+        if ((gx2 / 3.6) ** 2 + (gy2 / 2.6) ** 2 <= 1.05) shape.push([gx2 - 1, gy2, (gx2 + gy2) % 2 ? ORANGE : "#e6810e"]);
+      for (let gx2 = 1; gx2 <= 3; gx2++) for (let gy2 = -1; gy2 <= 1; gy2++) shape.push([gx2, gy2, "#ffb45a"]);
+      for (const [vx, vy, c] of shape) {
+        ctx.fillStyle = c; ctx.fillRect(vx * B - B / 2, vy * B - B / 2, B, B);
+        ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 0.5; ctx.strokeRect(vx * B - B / 2, vy * B - B / 2, B, B);
+      }
       ctx.fillStyle = CYAN; ctx.shadowColor = CYAN; ctx.shadowBlur = 8;
-      ctx.beginPath(); ctx.arc(12, -2.5, 1.6, 0, 7); ctx.arc(12, 2.5, 1.6, 0, 7); ctx.fill();
+      ctx.fillRect(3.5 * B, -1.5 * B, 3, 3); ctx.fillRect(3.5 * B, 0.8 * B, 3, 3);
       ctx.restore();
 
       raf = requestAnimationFrame(frame);
@@ -158,5 +180,5 @@ export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; runn
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, []);
 
-  return <canvas ref={ref} className="block h-[320px] w-full" aria-label="Spider hunter scanning live listings" />;
+  return <canvas ref={ref} className="block h-[380px] w-full" aria-label="Spider hunter scanning live listings" />;
 }
