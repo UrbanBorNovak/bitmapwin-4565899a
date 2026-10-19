@@ -17,7 +17,7 @@ export function SafeCanvas(props: CanvasProps) {
     safe[key] = value;
   }
   const userCreated = props.onCreated;
-  safe.onCreated = (state: Parameters<NonNullable<CanvasProps["onCreated"]>>[0]) => {
+  safe["onCreated"] = (state: Parameters<NonNullable<CanvasProps["onCreated"]>>[0]) => {
     const el = state.gl.domElement;
     el.addEventListener("webglcontextlost", (e) => e.preventDefault(), false);
     userCreated?.(state);
