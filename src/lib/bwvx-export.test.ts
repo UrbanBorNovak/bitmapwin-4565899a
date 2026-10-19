@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { BWVX_LOADER_JS, bwvxBoxes, exportGlb } from "./bwvx-export";
+import { BWVX_LOADER_JS, bwvxBoxes, exportGlb, downloadBuildGlb } from "./bwvx-export";
 import { encodeBuild, encodeBuildV2 } from "./voxel-populate";
 import { BLOCKS } from "./voxel-world";
 import type { TplBlock } from "./voxel-templates";
@@ -26,8 +26,8 @@ const close = (a: THREE.Color, b: THREE.Color) => Math.abs(a.r - b.r) + Math.abs
 
 function sdkLoader() {
   const src = BWVX_LOADER_JS.replace(/^import .*$/m, "").replace(/^export /gm, "");
-  return new Function("THREE", `${src}; return { loadBWVX, bwvxBoxes, BWVX_PALETTE };`)(THREE) as {
-    loadBWVX: (b64: string) => THREE.InstancedMesh; bwvxBoxes: (b64: string) => number[][];
+  return new Function("THREE", `${src}; return { loadBWVX, bwvxBoxes, BWVX_PALETTE, showBWVX };`)(THREE) as {
+    showBWVX: (s: THREE.Scene, b64: string, prev: THREE.InstancedMesh | null) => { mesh: THREE.InstancedMesh | null; error: string | null }; loadBWVX: (b64: string) => THREE.InstancedMesh; bwvxBoxes: (b64: string) => number[][];
   };
 }
 
@@ -121,4 +121,36 @@ describe("BWVX loaders reject bad payloads safely", () => {
   it("accepts the last valid palette index", () => {
     for (const f of both()) expect(() => f(b64([...V2, 0, 0, 0, 0, 0, 0, BLOCKS.length - 1]))).not.toThrow();
   });
+});
+
+describe("malformed builds fail cleanly in the viewer and .GLB export", () => {
+  const goodB64 = b64([...V2, 0, 0, 0, 1, 1, 1, 3]);
+  const bad = { truncated: b64([...V2, 0, 0, 0, 1]), reversed: b64([...V2, 5, 0, 0, 4, 1, 1, 3]), palette: b64([0, 0, 0, 255]), base64: "%%%" };
+  for (const [label, payload] of Object.entries(bad)) {
+    it(`viewer reports ${label} and removes the previous build`, () => {
+      const sdk = sdkLoader(); const scene = new THREE.Scene();
+      const first = sdk.showBWVX(scene, goodB64, null);
+      expect(first.error).toBeNull(); expect(scene.children).toHaveLength(1);
+      const r = sdk.showBWVX(scene, payload, first.mesh);
+      expect(r.mesh).toBeNull(); expect(r.error).toMatch(/BWVX/); expect(scene.children).toHaveLength(0);
+    });
+  }
+  const badBuilds: Record<string, TplBlock[]> = {
+    "outside canvas": [...fixture, { dx: 64, dy: 0, dz: 0, k: "stone" }],
+    "negative": [{ dx: -1, dy: 0, dz: 0, k: "stone" }],
+    "fractional": [{ dx: 1.5, dy: 0, dz: 0, k: "stone" }],
+    "unknown kind": [...fixture, { dx: 1, dy: 5, dz: 1, k: "nope" as TplBlock["k"] }],
+    "empty": [],
+  };
+  for (const [label, blocks] of Object.entries(badBuilds)) {
+    it(`.GLB download refuses ${label} builds without creating a file`, async () => {
+      let created = 0; const g = globalThis as Record<string, unknown>;
+      const prevDoc = g["document"]; const prevUrl = URL.createObjectURL;
+      g["document"] = { createElement: () => { created++; return { click() {} }; } };
+      URL.createObjectURL = () => { created++; return "blob:x"; };
+      try { await expect(downloadBuildGlb(blocks, "bad")).rejects.toThrow(); expect(created).toBe(0); }
+      finally { g["document"] = prevDoc; URL.createObjectURL = prevUrl; }
+    });
+  }
+  it("a valid fixture still exports", async () => { await expect(exportGlb(fixture)).resolves.toBeTruthy(); });
 });

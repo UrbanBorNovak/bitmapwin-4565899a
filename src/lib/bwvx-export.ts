@@ -76,10 +76,28 @@ export function loadBWVX(b64, { blockSize = 1 } = {}) {
   mesh.computeBoundingSphere();
   return mesh; // add to your scene: scene.add(loadBWVX(payload))
 }
+
+// Safe viewer swap: always removes the previous build first, so a bad payload never leaves stale geometry.
+export function showBWVX(scene, b64, prev, opts) {
+  if (prev) { scene.remove(prev); prev.geometry.dispose(); prev.material.dispose(); }
+  try { const mesh = loadBWVX(b64, opts); scene.add(mesh); return { mesh, error: null }; }
+  catch (e) { return { mesh: null, error: String((e && e.message) || e) }; }
+}
 `;
 
 /** One merged, vertex-coloured mesh from Forge blocks (same greedy boxes as BWVX2). */
+/** Reject builds that would otherwise export silently clipped or recoloured. */
+export function assertExportableBuild(blocks: TplBlock[], span = 64) {
+  const known = new Set(BLOCKS.map((b) => b.id as string));
+  blocks.forEach((b, i) => {
+    for (const v of [b.dx, b.dy, b.dz]) if (!Number.isInteger(v) || v < 0 || v >= span) throw new Error(`BWVX: block ${i} is outside the ${span}³ canvas`);
+    if (!known.has(b.k as string)) throw new Error(`BWVX: block ${i} has unknown kind "${String(b.k)}"`);
+  });
+}
+
 export async function buildGlbMesh(blocks: TplBlock[], name = "bwvx") {
+  if (!Array.isArray(blocks)) throw new Error("BWVX: build is not a block list");
+  assertExportableBuild(blocks);
   const THREE = await import("three");
   const { mergeGeometries } = await import("three/examples/jsm/utils/BufferGeometryUtils.js");
   const boxes = bwvxBoxes(encodeBuildV2(blocks));
@@ -114,7 +132,8 @@ export async function exportGlb(blocks: TplBlock[], name = "bwvx") {
 
 /** Build a .glb and download it. */
 export async function downloadBuildGlb(blocks: TplBlock[], name: string) {
-  const { glb, boxes } = await exportGlb(blocks, name);
+  const { glb, boxes } = await exportGlb(blocks, name); // throws before any file is created
+  if (!(glb instanceof ArrayBuffer) || glb.byteLength < 20) throw new Error("BWVX: export produced no file");
   const url = URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }));
   const a = document.createElement("a");
   a.href = url; a.download = `${name}.glb`; a.click();
