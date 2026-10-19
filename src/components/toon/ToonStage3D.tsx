@@ -86,27 +86,36 @@ import { FORGE_SPAN } from "@/lib/voxel-populate";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
+import { ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
 import { sceneAt, actorPositionAt, activeCut, type ToonActor, type ToonEpisode, type ToonLine, type ToonScene, type Shot } from "@/lib/toon-script";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
 function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: ToonActor; slot: number; scene: number; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number>; durRef: MutableRefObject<number> }) {
   const g = useRef<Group>(null);
-  const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
+  const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity, enabled: !actor.avatar });
+  const ready = !!actor.avatar || !!dna.data;
+  const movingRef = useRef(false);
   const head = useMemo(() => new Vector3(), []);
   const unitH = useRef(0), unitS = useRef(0), frames = useRef(0), locked = useRef(false);
+  useEffect(() => { locked.current = false; frames.current = 0; }, [actor.avatar?.model]);
   useEffect(() => () => { toonHeads.delete(slot); actorHeights.delete(slot); actorSizes.delete(slot); }, [slot]);
   useFrame(({ camera }) => {
     const t = timeRef.current, o = g.current;
     if (!o) return;
     const pos = actorPositionAt(actor, progressRef.current, durRef.current);
+    movingRef.current = pos.moving;
     const dx = actor.to ? actor.to.x - actor.x : 0, dz = actor.to ? actor.to.z - actor.z : 0;
     let y = 0, x = pos.x, rz = 0, ry = actor.to && (dx || dz) ? Math.atan2(dx, dz) : actor.x > 0 ? -Math.PI / 2 : Math.PI / 2, s = 1;
+    const bob = actor.avatar ? 0.25 : 1;
     if (actor.pose === "idle") y = Math.sin(t * 2) * 0.15;
-    if (pos.moving && actor.pose !== "jump") y = Math.abs(Math.sin(t * 6)) * 0.5;
-    else if (actor.pose === "walk") { x = actor.x + Math.sin(t * 0.6) * 4; y = Math.abs(Math.sin(t * 6)) * 0.5; ry = Math.cos(t * 0.6) > 0 ? Math.PI / 2 : -Math.PI / 2; }
-    if (actor.pose === "talk") { y = Math.abs(Math.sin(t * 8)) * 0.35; s = 1 + Math.sin(t * 8) * 0.03; }
+    if (pos.moving && actor.pose !== "jump") y = Math.abs(Math.sin(t * 6)) * 0.5 * bob;
+    else if (actor.pose === "walk") { x = actor.x + Math.sin(t * 0.6) * 4; y = Math.abs(Math.sin(t * 6)) * 0.5 * bob; ry = Math.cos(t * 0.6) > 0 ? Math.PI / 2 : -Math.PI / 2; }
+    if (actor.pose === "talk") { y = Math.abs(Math.sin(t * 8)) * 0.35 * bob; s = 1 + Math.sin(t * 8) * 0.03; }
     if (actor.pose === "jump") y = Math.max(0, Math.sin(t * 3.5)) * 4;
     if (actor.pose === "combat") { rz = Math.sin(t * 10) * 0.08; s = 1.08; }
+    if (actor.pose === "dance") { ry += Math.sin(t * 3) * 0.7; y = Math.abs(Math.sin(t * 6)) * 0.5; }
+    // Avatars face the camera-side (+z) when greeting so the wave reads.
+    if (actor.pose === "wave" && !pos.moving) ry = 0;
     let rx = 0, sy = 1;
     switch (actor.emote) {
       case "love": rz += Math.sin(t * 2) * 0.1; y += Math.sin(t * 3) * 0.3 + 0.3; break;
@@ -121,7 +130,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     }
     // Measure the real body (never the loading silhouette) until two readings agree, then lock —
     // voxels can still be streaming in on the first reading, which would freeze the wrong framing.
-    if (dna.data && !locked.current && o.children.length && frames.current < 600 && frames.current++ % 20 === 0) {
+    if (ready && !locked.current && o.children.length && frames.current < 600 && frames.current++ % 20 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.
       const b = new Box3(), tmp = new Box3();
@@ -143,12 +152,20 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     // Framing uses the static body size so squash/stretch never shakes the camera.
     actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10));
     // Publish the head's screen position for the speech-bubble overlay.
-    if (dna.data) {
+    if (ready) {
       head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
       if (head.z < 1) toonHeads.set(slot, { x: (head.x + 1) / 2, y: (1 - head.y) / 2, scene });
       else toonHeads.delete(slot);
     }
   });
+  if (actor.avatar) {
+    return (
+      <group ref={g}>
+        <ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />
+        {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} slot={slot} scene={scene} />}
+      </group>
+    );
+  }
   const d = dna.data;
   if (!d) {
     // Loading silhouette while the Guardian's block DNA is fetched.
