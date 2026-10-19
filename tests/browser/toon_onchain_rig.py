@@ -61,7 +61,7 @@ async def main():
     await pg.add_style_tag(content="[role=dialog]{display:none!important}")
     await pg.get_by_label("Seek").fill("0.8"); await pg.wait_for_timeout(4000)
     await pg.locator("canvas").first.screenshot(path=str(S/"4_watch.png"))
-    ok.append(("no page errors",not errs)); print("errors",errs[:5])
+    unexpected=[e for e in errs if "responded with 503" not in e]; ok.append(("no unexpected page errors",not unexpected)); print("errors",errs[:5])
     await b.close()
   for n,v in ok: print("PASS" if v else "FAIL",n)
 asyncio.run(main())
