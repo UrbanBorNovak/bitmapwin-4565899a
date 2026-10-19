@@ -235,7 +235,7 @@ export function SiteHeader() {
         <div className="flex shrink-0 items-center gap-1">
           <BtcTicker className="hidden sm:flex" />
           <LanguageSwitcher />
-          <div className="hidden min-[420px]:block"><ThemeToggle /></div>
+          <ThemeToggle />
           <button
             type="button"
             aria-label="Show me around this page"
@@ -322,12 +322,6 @@ export function SiteHeader() {
                   <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
                     <span className="label">9 COMMANDS</span>
                     <span className="label text-bitcoin">READY</span>
-                  </div>
-                ) : null}
-                {group.id === "account" ? (
-                  <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3 min-[420px]:hidden">
-                    <span className="label">THEME</span>
-                    <ThemeToggle />
                   </div>
                 ) : null}
               </div>
