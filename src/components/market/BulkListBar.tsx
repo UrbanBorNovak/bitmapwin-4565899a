@@ -13,7 +13,7 @@ import { computeEv } from "@/lib/listing-ev";
 import { supabase } from "@/integrations/supabase/client";
 
 export type BulkItem = { outpoint: string; valueSats: number; bitmapHeight: number };
-type Status = "pending" | "signing" | "done" | "skipped" | "failed";
+type Status = "pending" | "signing" | "done" | "skipped" | "failed" | "cancelled";
 
 /**
  * Docked bulk action bar for the seller console. Every BITMAP is its own UTXO,
@@ -74,8 +74,7 @@ export function BulkListBar({
       if (price !== null && price < DUST_SATS) price = null;
       const c = checks.get(b.bitmapHeight);
       const guards = listingGuards(b.bitmapHeight, !!c && c.status !== "unverified");
-      const ref = ev?.mid ?? floor?.floorSats ?? null;
-      const lowball = price !== null && isFarBelowFloor(price, ref);
+      const lowball = price !== null && (isFarBelowFloor(price, ev?.mid ?? null) || isFarBelowFloor(price, floor?.floorSats ?? null));
       return { b, floor, ev, price, guards, lowball, offer: openByOutpoint.get(b.outpoint) ?? null };
     });
   }, [items, asks.data, sales.data, wallet?.ordinalsAddress, overrides, mode, uniform, ladder, checks, openByOutpoint]);
@@ -99,7 +98,7 @@ export function BulkListBar({
     stop.current = false;
     const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
     for (const p of listable) {
-      if (stop.current) break;
+      if (stop.current) { setStatus((s) => ({ ...s, [p.b.outpoint]: "cancelled" })); continue; }
       if (p.offer && p.offer.priceSats === p.price) { setStatus((s) => ({ ...s, [p.b.outpoint]: "skipped" })); continue; }
       skip.current = false;
       setStatus((s) => ({ ...s, [p.b.outpoint]: "signing" }));
