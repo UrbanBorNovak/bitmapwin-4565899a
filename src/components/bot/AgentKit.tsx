@@ -131,6 +131,13 @@ export function AgentKit({ maxSats = 1_000_000, maxHeight = 840_000, showExport 
           )}
         </div>
       </div>
+      <div className="flex flex-wrap items-center gap-2 border-t border-border px-4 py-3">
+        <span className="label text-muted-foreground">WORKS WITH</span>
+        {["Claude", "Cursor", "Codex", "Copilot", "Cline", "Windsurf"].map((n) => (
+          <span key={n} className="border border-border px-2 py-1 font-mono text-[11px] text-foreground" data-no-translate>{n}</span>
+        ))}
+        <span className="label text-muted-foreground">· ANY MCP CLIENT WITH REMOTE HTTP SERVERS</span>
+      </div>
       {showExport && <SetupGuide />}
       <p className="label border-t border-border px-4 py-2 text-muted-foreground">
         The downloaded agent only reports matching listings. It never signs, buys or broadcasts — you buy in your own wallet.
