@@ -68,13 +68,13 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
     { block: 715093, duration: 6.5, shot: "dolly", transition: "wipe", cutBlend: true, sfx: "BAM!",
       cast: [px(PX.tornado, "#004 Tornado", -7, 1, "walk", { to: { x: -3, z: 1 }, moveStart: 0.2, moveEnd: 2.6 }), { height: 840000, name: "840000.bitmap", x: 3, z: -1, pose: "talk" as const }],
       lines: [
-        { at: 1, dur: 2.4, speaker: 1, text: "Pixels? In the citadel? Show me you're real.", style: "speech", cam: "ots" },
+        { at: 1, dur: 2.4, speaker: 1, text: "Pixels? In the citadel? Show me you're real.", style: "speech", cam: "two" },
         { at: 3.8, dur: 2.4, speaker: 0, text: "Check the chain. Every pixel is an inscription.", style: "speech", cam: "two" },
       ] },
     { block: 486145, duration: 6, shot: "dutch", transition: "fade", sfx: "HODL!",
       cast: [px(PX.fred, "#006 Fred the Frog", -2, 0, "jump"), px(PX.bot, "#009 Bitmap Bot", 2, 0, "combat", { emote: "angry" })],
       lines: [
-        { at: 0.8, dur: 2.4, speaker: 1, text: "Bastion defence online. Fists up, Fred!", style: "shout", cam: "close" },
+        { at: 0.8, dur: 2.4, speaker: 1, text: "Bastion defence online. Fists up, Fred!", style: "shout", cam: "two" },
         { at: 3.4, dur: 2.3, speaker: 0, text: "Ribbit. I jump higher than any fee spike.", style: "speech", cam: "two" },
       ] },
     { block: 819245, duration: 6.5, shot: "orbit", transition: "iris", sfx: "SATS!",
@@ -86,7 +86,7 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
     { block: 208, duration: 6.5, shot: "crane", transition: "wipe", sfx: "WHOOSH!",
       cast: [px(PX.bot, "#009 Bitmap Bot", -6, 0, "walk", { to: { x: -2, z: 0 }, moveStart: 0, moveEnd: 2.4 }), { height: 208, name: "208.bitmap", x: 3, z: 0, pose: "talk" as const, emote: "surprised" as const }],
       lines: [
-        { at: 0.8, dur: 2.4, speaker: 1, text: "Block 208, January 2009. One of the oldest districts.", style: "speech", cam: "ots" },
+        { at: 0.8, dur: 2.4, speaker: 1, text: "Block 208, January 2009. One of the oldest districts.", style: "speech", cam: "two" },
         { at: 3.6, dur: 2.5, speaker: 0, text: "Then let's bring everyone.", style: "speech", cam: "close" },
       ] },
     { block: 208, duration: 7, shot: "orbit", transition: "fade", sfx: "HODL!",
@@ -94,7 +94,7 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
         px(PX.fred, "#006 Fred the Frog", 5, 1, "jump")],
       lines: [
         { at: 0.8, dur: 2.8, speaker: 2, text: "Over two hundred pixels. One rig. All on Bitcoin.", style: "shout", cam: "establish" },
-        { at: 4, dur: 2.6, speaker: 0, text: "BITMAP Pixels are finally coming home.", style: "speech", cam: "two" },
+        { at: 4, dur: 2.6, speaker: 0, text: "BITMAP Pixels are finally coming home.", style: "speech", cam: "establish" },
       ] },
   ],
 };
