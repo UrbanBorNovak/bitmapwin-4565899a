@@ -77,7 +77,7 @@ export async function downloadBuildGlb(blocks: TplBlock[], name: string) {
     const g = new THREE.BoxGeometry(sx, sy, sz).toNonIndexed();
     g.translate(x0 + sx / 2, y0 + sy / 2, z0 + sz / 2);
     const c = colors[k] ?? colors[3]!;
-    const n = g.attributes.position!.count, arr = new Float32Array(n * 3);
+    const n = g.attributes["position"]!.count, arr = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { arr[i * 3] = c.r; arr[i * 3 + 1] = c.g; arr[i * 3 + 2] = c.b; }
     g.setAttribute("color", new THREE.BufferAttribute(arr, 3));
     g.deleteAttribute("uv");
