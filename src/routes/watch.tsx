@@ -1,3 +1,4 @@
+import { ReleasePanel } from "@/components/toon/ReleasePanel";
 import { createFileRoute, ClientOnly, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
@@ -247,6 +248,7 @@ function WatchPage() {
               </div>
             </div>
           </section>
+          <div className="mt-4"><ReleasePanel episode={episode} /></div>
         </div>
 
         <aside>

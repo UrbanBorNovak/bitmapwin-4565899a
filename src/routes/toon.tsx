@@ -1,3 +1,4 @@
+import { ReleasePanel } from "@/components/toon/ReleasePanel";
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, transitionAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
@@ -187,6 +188,7 @@ function ToonPage() {
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
           </div>
           <div className="mt-3"><CinemaSubmitPanel episode={episode} /></div>
+          <div className="mt-3"><ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} /></div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
             <span className="label text-signal">ART STYLE</span>
             {TOON_STYLES.map((s) => (
