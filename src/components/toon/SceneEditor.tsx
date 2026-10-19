@@ -3,7 +3,10 @@ import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { ContinuityHint } from "@/components/toon/ContinuityNotebook";
 import { CharacterHint } from "@/components/toon/CharacterProfiles";
 import { EMOTES, MAX_SCENE_SECONDS, MAX_SCENES, type Emote, type Pose, type Shot, type ToonEpisode, type ToonLine, type ToonScene } from "@/lib/toon-script";
-import { AVATAR_MODELS, AVATAR_SKINS, type AvatarModel, type AvatarSkin } from "@/lib/toon-avatars";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { AVATAR_MODELS, AVATAR_SKINS, pixelSkin, type AvatarModel, type ToonAvatar } from "@/lib/toon-avatars";
+import { BITMAP_PIXELS_INSCRIPTION, getBitmapPixelsCollection } from "@/lib/bitmap-pixels.functions";
 
 const SHOTS: { v: Shot; label: string }[] = [
   { v: "wide", label: "Wide sweep" }, { v: "orbit", label: "Orbit" }, { v: "dolly", label: "Dolly in" },
@@ -20,6 +23,8 @@ const num = (v: string, min: number, max: number) => Math.min(max, Math.max(min,
 /** Visual editor for the episode script; every change produces a new episode object. */
 export function SceneEditor({ episode, onChange, onSeek, characters = [], notes = [] }: { episode: ToonEpisode; onChange: (e: ToonEpisode) => void; onSeek: (t: number) => void; characters?: ToonCharacter[]; notes?: ContinuityNote[] }) {
   const [sel, setSel] = useState(0);
+  const readPixels = useServerFn(getBitmapPixelsCollection);
+  const pixels = useQuery({ queryKey: ["bitmap-pixels-collection", BITMAP_PIXELS_INSCRIPTION], queryFn: () => readPixels(), staleTime: Infinity, retry: 1 });
   const i = Math.min(sel, episode.scenes.length - 1);
   const s = episode.scenes[i]!;
   const start = episode.scenes.slice(0, i).reduce((a, c) => a + c.duration, 0);
@@ -98,8 +103,11 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
               {AVATAR_MODELS.map((m) => <option key={m.v} value={m.v}>Avatar · {m.label}</option>)}
             </select>
             {a.avatar ? (
-              <select className={field} aria-label="Avatar texture" value={a.avatar.skin} onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k && c.avatar ? { ...c, avatar: { ...c.avatar, skin: e.target.value as AvatarSkin } } : c)) })}>
-                {AVATAR_SKINS.map((sk) => <option key={sk.v} value={sk.v}>{sk.label}</option>)}
+              <select className={field} aria-label="Avatar texture" value={a.avatar.skin} onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k && c.avatar ? { ...c, avatar: { ...c.avatar, skin: e.target.value as ToonAvatar["skin"] } } : c)) })}>
+                <optgroup label="Studio textures">{AVATAR_SKINS.map((sk) => <option key={sk.v} value={sk.v}>{sk.label}</option>)}</optgroup>
+                <optgroup label={pixels.data ? `BITMAP Pixels · Block 881,133 (${pixels.data.pixels.length})` : "BITMAP Pixels · loading…"}>
+                  {(pixels.data?.pixels ?? []).map((px) => <option key={px.inscriptionId} value={pixelSkin(px.inscriptionId)}>#{String(px.index).padStart(3, "0")} {px.name}</option>)}
+                </optgroup>
               </select>
             ) : <span className="self-center font-mono text-[10px] text-muted-foreground">VERIFIED BLOCK BODY</span>}
           </div>
