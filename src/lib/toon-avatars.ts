@@ -3,7 +3,12 @@
 
 export type AvatarModel = "runner" | "bruiser" | "bot" | "wizard";
 export type AvatarSkin = "hoodie" | "cyber" | "camo" | "gold" | "midnight" | "sakura";
-export interface ToonAvatar { model: AvatarModel; skin: AvatarSkin; }
+/** On-chain BITMAP Pixel skin: "px:<inscriptionId>" from the Block 881,133 collection. */
+export type PixelSkin = `px:${string}`;
+export interface ToonAvatar { model: AvatarModel; skin: AvatarSkin | PixelSkin; }
+const PIXEL_ID = /^px:[0-9a-f]{64}i\d+$/;
+export const isPixelSkin = (v: unknown): v is PixelSkin => typeof v === "string" && PIXEL_ID.test(v);
+export const pixelSkin = (inscriptionId: string): PixelSkin => `px:${inscriptionId.toLowerCase()}`;
 
 export const AVATAR_MODELS: { v: AvatarModel; label: string }[] = [
   { v: "runner", label: "Runner" }, { v: "bruiser", label: "Bruiser" }, { v: "bot", label: "Bot" }, { v: "wizard", label: "Wizard" },
@@ -20,7 +25,7 @@ export const AVATAR_SKINS: { v: AvatarSkin; label: string; base: string; accent:
 
 export const isAvatar = (a: unknown): a is ToonAvatar =>
   !!a && typeof a === "object" &&
-  AVATAR_MODELS.some((m) => m.v === (a as ToonAvatar).model) && AVATAR_SKINS.some((s) => s.v === (a as ToonAvatar).skin);
+  AVATAR_MODELS.some((m) => m.v === (a as ToonAvatar).model) && (AVATAR_SKINS.some((s) => s.v === (a as ToonAvatar).skin) || isPixelSkin((a as ToonAvatar).skin));
 
 /** Body proportions per model (avatar units; full height ≈ 1.2 like a Guardian body). */
 export const MODEL_SHAPE: Record<AvatarModel, { torso: [number, number, number]; head: number; limb: number; leg: number }> = {
