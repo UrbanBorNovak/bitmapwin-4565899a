@@ -8,7 +8,7 @@ import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 import { cart, cartTotal, useCart, type CartItem } from "@/lib/sweep-cart";
 
 /** Live network fee rates (display only — the server quotes the real rate per purchase). */
-function useFees() {
+export function useFees() {
   return useQuery({
     queryKey: ["mempool", "fees"],
     queryFn: async () => {
