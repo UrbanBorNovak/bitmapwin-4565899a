@@ -90,8 +90,8 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
         { at: 3.6, dur: 2.5, speaker: 0, text: "Then let's bring everyone.", style: "speech", cam: "close" },
       ] },
     { block: 208, duration: 7, shot: "orbit", transition: "fade", sfx: "HODL!",
-      cast: [px(PX.pizza, "#001 Pizza", -6, 0, "wave"), px(PX.nyan, "#003 Nyan", -3, 1, "dance"), px(PX.tornado, "#004 Tornado", 0, 0, "wave", { emote: "love" }),
-        px(PX.fred, "#006 Fred the Frog", 3, 1, "jump"), px(PX.bot, "#009 Bitmap Bot", 6, 0, "wave")],
+      cast: [px(PX.pizza, "#001 Pizza", -5, 0, "wave"), px(PX.nyan, "#003 Nyan", -2, 1, "dance"), px(PX.tornado, "#004 Tornado", 2, 0, "wave", { emote: "love" }),
+        px(PX.fred, "#006 Fred the Frog", 5, 1, "jump")],
       lines: [
         { at: 0.8, dur: 2.8, speaker: 2, text: "219 pixels. One rig. All on Bitcoin.", style: "shout", cam: "establish" },
         { at: 4, dur: 2.6, speaker: 0, text: "BITMAP Pixels are finally coming home.", style: "speech", cam: "two" },
