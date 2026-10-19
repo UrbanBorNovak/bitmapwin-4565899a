@@ -26,8 +26,10 @@ function useSkinTexture(skinId: string) {
   useEffect(() => {
     setPixel(null);
     if (!isPixelSkin(skinId)) return;
-    let live = true, made: CanvasTexture | null = null;
+    let live = true, made: CanvasTexture | null = null, tries = 0, timer: ReturnType<typeof setTimeout> | undefined;
     const img = new Image(); img.crossOrigin = "anonymous";
+    // A failed load keeps the studio texture visible and retries a few times (ordinals.com rate-limits bursts).
+    img.onerror = () => { if (live && ++tries < 4) timer = setTimeout(() => { img.src = `/api/public/inscription/${skinId.slice(3)}?retry=${tries}`; }, 800 * tries); };
     img.onload = () => {
       if (!live) return;
       const c = document.createElement("canvas"); c.width = c.height = 64;
@@ -43,7 +45,7 @@ function useSkinTexture(skinId: string) {
       setPixel({ t: made, s: { ...AVATAR_SKINS[0]!, base: skin, accent, skin } });
     };
     img.src = `/api/public/inscription/${skinId.slice(3)}`;
-    return () => { live = false; made?.dispose(); };
+    return () => { live = false; clearTimeout(timer); made?.dispose(); };
   }, [skinId]);
   return pixel ?? tex;
 }
