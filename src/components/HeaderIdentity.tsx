@@ -32,7 +32,7 @@ export function HeaderIdentity() {
 
   if (!session && !wallet) {
     return (
-      <Link to="/auth" className="btn-term min-h-11 !px-3 !py-2 md:min-h-0 md:!px-5 md:!py-3">
+      <Link to="/auth" className="btn-term min-h-11 whitespace-nowrap !px-2 !py-2 sm:!px-3 md:min-h-0 md:!px-5 md:!py-3">
         {loading ? "…" : "SIGN IN"}
       </Link>
     );
