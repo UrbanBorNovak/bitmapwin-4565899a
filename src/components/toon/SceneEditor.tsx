@@ -146,7 +146,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
               <option value="speech">Speech</option><option value="shout">Shout</option><option value="thought">Thought</option>
             </select>
             <select className={field} value={l.cam ?? "auto"} aria-label="Camera shot" onChange={(e) => patchLine(k, { cam: e.target.value as NonNullable<ToonLine["cam"]> })}>
-              <option value="auto">Camera: scene</option><option value="close">Speaker close-up</option><option value="two">Two-shot</option><option value="ots">Over the shoulder</option>
+              <option value="auto">Camera: scene</option><option value="close">Speaker close-up</option><option value="two">Two-shot</option><option value="ots">Over the shoulder</option><option value="establish">Guardian + build</option>
             </select>
             <button className="px-2 font-mono text-[11px] text-muted-foreground hover:text-bitcoin" aria-label="Remove line" onClick={() => patch({ lines: s.lines.filter((_, j) => j !== k) })}>✕</button>
           </div>

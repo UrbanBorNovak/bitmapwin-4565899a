@@ -21,7 +21,7 @@ export function actorPositionAt(a: ToonActor, local: number, dur: number): { x: 
   return { x: a.x + (a.to.x - a.x) * e, z: a.z + (a.to.z - a.z) * e, moving: q > 0 && q < 1 };
 }
 export interface ToonLine { at: number; dur: number; speaker: number; text: string; style: "speech" | "shout" | "thought"; cam?: LineCam; }
-export type LineCam = "auto" | "close" | "two" | "ots";
+export type LineCam = "auto" | "close" | "two" | "ots" | "establish";
 export type Transition = "cut" | "fade" | "wipe" | "iris";
 export const TRANSITION_SECONDS = 0.45;
 export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; }
@@ -127,7 +127,7 @@ export function parseEpisode(json: string): ToonEpisode {
     for (const c of s.cast) if (c.emote && !EMOTES.some((x) => x.v === c.emote)) delete c.emote;
     if (!Array.isArray(s.lines)) s.lines = [];
     if (s.transition && !["cut", "fade", "wipe", "iris"].includes(s.transition)) delete s.transition;
-    for (const l of s.lines) if (l.cam && !["auto", "close", "two", "ots"].includes(l.cam)) delete l.cam;
+    for (const l of s.lines) if (l.cam && !["auto", "close", "two", "ots", "establish"].includes(l.cam)) delete l.cam;
   }
   return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false, ...(["manga", "ghibli", "shonen", "noir", "retro"].includes(e.style as string) ? { style: e.style as NonNullable<ToonEpisode["style"]> } : {}) };
 }
