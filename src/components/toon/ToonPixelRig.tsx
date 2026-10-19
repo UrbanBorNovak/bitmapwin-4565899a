@@ -14,7 +14,7 @@ const skinUrl = (id: string, attempt: number) => `/api/public/inscription/${id}$
 
 /** The canonical on-chain GLB rig wearing a BITMAP Pixel inscription on its own UVs — the Oasis pipeline.
  * Poses play the rig's baked skeletal clips; gestures it never baked are layered onto its own arm/head bones. */
-function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscriptionId: string; tint?: string; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number>; attempt: number }) {
+function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscriptionId: string; tint?: string | undefined; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number> | undefined; attempt: number }) {
   const gltf = useGLTF(MODEL_URL);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const { actions, names } = useAnimations(gltf.animations, scene);
@@ -117,7 +117,7 @@ class RigBoundary extends Component<{ fallback: ReactNode; children: (attempt: n
   override render() { return this.state.failed ? this.props.fallback : this.props.children(this.state.attempt); }
 }
 
-export function ToonPixelRig({ inscriptionId, tint, pose, movingRef, timeRef, fallback }: { inscriptionId: string; tint?: string; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number>; fallback: ReactNode }) {
+export function ToonPixelRig({ inscriptionId, tint, pose, movingRef, timeRef, fallback }: { inscriptionId: string; tint?: string | undefined; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number> | undefined; fallback: ReactNode }) {
   return (
     <RigBoundary
       fallback={fallback}
