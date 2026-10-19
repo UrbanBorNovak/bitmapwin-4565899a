@@ -40,7 +40,7 @@ const TOOLS: Tool[] = [
     next: { to: "/marketplace", label: "Open the market" } },
   { to: "/traits", name: "Trait Scout", cost: "free", badge: "FREE · CHAIN DATA", cat: "data",
     hook: "Browse official BITMAP traits backed only by proven block facts.",
-    specs: ["Bitcoin.Community trait definitions", "verified holders", "block history notes"] },
+    specs: ["Bitmap.Community trait definitions", "verified holders", "block history notes"] },
   { to: "/stream", name: "World Stream", cost: "free", badge: "FREE · LIVE", cat: "data",
     hook: "Watch verified BITMAP history play back as a live radar of events.",
     specs: ["100–1,000 event density", "filters & scrubber", "sound cues", "no sign-in"] },
