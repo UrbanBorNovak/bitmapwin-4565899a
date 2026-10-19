@@ -17,7 +17,7 @@ const skinUrl = (id: string, attempt: number) => `/api/public/inscription/${id}$
 function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscriptionId: string; tint?: string; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number>; attempt: number }) {
   const gltf = useGLTF(MODEL_URL);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions, names, mixer } = useAnimations(gltf.animations, scene);
+  const { actions, names } = useAnimations(gltf.animations, scene);
   const texture = useTexture(skinUrl(inscriptionId, attempt));
   const bones = useMemo(() => {
     const by = (n: string) => scene.getObjectByName(n) ?? null;
@@ -81,15 +81,14 @@ function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscr
     return () => clearInterval(id);
   }, [actions, names, pose, movingRef]);
 
-  // After the mixer writes the clip pose, layer the gesture onto the real bones.
+  // Subscribed after useAnimations, so this runs once the mixer wrote the clip pose, layer the gesture onto the real bones.
   const q = useMemo(() => new THREE.Quaternion(), []), ax = useMemo(() => new THREE.Vector3(1, 0, 0), []);
   useFrame(() => {
-    mixer.update(0); // make sure this frame's clip pose is applied before layering
     const g = rigGesture(pose, timeRef?.current ?? performance.now() / 1000, movingRef.current);
     if (bones.armL && g.armL) bones.armL.quaternion.multiply(q.setFromAxisAngle(ax, g.armL));
     if (bones.armR && g.armR) bones.armR.quaternion.multiply(q.setFromAxisAngle(ax, g.armR));
     if (bones.head && g.head) bones.head.quaternion.multiply(q.setFromAxisAngle(ax, g.head));
-  }, 1);
+  });
 
   return (
     <group scale={fitted.fit} position={[-fitted.c.x * fitted.fit, -fitted.minY * fitted.fit, -fitted.c.z * fitted.fit]}>
