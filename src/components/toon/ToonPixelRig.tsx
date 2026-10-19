@@ -22,7 +22,7 @@ function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscr
   const bones = useMemo(() => {
     const by = (n: string) => scene.getObjectByName(n) ?? null;
     // Armature names are mirrored ("Arm.L" sits under "RightArm"); use the deforming bones.
-    return { armL: by("Arm.L"), armR: by("Arm.R"), head: by("Head") };
+    return { armL: by("Arm.L"), armR: by("Arm.R"), head: by("Head"), legL: by("Leg.L"), legR: by("Leg.R") };
   }, [scene]);
 
   useEffect(() => {
@@ -81,13 +81,26 @@ function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscr
     return () => clearInterval(id);
   }, [actions, names, pose, movingRef]);
 
-  // Subscribed after useAnimations, so this runs once the mixer wrote the clip pose, layer the gesture onto the real bones.
+  // Rest pose per bone, so gestures are applied absolutely when no clip writes the bone (never accumulate).
+  const rest = useMemo(() => {
+    const m = new Map<THREE.Object3D, THREE.Quaternion>();
+    for (const b of Object.values(bones)) if (b) m.set(b, b.quaternion.clone());
+    return m;
+  }, [bones]);
+  // Subscribed after useAnimations, so this runs once the mixer wrote the clip pose; layer the gesture onto the real bones.
   const q = useMemo(() => new THREE.Quaternion(), []), ax = useMemo(() => new THREE.Vector3(1, 0, 0), []);
   useFrame(() => {
+    const a = active.current;
+    if (a && !a.isRunning()) { a.enabled = true; a.setEffectiveWeight(1).play(); }
+    const driven = !!a && a.isRunning();
     const g = rigGesture(pose, timeRef?.current ?? performance.now() / 1000, movingRef.current);
-    if (bones.armL && g.armL) bones.armL.quaternion.multiply(q.setFromAxisAngle(ax, g.armL));
-    if (bones.armR && g.armR) bones.armR.quaternion.multiply(q.setFromAxisAngle(ax, g.armR));
-    if (bones.head && g.head) bones.head.quaternion.multiply(q.setFromAxisAngle(ax, g.head));
+    const layer = (b: THREE.Object3D | null, r: number) => {
+      if (!b) return;
+      if (!driven) b.quaternion.copy(rest.get(b)!);
+      if (r) b.quaternion.multiply(q.setFromAxisAngle(ax, r));
+    };
+    layer(bones.armL, g.armL); layer(bones.armR, g.armR); layer(bones.head, g.head);
+    layer(bones.legL, g.legL); layer(bones.legR, g.legR);
   });
 
   return (

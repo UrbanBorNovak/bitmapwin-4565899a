@@ -45,10 +45,19 @@ describe("on-chain rig poses", () => {
   });
   it("raises the arm when waving and never while walking", () => {
     expect(rigGesture("wave", 0, false).armR).toBeLessThan(-2);
-    expect(rigGesture("wave", 0, true)).toEqual({ armL: 0, armR: 0, head: 0 });
+    expect(rigGesture("wave", 0, true)).toEqual({ armL: 0, armR: 0, head: 0, legL: 0, legR: 0 });
   });
   it("pixels trailer is longer than four scenes and parses intact", () => {
     expect(PIXELS_HOMECOMING.scenes.length).toBeGreaterThan(4);
     expect(parseEpisode(JSON.stringify(PIXELS_HOMECOMING))?.scenes.length).toBe(PIXELS_HOMECOMING.scenes.length);
+  });
+});
+
+describe("standing limbs", () => {
+  it("moves legs in idle, talk and dance poses", () => {
+    for (const p of ["idle", "talk", "dance"]) {
+      const a = rigGesture(p, 0.7, false), b = rigGesture(p, 1.4, false);
+      expect(a.legL).not.toBe(b.legL);
+    }
   });
 });
