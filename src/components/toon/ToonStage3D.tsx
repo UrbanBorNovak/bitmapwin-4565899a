@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import { Box3, CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite } from "three";
+import { Box3, CanvasTexture, Color, Object3D, SRGBColorSpace, Vector3, type Group, type InstancedMesh, type Sprite } from "three";
+import { blockParcelSizes } from "@/lib/bitmap-layout";
 
 /** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
 const actorHeights = new Map<number, number>();
@@ -152,10 +153,41 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   );
 }
 
+/** Every real transaction parcel of the block, drawn in one instanced mesh (no culling, no cap). */
+function ParcelGrid({ classes }: { classes: number[] | undefined }) {
+  const ref = useRef<InstancedMesh>(null);
+  const parcels = useMemo(() => parcelRects(classes, FORGE_SPAN).filter((r) => r.cells.size > 0), [classes]);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    const o = new Object3D(), c = new Color();
+    parcels.forEach((r, i) => {
+      const w = r.x1 - r.x0, d = r.z1 - r.z0, gap = Math.min(0.12, w * 0.08);
+      const lift = 0.12 + Math.min(r.size, 5) * 0.05;
+      o.position.set(r.x0 + w / 2 - FORGE_SPAN / 2, lift / 2, r.z0 + d / 2 - FORGE_SPAN / 2);
+      o.scale.set(Math.max(0.05, w - gap), lift, Math.max(0.05, d - gap));
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, c.set(r.size >= 4 ? "#f7931a" : r.size === 3 ? "#e8a24a" : r.size === 2 ? "#d6b06e" : "#c9a466"));
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [parcels]);
+  if (!parcels.length) return null;
+  return (
+    <instancedMesh key={parcels.length} ref={ref} args={[undefined, undefined, parcels.length]} receiveShadow raycast={() => null}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial roughness={0.85} />
+    </instancedMesh>
+  );
+}
+
 function Land({ block }: { block: number }) {
   const sizes = useQuery({ ...blockSizeMapQuery(block), staleTime: Infinity });
   const build = useQuery(forgeBuildQuery(block));
-  const parcels = useMemo(() => parcelRects(sizes.data?.classes, FORGE_SPAN).filter((r) => r.x1 - r.x0 >= 2).slice(0, 300), [sizes.data]);
+  // Real size map; while loading or if unavailable, the block's deterministic layout keeps the land true to its height.
+  const classes = useMemo(() => (sizes.data?.classes?.length ? sizes.data.classes : sizes.isFetched ? blockParcelSizes(block, sizes.data?.txCount) : undefined), [sizes.data, sizes.isFetched, block]);
   // Guardians perform on an open sand plaza; the land and its build sit just behind them so voxels never swallow the cast.
   const back = build.data?.data ? -(FORGE_SPAN / 2 + 6) : 0;
   return (
@@ -167,17 +199,9 @@ function Land({ block }: { block: number }) {
       <group position={[0, 0, back]}>
       <mesh position={[0, -0.6, 0]}>
         <boxGeometry args={[FORGE_SPAN, 1.2, FORGE_SPAN]} />
-        <meshStandardMaterial color="#d9b77a" roughness={1} />
+        <meshStandardMaterial color="#8a6a3a" roughness={1} />
       </mesh>
-      {parcels.map((r) => {
-        const w = r.x1 - r.x0, dd = r.z1 - r.z0;
-        return (
-          <mesh key={r.index} position={[r.x0 + w / 2 - FORGE_SPAN / 2, 0.1, r.z0 + dd / 2 - FORGE_SPAN / 2]}>
-            <boxGeometry args={[w * 0.92, 0.25, dd * 0.92]} />
-            <meshStandardMaterial color={r.size >= 2 ? "#f7931a" : "#c9a466"} roughness={0.8} />
-          </mesh>
-        );
-      })}
+      <ParcelGrid classes={classes} />
       {build.data?.data && <ForgeBuild3D height={block} position={[0, 0, 0]} cell={40} />}
       </group>
     </group>
