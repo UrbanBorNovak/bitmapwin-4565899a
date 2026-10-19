@@ -26,6 +26,11 @@ export function channelUrl(p: keyof Channels, handle: string) {
 
 const stamp = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+/** YouTube only turns timestamps into chapters with 3+ entries, the first at 00:00, each at least 10 s long. */
+export function youtubeChaptersValid(ep: ToonEpisode): boolean {
+  return ep.scenes.length >= 3 && ep.scenes.every((s) => s.duration >= 10);
+}
+
 export function chapters(ep: ToonEpisode): string[] {
   let t = 0;
   return ep.scenes.map((s, i) => { const line = `${stamp(t)} Scene ${i + 1} · ${s.block}.BITMAP`; t += s.duration; return line; });
@@ -55,7 +60,7 @@ export function releaseDescription(ep: ToonEpisode, p: Platform, ch: Channels): 
   return [
     `${ep.title} — a Toon Studio episode filmed on real BITMAP land on Bitcoin.`,
     "",
-    "CHAPTERS", ...chapters(ep), "",
+    youtubeChaptersValid(ep) ? "CHAPTERS" : "SCENES", ...chapters(ep), "",
     "FILMED ON", ...blocks.map((b) => `${b}.bitmap → ${SITE}/bitmap/${b}`), "",
     ...(cast.length ? ["STARRING", cast.join(", "), ""] : []),
     ...(credit ? ["CREATOR", credit, ""] : []),
