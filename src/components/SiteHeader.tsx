@@ -235,7 +235,7 @@ export function SiteHeader() {
         <div className="flex shrink-0 items-center gap-1">
           <BtcTicker className="hidden sm:flex" />
           <LanguageSwitcher />
-          <ThemeToggle />
+          <div className="hidden min-[420px]:block"><ThemeToggle /></div>
           <button
             type="button"
             aria-label="Show me around this page"
