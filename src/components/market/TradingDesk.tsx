@@ -5,13 +5,14 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress, type RegistryParcel } from "@/lib/registry";
 import { sweepCheapest } from "@/lib/market-sweep";
 import { cart } from "@/lib/sweep-cart";
-import { CartToggle } from "@/components/market/TradeSlip";
+import { CartToggle, useFees } from "@/components/market/TradeSlip";
 import { FloorDelta } from "@/components/ParcelCard";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
 
 /** Floor sweeper: lines up the N cheapest open asks; each buy is still its own wallet-signed PSBT. */
 export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
   const [n, setN] = useState(3);
+  const fees = useFees();
   const { picks, totalSats } = useMemo(() => sweepCheapest(listed, n), [listed, n]);
   if (listed.length === 0) return null;
   return (
