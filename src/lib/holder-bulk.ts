@@ -66,7 +66,7 @@ export type EvLike = { low: number; mid: number; high: number; fallback: boolean
  * `rung` is this item's ladder position, consumed only when the ladder applies.
  */
 export function planPrice(o: {
-  mode: PriceMode; override?: string; uniform?: string; ev: EvLike; floorSats: number | null; ladder: number; rung: number;
+  mode: PriceMode; override?: string | undefined; uniform?: string | undefined; ev: EvLike; floorSats: number | null; ladder: number; rung: number;
 }): { price: number | null; manual: boolean; needsChoice: boolean; usedRung: boolean } {
   if (o.override && Number(o.override) > 0) return { price: Math.round(Number(o.override)), manual: true, needsChoice: false, usedRung: false };
   const needsChoice = o.mode !== "uniform" && (!o.ev || o.ev.fallback);
