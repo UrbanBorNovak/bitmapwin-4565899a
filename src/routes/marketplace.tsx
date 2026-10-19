@@ -27,6 +27,7 @@ import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
+import { BulkSellDrawer } from "@/components/market/BulkSellDrawer";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
@@ -423,7 +424,7 @@ function Marketplace() {
                 </button>
               ))}
             </span>
-            <a href="#sell-bitmap" className="btn-term min-h-11">◆ SELL YOUR BITMAP</a>
+            <BulkSellDrawer />
             <Link
               to="/bot"
               search={{
