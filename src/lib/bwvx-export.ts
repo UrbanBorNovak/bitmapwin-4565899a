@@ -65,10 +65,9 @@ export function loadBWVX(b64, { blockSize = 1 } = {}) {
 }
 `;
 
-/** Build a .glb (one merged mesh, vertex colours) from Forge blocks and download it. */
-export async function downloadBuildGlb(blocks: TplBlock[], name: string) {
+/** One merged, vertex-coloured mesh from Forge blocks (same greedy boxes as BWVX2). */
+export async function buildGlbMesh(blocks: TplBlock[], name = "bwvx") {
   const THREE = await import("three");
-  const { GLTFExporter } = await import("three/examples/jsm/exporters/GLTFExporter.js");
   const { mergeGeometries } = await import("three/examples/jsm/utils/BufferGeometryUtils.js");
   const boxes = bwvxBoxes(encodeBuildV2(blocks));
   const colors = PALETTE_HEX.map((h) => new THREE.Color(h));
@@ -84,15 +83,28 @@ export async function downloadBuildGlb(blocks: TplBlock[], name: string) {
     return g;
   });
   if (!parts.length) throw new Error("Nothing to export yet");
-  const merged = mergeGeometries(parts)!;
-  const mesh = new THREE.Mesh(merged, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75 }));
+  const mesh = new THREE.Mesh(mergeGeometries(parts)!, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75 }));
   mesh.name = name;
+  return { mesh, boxes: boxes.length };
+}
+
+/** Binary glTF bytes for Forge blocks. */
+export async function exportGlb(blocks: TplBlock[], name = "bwvx") {
+  const THREE = await import("three");
+  const { GLTFExporter } = await import("three/examples/jsm/exporters/GLTFExporter.js");
+  const { mesh, boxes } = await buildGlbMesh(blocks, name);
   const scene = new THREE.Scene();
   scene.add(mesh);
   const glb = (await new GLTFExporter().parseAsync(scene, { binary: true })) as ArrayBuffer;
+  return { glb, boxes };
+}
+
+/** Build a .glb and download it. */
+export async function downloadBuildGlb(blocks: TplBlock[], name: string) {
+  const { glb, boxes } = await exportGlb(blocks, name);
   const url = URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }));
   const a = document.createElement("a");
   a.href = url; a.download = `${name}.glb`; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
-  return { boxes: boxes.length, bytes: glb.byteLength };
+  return { boxes, bytes: glb.byteLength };
 }
