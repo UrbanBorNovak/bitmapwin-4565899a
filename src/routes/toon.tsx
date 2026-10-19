@@ -129,7 +129,7 @@ function ToonPage() {
         stopped = true;
         const blob = await rec.finish();
         setRecording(false);
-        const name = `${episode.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-x.${rec.kind}`;
+        const name = `${episode.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-bitmapwin.${rec.kind}`;
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob); a.download = name;
         document.body.appendChild(a); a.click(); a.remove();
