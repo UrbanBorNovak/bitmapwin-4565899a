@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProvenanceEvent } from "@/lib/passport";
+import { CHAIN_RECORDS } from "@/lib/chain-records";
 
 /**
  * "Grapes" view of the World Stream: each BITMAP is a vine node, each real
@@ -34,7 +35,7 @@ function toneFor(e: ProvenanceEvent) {
 export function StreamConstellation({ events, height = 460 }: { events: ProvenanceEvent[]; height?: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
-  const ordered = useMemo(() => [...events].sort((a, b) => +new Date(a.occurredAt) - +new Date(b.occurredAt)), [events]);
+  const ordered = useMemo(() => [...CHAIN_RECORDS, ...events].sort((a, b) => +new Date(a.occurredAt) - +new Date(b.occurredAt)), [events]);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [hover, setHover] = useState<ProvenanceEvent | null>(null);
