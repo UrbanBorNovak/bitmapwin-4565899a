@@ -67,12 +67,17 @@ export function rigClipFor(names: string[], pose: string, moving: boolean): { na
 
 /** Extra bone rotations (radians, about each bone's local X) layered on top of the baked clip
  * for gestures the rig never baked: waving arm, talking head, dancing arms, guard-up fists. Pure in t. */
-export function rigGesture(pose: string, t: number, moving: boolean): { armL: number; armR: number; head: number } {
-  if (moving) return { armL: 0, armR: 0, head: 0 };
-  if (pose === "wave") return { armL: 0, armR: -2.5 + Math.sin(t * 9) * 0.4, head: 0.08 };
-  if (pose === "talk") return { armL: 0, armR: -0.5 + Math.sin(t * 5) * 0.3, head: Math.sin(t * 4) * 0.12 };
-  if (pose === "dance") { const s = Math.sin(t * 6); return { armL: -1.4 - s * 0.6, armR: -1.4 + s * 0.6, head: s * 0.15 }; }
-  if (pose === "combat") return { armL: -1.3 + Math.sin(t * 12) * 0.4, armR: -1.3 - Math.sin(t * 12) * 0.4, head: 0 };
-  if (pose === "jump") return { armL: -2.4, armR: -2.4, head: 0 };
-  return { armL: 0, armR: 0, head: 0 };
+export type RigGesture = { armL: number; armR: number; head: number; legL: number; legR: number };
+/** Extra bone rotations (radians, X axis) layered on the baked clip. The baked Idle has frozen legs, so every
+ * standing pose adds its own visible arm and leg motion. Walking already swings everything, so it adds nothing. */
+export function rigGesture(pose: string, t: number, moving: boolean): RigGesture {
+  if (moving) return { armL: 0, armR: 0, head: 0, legL: 0, legR: 0 };
+  const s = Math.sin(t * 2.2);
+  if (pose === "wave") return { armL: s * 0.15, armR: -2.5 + Math.sin(t * 9) * 0.4, head: 0.08, legL: s * 0.12, legR: -s * 0.12 };
+  if (pose === "talk") { const h = Math.sin(t * 5); return { armL: -0.4 - h * 0.3, armR: -0.5 + h * 0.35, head: Math.sin(t * 4) * 0.12, legL: s * 0.15, legR: -s * 0.15 }; }
+  if (pose === "dance") { const d = Math.sin(t * 6); return { armL: -1.4 - d * 0.6, armR: -1.4 + d * 0.6, head: d * 0.15, legL: d * 0.5, legR: -d * 0.5 }; }
+  if (pose === "combat") { const c = Math.sin(t * 12); return { armL: -1.3 + c * 0.4, armR: -1.3 - c * 0.4, head: 0, legL: 0.35 + c * 0.1, legR: -0.35 - c * 0.1 }; }
+  if (pose === "jump") return { armL: -2.4, armR: -2.4, head: 0, legL: -0.7, legR: -0.7 };
+  // idle: breathing arm sway and weight shift
+  return { armL: s * 0.18, armR: -s * 0.18, head: Math.sin(t * 1.3) * 0.06, legL: s * 0.1, legR: -s * 0.1 };
 }
