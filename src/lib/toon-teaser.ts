@@ -16,7 +16,7 @@ export const CITADEL_TEASER: ToonEpisode = {
         { height: 208, name: "208.bitmap", x: -3, z: 1, pose: "talk" },
       ],
       lines: [
-        { at: 1, dur: 2.4, speaker: 0, text: "Over nine thousand voxels, all inscribed on L1!", style: "shout", cam: "close" },
+        { at: 1, dur: 2.4, speaker: 0, text: "A whole voxel city, inscribed on Bitcoin L1!", style: "shout", cam: "close" },
         { at: 3.8, dur: 2.8, speaker: 1, text: "Welcome, traveller. The signal points deeper.", style: "speech", cam: "two" },
       ] },
     { block: 486145, duration: 6.5, shot: "dutch", transition: "wipe", sfx: "BAM!",
@@ -34,8 +34,8 @@ export const CITADEL_TEASER: ToonEpisode = {
         { height: 840000, name: "840000.bitmap", x: 2, z: 0, pose: "talk", emote: "happy" },
       ],
       lines: [
-        { at: 0.8, dur: 2.6, speaker: 0, text: "Block 208. Where the signal began, in 2009.", style: "thought", cam: "two" },
-        { at: 3.6, dur: 2.6, speaker: 1, text: "From genesis to megacity. Inscribe your legend.", style: "speech", cam: "two" },
+        { at: 0.8, dur: 2.6, speaker: 0, text: "Block 208. Mined in January 2009, days after genesis.", style: "thought", cam: "two" },
+        { at: 3.6, dur: 2.6, speaker: 1, text: "From those first blocks to megacities. Inscribe your legend.", style: "speech", cam: "two" },
       ] },
   ],
 };
@@ -57,7 +57,7 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
     { block: 881133, duration: 6, shot: "crane", sfx: "SATS!",
       cast: [px(PX.pizza, "#001 Pizza", -2, 1, "idle", { emote: "surprised" })],
       lines: [
-        { at: 0.8, dur: 2.4, speaker: 0, text: "Block 881,133. Two hundred nineteen of us, inscribed in pixels.", style: "thought", cam: "establish" },
+        { at: 0.8, dur: 2.4, speaker: 0, text: "Block 881,133. Over two hundred of us, drawn in pixels.", style: "thought", cam: "establish" },
         { at: 3.4, dur: 2.3, speaker: 0, text: "But we've never had bodies. Until now.", style: "speech", cam: "close" },
       ] },
     { block: 881133, duration: 6, shot: "orbit", transition: "iris", sfx: "WHOOSH!",
@@ -68,33 +68,33 @@ export const PIXELS_HOMECOMING: ToonEpisode = {
     { block: 715093, duration: 6.5, shot: "dolly", transition: "wipe", cutBlend: true, sfx: "BAM!",
       cast: [px(PX.tornado, "#004 Tornado", -7, 1, "walk", { to: { x: -3, z: 1 }, moveStart: 0.2, moveEnd: 2.6 }), { height: 840000, name: "840000.bitmap", x: 3, z: -1, pose: "talk" as const }],
       lines: [
-        { at: 1, dur: 2.4, speaker: 1, text: "Pixels? In the citadel? Show me you're real.", style: "speech", cam: "ots" },
+        { at: 1, dur: 2.4, speaker: 1, text: "Pixels? In the citadel? Show me you're real.", style: "speech", cam: "two" },
         { at: 3.8, dur: 2.4, speaker: 0, text: "Check the chain. Every pixel is an inscription.", style: "speech", cam: "two" },
       ] },
     { block: 486145, duration: 6, shot: "dutch", transition: "fade", sfx: "HODL!",
-      cast: [px(PX.fred, "#006 Fred the Frog", -2, 0, "jump"), px(PX.bot, "#009 Bitmap Bot", 2, 0, "combat", { emote: "angry" })],
+      cast: [px(PX.fred, "#006 Fred the Frog", -4, 0, "jump"), px(PX.bot, "#009 Bitmap Bot", 4, 0, "combat", { emote: "angry" })],
       lines: [
-        { at: 0.8, dur: 2.4, speaker: 1, text: "Bastion defence online. Fists up, Fred!", style: "shout", cam: "close" },
+        { at: 0.8, dur: 2.4, speaker: 1, text: "Bastion defence online. Fists up, Fred!", style: "shout", cam: "establish" },
         { at: 3.4, dur: 2.3, speaker: 0, text: "Ribbit. I jump higher than any fee spike.", style: "speech", cam: "two" },
       ] },
     { block: 819245, duration: 6.5, shot: "orbit", transition: "iris", sfx: "SATS!",
       cast: [px(PX.pizza, "#001 Pizza", -4, 0, "dance", { emote: "love" }), px(PX.nyan, "#003 Nyan", 0, 1, "dance"), px(PX.tornado, "#004 Tornado", 4, 0, "dance", { emote: "happy" })],
       lines: [
-        { at: 1, dur: 2.6, speaker: 1, text: "Nine thousand voxels and a dance floor!", style: "shout", cam: "establish" },
+        { at: 1, dur: 2.6, speaker: 1, text: "An inscribed city and a dance floor!", style: "shout", cam: "establish" },
         { at: 3.9, dur: 2.3, speaker: 0, text: "Every build we cross is someone's home.", style: "thought", cam: "two" },
       ] },
     { block: 208, duration: 6.5, shot: "crane", transition: "wipe", sfx: "WHOOSH!",
       cast: [px(PX.bot, "#009 Bitmap Bot", -6, 0, "walk", { to: { x: -2, z: 0 }, moveStart: 0, moveEnd: 2.4 }), { height: 208, name: "208.bitmap", x: 3, z: 0, pose: "talk" as const, emote: "surprised" as const }],
       lines: [
-        { at: 0.8, dur: 2.4, speaker: 1, text: "Block 208. 2009. Nobody has walked here in years.", style: "speech", cam: "ots" },
+        { at: 0.8, dur: 2.4, speaker: 1, text: "Block 208, January 2009. One of the oldest districts.", style: "speech", cam: "two" },
         { at: 3.6, dur: 2.5, speaker: 0, text: "Then let's bring everyone.", style: "speech", cam: "close" },
       ] },
     { block: 208, duration: 7, shot: "orbit", transition: "fade", sfx: "HODL!",
       cast: [px(PX.pizza, "#001 Pizza", -5, 0, "wave"), px(PX.nyan, "#003 Nyan", -2, 1, "dance"), px(PX.tornado, "#004 Tornado", 2, 0, "wave", { emote: "love" }),
         px(PX.fred, "#006 Fred the Frog", 5, 1, "jump")],
       lines: [
-        { at: 0.8, dur: 2.8, speaker: 2, text: "219 pixels. One rig. All on Bitcoin.", style: "shout", cam: "establish" },
-        { at: 4, dur: 2.6, speaker: 0, text: "BITMAP Pixels are finally coming home.", style: "speech", cam: "two" },
+        { at: 0.8, dur: 2.8, speaker: 2, text: "Over two hundred pixels. One rig. All on Bitcoin.", style: "shout", cam: "establish" },
+        { at: 4, dur: 2.6, speaker: 0, text: "BITMAP Pixels are finally coming home.", style: "speech", cam: "establish" },
       ] },
   ],
 };

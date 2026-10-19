@@ -133,6 +133,8 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     }
     // Measure the real body (never the loading silhouette) until two readings agree, then lock —
     // voxels can still be streaming in on the first reading, which would freeze the wrong framing.
+    // Avatars wear the fixed-height on-chain rig (skinned bounds are unreliable mid-clip): use its known size.
+    if (actor.avatar && !locked.current) { unitH.current = 1.25; unitS.current = 1.25; locked.current = true; }
     if (ready && !locked.current && o.children.length && frames.current < 600 && frames.current++ % 20 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.

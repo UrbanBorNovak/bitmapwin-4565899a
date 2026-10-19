@@ -6,7 +6,7 @@ import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
-import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
+import { canEncodeMp4, createXRecorder, probeMp4, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
 import { CITADEL_TEASER, PIXELS_HOMECOMING } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
@@ -97,6 +97,9 @@ function ToonPage() {
   }, [episode, time]);
 
   const [lastFile, setLastFile] = useState<File | null>(null);
+  // Label the button with the format this browser will really save (checked after hydration).
+  const [mp4Ok, setMp4Ok] = useState<boolean | null>(null);
+  useEffect(() => { let live = true; void probeMp4().then((ok) => { if (live) setMp4Ok(ok); }); return () => { live = false; }; }, []);
 
   const record = async () => {
     const gl = stageRef.current?.querySelector("canvas");
@@ -177,7 +180,7 @@ function ToonPage() {
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
             <button className="btn-term" disabled={recording} onClick={() => { if (time >= total) setTime(0); setPlaying((p) => !p); }}>[ {playing ? "PAUSE" : "▶ PLAY"} ]</button>
             <button className="btn-term-ghost" disabled={recording} onClick={() => { setPlaying(false); setTime(0); }}>[ ⏮ REWIND ]</button>
-            <button className="btn-term" disabled={recording} onClick={() => void record()}>[ {recording ? "● RECORDING…" : "⏺ EXPORT FOR X (MP4)"} ]</button>
+            <button className="btn-term" disabled={recording} onClick={() => void record()}>[ {recording ? "● RECORDING…" : `⏺ EXPORT VIDEO (${mp4Ok === false ? "WEBM" : mp4Ok ? "MP4 FOR X" : "…"})`} ]</button>
             <button className="btn-term-ghost" disabled={recording} onClick={() => void postToX()}>[ 𝕏 POST TO X ]</button>
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />

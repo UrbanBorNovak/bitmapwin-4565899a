@@ -49,7 +49,7 @@ async def main():
       await st.screenshot(path=str(S/f"3_scrub_{t}.png"))
     try:
       async with pg.expect_download(timeout=150000) as d:
-        await pg.get_by_role("button",name=re.compile("EXPORT FOR X")).click()
+        await pg.get_by_role("button",name=re.compile("EXPORT VIDEO")).click()
       dl=await d.value; out="/tmp/browser/rig/export"+Path(dl.suggested_filename).suffix
       await dl.save_as(out); ok.append(("export",Path(out).stat().st_size>20000)); print("export",out)
     except Exception as e: ok.append(("export",False)); print(e)
