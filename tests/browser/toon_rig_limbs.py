@@ -32,9 +32,9 @@ async def main():
     await pg.get_by_role("button", name="[ APPLY SCRIPT ]").click()
     st = pg.locator("canvas").first; tl = pg.get_by_label("Timeline", exact=True)
     async def shot(t, name):
-      await tl.fill(str(t)); await pg.wait_for_timeout(1200); f = str(S / f"{name}.png"); await st.screenshot(path=f); return f
+      await tl.fill(f"{t:g}"); await pg.wait_for_timeout(1200); f = str(S / f"{name}.png"); await st.screenshot(path=f); return f
     await shot(0.5, "warm")
-    for scene, (t1, t2) in (("s1", (1.0, 1.7)), ("s2", (5.0, 5.7))):
+    for scene, (t1, t2) in (("s1", (1, 1.7)), ("s2", (5, 5.7))):
       a = await shot(t1, f"{scene}_a"); bb = await shot(t2, f"{scene}_b")
       # loop back and forth, then return: same time must give the same frame
       for _ in range(4): await shot(t2, "loop"); await shot(t1, "loop")
