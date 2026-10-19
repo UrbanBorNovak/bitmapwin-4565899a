@@ -8,7 +8,9 @@ import { signListingPsbt, signMessageWithWallet, xOnlyPubKeyHex } from "@/lib/br
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
-import { DUST_SATS, isFarBelowFloor, listingGuards, matchPrice, suggestFloor } from "@/lib/holder-bulk";
+import { DUST_SATS, isFarBelowFloor, ladderPrice, listingGuards, matchPrice, suggestFloor } from "@/lib/holder-bulk";
+import { computeEv } from "@/lib/listing-ev";
+import { supabase } from "@/integrations/supabase/client";
 
 export type BulkItem = { outpoint: string; valueSats: number; bitmapHeight: number };
 type Status = "pending" | "signing" | "done" | "skipped" | "failed";
@@ -153,13 +155,19 @@ export function BulkListBar({
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-[11px] font-bold text-primary">{items.length} SELECTED</span>
         <span className="label">PRICE:</span>
-        {([["floor", "MATCH FLOOR"], ["under1", "FLOOR −1%"], ["uniform", "SAME PRICE"]] as const).map(([m, l]) => (
+        {([["ev", "FAIR EV"], ["evlow", "EV−"], ["evhigh", "EV+"], ["floor", "MATCH FLOOR"], ["under1", "FLOOR −1%"], ["uniform", "SAME PRICE"]] as const).map(([m, l]) => (
           <button key={m} disabled={running} className={mode === m ? "btn-term !px-2 !py-1" : "btn-term-ghost !px-2 !py-1"} onClick={() => setMode(m)}>{l}</button>
         ))}
         {mode === "uniform" && (
           <input value={uniform} onChange={(e) => setUniform(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="SATS EACH" aria-label="Same price in sats"
             className="w-32 border border-border bg-background px-2 py-1 font-mono text-[11px] text-foreground focus:border-foreground focus:outline-none" />
         )}
+        <label className="label flex items-center gap-1">LADDER
+          <select value={ladder} disabled={running} onChange={(e) => setLadder(Number(e.target.value))} aria-label="Ladder step"
+            className="border border-border bg-background px-1 py-1 font-mono text-[11px] text-foreground">
+            {[0, 1, 2, 5, 10].map((v) => <option key={v} value={v}>{v === 0 ? "OFF" : `+${v}% EACH`}</option>)}
+          </select>
+        </label>
         <span className="label ml-auto">{listable.length} PRICED · TOTAL {formatSats(total)}</span>
       </div>
 
@@ -170,10 +178,10 @@ export function BulkListBar({
             <li key={p.b.outpoint} className="flex flex-wrap items-center gap-2 px-3 py-2 font-mono text-[10px]">
               <span className="w-28 font-bold text-foreground">{p.b.bitmapHeight}.BITMAP</span>
               <span className="text-muted-foreground">
-                {p.floor ? `${p.floor.scope.toUpperCase()} FLOOR ${p.floor.floorSats.toLocaleString("en-US")} SATS` : asks.isLoading ? "READING FLOORS…" : "NO COMPARABLE ASKS"}
+                {p.ev ? `EV ${p.ev.mid.toLocaleString("en-US")} (${p.ev.sampleSize} SALES${p.ev.fallback ? ", BROAD" : ""}) · ` : sales.isLoading ? "READING SALES… · " : "NO EV DATA · "}{p.floor ? `${p.floor.scope.toUpperCase()} FLOOR ${p.floor.floorSats.toLocaleString("en-US")} SATS` : asks.isLoading ? "READING FLOORS…" : "NO COMPARABLE ASKS"}
               </span>
               {p.guards.map((g) => <span key={g.id} className="border border-primary/60 px-1 text-primary">⚠ {g.label}</span>)}
-              {p.lowball && <span className="border border-destructive px-1 text-destructive">⚠ UNDER HALF THE FLOOR</span>}
+              {p.lowball && <span className="border border-destructive px-1 text-destructive">⚠ UNDER HALF OF EV/FLOOR</span>}
               <input value={overrides[p.b.outpoint] ?? ""} disabled={running}
                 onChange={(e) => setOverrides((o) => ({ ...o, [p.b.outpoint]: e.target.value.replace(/[^0-9]/g, "") }))}
                 placeholder={p.price ? p.price.toLocaleString("en-US") : "SATS"} aria-label={`Price for ${p.b.bitmapHeight}.bitmap`}
@@ -209,7 +217,7 @@ export function BulkListBar({
         )}
       </div>
       <p className="mt-2 font-mono text-[9px] text-muted-foreground">
-        &gt; EACH BITMAP IS SIGNED SEPARATELY BY YOUR WALLET · UNLISTING MOVES NO FUNDS · FLOORS EXCLUDE YOUR OWN ASKS
+        &gt; EACH BITMAP IS SIGNED SEPARATELY BY YOUR WALLET · UNLISTING MOVES NO FUNDS · FLOORS EXCLUDE YOUR OWN ASKS · EV FROM CONFIRMED SALES · BUYER PAYS THE FEE, YOU GET YOUR FULL ASK
       </p>
     </div>
   );
