@@ -1869,6 +1869,9 @@ function PlayerCameraRig({
   /** S in third person turns the body round to face the way it walks. */
   const turnGoal = useRef<number | null>(null);
   const sHeld = useRef(false);
+  /** Third person on foot: the orbit camera's own heading, independent of the body. */
+  const camYaw = useRef<number | null>(null);
+  const camDrag = useRef(0);
   const bob = useRef(0);
   const arm = useRef(1);
   const jumpRequested = useRef(false);
@@ -1993,9 +1996,18 @@ function PlayerCameraRig({
     };
     canvas.addEventListener("pointerdown", lock);
     document.addEventListener("mousemove", look);
+    // Third person: drag with any mouse button to orbit the camera round the body.
+    const orbit = (event: MouseEvent) => {
+      if (mode !== "third" || event.buttons === 0 || camYaw.current === null) return;
+      camYaw.current -= event.movementX * 0.0045;
+      camDrag.current += Math.abs(event.movementX);
+    };
+    canvas.addEventListener("mousemove", orbit);
+    const cleanupOrbit = () => canvas.removeEventListener("mousemove", orbit);
     return () => {
       canvas.removeEventListener("pointerdown", lock);
       document.removeEventListener("mousemove", look);
+      cleanupOrbit();
       if (document.pointerLockElement === canvas) document.exitPointerLock();
     };
   }, [gl, mode, pose]);
@@ -2015,8 +2027,11 @@ function PlayerCameraRig({
       pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.0024 * steady, -1.05, 1.05);
     }
     const padJump = consumeTouchJump();
-    // Third person on foot: S swings the body round and walks the way it faces.
-    const bodySteer = mode !== "first" && !isDriving();
+    // Third person on foot uses a camera-relative controller (see below);
+    // top-down keeps the classic body steering.
+    const freeCam = mode === "third" && !isDriving() && !isTouchDevice();
+    if (!freeCam || camYaw.current === null) camYaw.current = player.yaw;
+    const bodySteer = mode !== "first" && !isDriving() && !freeCam;
     const sDown = pressed.has("s") || pressed.has("arrowdown");
     if (bodySteer && sDown && !sHeld.current) turnGoal.current = player.yaw + Math.PI;
     sHeld.current = sDown;
@@ -2051,6 +2066,28 @@ function PlayerCameraRig({
       sprint: pressed.has("shift") || touchPad.sprint,
       jump: jumpRequested.current || padJump,
     };
+    if (freeCam && camYaw.current !== null) {
+      // Bop-style controller: arrows orbit the camera, WASD runs relative to it,
+      // and the body turns smoothly to face the way it travels.
+      const orbitKeys = (pressed.has("arrowleft") ? 1 : 0) - (pressed.has("arrowright") ? 1 : 0);
+      camYaw.current += orbitKeys * 2.4 * delta;
+      const f = intent.forward;
+      const s = clampAxis((pressed.has("d") ? 1 : 0) - (pressed.has("a") ? 1 : 0) + intent.strafe);
+      const mag = Math.min(1, Math.hypot(f, s));
+      if (mag > 0.01) {
+        const cy = camYaw.current;
+        const dx = Math.sin(cy) * f + Math.cos(cy) * s;
+        const dz = Math.cos(cy) * f - Math.sin(cy) * s;
+        player.yaw = damp(player.yaw, Math.atan2(dx, dz), 12, delta, true);
+        // Ease the camera in behind the run when nobody is dragging it.
+        if (camDrag.current === 0 && f > 0.1) camYaw.current = damp(camYaw.current, player.yaw, 1.2 * f, delta, true);
+      }
+      camDrag.current = 0;
+      intent.forward = mag;
+      intent.strafe = 0;
+      intent.turn = 0;
+    }
+
 
     // Aboard a ride the same keys travel it: much faster and with wider turns.
     // The Genesis Dog can jump; flying rides swap jumping for climb and sink.
@@ -2256,9 +2293,10 @@ function PlayerCameraRig({
       const back = AVATAR_U * (riding ? 11.6 + gait * 2.7 : 4.75 + gait * 1.15);
       const shoulder = riding ? 0 : AVATAR_U * 1.05;
       const side = shoulder - steer.current * AVATAR_U * (riding ? 2 : 1.05);
-      const idealX = player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side;
+      const vy = camYaw.current ?? player.yaw;
+      const idealX = player.x - Math.sin(vy) * back + Math.cos(vy) * side;
       const idealY = player.y + ground + AVATAR_U * (riding ? 3.15 - gait * 0.55 : 2 - gait * 0.16) - dip;
-      const idealZ = player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side;
+      const idealZ = player.z - Math.cos(vy) * back - Math.sin(vy) * side;
       // Spring arm: shorten the boom when trees or raised ground sit between the
       // avatar's head and the ideal camera spot, so the lens never sinks into
       // leaves or terrain. Pull in fast, ease back out slowly.
@@ -2284,9 +2322,9 @@ function PlayerCameraRig({
       // Keep the avatar on the lower third and reveal more space in front.
       const lead = riding ? 0.16 + gait * 0.16 : 0.22 + gait * 0.18;
       cameraLook.current.set(
-        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
+        player.x + player.vx * lead + Math.sin(vy) * AVATAR_U * (riding ? 3.1 : 4.2),
         player.y + ground + AVATAR_U * (riding ? 0.78 : 0.98),
-        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
+        player.z + player.vz * lead + Math.cos(vy) * AVATAR_U * (riding ? 3.1 : 4.2),
       );
     }
     // Battle Drop cinematic: ramp view in the plane, a high chase in freefall
@@ -2360,7 +2398,7 @@ function PlayerCameraRig({
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
     camera.quaternion.slerp(
       targetRotation.current,
-      1 - Math.exp(-(mode === "first" ? 20 : 7) * delta),
+      1 - Math.exp(-(mode === "first" ? 20 : transitionSpeed) * delta),
     );
     // Lean last, on top of the settled look, so turning banks the frame without
     // ever pulling the camera off its target.
