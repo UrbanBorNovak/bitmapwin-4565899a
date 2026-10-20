@@ -39,10 +39,10 @@ export function think(b: Brain, senses: Senses, steps = 20): Record<Drive, numbe
   const r = rng(b.seed + 1);
   for (let t = 0; t < steps; t++) {
     SENSORS.forEach((k, i) => { spike[i] = r() < Math.min(1, Math.max(0, senses[k])) ? 1 : 0; });
-    for (let i = 0; i < SYNAPSES; i++) if (spike[b.pre[i]]) v[b.post[i]] += b.w[i];
+    for (let i = 0; i < SYNAPSES; i++) if (spike[b.pre[i]!]) v[b.post[i]!]! += b.w[i]!;
     for (let n = SENSORS.length; n < NEURONS; n++) {
-      spike[n] = v[n] > 1 ? 1 : 0;
-      v[n] = spike[n] ? 0 : v[n] * 0.7;
+      spike[n] = v[n]! > 1 ? 1 : 0;
+      v[n] = spike[n] ? 0 : v[n]! * 0.7;
       if (n >= MOTOR0 && spike[n]) out[n - MOTOR0]++;
     }
   }
