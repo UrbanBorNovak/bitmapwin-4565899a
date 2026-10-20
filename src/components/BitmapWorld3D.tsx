@@ -162,6 +162,7 @@ import { grantXp } from "@/lib/world-skills";
 import { FlyCreatures } from "@/components/game/FlyCreatures";
 import { MysteryBoxes } from "@/components/game/MysteryBoxes";
 import { NightVision } from "@/components/game/NightVision";
+import { WorldVisualMod, VisualModControls } from "@/components/game/WorldVisualMod";
 import {
   activeRegen,
   companionSpec,
