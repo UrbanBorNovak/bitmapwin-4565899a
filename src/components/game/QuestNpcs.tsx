@@ -29,6 +29,8 @@ const LOOK: Record<string, Look> = {
   "mr-shiddy": { body: "#5a4a32", head: "#e0b894", accent: "#ff8c1a" },
   "space-monnkey": { body: "#6a2fd6", head: "#8b5a2b", accent: "#39ff88" },
   dudeamoto: { body: "#8a6a4a", head: "#e6c3a0", accent: "#f7931a" },
+  "putin-x": { body: "#1c1f26", head: "#e2c2a4", accent: "#d52b1e" },
+  "elon-x": { body: "#14161a", head: "#e8c6a2", accent: "#ffffff" },
   ladybird: { body: "#c8102e", head: "#f0cfae", accent: "#141414" }, // red shell, black spots
 };
 
