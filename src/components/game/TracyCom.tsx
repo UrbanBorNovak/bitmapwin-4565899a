@@ -51,7 +51,7 @@ function Portrait({ mood, talking, blink }: { mood: TracyMood; talking: boolean;
   );
 }
 
-export function TracyCom({ script, onEnd, onNode, className = "", passive = false, voice }: { script: TracyScript; onEnd?: () => void; /** fires each time a node is entered */ onNode?: (id: string) => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number }) {
+export function TracyCom({ script, onEnd, onNode, className = "", passive = false, voice, avatar }: { script: TracyScript; onEnd?: () => void; /** fires each time a node is entered */ onNode?: (id: string) => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number; /** BITMAP Pixel inscription id shown instead of the drawn face */ avatar?: string }) {
   const [nodeId, setNodeId] = useState<string | null>(script.start);
   const [started, setStarted] = useState(() => performance.now());
   const [now, setNow] = useState(() => performance.now());
@@ -130,7 +130,7 @@ export function TracyCom({ script, onEnd, onNode, className = "", passive = fals
       <div className={`tracy-crt relative overflow-hidden rounded-[14px] border border-signal/30 bg-muted p-3 ${glitch ? "tracy-glitch" : ""}`} onClick={() => step()}>
         <div className="flex gap-3">
           <div className="h-20 w-20 shrink-0 rounded-md border border-signal/40 bg-background/60 p-1">
-            <Portrait mood={node.mood ?? "idle"} talking={!done && Math.floor(now / 110) % 2 === 0} blink={blink} />
+            {avatar ? <img src={`/api/public/inscription/${avatar}`} alt={`${node.speaker} BITMAP Pixel`} className="h-full w-full object-contain [image-rendering:pixelated]" /> : <Portrait mood={node.mood ?? "idle"} talking={!done && Math.floor(now / 110) % 2 === 0} blink={blink} />}
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[11px] tracking-widest text-primary">{node.speaker}</div>
