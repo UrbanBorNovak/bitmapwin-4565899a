@@ -982,6 +982,19 @@ function ForgePage() {
               <span className="mx-1 h-4 w-px bg-border" />
               <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
               <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
+              <label title="Import a .bwvx or MagicaVoxel .vox file as a piece" data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
+                ⇪ IMPORT .BWVX/.VOX
+                <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  void import("@/lib/voxel-import").then((m) => m.importVoxelFile(file, SPAN)).then((r) => {
+                    setPicked({ id: `file:${file.name}:${Date.now()}`, name: file.name.replace(/\.(bwvx|vox)$/i, ""), sphere: "bricks", blocks: r.blocks, author: null, bitCost: 0 });
+                    setTool("stamp"); setTurns(0);
+                    toast.success(`Imported ${r.blocks.length.toLocaleString()} blocks — click the land to place`, { description: r.note });
+                  }).catch((err) => toast.error("Import failed", { description: String(err?.message ?? err) }));
+                }} />
+              </label>
               <div className="flex items-center rounded border border-border" title="Floor level (Q/E) — only needed to build in mid-air">
                 <button type="button" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">−</button>
                 <span className="px-1 text-[10px] text-muted-foreground">LVL {layer}</span>
