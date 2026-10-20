@@ -27,6 +27,7 @@ import { Route as ClipsRouteImport } from './routes/clips'
 import { Route as CoForgeRouteImport } from './routes/co-forge'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
+import { Route as ColonyRouteImport } from './routes/colony'
 import { Route as CommandRouteImport } from './routes/command'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -225,6 +226,11 @@ const CoinsRoute = CoinsRouteImport.update({
 const CollectionsRoute = CollectionsRouteImport.update({
   id: '/collections',
   path: '/collections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ColonyRoute = ColonyRouteImport.update({
+  id: '/colony',
+  path: '/colony',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommandRoute = CommandRouteImport.update({
@@ -796,6 +802,7 @@ export interface FileRoutesByFullPath {
   '/co-forge': typeof CoForgeRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
+  '/colony': typeof ColonyRoute
   '/command': typeof CommandRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
@@ -924,6 +931,7 @@ export interface FileRoutesByTo {
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
   '/coins': typeof CoinsRoute
+  '/colony': typeof ColonyRoute
   '/command': typeof CommandRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
@@ -1051,6 +1059,7 @@ export interface FileRoutesById {
   '/co-forge': typeof CoForgeRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
+  '/colony': typeof ColonyRoute
   '/command': typeof CommandRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
@@ -1182,6 +1191,7 @@ export interface FileRouteTypes {
     | '/co-forge'
     | '/coins'
     | '/collections'
+    | '/colony'
     | '/command'
     | '/create'
     | '/dashboard'
@@ -1310,6 +1320,7 @@ export interface FileRouteTypes {
     | '/clips'
     | '/co-forge'
     | '/coins'
+    | '/colony'
     | '/command'
     | '/create'
     | '/dashboard'
@@ -1436,6 +1447,7 @@ export interface FileRouteTypes {
     | '/co-forge'
     | '/coins'
     | '/collections'
+    | '/colony'
     | '/command'
     | '/create'
     | '/dashboard'
@@ -1566,6 +1578,7 @@ export interface RootRouteChildren {
   CoForgeRoute: typeof CoForgeRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
+  ColonyRoute: typeof ColonyRoute
   CommandRoute: typeof CommandRoute
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
@@ -1763,6 +1776,13 @@ declare module '@tanstack/react-router' {
       path: '/collections'
       fullPath: '/collections'
       preLoaderRoute: typeof CollectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/colony': {
+      id: '/colony'
+      path: '/colony'
+      fullPath: '/colony'
+      preLoaderRoute: typeof ColonyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/command': {
@@ -2685,6 +2705,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoForgeRoute: CoForgeRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
+  ColonyRoute: ColonyRoute,
   CommandRoute: CommandRoute,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
