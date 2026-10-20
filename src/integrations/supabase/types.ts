@@ -76,6 +76,84 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_proposal_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event: string
+          id: string
+          proposal_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event: string
+          id?: string
+          proposal_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event?: string
+          id?: string
+          proposal_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agent_proposals: {
+        Row: {
+          citizen_id: string
+          created_at: string
+          decided_at: string | null
+          href: string
+          id: string
+          item: string | null
+          kind: string
+          offer_id: string | null
+          price_sats: number | null
+          reason: string | null
+          stale_why: string | null
+          status: string
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          citizen_id: string
+          created_at?: string
+          decided_at?: string | null
+          href: string
+          id: string
+          item?: string | null
+          kind: string
+          offer_id?: string | null
+          price_sats?: number | null
+          reason?: string | null
+          stale_why?: string | null
+          status?: string
+          summary: string
+          user_id: string
+        }
+        Update: {
+          citizen_id?: string
+          created_at?: string
+          decided_at?: string | null
+          href?: string
+          id?: string
+          item?: string | null
+          kind?: string
+          offer_id?: string | null
+          price_sats?: number | null
+          reason?: string | null
+          stale_why?: string | null
+          status?: string
+          summary?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bids: {
         Row: {
           accepted_offer_id: string | null
