@@ -74,6 +74,7 @@ export function BuyButton({
           offerId,
           buyerPaymentAddress: wallet.paymentAddress,
           buyerOrdinalsAddress: wallet.ordinalsAddress,
+          expectedPriceSats: priceSats,
           ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
           ...(keyCandidates(wallet).length > 0
             ? { paymentPublicKeyHex: keyCandidates(wallet) }
