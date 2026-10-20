@@ -18,6 +18,7 @@ export const QUEST_ITEMS: QuestItem[] = [
   { id: "skiff-key", name: "HOVER-SKIFF KEY", icon: "⚿", landmarkId: "trading-post", blurb: "Wierdamoto's skiff. Two years of dust trails on the odometer." },
   { id: "dust-sample", name: "DUST SAMPLE", icon: "✧", landmarkId: "arena", blurb: "Forty thousand tiny outputs in a jar. Blockamoto's calling card." },
   { id: "explorer-lens", name: "EXPLORER LENS", icon: "◉", landmarkId: "tower", blurb: "Shows where a sat really went. The block explorer never lies." },
+  { id: "architect-blueprint", name: "MASTER BLUEPRINT", icon: "⌗", landmarkId: "miner-rig-3", blurb: "PROJECT_BITERNAM // REVISION: ∞ // ARCHITECT: URBAN. The coordinate maths for the ground under your boots." },
 ];
 export const itemById = (id: string) => QUEST_ITEMS.find((i) => i.id === id) ?? null;
 
@@ -119,15 +120,15 @@ export const QUEST_NPCS: QuestNpc[] = ([
     ] },
   },
   {
-    id: "tornado", name: "TORNADO", landmarkId: "bitcoin-statue", voice: 170,
-    persona: "Tornado, anchorman of Bitmap News. Booming broadcast voice, loves a breaking headline, always signs off with the block height.",
+    id: "tornado", name: "TORNADO H. THOMPSON", landmarkId: "bitcoin-statue", voice: 170,
+    persona: "Tornado H. Thompson, gonzo anchorman of Bitmap News. Aviator shades, booming broadcast voice, loves a breaking headline, always signs off with the block height.",
     script: { id: "npc-tornado", title: "BITMAP NEWS · LIVE DESK", start: "a", nodes: [
-      { id: "a", speaker: "TORNADO", mood: "alarm", text: "GOOD EVENING, BITMAPPERS. Breaking tonight: a virus in the park node, a masked marshal on the loose, and fees doing something nobody can explain.", choices: [
+      { id: "a", speaker: "TORNADO H. THOMPSON", mood: "alarm", text: "GOOD EVENING, BITMAPPERS. Breaking tonight: a virus in the park node, a masked marshal on the loose, and fees doing something nobody can explain.", choices: [
         { label: "\"Can you get a message out?\"", next: "b" },
         { label: "\"Any leads?\"", next: "c" },
       ] },
-      { id: "b", speaker: "TORNADO", mood: "smug", text: "Kid, I go live every block. But the virus is jamming my signal. Find BOP. If anyone can patch a broadcast, it's BOP.", next: null },
-      { id: "c", speaker: "TORNADO", mood: "idle", text: "Sources say the jam started in the miner rigs. Sources also say BOP knows. I am the sources. Back to you, chain.", next: null },
+      { id: "b", speaker: "TORNADO H. THOMPSON", mood: "smug", text: "Kid, I go live every block. But the virus is jamming my signal. Find BOP. If anyone can patch a broadcast, it's BOP.", next: null },
+      { id: "c", speaker: "TORNADO H. THOMPSON", mood: "idle", text: "Sources say the jam started in the miner rigs. Sources also say BOP knows. I am the sources. Back to you, chain.", next: null },
     ] },
   },
   {
@@ -143,14 +144,64 @@ export const QUEST_NPCS: QuestNpc[] = ([
   },
   {
     id: "urban", name: "URBAN", landmarkId: "miner-rig-3", voice: 150,
-    persona: "Urban, a practical engineer who builds the world's tools and marketplaces. Hands-on, honest about what is broken, proud of clean structure.",
-    script: { id: "npc-urban", title: "MINER RIG 3 · WORKSHOP", start: "a", nodes: [
-      { id: "a", speaker: "URBAN", mood: "idle", text: "BOP fried another rig? Typical. Hand me that wrench. Every block in this park is a part, and every part has a place.", choices: [
+    persona: "Urban, the Master Architect who laid the bedrock of the Oasis tile by tile. Pragmatic, dry-witted, ships reality instead of theorising. Knows the world is code and is quietly proud of it.",
+    script: { id: "npc-urban", title: "MINER RIG 3 · ARCHITECT'S WORKSHOP", start: "a", nodes: [
+      { id: "a", speaker: "URBAN", mood: "idle", text: "BOP fried another rig? Typical. Hand me that wrench. Every block in this park is a part, and every part has a place. I should know. I placed them.", choices: [
         { label: "\"Can you fix it?\"", next: "b" },
         { label: "\"What are you building?\"", next: "c" },
+        { label: "\"Is this all just a simulation?\"", next: "egg" },
       ] },
-      { id: "c", speaker: "URBAN", mood: "smug", text: "Land you can actually build on. Tools that check the chain before they trust a word. Now, the rig.", next: "b" },
+      { id: "c", speaker: "URBAN", mood: "smug", text: "Land you can actually build on. Tools that check the chain before they trust a word. Code keeps the lights on, art gives it a pulse. Someone had to lay the bedrock so none of you fell into the void.", next: "b" },
+      { id: "egg", speaker: "URBAN", mood: "glitch", text: "...You noticed the seams. Kid, you have no idea how much maths went into stopping the page zoom from blowing up three-dimensional space. Look behind this rig. Don't tell dev9 I left the master blueprint lying around.", next: "b" },
       { id: "b", speaker: "URBAN", mood: "idle", text: "Fixed and verified. But a working park is no use if nobody comes. Take this to 9 at the Great Statue.", next: null },
+    ] },
+  },
+  {
+    id: "dabber", name: "ELEVATED DABBER", landmarkId: "mayor-pepe", voice: 135,
+    persona: "Elevated Dabber, the summit visionary of the Bitmappers. Laid-back, endlessly positive, sees every BITMAP from above and blows the FUD away like smoke.",
+    script: { id: "npc-dabber", title: "MAYOR PEPE · HIGH GROUND", start: "a", nodes: [
+      { id: "a", speaker: "ELEVATED DABBER", mood: "smug", text: "Ayyy, Marshal. Up here you see it all. Every block a tile, every tile a home. Blockamoto only sees spreadsheets.", choices: [
+        { label: "\"How do we beat him?\"", next: "b" },
+        { label: "\"Nice view.\"", next: "c" },
+      ] },
+      { id: "c", speaker: "ELEVATED DABBER", mood: "idle", text: "Best view on the chain, friend. Stay elevated. Zoom out far enough and the FUD just turns into weather.", next: "b" },
+      { id: "b", speaker: "ELEVATED DABBER", mood: "smug", text: "Easy. We keep building higher than he can tax. Good vibes compound, man. Like blocks.", next: null },
+    ] },
+  },
+  {
+    id: "bitlodo", name: "BITLODO", landmarkId: "arena", voice: 200,
+    persona: "Bitlodo, the cinema maestro of the Oasis and maker of the Clips studio. Thinks in shots and frames, directs every fight like a movie, talks like a film director on set.",
+    script: { id: "npc-bitlodo", title: "THE ARENA · DIRECTOR'S CHAIR", start: "a", nodes: [
+      { id: "a", speaker: "BITLODO", mood: "smug", text: "Cut! You walked straight through my shot. No, wait, keep walking. That's good. That's the story.", choices: [
+        { label: "\"What are you filming?\"", next: "b" },
+        { label: "\"Can you film Blockamoto?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "BITLODO", mood: "idle", text: "Everything that happens on chain deserves a trailer. Raids, landings, first builds. Frame by frame, forever.", next: null },
+      { id: "c", speaker: "BITLODO", mood: "alarm", text: "Already rolling. Villains always forget the camera. That's the third act, Marshal. Action!", next: null },
+    ] },
+  },
+  {
+    id: "mononaut", name: "MONONAUT", landmarkId: "miner-rig-2", voice: 115,
+    persona: "Mononaut, the mempool cartographer. A quiet forensic detective who remembers every record block and can tell a real sale from a custodial sweep at a glance.",
+    script: { id: "npc-mononaut", title: "MINER RIG 2 · MEMPOOL CHARTS", start: "a", nodes: [
+      { id: "a", speaker: "MONONAUT", mood: "idle", text: "Block 972,161. Seven thousand nine hundred twenty-nine transactions. Still not the record. Block 367,853 holds that: twelve thousand two hundred thirty-nine.", choices: [
+        { label: "\"Who made that record?\"", next: "b" },
+        { label: "\"Is Blockamoto faking sales?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "MONONAUT", mood: "smug", text: "2015 dust cleanup. Someone swept the floor of the whole chain. The curator calls it a storm. I call it a Tuesday.", next: null },
+      { id: "c", speaker: "MONONAUT", mood: "alarm", text: "One input, change back to the sender. That's not a sale, that's a sweep. Charts don't lie. People do.", next: null },
+    ] },
+  },
+  {
+    id: "sunset", name: "BITMAP SUNSET", landmarkId: "miner-rig-4", voice: 180,
+    persona: "Bitmap Sunset, the atmosphere architect. A dreamy synthwave poet who paints the sky over every block and keeps the frequencies calm.",
+    script: { id: "npc-sunset", title: "WESTERN LOOKOUT · GOLDEN HOUR", start: "a", nodes: [
+      { id: "a", speaker: "BITMAP SUNSET", mood: "idle", text: "Shh. Watch the horizon. Every ten minutes the sky gets a new block, and every block gets a new colour.", choices: [
+        { label: "\"Why paint the sky?\"", next: "b" },
+        { label: "\"Blockamoto wants it grey.\"", next: "c" },
+      ] },
+      { id: "b", speaker: "BITMAP SUNSET", mood: "smug", text: "Because land without light is just a ledger. Pink at dusk, cyan at dawn. That's how the Bitmappers know they're home.", next: null },
+      { id: "c", speaker: "BITMAP SUNSET", mood: "alarm", text: "He can't. The sun sets on its own schedule. Like difficulty adjustments. Nobody votes on it.", next: null },
     ] },
   },
   {
@@ -168,11 +219,16 @@ export const QUEST_NPCS: QuestNpc[] = ([
 
 /** The Biternam crew — shown as a cast list on /biternam. */
 export const BITERNAM_CREW = [
+  { id: "wierdamoto", name: "WIERDAMOTO", role: "Masked rebel leader", line: "Theatrical keeper of self-custody. Every sat belongs to its holder." },
   { id: "dev9", name: "DEV9", role: "The veteran", line: "Old dev, ex-military, reads raw transactions like intercepted signals." },
-  { id: "tornado", name: "TORNADO", role: "Anchorman of Bitmap News", line: "Goes live every block. Signs off with the height." },
   { id: "bop", name: "BOP", role: "The programmer", line: "Ships overnight. Makes hard things feel smooth." },
   { id: "nine", name: "9", role: "Culture leader", line: "Gathers the Bitmappers and gives the park its soul." },
-  { id: "urban", name: "URBAN", role: "The engineer", line: "Builds the tools and checks the chain before trusting a word." },
+  { id: "tornado", name: "TORNADO H. THOMPSON", role: "Gonzo anchor of Bitmap News", line: "Goes live every block. Signs off with the height." },
+  { id: "dabber", name: "ELEVATED DABBER", role: "Summit visionary", line: "Sees every BITMAP from above and blows the FUD away like smoke." },
+  { id: "bitlodo", name: "BITLODO", role: "Cinema maestro", line: "Directs every raid like a movie. Frame by frame, forever." },
+  { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
+  { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
+  { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
 ];
 
 export const QUESTS: Quest[] = [
@@ -217,6 +273,14 @@ export const QUESTS: Quest[] = [
       { kind: "talk", target: "urban", label: "Get Urban to rebuild the rig at Miner Rig 3" },
       { kind: "talk", target: "nine", label: "Rally the Bitmappers with 9 at the Great Statue" },
       { kind: "talk", target: "dev9", label: "Report back to dev9" },
+    ],
+  },
+  {
+    id: "egg-architect", title: "THE ARCHITECT'S SEAL", bit: 77, badge: "ARCHITECT'S SEAL",
+    blurb: "Some say the world was drawn by hand. Ask the engineer the question nobody asks.",
+    steps: [
+      { kind: "talk", target: "urban", label: "Ask Urban an uncomfortable question at Miner Rig 3" },
+      { kind: "pickup", target: "architect-blueprint", label: "Find what he left behind the rig", cindy: "Marshal... that's the master blueprint. Revision infinity. Don't drop it, he's the only one who can rewrite the collision matrix." },
     ],
   },
 ];
