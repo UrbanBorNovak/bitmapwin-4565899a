@@ -99,3 +99,12 @@ d2("chapter replay", () => {
     e2(r.claimed).toEqual(["ch1", "egg-architect"]);
   });
 });
+
+d2("bit-café handoff", () => {
+  i2("showing dev9 the press pass swaps it for the cipher note and Mononaut asks for it next", () => {
+    let p = applyEvent(blankProgress(), "talk", "tornado").next;
+    p = applyEvent(p, "give", "dev9>press-pass").next;
+    e2(heldItems(p).map((i) => i.id)).toEqual(["cipher-note"]);
+    e2(missionStepFor("mononaut", p)?.step.item).toBe("cipher-note");
+  });
+});
