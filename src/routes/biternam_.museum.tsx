@@ -4,7 +4,7 @@ import { MuseumInterior } from "@/components/biternam/MuseumInterior";
 import { TracyCom } from "@/components/game/TracyCom";
 import { npcById, questStore } from "@/lib/biternam-quests";
 
-export const Route = createFileRoute("/biternam/museum")({
+export const Route = createFileRoute("/biternam_/museum")({
   ssr: false,
   head: () => ({
     meta: [
