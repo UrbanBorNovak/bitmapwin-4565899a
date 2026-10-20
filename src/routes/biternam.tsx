@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { TracyCom } from "@/components/game/TracyCom";
+import { PixelFace } from "@/components/game/PixelFace";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
 import { BITERNAM_PART_1 } from "@/lib/biternam-story";
 import { BITERNAM_CREW, CREW_MISSION_ROLE, CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
@@ -47,7 +48,7 @@ function BiternamPage() {
           {BITERNAM_CREW.map((c) => (
             <div key={c.id} className="rounded border border-border bg-card/40 p-4 backdrop-blur">
               <div className="flex items-center gap-3">
-                {CREW_PIXEL_AVATAR[c.id] ? <img src={`/api/public/inscription/${CREW_PIXEL_AVATAR[c.id]}`} alt={`${c.name} BITMAP Pixel`} className="size-10 border border-bitcoin/40 object-contain [image-rendering:pixelated]" loading="lazy" /> : null}
+                {CREW_PIXEL_AVATAR[c.id] ? <PixelFace inscriptionId={CREW_PIXEL_AVATAR[c.id]!} label={`${c.name} BITMAP Pixel`} className="size-10 border border-bitcoin/40" /> : null}
                 <div className="font-display text-xl" data-no-translate>{c.name}</div>
               </div>
               <div className="font-mono text-[11px] tracking-[0.2em] text-signal">{c.role.toUpperCase()}</div>
