@@ -81,6 +81,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as BiternamCafeRouteImport } from './routes/biternam_.cafe'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
@@ -502,6 +503,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BiternamCafeRoute = BiternamCafeRouteImport.update({
+  id: '/biternam_/cafe',
+  path: '/biternam/cafe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamMuseumRoute = BiternamMuseumRouteImport.update({
   id: '/biternam_/museum',
   path: '/biternam/museum',
@@ -874,6 +880,7 @@ export interface FileRoutesByFullPath {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam/cafe': typeof BiternamCafeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
@@ -1003,6 +1010,7 @@ export interface FileRoutesByTo {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam/cafe': typeof BiternamCafeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
@@ -1137,6 +1145,7 @@ export interface FileRoutesById {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam_/cafe': typeof BiternamCafeRoute
   '/biternam_/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
@@ -1272,6 +1281,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam/cafe'
     | '/biternam/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
@@ -1401,6 +1411,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam/cafe'
     | '/biternam/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
@@ -1534,6 +1545,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam_/cafe'
     | '/biternam_/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
@@ -1668,6 +1680,7 @@ export interface RootRouteChildren {
   WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  BiternamCafeRoute: typeof BiternamCafeRoute
   BiternamMuseumRoute: typeof BiternamMuseumRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
@@ -2192,6 +2205,13 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/cafe': {
+      id: '/biternam_/cafe'
+      path: '/biternam/cafe'
+      fullPath: '/biternam/cafe'
+      preLoaderRoute: typeof BiternamCafeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/museum': {
@@ -2821,6 +2841,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  BiternamCafeRoute: BiternamCafeRoute,
   BiternamMuseumRoute: BiternamMuseumRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
