@@ -98,6 +98,11 @@ export type Proposal = {
   summary: string;
   /** where the owner completes it themselves, e.g. a BITMAP page */
   href: string;
+  /** trade proposals from a real listing */
+  offerId?: string;
+  item?: string;
+  priceSats?: number;
+  reason?: string;
   status: "pending" | "approved" | "rejected";
   createdAt: number;
 };
@@ -129,8 +134,41 @@ export const approvals = {
     const next: Proposal = { ...p, id: `${p.citizenId}:${Date.now()}`, status: "pending", createdAt: Date.now() };
     save([next, ...load()].slice(0, 50));
   },
+  /** Broker queues real listings once each; already-queued offers are skipped. */
+  proposeTrades(picks: BrokerPick[]) {
+    const have = new Set(load().map((p) => p.offerId).filter(Boolean));
+    const fresh = picks.filter((p) => !have.has(p.offerId));
+    const now = Date.now();
+    const rows: Proposal[] = fresh.map((p, i) => ({
+      id: `broker:${p.offerId}`, citizenId: "broker", kind: "trade", status: "pending", createdAt: now + i,
+      summary: `Buy ${p.item} for ${p.priceSats.toLocaleString()} sats`, href: `/bitmap/${p.height}`,
+      offerId: p.offerId, item: p.item, priceSats: p.priceSats, reason: p.reason,
+    }));
+    if (rows.length) save([...rows, ...load()].slice(0, 50));
+    return rows.length;
+  },
   decide(id: string, approve: boolean) { save(decide(load(), id, approve)); },
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
 };
 
 export const useApprovals = () => useSyncExternalStore(approvals.subscribe, approvals.get, () => EMPTY);
+
+/* ---------- broker: picks from real open listings ---------- */
+
+export type ListingLite = { id: string; bitmapHeight: number | null; priceSats: number; status: string };
+export type BrokerPick = { offerId: string; height: number; item: string; priceSats: number; reason: string };
+
+/** Pure: cheapest open listings, each with a reason grounded in the listing data itself. */
+export function brokerPicks(listings: ListingLite[], max = 3): BrokerPick[] {
+  const open = listings.filter((l): l is ListingLite & { bitmapHeight: number } => l.status === "open" && l.priceSats > 0 && l.bitmapHeight != null);
+  if (open.length === 0) return [];
+  const sorted = [...open].sort((a, b) => a.priceSats - b.priceSats);
+  const median = sorted[Math.floor(sorted.length / 2)]?.priceSats ?? 0;
+  return sorted.slice(0, max).map((l, i) => {
+    const pct = median > 0 ? Math.round((1 - l.priceSats / median) * 100) : 0;
+    const why = [i === 0 ? "Lowest price among open listings" : `#${i + 1} cheapest open listing`];
+    if (pct > 0) why.push(`${pct}% below the median ask of ${median.toLocaleString()} sats`);
+    if (l.bitmapHeight < 100_000) why.push("early block (under 100,000)");
+    return { offerId: l.id, height: l.bitmapHeight, item: `${l.bitmapHeight}.bitmap`, priceSats: l.priceSats, reason: why.join(" · ") };
+  });
+}
