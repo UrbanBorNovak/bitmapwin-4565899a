@@ -16,3 +16,17 @@ describe(".bwvx round trip", () => {
     expect(() => exportBwvxBytes([])).toThrow();
   });
 });
+
+import { tuplesToBlocks, bwvxPayload, bwvxBoxes } from "./bwvx-export";
+describe("agent proposal export", () => {
+  it("proposal tuples export to .bwvx and read back identically", () => {
+    const t: [number, number, number, string][] = [[0, 0, 0, "stone"], [0, 1, 0, "stone"], [4, 0, 1, "grass"]];
+    const back = parseBwvx(exportBwvxBytes(tuplesToBlocks(t))).blocks.map(key).sort();
+    expect(back).toEqual(t.map(([x, y, z, k]) => `${x},${y},${z},${k}`).sort());
+  });
+  it("loader payload decodes to boxes covering every voxel", () => {
+    const boxes = bwvxBoxes(bwvxPayload(tuplesToBlocks([[0, 0, 0, "stone"], [1, 0, 0, "stone"]])));
+    const vol = boxes.reduce((n, b) => n + (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1) * (b.z1 - b.z0 + 1), 0);
+    expect(vol).toBe(2);
+  });
+});

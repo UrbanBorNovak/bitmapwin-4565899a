@@ -13,6 +13,7 @@ import { useProposalStore } from "@/lib/agent-proposals-store";
 import { fetchOffers } from "@/lib/offers";
 import { supabase } from "@/integrations/supabase/client";
 import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/colony")({
   head: () => ({
@@ -90,6 +91,24 @@ function GhostCompare({ r }: { r: BuildRow }) {
   );
 }
 
+/** Open-format exports: .bwvx (Bitcoin-native), .glb (Blender/Unreal, one merged mesh) and the one-draw-call Three.js loader. */
+function ProposalExports({ r }: { r: BuildRow }) {
+  const name = `${r.bitmap_height}${r.parcel_index !== null ? `-p${r.parcel_index}` : ""}-proposal`;
+  const run = (f: (m: typeof import("@/lib/bwvx-export")) => Promise<string> | string) =>
+    void import("@/lib/bwvx-export").then(async (m) => toast.success(await f(m))).catch((e) => toast.error(String(e?.message ?? e)));
+  const btn = "rounded border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground hover:text-foreground";
+  return (
+    <div className="flex flex-wrap gap-1 pt-1">
+      <button type="button" className={btn} onClick={() => run((m) => `.BWVX saved · ${m.downloadBwvx(m.tuplesToBlocks(r.blocks), name).bytes.toLocaleString()} B`)}>EXPORT .BWVX</button>
+      <button type="button" className={btn} onClick={() => run(async (m) => { const x = await m.downloadBuildGlb(m.tuplesToBlocks(r.blocks), name); return `.GLB saved · ${x.boxes} boxes · 1 mesh`; })}>EXPORT .GLB</button>
+      <button type="button" className={btn} onClick={() => run(async (m) => {
+        const code = `${m.BWVX_LOADER_JS}\n// ${name}\nexport const PAYLOAD = "${m.bwvxPayload(m.tuplesToBlocks(r.blocks))}";\n// scene.add(loadBWVX(PAYLOAD));\n`;
+        await navigator.clipboard.writeText(code); return "Loader + payload copied";
+      })}>COPY THREE.JS LOADER</button>
+    </div>
+  );
+}
+
 function BuildProposals() {
   const [open, setOpen] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -134,6 +153,7 @@ function BuildProposals() {
                   <Link to="/forge" search={{ height: r.bitmap_height, ...(r.parcel_index !== null ? { parcel: r.parcel_index } : {}), proposal: r.id }} className="font-mono text-[11px] text-primary underline">REOPEN IN LAND FORGE</Link>
                 ) : <span className="font-mono text-[11px] text-muted-foreground">REJECTED</span>}
                 <button type="button" onClick={() => setOpen(open === r.id ? null : r.id)} className="block font-mono text-[11px] text-signal underline">{open === r.id ? "HIDE 3D COMPARE" : "COMPARE IN 3D"}</button>
+                <ProposalExports r={r} />
               </div>
               </div>
               {open === r.id && <GhostCompare r={r} />}
