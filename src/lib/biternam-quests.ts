@@ -72,7 +72,74 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "b", speaker: "BLOCKAMOTO SENTRY", mood: "glitch", text: "Fine. Fine! Take your dust. This conversation will not be recorded. It is already on chain, isn't it.", next: null },
     ] },
   },
+  {
+    id: "dev9", name: "DEV9", landmarkId: "bit-cafe", voice: 100,
+    persona: "dev9, a veteran developer and former military man. Calm, dry, Bond-like. Trusts only what he can verify on chain; reads raw transactions like intercepted signals.",
+    script: { id: "npc-dev9", title: "BIT CAFÉ · CORNER TABLE", start: "a", nodes: [
+      { id: "a", speaker: "DEV9", mood: "idle", text: "Sit. Don't order the espresso, it's been in the mempool since 2017. I hear Blockamoto is moving dust again.", choices: [
+        { label: "\"How do you know?\"", next: "b" },
+        { label: "\"I need a team.\"", next: "c" },
+      ] },
+      { id: "b", speaker: "DEV9", mood: "smug", text: "Three taproot addresses, big UTXOs, nothing that looks like a sale. Old habit. I read the outputs, not the press release.", next: "c" },
+      { id: "c", speaker: "DEV9", mood: "idle", text: "Then go see Tornado at the Tower plaza. If it's news, he's already broadcasting it. Shaken, not double-spent.", next: null },
+    ] },
+  },
+  {
+    id: "tornado", name: "TORNADO", landmarkId: "bitcoin-statue", voice: 170,
+    persona: "Tornado, anchorman of Bitmap News. Booming broadcast voice, loves a breaking headline, always signs off with the block height.",
+    script: { id: "npc-tornado", title: "BITMAP NEWS · LIVE DESK", start: "a", nodes: [
+      { id: "a", speaker: "TORNADO", mood: "alarm", text: "GOOD EVENING, BITMAPPERS. Breaking tonight: a virus in the park node, a masked marshal on the loose, and fees doing something nobody can explain.", choices: [
+        { label: "\"Can you get a message out?\"", next: "b" },
+        { label: "\"Any leads?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "TORNADO", mood: "smug", text: "Kid, I go live every block. But the virus is jamming my signal. Find BOP. If anyone can patch a broadcast, it's BOP.", next: null },
+      { id: "c", speaker: "TORNADO", mood: "idle", text: "Sources say the jam started in the miner rigs. Sources also say BOP knows. I am the sources. Back to you, chain.", next: null },
+    ] },
+  },
+  {
+    id: "bop", name: "BOP", landmarkId: "miner-rig-1", voice: 230,
+    persona: "BOP, a brilliant, fast-talking programmer. Ships tools overnight, speaks in short bursts of code jargon, makes hard things feel smooth.",
+    script: { id: "npc-bop", title: "MINER RIG 1 · TERMINAL", start: "a", nodes: [
+      { id: "a", speaker: "BOP", mood: "smug", text: "oh hey. yeah, the virus. it's hooked into the render loop. cute. give me ten seconds.", choices: [
+        { label: "\"Ten seconds?\"", next: "b" },
+        { label: "\"Can you unjam Bitmap News?\"", next: "b" },
+      ] },
+      { id: "b", speaker: "BOP", mood: "glitch", text: "done. smooth again. broadcast is up. but the rig it lived on is cooked. you need Urban to rebuild the hardware.", next: null },
+    ] },
+  },
+  {
+    id: "urban", name: "URBAN", landmarkId: "miner-rig-3", voice: 150,
+    persona: "Urban, a practical engineer who builds the world's tools and marketplaces. Hands-on, honest about what is broken, proud of clean structure.",
+    script: { id: "npc-urban", title: "MINER RIG 3 · WORKSHOP", start: "a", nodes: [
+      { id: "a", speaker: "URBAN", mood: "idle", text: "BOP fried another rig? Typical. Hand me that wrench. Every block in this park is a part, and every part has a place.", choices: [
+        { label: "\"Can you fix it?\"", next: "b" },
+        { label: "\"What are you building?\"", next: "c" },
+      ] },
+      { id: "c", speaker: "URBAN", mood: "smug", text: "Land you can actually build on. Tools that check the chain before they trust a word. Now, the rig.", next: "b" },
+      { id: "b", speaker: "URBAN", mood: "idle", text: "Fixed and verified. But a working park is no use if nobody comes. Take this to 9 at the Great Statue.", next: null },
+    ] },
+  },
+  {
+    id: "nine", name: "9", landmarkId: "great-bitcoin-statue", voice: 190,
+    persona: "9, the culture leader of the Bitmappers. Warm, visionary, speaks about community and art. Gathers people and gives the park its soul.",
+    script: { id: "npc-nine", title: "GREAT STATUE · GATHERING", start: "a", nodes: [
+      { id: "a", speaker: "9", mood: "idle", text: "You came. Good. Code keeps the park running, but people keep it alive. The Bitmappers are scattered and scared.", choices: [
+        { label: "\"What do they need?\"", next: "b" },
+        { label: "\"Blockamoto wants them divided.\"", next: "b" },
+      ] },
+      { id: "b", speaker: "9", mood: "smug", text: "A reason to gather. Tornado broadcasts, we light the statue, everyone comes home. Tell dev9 the crew is ready.", next: null },
+    ] },
+  },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
+
+/** The Biternam crew — shown as a cast list on /biternam. */
+export const BITERNAM_CREW = [
+  { id: "dev9", name: "DEV9", role: "The veteran", line: "Old dev, ex-military, reads raw transactions like intercepted signals." },
+  { id: "tornado", name: "TORNADO", role: "Anchorman of Bitmap News", line: "Goes live every block. Signs off with the height." },
+  { id: "bop", name: "BOP", role: "The programmer", line: "Ships overnight. Makes hard things feel smooth." },
+  { id: "nine", name: "9", role: "Culture leader", line: "Gathers the Bitmappers and gives the park its soul." },
+  { id: "urban", name: "URBAN", role: "The engineer", line: "Builds the tools and checks the chain before trusting a word." },
+];
 
 export const QUESTS: Quest[] = [
   {
@@ -93,6 +160,18 @@ export const QUESTS: Quest[] = [
       { kind: "visit", target: "arena", label: "Search the Arena for blown dust" },
       { kind: "talk", target: "sentry", label: "Face the sentry at the Metavoxel Tower" },
       { kind: "visit", target: "bit-museum", label: "Bring the record home to the Museum" },
+    ],
+  },
+  {
+    id: "q3", title: "ASSEMBLE THE CREW", bit: 50, badge: "CREW CALL",
+    blurb: "dev9 needs a team. Gather the Bitmap News anchor, the programmer, the engineer and the culture leader.",
+    steps: [
+      { kind: "talk", target: "dev9", label: "Meet dev9 at the Bit Café" },
+      { kind: "talk", target: "tornado", label: "Find Tornado at the Bitcoin Statue" },
+      { kind: "talk", target: "bop", label: "Ask BOP to unjam the broadcast at Miner Rig 1" },
+      { kind: "talk", target: "urban", label: "Get Urban to rebuild the rig at Miner Rig 3" },
+      { kind: "talk", target: "nine", label: "Rally the Bitmappers with 9 at the Great Statue" },
+      { kind: "talk", target: "dev9", label: "Report back to dev9" },
     ],
   },
 ];

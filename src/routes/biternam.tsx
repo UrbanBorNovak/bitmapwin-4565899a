@@ -3,6 +3,7 @@ import { useState } from "react";
 import { TracyCom } from "@/components/game/TracyCom";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
 import { BITERNAM_PART_1 } from "@/lib/biternam-story";
+import { BITERNAM_CREW } from "@/lib/biternam-quests";
 
 export const Route = createFileRoute("/biternam")({
   head: () => ({
@@ -35,6 +36,19 @@ function BiternamPage() {
             <Link to="/map" className="rounded border border-border px-3 py-2 hover:border-signal">[ ENTER THE OASIS ]</Link>
           </div>
         )}
+      </section>
+      <section className="mx-auto max-w-3xl px-6 pb-12">
+        <div className="border-t border-border pt-10 font-mono text-[11px] tracking-[0.3em] text-bitcoin">THE CREW</div>
+        <p className="mt-2 text-sm text-muted-foreground">Find them in the Oasis. Quest: ASSEMBLE THE CREW.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {BITERNAM_CREW.map((c) => (
+            <div key={c.id} className="rounded border border-border bg-card/40 p-4 backdrop-blur">
+              <div className="font-display text-xl" data-no-translate>{c.name}</div>
+              <div className="font-mono text-[11px] tracking-[0.2em] text-signal">{c.role.toUpperCase()}</div>
+              <p className="mt-2 text-sm text-foreground/85">{c.line}</p>
+            </div>
+          ))}
+        </div>
       </section>
       <article className="mx-auto max-w-3xl px-6 pb-24">
         <div className="border-t border-border pt-10 font-mono text-[11px] tracking-[0.3em] text-bitcoin">THE STORY SO FAR</div>
