@@ -5,7 +5,7 @@
 import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TracyCom } from "@/components/game/TracyCom";
-import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, pendingItems, nearestNpc, npcById, questStore, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
+import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
 import { askNpcFn, claimQuestRewardFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
 import { tracyCue } from "@/lib/tracy-com";
@@ -70,6 +70,11 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   useEffect(() => { if (talking && nearId !== talking.npc.id) { setTalking(null); setReply(null); } }, [nearId, talking]);
 
   const endCall = () => { if (talking) questStore.record("talk", talking.npc.id); };
+  // A hero waiting on a mission step speaks their own lines; give steps offer your wrist inventory.
+  const mission = talking ? missionStepFor(talking.npc.id, progress) : null;
+  const onMissionNode = (id: string) => {
+    if (talking && mission?.step.kind === "give" && id === "ok") questStore.record("give", `${talking.npc.id}>${mission.step.item}`);
+  };
 
   const sendQuestion = async () => {
     if (!talking || !q.trim() || busy) return;
@@ -105,7 +110,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
           {reply ? (
             <TracyCom key={reply.n} script={{ id: "reply", title: "OPEN CHANNEL", start: "a", nodes: [{ id: "a", speaker: reply.npc.name, mood: "idle", text: reply.text, next: null }] }} voice={reply.npc.voice} onEnd={() => setReply(null)} />
           ) : (
-            <TracyCom key={talking.n} script={talking.npc.script} voice={talking.npc.voice} onEnd={endCall} />
+            <TracyCom key={`${talking.n}:${mission?.quest.id ?? ""}`} script={mission ? missionScript(talking.npc, mission.step, held) : talking.npc.script} voice={talking.npc.voice} onEnd={endCall} onNode={onMissionNode} />
           )}
           <form className="glass-panel flex gap-2 rounded-[14px] border border-border p-2 font-mono text-[12px]" onSubmit={(e) => { e.preventDefault(); void sendQuestion(); }}>
             <input value={q} onChange={(e) => setQ(e.target.value)} maxLength={240} placeholder={`Ask ${talking.npc.name.toLowerCase()} anything…`} aria-label="Question" className="min-w-0 flex-1 rounded bg-muted px-2 py-1 text-foreground outline-none" />

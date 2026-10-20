@@ -50,3 +50,30 @@ describe("architect easter egg", () => {
     expect(isComplete(q, p)).toBe(true);
   });
 });
+
+import { itemById, missionScript, missionStepFor, npcById } from "./biternam-quests";
+describe("CH.2 the grey protocol", () => {
+  const q = () => QUESTS.find((x) => x.id === "ch2")!;
+  it("uses all ten heroes and pays 100 BIT", () => {
+    expect(new Set(q().steps.filter((s) => s.kind !== "pickup").map((s) => s.target)).size).toBe(10);
+    expect(q().bit).toBe(100);
+  });
+  it("a wrong item does not advance; the right one does and is taken from the wrist", () => {
+    let p = applyEvent(blankProgress(), "talk", "tornado").next;
+    expect(heldItems(p).map((i) => i.id)).toEqual(["press-pass"]);
+    expect(applyEvent(p, "give", "dev9>utxo-map").advanced).toHaveLength(0);
+    p = applyEvent(p, "give", "dev9>press-pass").next;
+    expect(heldItems(p).map((i) => i.id)).toEqual(["cipher-note"]);
+  });
+  it("finishing every step in order completes the chapter", () => {
+    let p = blankProgress();
+    for (const s of q().steps) p = applyEvent(p, s.kind, s.kind === "give" ? `${s.target}>${s.item}` : s.target).next;
+    expect(isComplete(q(), p)).toBe(true);
+    expect(heldItems(p).some((i) => i.id === "bedrock-seal")).toBe(false);
+  });
+  it("give dialogues offer held items and are valid scripts", () => {
+    for (const s of q().steps) if (s.say) expect(validateScript(missionScript(npcById(s.target)!, s, [itemById(s.item ?? "press-pass")!]))).toEqual([]);
+    const p = applyEvent(blankProgress(), "talk", "tornado").next;
+    expect(missionStepFor("dev9", p)?.step.item).toBe("press-pass");
+  });
+});
