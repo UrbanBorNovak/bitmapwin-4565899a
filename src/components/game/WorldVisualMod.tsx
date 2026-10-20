@@ -76,6 +76,9 @@ export function VisualModControls() {
     if (!open || !btn.current) return;
     const r = btn.current.getBoundingClientRect();
     setPos({ right: window.innerWidth - r.right, bottom: window.innerHeight - r.top + 8 });
+    const close = (e: PointerEvent) => { if (!btn.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
   }, [open]);
   const ids = Object.keys(VISUAL_MODS) as VisualModId[];
   return (
@@ -91,11 +94,11 @@ export function VisualModControls() {
       </button>
       {open && pos ? createPortal(
         <div style={{ right: pos.right, bottom: pos.bottom }} onPointerDown={(e) => e.stopPropagation()} className="fixed z-[200] grid w-80 grid-cols-2 gap-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
-          <button type="button" onClick={() => set({ locked: null })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${!locked ? "text-bitcoin" : "text-muted-foreground"}`}>
+          <button type="button" onClick={() => { set({ locked: null }); setOpen(false); }} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${!locked ? "text-bitcoin" : "text-muted-foreground"}`}>
             NORMAL
           </button>
           {ids.map((id) => (
-            <button key={id} type="button" onClick={() => set({ locked: id })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${locked === id ? "text-bitcoin" : "text-muted-foreground hover:text-foreground"}`}>
+            <button key={id} type="button" onClick={() => { set({ locked: id }); setOpen(false); }} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${locked === id ? "text-bitcoin" : "text-muted-foreground hover:text-foreground"}`}>
               {VISUAL_MODS[id].label}
             </button>
           ))}
@@ -103,7 +106,7 @@ export function VisualModControls() {
           <button type="button" onClick={() => set({ surges: !surges })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${surges ? "text-signal" : "text-muted-foreground"}`}>
             RANDOM SURGES: {surges ? "ON" : "OFF"}
           </button>
-          <button type="button" onClick={triggerSurge} className="block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight text-signal">
+          <button type="button" onClick={() => { triggerSurge(); setOpen(false); }} className="block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight text-signal">
             ⚡ GLITCH NOW
           </button>
         </div>,

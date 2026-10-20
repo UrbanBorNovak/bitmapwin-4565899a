@@ -76,12 +76,16 @@ export function TracyCom({ script, onEnd, className = "", passive = false }: { s
     lastShown.current = shown;
   }, [shown, node, bleep]);
 
+  // Held in a ref: callers pass inline callbacks, and the 60fps typing clock
+  // re-renders constantly — a changing goTo would keep resetting the hang-up timer.
+  const onEndRef = useRef(onEnd);
+  onEndRef.current = onEnd;
   const goTo = useCallback((next: ReturnType<typeof advance>) => {
-    if (!next) { setNodeId(null); onEnd?.(); return; }
+    if (!next) { setNodeId(null); onEndRef.current?.(); return; }
     lastShown.current = 0;
     setNodeId(next.id);
     setStarted(performance.now());
-  }, [onEnd]);
+  }, []);
 
   const step = useCallback((choice?: number) => {
     if (!node) return;
