@@ -67,8 +67,6 @@ function PlaceStoryPage() {
             <p>{place.story[1]}</p>
           </div>
           <PlaceChainLore height={place.height} />
-          <div>
-          </div>
           <div className="mt-9 border-l-2 border-signal bg-signal/5 p-5">
             <p className="label text-signal">THE LANDSCAPE</p>
             <h2 className="display mt-2 text-2xl md:text-3xl">{landscape.name}</h2>
