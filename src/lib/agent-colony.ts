@@ -99,12 +99,12 @@ export type Proposal = {
   /** where the owner completes it themselves, e.g. a BITMAP page */
   href: string;
   /** trade proposals from a real listing */
-  offerId?: string;
-  item?: string;
-  priceSats?: number;
-  reason?: string;
+  offerId?: string | undefined;
+  item?: string | undefined;
+  priceSats?: number | undefined;
+  reason?: string | undefined;
   status: "pending" | "approved" | "rejected" | "stale";
-  staleWhy?: string;
+  staleWhy?: string | undefined;
   createdAt: number;
 };
 
