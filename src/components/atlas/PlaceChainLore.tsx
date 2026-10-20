@@ -24,7 +24,7 @@ function hash(s: string) {
 /** Deterministic, per-inscription lore line: same id always gives the same text. */
 function loreFor(id: string, kind: "RE" | "CHILD", block: number | null) {
   const h = hash(id);
-  const pick = <T,>(a: T[], s: number) => a[(h >>> s) % a.length];
+  const pick = <T,>(a: T[], s: number): T => a[(h >>> s) % a.length] as T;
   const mid = pick(MID, 5).replace("{n}", String(((h >>> 9) % 97) + 3)).replace("{w}", pick(WORDS, 13));
   const end = block && block % 2016 < 144 ? "near the turning of a difficulty epoch" : pick(END, 17);
   return `${pick(kind === "RE" ? OPEN_RE : OPEN_CHILD, 1)} ${mid}, ${end}`;
