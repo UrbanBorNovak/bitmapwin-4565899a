@@ -19,13 +19,20 @@ const LOOK: Record<string, Look> = {
   tornado: { body: "#1f3a6b", head: "#e6c3a0", accent: "#ff4433" }, // news-desk blue, ON AIR red
   bop: { body: "#2a2f3a", head: "#f0cfae", accent: "#39ff88" }, // hoodie, terminal green
   nine: { body: "#5b2a86", head: "#e2b896", accent: "#ffd23f" }, // culture purple, gold
-  urban: { body: "#d9771f", head: "#e8c6a2", accent: "#ffe14d" }, // engineer orange, hi-vis
+  urban: { body: "#ff6f00", head: "#e8c6a2", accent: "#00f0ff" }, // hazard orange, blueprint cyan
+  dabber: { body: "#245436", head: "#e4be9b", accent: "#ffb703" }, // olive, amber haze
+  bitlodo: { body: "#232328", head: "#ebd0b5", accent: "#00e5ff" }, // director vest, tally light
+  mononaut: { body: "#2f3e46", head: "#e2c2a4", accent: "#f7931a" }, // trenchcoat, orange loupe
+  sunset: { body: "#3a0ca3", head: "#ebd2b9", accent: "#f72585" }, // twilight, synth pink
 };
 
 function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boolean }) {
   const p = npcSpot(npc);
   const g = useRef<Group>(null);
   const ring = useRef<Mesh>(null);
+  const grid = useRef<Mesh>(null);
+  const sparks = useRef<Group>(null);
+  const architect = npc.id === "urban";
   const look = LOOK[npc.id] ?? DROID;
   const s = unit * 1.4;
   useFrame(({ clock }) => {
@@ -34,6 +41,8 @@ function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boole
       g.current.position.set(p.x, groundY(p.x, p.z) + Math.sin(t * 2) * s * 0.03, p.z);
       g.current.rotation.y = -p.yaw + Math.sin(t * 0.6) * 0.3;
     }
+    if (grid.current) grid.current.rotation.z = t * 0.5;
+    if (sparks.current) sparks.current.children.forEach((c, i) => { const k = (t * 0.4 + i / 6) % 1; c.position.set(Math.cos(i * 2.1 + t) * s * 0.5, k * s * 2, Math.sin(i * 2.1 + t) * s * 0.5); c.scale.setScalar(1 - k); });
     if (ring.current) ring.current.scale.setScalar(active ? 1.15 + Math.sin(t * 6) * 0.05 : 1);
   });
   return (
@@ -42,6 +51,18 @@ function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boole
         <ringGeometry args={[s * 0.45, s * 0.55, 24]} />
         <meshBasicMaterial color={look.accent} transparent opacity={active ? 0.95 : 0.5} />
       </mesh>
+      {architect && (
+        <>
+          {/* Architect's blueprint compass: a rotating gold schematic under the cyan ring */}
+          <mesh ref={grid} rotation-x={-Math.PI / 2} position-y={s * 0.015}>
+            <ringGeometry args={[s * 0.62, s * 0.7, 8, 1]} />
+            <meshBasicMaterial color="#ffe14d" wireframe transparent opacity={0.8} />
+          </mesh>
+          <group ref={sparks}>
+            {Array.from({ length: 6 }, (_, i) => <mesh key={i}><boxGeometry args={[s * 0.05, s * 0.05, s * 0.05]} /><meshBasicMaterial color="#00f0ff" /></mesh>)}
+          </group>
+        </>
+      )}
       <mesh position={[-s * 0.1, s * 0.25, 0]}><boxGeometry args={[s * 0.14, s * 0.5, s * 0.16]} /><meshStandardMaterial color={look.body} /></mesh>
       <mesh position={[s * 0.1, s * 0.25, 0]}><boxGeometry args={[s * 0.14, s * 0.5, s * 0.16]} /><meshStandardMaterial color={look.body} /></mesh>
       <mesh position={[0, s * 0.75, 0]}><boxGeometry args={[s * 0.42, s * 0.5, s * 0.24]} /><meshStandardMaterial color={look.body} /></mesh>

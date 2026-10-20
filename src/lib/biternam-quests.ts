@@ -18,6 +18,7 @@ export const QUEST_ITEMS: QuestItem[] = [
   { id: "skiff-key", name: "HOVER-SKIFF KEY", icon: "⚿", landmarkId: "trading-post", blurb: "Wierdamoto's skiff. Two years of dust trails on the odometer." },
   { id: "dust-sample", name: "DUST SAMPLE", icon: "✧", landmarkId: "arena", blurb: "Forty thousand tiny outputs in a jar. Blockamoto's calling card." },
   { id: "explorer-lens", name: "EXPLORER LENS", icon: "◉", landmarkId: "tower", blurb: "Shows where a sat really went. The block explorer never lies." },
+  { id: "architect-blueprint", name: "MASTER BLUEPRINT", icon: "⌗", landmarkId: "miner-rig-3", blurb: "PROJECT_BITERNAM // REVISION: ∞ // ARCHITECT: URBAN. The coordinate maths for the ground under your boots." },
 ];
 export const itemById = (id: string) => QUEST_ITEMS.find((i) => i.id === id) ?? null;
 
@@ -119,15 +120,15 @@ export const QUEST_NPCS: QuestNpc[] = ([
     ] },
   },
   {
-    id: "tornado", name: "TORNADO", landmarkId: "bitcoin-statue", voice: 170,
-    persona: "Tornado, anchorman of Bitmap News. Booming broadcast voice, loves a breaking headline, always signs off with the block height.",
+    id: "tornado", name: "TORNADO H. THOMPSON", landmarkId: "bitcoin-statue", voice: 170,
+    persona: "Tornado H. Thompson, gonzo anchorman of Bitmap News. Aviator shades, booming broadcast voice, loves a breaking headline, always signs off with the block height.",
     script: { id: "npc-tornado", title: "BITMAP NEWS · LIVE DESK", start: "a", nodes: [
-      { id: "a", speaker: "TORNADO", mood: "alarm", text: "GOOD EVENING, BITMAPPERS. Breaking tonight: a virus in the park node, a masked marshal on the loose, and fees doing something nobody can explain.", choices: [
+      { id: "a", speaker: "TORNADO H. THOMPSON", mood: "alarm", text: "GOOD EVENING, BITMAPPERS. Breaking tonight: a virus in the park node, a masked marshal on the loose, and fees doing something nobody can explain.", choices: [
         { label: "\"Can you get a message out?\"", next: "b" },
         { label: "\"Any leads?\"", next: "c" },
       ] },
-      { id: "b", speaker: "TORNADO", mood: "smug", text: "Kid, I go live every block. But the virus is jamming my signal. Find BOP. If anyone can patch a broadcast, it's BOP.", next: null },
-      { id: "c", speaker: "TORNADO", mood: "idle", text: "Sources say the jam started in the miner rigs. Sources also say BOP knows. I am the sources. Back to you, chain.", next: null },
+      { id: "b", speaker: "TORNADO H. THOMPSON", mood: "smug", text: "Kid, I go live every block. But the virus is jamming my signal. Find BOP. If anyone can patch a broadcast, it's BOP.", next: null },
+      { id: "c", speaker: "TORNADO H. THOMPSON", mood: "idle", text: "Sources say the jam started in the miner rigs. Sources also say BOP knows. I am the sources. Back to you, chain.", next: null },
     ] },
   },
   {
@@ -218,11 +219,16 @@ export const QUEST_NPCS: QuestNpc[] = ([
 
 /** The Biternam crew — shown as a cast list on /biternam. */
 export const BITERNAM_CREW = [
+  { id: "wierdamoto", name: "WIERDAMOTO", role: "Masked rebel leader", line: "Theatrical keeper of self-custody. Every sat belongs to its holder." },
   { id: "dev9", name: "DEV9", role: "The veteran", line: "Old dev, ex-military, reads raw transactions like intercepted signals." },
-  { id: "tornado", name: "TORNADO", role: "Anchorman of Bitmap News", line: "Goes live every block. Signs off with the height." },
   { id: "bop", name: "BOP", role: "The programmer", line: "Ships overnight. Makes hard things feel smooth." },
   { id: "nine", name: "9", role: "Culture leader", line: "Gathers the Bitmappers and gives the park its soul." },
-  { id: "urban", name: "URBAN", role: "The engineer", line: "Builds the tools and checks the chain before trusting a word." },
+  { id: "tornado", name: "TORNADO H. THOMPSON", role: "Gonzo anchor of Bitmap News", line: "Goes live every block. Signs off with the height." },
+  { id: "dabber", name: "ELEVATED DABBER", role: "Summit visionary", line: "Sees every BITMAP from above and blows the FUD away like smoke." },
+  { id: "bitlodo", name: "BITLODO", role: "Cinema maestro", line: "Directs every raid like a movie. Frame by frame, forever." },
+  { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
+  { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
+  { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
 ];
 
 export const QUESTS: Quest[] = [
@@ -267,6 +273,14 @@ export const QUESTS: Quest[] = [
       { kind: "talk", target: "urban", label: "Get Urban to rebuild the rig at Miner Rig 3" },
       { kind: "talk", target: "nine", label: "Rally the Bitmappers with 9 at the Great Statue" },
       { kind: "talk", target: "dev9", label: "Report back to dev9" },
+    ],
+  },
+  {
+    id: "egg-architect", title: "THE ARCHITECT'S SEAL", bit: 77, badge: "ARCHITECT'S SEAL",
+    blurb: "Some say the world was drawn by hand. Ask the engineer the question nobody asks.",
+    steps: [
+      { kind: "talk", target: "urban", label: "Ask Urban an uncomfortable question at Miner Rig 3" },
+      { kind: "pickup", target: "architect-blueprint", label: "Find what he left behind the rig", cindy: "Marshal... that's the master blueprint. Revision infinity. Don't drop it, he's the only one who can rewrite the collision matrix." },
     ],
   },
 ];

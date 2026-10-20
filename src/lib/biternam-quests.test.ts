@@ -22,7 +22,7 @@ describe("biternam quests", () => {
 import { describe as d2, it as i2, expect as e2 } from "vitest";
 d2("crew quest", () => {
   i2("all five crew members stand in the Oasis and the crew quest pays 50 BIT", () => {
-    for (const id of ["dev9", "tornado", "bop", "nine", "urban"]) e2(QUEST_NPCS.some((n) => n.id === id)).toBe(true);
+    for (const id of ["dev9", "tornado", "bop", "nine", "urban", "dabber", "bitlodo", "mononaut", "sunset", "wierdamoto"]) e2(QUEST_NPCS.some((n) => n.id === id)).toBe(true);
     e2(QUESTS.find((q) => q.id === "q3")!.bit).toBe(50);
   });
 });
@@ -38,5 +38,15 @@ d2("chapter 1 mission", () => {
     e2(isComplete(ch1, p)).toBe(true);
     e2(heldItems(p).map((i) => i.id)).toEqual(["skiff-key", "dust-sample", "explorer-lens"]);
     e2(ch1.bit).toBe(40);
+  });
+});
+
+describe("architect easter egg", () => {
+  it("pays a fixed 77 BIT after talking to Urban then finding the blueprint", async () => {
+    const q = QUESTS.find((x) => x.id === "egg-architect")!;
+    expect(q.bit).toBe(77);
+    let p = applyEvent(blankProgress(), "talk", "urban").next;
+    p = applyEvent(p, "pickup", "architect-blueprint").next;
+    expect(isComplete(q, p)).toBe(true);
   });
 });
