@@ -30,7 +30,9 @@ const REELS: Reel[] = [
 
 export const Route = createFileRoute("/watch")({
   validateSearch: (s: Record<string, unknown>) => ({ ep: typeof s['ep'] === "string" ? s['ep'] : undefined }),
-  head: () => {
+  head: ({ match }) => {
+    const ep = (match.search as { ep?: string }).ep;
+    const player = `https://bitmapwin.app/watch${ep ? `?ep=${encodeURIComponent(ep)}` : ""}`;
     const title = "Toon Cinema — Watch BITMAP Guardian Cartoons";
     const description =
       "Press play on cartoon episodes starring BITMAP Guardians, filmed on real Bitcoin blocks and inscribed voxel builds. Free to watch in your browser.";
@@ -41,7 +43,11 @@ export const Route = createFileRoute("/watch")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:card", content: "player" },
+        { name: "twitter:player", content: player },
+        { name: "twitter:player:width", content: "1280" },
+        { name: "twitter:player:height", content: "720" },
+        { property: "og:url", content: player },
       ],
     };
   },
