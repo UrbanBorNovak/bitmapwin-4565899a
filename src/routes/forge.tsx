@@ -45,10 +45,11 @@ import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
 
 export const Route = createFileRoute("/forge")({
-  validateSearch: (s: Record<string, unknown>): { height?: number; parcel?: number } => {
+  validateSearch: (s: Record<string, unknown>): { height?: number; parcel?: number; proposal?: string } => {
     const h = Number(s["height"]);
     const p = Number(s["parcel"]);
-    const out: { height?: number; parcel?: number } = {};
+    const out: { height?: number; parcel?: number; proposal?: string } = {};
+    if (typeof s["proposal"] === "string" && /^[0-9a-f-]{36}$/i.test(s["proposal"])) out.proposal = s["proposal"];
     if (s["height"] !== undefined && Number.isInteger(h) && h >= 0) out.height = h;
     if (s["parcel"] !== undefined && Number.isInteger(p) && p >= 0) out.parcel = p;
     return out;
@@ -408,6 +409,27 @@ function ForgePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chainBuild?.inscriptionId]);
   useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
+  /** Agent build proposal (owner-only read via RLS) loaded straight onto the canvas for review. */
+  const proposalLoaded = useRef<string | null>(null);
+  useEffect(() => {
+    const pid = search.proposal;
+    if (!pid || proposalLoaded.current === pid) return;
+    proposalLoaded.current = pid;
+    void supabase.from("build_proposals").select("blocks, block_count, bitmap_height").eq("id", pid).maybeSingle().then(({ data }) => {
+      if (!data) { toast.error("PROPOSAL NOT FOUND ON YOUR ACCOUNT"); return; }
+      const rows = (data.blocks as unknown as [number, number, number, string][]) ?? [];
+      const next = new Map<string, TplBlock>();
+      for (const [x, y, z, k] of rows) next.set(cellKey(x, y, z), { dx: x, dy: y, dz: z, k: k as TplBlock["k"] });
+      setXl(false);
+      setHistory((h) => [...h, world]);
+      setWorld(next);
+      setPendingLoad(null);
+      loadedFor.current = chainBuild?.inscriptionId ?? "__proposal__";
+      toast.success(`LOADED AGENT PROPOSAL · ${next.size.toLocaleString()} VOXELS — REVIEW, EDIT, THEN INSCRIBE YOURSELF`);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.proposal]);
+
   const collectionQ = useQuery(collectionPiecesQuery());
   const [makers, setMakers] = useState<Record<string, string>>({});
   const [siteTribute, setSiteTribute] = useState(false);
