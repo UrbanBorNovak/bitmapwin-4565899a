@@ -2007,6 +2007,7 @@ function PlayerCameraRig({
     return () => {
       canvas.removeEventListener("pointerdown", lock);
       document.removeEventListener("mousemove", look);
+      cleanupOrbit();
       if (document.pointerLockElement === canvas) document.exitPointerLock();
     };
   }, [gl, mode, pose]);
@@ -2026,8 +2027,11 @@ function PlayerCameraRig({
       pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.0024 * steady, -1.05, 1.05);
     }
     const padJump = consumeTouchJump();
-    // Third person on foot: S swings the body round and walks the way it faces.
-    const bodySteer = mode !== "first" && !isDriving();
+    // Third person on foot uses a camera-relative controller (see below);
+    // top-down keeps the classic body steering.
+    const freeCam = mode === "third" && !isDriving() && !isTouchDevice();
+    if (!freeCam || camYaw.current === null) camYaw.current = player.yaw;
+    const bodySteer = mode !== "first" && !isDriving() && !freeCam;
     const sDown = pressed.has("s") || pressed.has("arrowdown");
     if (bodySteer && sDown && !sHeld.current) turnGoal.current = player.yaw + Math.PI;
     sHeld.current = sDown;
