@@ -340,6 +340,9 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { OasisTracy } from "@/components/game/OasisTracy";
+import { CinematicBars } from "@/components/game/CinematicBars";
+import { cinematics, shotFrame, shotInReach, SKIP_KEYS } from "@/lib/oasis-cinematics";
+import { tracyCue } from "@/lib/tracy-com";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
@@ -1890,6 +1893,7 @@ function PlayerCameraRig({
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const key = event.key.toLowerCase();
+      if (cinematics.active() && SKIP_KEYS.has(key)) cinematics.stop();
       if (event.code === "Space" && !event.repeat) {
         jumpRequested.current = true;
         event.preventDefault();
@@ -2322,7 +2326,28 @@ function PlayerCameraRig({
       cameraTarget.current.set(player.x, g + AVATAR_U * 42, player.z - AVATAR_U * 9);
       cameraLook.current.set(player.x, g, player.z);
     }
-    const transitionSpeed = (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
+    // Landmark establishing shots: first visit to a key building detaches the
+    // camera for a few seconds; any movement key skips it.
+    const nowS = clock.elapsedTime;
+    let shotLive = cinematics.active();
+    if (!shotLive && dropCam.current < 0.05 && !calm.current) {
+      const shot = shotInReach(player.x, player.z, cinematics.seen);
+      if (shot) {
+        cinematics.start(shot, nowS);
+        tracyCue({ kind: "landmark", id: shot.id, title: shot.title, line: shot.line });
+        shotLive = cinematics.active();
+      }
+    }
+    if (shotLive) {
+      const t = nowS - shotLive.startedAt;
+      if (t >= shotLive.shot.duration) cinematics.stop();
+      else {
+        const f = shotFrame(shotLive.shot, t, groundY);
+        cameraTarget.current.set(f.position.x, f.position.y, f.position.z);
+        cameraLook.current.set(f.look.x, f.look.y, f.look.z);
+      }
+    }
+    const transitionSpeed = cinematics.active() ? 2.2 : (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
@@ -4857,6 +4882,7 @@ function BitmapWorld3DInner({
 
         {/* TRACY-9 — wrist-com quips on boarding a ride or hitting a sealed gate. */}
         <OasisTracy hidden={cameraMode === "map"} />
+        <CinematicBars hidden={cameraMode === "map"} />
 
         {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
         <NightVision active={gear.goggles && cameraMode === "first"} />

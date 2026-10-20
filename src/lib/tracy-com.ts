@@ -78,7 +78,8 @@ export const SECTOR_09_BRIEFING: TracyScript = {
 export type TracyCue =
   | { kind: "board"; rideId: string; label: string }
   | { kind: "sealed"; title: string; reason: "closed" | "no-pass" }
-  | { kind: "anomaly"; label: string };
+  | { kind: "anomaly"; label: string }
+  | { kind: "landmark"; id: string; title: string; line: string };
 
 /** One cue per kind+subject at most every `cooldownMs`, so she never nags. */
 export function shouldSpeak(lastAt: number | undefined, now: number, cooldownMs = 45_000) {
@@ -87,6 +88,7 @@ export function shouldSpeak(lastAt: number | undefined, now: number, cooldownMs 
 
 export function cueKey(cue: TracyCue) {
   if (cue.kind === "anomaly") return "anomaly";
+  if (cue.kind === "landmark") return `landmark:${cue.id}`;
   return cue.kind === "board" ? `board:${cue.rideId}` : `sealed:${cue.title}`;
 }
 
@@ -107,6 +109,14 @@ const RIDE_QUIPS: Record<string, string> = {
 
 /** Builds the one-line call Tracy makes for a world cue. */
 export function cueScript(cue: TracyCue): TracyScript {
+  if (cue.kind === "landmark") {
+    return {
+      id: cueKey(cue),
+      title: `ESTABLISHING · ${cue.title}`,
+      start: "a",
+      nodes: [{ id: "a", speaker: "CINDY-9", mood: "smug", text: cue.line, next: null }],
+    };
+  }
   if (cue.kind === "anomaly") {
     return {
       id: cueKey(cue),
