@@ -6,7 +6,7 @@ import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TracyCom } from "@/components/game/TracyCom";
 import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, stepKey, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
-import { askNpcFn, claimQuestRewardFn } from "@/lib/biternam-npc.functions";
+import { askNpcFn, claimQuestRewardFn, recordQuestStepFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
 import { tracyCue } from "@/lib/tracy-com";
 import { WORLD_CELL } from "@/lib/player-state";
@@ -36,6 +36,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   const [muted, setMuted] = useState(false);
   const ask = useServerFn(askNpcFn);
   const claim = useServerFn(claimQuestRewardFn);
+  const recordStep = useServerFn(recordQuestStepFn);
   const wallet = useWalletSession();
   const address = wallet?.ordinalsAddress || wallet?.paymentAddress || null;
 
