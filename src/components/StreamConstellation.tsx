@@ -270,7 +270,9 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
 
   function pick(ev: React.MouseEvent) {
     const cv = canvas.current; if (!cv) return;
-    const r = cv.getBoundingClientRect(); const x = ev.clientX - r.left - r.width / 2, y = ev.clientY - r.top - r.height / 2;
+    // Page-size preference sets CSS zoom on <html>: rect is zoomed, node coords are in layout px.
+    const r = cv.getBoundingClientRect(); const k = r.width ? cv.clientWidth / r.width : 1;
+    const x = (ev.clientX - r.left - r.width / 2) * k, y = (ev.clientY - r.top - r.height / 2) * k;
     let best: Node | null = null, bd = 144;
     for (const n of graph.current.nodes) { if (n.kind !== "event" || n.born >= step) continue; const d = (n.x - x) ** 2 + (n.y - y) ** 2; if (d < bd) { bd = d; best = n; } }
     if ((best?.ev ?? null) !== hover && best) beep(900, 1300, 25, 0.015);
