@@ -28,6 +28,7 @@ const LOOK: Record<string, Look> = {
   "mr-shiddy": { body: "#5a4a32", head: "#e0b894", accent: "#ff8c1a" },
   "space-monnkey": { body: "#6a2fd6", head: "#8b5a2b", accent: "#39ff88" },
   dudeamoto: { body: "#8a6a4a", head: "#e6c3a0", accent: "#f7931a" },
+  ladybird: { body: "#c8102e", head: "#f0cfae", accent: "#141414" }, // red shell, black spots
 };
 
 function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boolean }) {
