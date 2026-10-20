@@ -4882,6 +4882,7 @@ function BitmapWorld3DInner({
 
         {/* TRACY-9 — wrist-com quips on boarding a ride or hitting a sealed gate. */}
         <OasisTracy hidden={cameraMode === "map"} />
+        <CinematicBars hidden={cameraMode === "map"} />
 
         {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
         <NightVision active={gear.goggles && cameraMode === "first"} />
