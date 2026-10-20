@@ -16,7 +16,7 @@ export const askNpcFn = createServerFn({ method: "POST" })
 /** Fixed BIT for a finished quest, once per account. */
 export const claimQuestRewardFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ address: z.string().min(14).max(100), quest: z.string().max(8) }).parse(d))
+  .inputValidator((d: unknown) => z.object({ address: z.string().min(14).max(100), quest: z.string().max(32) }).parse(d))
   .handler(async ({ data, context }) => {
     const { QUESTS } = await import("@/lib/biternam-quests");
     const quest = QUESTS.find((q) => q.id === data.quest);
