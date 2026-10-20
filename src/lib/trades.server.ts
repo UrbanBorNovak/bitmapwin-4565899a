@@ -1,4 +1,5 @@
 import type { ChainTrade, TradeTrace } from "@/lib/trades";
+import { salePriceOf } from "@/lib/sale-structure";
 
 const MEMPOOL = "https://mempool.space/api";
 
@@ -112,14 +113,8 @@ export async function traceBitmapTrades(
     const seller = ownerAddress;
     const buyer = next.vout[located.index]?.scriptpubkey_address ?? null;
 
-    // Sats paid back to the seller in this transaction = the sale price.
-    let priceSats = 0;
-    if (seller) {
-      next.vout.forEach((output, index) => {
-        if (index === located.index) return;
-        if (output.scriptpubkey_address === seller) priceSats += output.value;
-      });
-    }
+    // Only a marketplace-shaped tx (buyer funding + paired seller payout) has a price.
+    const priceSats = salePriceOf(next, vinIndex, located.index, seller);
 
     trades.push({
       txid: next.txid,
