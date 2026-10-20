@@ -2066,6 +2066,28 @@ function PlayerCameraRig({
       sprint: pressed.has("shift") || touchPad.sprint,
       jump: jumpRequested.current || padJump,
     };
+    if (freeCam && camYaw.current !== null) {
+      // Bop-style controller: arrows orbit the camera, WASD runs relative to it,
+      // and the body turns smoothly to face the way it travels.
+      const orbitKeys = (pressed.has("arrowleft") ? 1 : 0) - (pressed.has("arrowright") ? 1 : 0);
+      camYaw.current += orbitKeys * 2.4 * delta;
+      const f = intent.forward;
+      const s = clampAxis((pressed.has("d") ? 1 : 0) - (pressed.has("a") ? 1 : 0) + intent.strafe);
+      const mag = Math.min(1, Math.hypot(f, s));
+      if (mag > 0.01) {
+        const cy = camYaw.current;
+        const dx = Math.sin(cy) * f - Math.cos(cy) * s;
+        const dz = Math.cos(cy) * f + Math.sin(cy) * s;
+        player.yaw = damp(player.yaw, Math.atan2(dx, dz), 12, delta, true);
+        // Ease the camera in behind the run when nobody is dragging it.
+        if (camDrag.current === 0 && f > 0.1) camYaw.current = damp(camYaw.current, player.yaw, 1.2 * f, delta, true);
+      }
+      camDrag.current = 0;
+      intent.forward = mag;
+      intent.strafe = 0;
+      intent.turn = 0;
+    }
+
 
     // Aboard a ride the same keys travel it: much faster and with wider turns.
     // The Genesis Dog can jump; flying rides swap jumping for climb and sink.
