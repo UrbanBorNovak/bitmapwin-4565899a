@@ -310,7 +310,7 @@ export function SiteHeader() {
           )}
         </button>
         {mobileOpen && (
-          <div className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto shadow-lg border-t border-border bg-background">
+          <div className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto pb-24 shadow-lg border-t border-border bg-background">
             {NAV_GROUPS.map((group) => {
               const expanded = mobileSection === group.id;
               const hasCurrent = group.items.some((i) => itemIsActive(i.to));
