@@ -1789,3 +1789,15 @@
 .book-flash-new { animation: book-flash-new 1.6s ease-out; }
 .book-flash-gone { animation: book-flash-gone 1.6s ease-out forwards; text-decoration: line-through; }
 @media (prefers-reduced-motion: reduce) { .book-flash-new, .book-flash-gone { animation: none; } }
+
+/* Tracy-Com wrist communicator CRT */
+.tracy-crt { box-shadow: inset 0 0 24px color-mix(in oklch, var(--signal) 25%, transparent); }
+.tracy-crt::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, color-mix(in oklch, var(--background) 35%, transparent) 0 1px, transparent 1px 3px);
+  animation: tracy-flicker 3s steps(2) infinite;
+}
+.tracy-glitch { animation: tracy-shake 0.18s steps(2) infinite; }
+@keyframes tracy-flicker { 50% { opacity: 0.85; } }
+@keyframes tracy-shake { 50% { transform: translateX(1px) skewX(-1deg); } }
+@media (prefers-reduced-motion: reduce) { .tracy-crt::after, .tracy-glitch { animation: none; } }
