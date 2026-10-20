@@ -345,7 +345,8 @@ import { QuestNpcs } from "@/components/game/QuestNpcs";
 import { ColonyCitizens } from "@/components/game/ColonyCitizens";
 import { CinematicBars } from "@/components/game/CinematicBars";
 import { cinematics, shotFrame, shotInReach, SKIP_KEYS } from "@/lib/oasis-cinematics";
-import { tracyCue } from "@/lib/tracy-com";
+import { tracyCue, onTracyCue } from "@/lib/tracy-com";
+import { bulletTime, bulletFrame, cueToBullet, type BulletEvent } from "@/lib/oasis-bullet-time";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
@@ -1880,6 +1881,12 @@ function PlayerCameraRig({
   const land = useRef(0);
   const roll = useRef(0);
   const wasGrounded = useRef(true);
+  const pendingBullet = useRef<BulletEvent | null>(null);
+  const bulletFov = useRef(1);
+  useEffect(() => onTracyCue((cue) => {
+    const ev = cueToBullet(cue.kind);
+    if (ev) pendingBullet.current = ev;
+  }), []);
   const calm = useRef(false);
   const dropCam = useRef(0);
   const dropLand = useRef(new THREE.Vector3());
@@ -1904,6 +1911,7 @@ function PlayerCameraRig({
       // Only a fresh press skips: a key already held when the shot began keeps
       // auto-repeating, and those repeats must not cancel the flyby.
       if (!event.repeat && cinematics.active() && SKIP_KEYS.has(key)) cinematics.stop();
+      if (!event.repeat && bulletTime.active() && SKIP_KEYS.has(key)) bulletTime.stop();
       if (event.code === "Space" && !event.repeat) {
         jumpRequested.current = true;
         event.preventDefault();
@@ -2219,6 +2227,7 @@ function PlayerCameraRig({
     // feel and short enough not to fight the next step.
     if (!calm.current && player.grounded && !wasGrounded.current) {
       land.current = Math.min(1, fallSpeed / (MOVE.jumpSpeed * 0.9));
+      if (fallSpeed > MOVE.jumpSpeed * 2.2) pendingBullet.current = "hard-landing";
       // Coming down in the shallows breaks the water instead of thumping sand.
       if (fallSpeed > MOVE.jumpSpeed * 0.4)
         playSfx(isSea(player.x, player.z) ? "splash" : "step");
@@ -2392,7 +2401,28 @@ function PlayerCameraRig({
         cameraLook.current.set(f.look.x, f.look.y, f.look.z);
       }
     }
-    const transitionSpeed = cinematics.active() ? 2.2 : (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
+    // Matrix-style bullet-time sweep on specific events (boarding a ride,
+    // anomaly surges, sealed gates, hard landings). Never during a landmark
+    // flyby or the Battle Drop camera.
+    if (pendingBullet.current && !cinematics.active() && dropCam.current < 0.05 && mode !== "topdown") {
+      bulletTime.trigger(pendingBullet.current, nowS, camYaw.current ?? player.yaw);
+    }
+    pendingBullet.current = null;
+    let bulletRoll = 0;
+    bulletFov.current = 1;
+    const bShot = cinematics.active() ? null : bulletTime.active();
+    if (bShot) {
+      const f = bulletFrame(bShot, nowS - bShot.startedAt, AVATAR_U);
+      if (f.done) bulletTime.stop();
+      else {
+        const gy = groundY(player.x, player.z) + player.y;
+        cameraTarget.current.set(player.x + f.offset.x, gy + f.offset.y, player.z + f.offset.z);
+        cameraLook.current.set(player.x, gy + f.lookY, player.z);
+        bulletRoll = f.roll;
+        bulletFov.current = f.fovScale;
+      }
+    }
+    const transitionSpeed = cinematics.active() ? 2.2 : bulletTime.active() ? 14 : (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
@@ -2402,7 +2432,7 @@ function PlayerCameraRig({
     );
     // Lean last, on top of the settled look, so turning banks the frame without
     // ever pulling the camera off its target.
-    if (Math.abs(roll.current) > 0.0005) camera.rotateZ(roll.current);
+    if (Math.abs(roll.current + bulletRoll) > 0.0005) camera.rotateZ(roll.current + bulletRoll);
 
     const perspective = camera as THREE.PerspectiveCamera;
     // Holding the left button in first person steadies the aim and pulls the
