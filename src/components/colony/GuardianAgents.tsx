@@ -22,9 +22,9 @@ export function GuardianAgents() {
   const wallet = useWalletSession();
   const address = wallet?.ordinalsAddress || wallet?.paymentAddress || null;
   async function forage(height: number) {
-    if (!address) return toast.error("Connect a verified wallet to earn BIT");
+    if (!address) { toast.error("Connect a verified wallet to earn BIT"); return; }
     const r = await collect({ data: { height, address } });
-    r.ok ? toast.success(`+${r.bit} BIT foraged by #${height}`) : toast.error(r.error);
+    if (r.ok) toast.success(`+${r.bit} BIT foraged by #${height}`); else toast.error(r.error);
   }
   const mine = useQuery(myGuardiansQuery(userId));
   const guardians = mine.data ?? [];

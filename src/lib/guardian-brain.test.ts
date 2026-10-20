@@ -19,3 +19,13 @@ describe("guardian brain", () => {
     expect(decideDrive(wireBrain(1), s).drive).toBe("rest");
   });
 });
+
+import { forageRef, FORAGE_BIT } from "./guardian-brain";
+describe("forage reward", () => {
+  it("pays 5 BIT, keyed once per Guardian per UTC day", () => {
+    expect(FORAGE_BIT).toBe(5);
+    const t = Date.UTC(2026, 9, 20, 3);
+    expect(forageRef(840000, t)).toBe(forageRef(840000, t + 3600_000 * 10));
+    expect(forageRef(840000, t)).not.toBe(forageRef(840000, t + 86400_000));
+  });
+});
