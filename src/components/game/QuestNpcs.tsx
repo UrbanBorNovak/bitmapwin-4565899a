@@ -15,6 +15,11 @@ const LOOK: Record<string, Look> = {
   curator: { body: "#3b2f4a", head: "#e9c9a8", accent: "#f7931a" },
   wierdamoto: { body: "#111114", head: "#f4f1ea", accent: "#c41e1e" },
   sentry: { body: "#1b2733", head: "#28e0ff", accent: "#ff3355" },
+  dev9: { body: "#1a1c20", head: "#d8b89a", accent: "#c8ccd2" }, // black tux, silver
+  tornado: { body: "#1f3a6b", head: "#e6c3a0", accent: "#ff4433" }, // news-desk blue, ON AIR red
+  bop: { body: "#2a2f3a", head: "#f0cfae", accent: "#39ff88" }, // hoodie, terminal green
+  nine: { body: "#5b2a86", head: "#e2b896", accent: "#ffd23f" }, // culture purple, gold
+  urban: { body: "#d9771f", head: "#e8c6a2", accent: "#ffe14d" }, // engineer orange, hi-vis
 };
 
 function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boolean }) {
