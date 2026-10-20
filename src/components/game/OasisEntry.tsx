@@ -182,14 +182,18 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
       </aside>
 
       {/* CENTER — figure on pedestal */}
-      <section className="relative flex min-h-[460px] flex-col">
+      <section className="relative flex min-h-[460px] min-w-0 flex-col">
         <div
-          className="relative flex-1"
+          className="relative min-h-[420px] min-w-0 flex-1 overflow-hidden"
           onWheel={(e) => stepSkin(e.deltaY > 0 ? 1 : -1)}
           aria-label="Character preview — scroll to change skin"
         >
           <div className="pointer-events-none absolute inset-x-[15%] bottom-[6%] h-10 rounded-[50%] border border-bitcoin/50 bg-bitcoin/10 shadow-[0_0_60px_-6px_hsl(var(--bitcoin,30_93%_54%))]" />
-          <CharacterPortrait model={OFFICIAL_RIGS[rigIndex]!.id} skin={skin} className="h-full min-h-[420px]" />
+          {/* Absolutely placed so the 3D view can never push its own box wider —
+              that feedback loop grew the canvas past what any GPU can draw. */}
+          <div className="absolute inset-0">
+            <CharacterPortrait model={OFFICIAL_RIGS[rigIndex]!.id} skin={skin} className="h-full w-full" />
+          </div>
           <button
             aria-label="Previous skin"
             onClick={() => stepSkin(-1)}
