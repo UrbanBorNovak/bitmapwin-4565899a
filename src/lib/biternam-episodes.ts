@@ -16,15 +16,15 @@ const ep = (title: string, music: NonNullable<ToonEpisode["music"]>, scenes: Too
 
 export const BITERNAM_EPISODES: ToonEpisode[] = [
   ep("CH.1 · THE LAW AROUND HERE", "tension", [
-    { block: 210000, duration: 8, shot: "crane", sfx: "BAM!", cast: [wierd(0, 2, "walk", { to: { x: 0, z: -2 }, moveStart: 0, moveEnd: 4 })],
+    { block: 210000, set: "oasis", duration: 8, shot: "crane", sfx: "BAM!", cast: [wierd(0, 2, "walk", { to: { x: 0, z: -2 }, moveStart: 0, moveEnd: 4 })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "The chain doesn't forget. Neither do I.", style: "thought", cam: "establish" }] },
-    { block: 210000, duration: 7, shot: "dutch", transition: "cut", cast: [wierd(0, 0, "combat")],
+    { block: 210000, set: "oasis", duration: 7, shot: "dutch", transition: "cut", cast: [wierd(0, 0, "combat")],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Two years chasing Blockamoto. Two years of dust.", style: "speech", cam: "close" }] },
   ]),
   ep("CH.2 · THE ART OF PRODUCT PLACEMENT", "chill", [
-    { block: 840000, duration: 8, shot: "dolly", sfx: "SATS!", cast: [wierd(0, 0, "idle", { emote: "surprised" })],
+    { block: 840000, set: "studio", duration: 8, shot: "dolly", sfx: "SATS!", cast: [wierd(0, 0, "idle", { emote: "surprised" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Read the fine print, kid. It's inscribed.", style: "thought", cam: "close" }] },
-    { block: 840000, duration: 7, shot: "orbit", transition: "iris", cast: [wierd(0, 0, "dance", { emote: "happy" })],
+    { block: 840000, set: "studio", duration: 7, shot: "orbit", transition: "iris", cast: [wierd(0, 0, "dance", { emote: "happy" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "A free week at BITERNAM? Nothing is free.", style: "speech", cam: "two" }] },
   ]),
   ep("CH.3 · THE PEACE OF THE PEOPLES", "chill", [
