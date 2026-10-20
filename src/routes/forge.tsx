@@ -1070,12 +1070,7 @@ function ForgePage() {
                 <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
                   e.target.value = "";
-                  if (!file) return;
-                  void import("@/lib/voxel-import").then((m) => m.importVoxelFile(file, SPAN)).then((r) => {
-                    setPicked({ id: `file:${file.name}:${Date.now()}`, name: file.name.replace(/\.(bwvx|vox)$/i, ""), sphere: "bricks", blocks: r.blocks, author: null, bitCost: 0 });
-                    setTool("stamp"); setTurns(0);
-                    toast.success(`Imported ${r.blocks.length.toLocaleString()} blocks — click the land to place`, { description: r.note });
-                  }).catch((err) => toast.error("Import failed", { description: String(err?.message ?? err) }));
+                  if (file) loadVoxelFile(file);
                 }} />
               </label>
               <div className="flex items-center rounded border border-border" title="Floor level (Q/E) — only needed to build in mid-air">
@@ -1128,6 +1123,7 @@ function ForgePage() {
                     </span>
                     <button type="button" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void navigator.clipboard.writeText(FORGE_UNPACK_JS).then(() => toast.success("Unpacker copied — thank you for building!"))}>COPY UNPACKER JS</button>
                     <button type="button" data-testid="forge-glb" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBuildGlb(parcelBlocks, `bitmap-${height}`)).then((r) => toast.success(`.GLB saved · ${r.boxes} boxes · ${(r.bytes / 1024).toFixed(1)} KB`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .GLB</button>
+                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .BWVX</button>
                   </div>
                 );
               })()}
