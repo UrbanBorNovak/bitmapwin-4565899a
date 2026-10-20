@@ -95,3 +95,39 @@ export function ToonAvatarBody({ avatar, pose, timeRef, movingRef }: { avatar: T
     </group>
   );
 }
+
+/** Per-model gear worn over the on-chain rig (rig height 1.25, facing +z), so every cast member reads differently. */
+export function ModelGear({ model, accent }: { model: ToonAvatar["model"]; accent: string }) {
+  if (model === "vendetta") return (
+    <group>
+      {/* White theatrical mask: pale face, rosy cheeks, upturned moustache, thin goatee, arched brows */}
+      <mesh position={[0, 1.04, 0.14]}><boxGeometry args={[0.24, 0.28, 0.03]} /><meshStandardMaterial color="#f4f1ea" roughness={0.4} /></mesh>
+      {[-1, 1].map((s) => <group key={s}>
+        <mesh position={[s * 0.06, 1.1, 0.158]}><boxGeometry args={[0.05, 0.02, 0.01]} /><meshBasicMaterial color="#111" /></mesh>
+        <mesh position={[s * 0.065, 1.14, 0.158]} rotation={[0, 0, s * -0.35]}><boxGeometry args={[0.07, 0.012, 0.01]} /><meshBasicMaterial color="#111" /></mesh>
+        <mesh position={[s * 0.08, 1.02, 0.158]}><boxGeometry args={[0.04, 0.03, 0.01]} /><meshBasicMaterial color="#e8a0a0" /></mesh>
+        <mesh position={[s * 0.05, 0.99, 0.16]} rotation={[0, 0, s * 0.45]}><boxGeometry args={[0.07, 0.018, 0.01]} /><meshBasicMaterial color="#111" /></mesh>
+      </group>)}
+      <mesh position={[0, 0.93, 0.16]}><boxGeometry args={[0.015, 0.05, 0.01]} /><meshBasicMaterial color="#111" /></mesh>
+      {/* Wide-brim black hat and cloak */}
+      <mesh position={[0, 1.24, 0]}><cylinderGeometry args={[0.24, 0.24, 0.02, 20]} /><meshStandardMaterial color="#111" /></mesh>
+      <mesh position={[0, 1.31, 0]}><cylinderGeometry args={[0.12, 0.14, 0.13, 20]} /><meshStandardMaterial color="#111" /></mesh>
+      <mesh position={[0, 1.26, 0]}><cylinderGeometry args={[0.142, 0.142, 0.025, 20]} /><meshStandardMaterial color={accent} /></mesh>
+      <mesh position={[0, 0.62, -0.13]} rotation={[0.08, 0, 0]}><boxGeometry args={[0.46, 0.8, 0.03]} /><meshStandardMaterial color="#141416" /></mesh>
+    </group>
+  );
+  if (model === "wizard") return <mesh position={[0, 1.36, 0]}><coneGeometry args={[0.17, 0.36, 6]} /><meshStandardMaterial color={accent} /></mesh>;
+  if (model === "bot") return (
+    <group>
+      <mesh position={[0, 1.08, 0.14]}><boxGeometry args={[0.22, 0.07, 0.03]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[0, 1.34, 0]}><boxGeometry args={[0.025, 0.18, 0.025]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.6} /></mesh>
+    </group>
+  );
+  if (model === "bruiser") return (
+    <group>
+      <mesh position={[0, 1.08, 0.14]}><boxGeometry args={[0.24, 0.05, 0.03]} /><meshStandardMaterial color="#111" /></mesh>
+      {[-1, 1].map((s) => <mesh key={s} position={[s * 0.2, 0.86, 0]}><boxGeometry args={[0.14, 0.08, 0.2]} /><meshStandardMaterial color={accent} /></mesh>)}
+    </group>
+  );
+  return <mesh position={[0, 1.24, 0.03]}><boxGeometry args={[0.24, 0.04, 0.3]} /><meshStandardMaterial color={accent} /></mesh>;
+}
