@@ -81,6 +81,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
 import { Route as CodexIndexRouteImport } from './routes/codex.index'
@@ -501,6 +502,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BiternamMuseumRoute = BiternamMuseumRouteImport.update({
+  id: '/biternam_/museum',
+  path: '/biternam/museum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BitmapBlockRoute = BitmapBlockRouteImport.update({
   id: '/bitmap/$block',
   path: '/bitmap/$block',
@@ -868,6 +874,7 @@ export interface FileRoutesByFullPath {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -996,6 +1003,7 @@ export interface FileRoutesByTo {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1129,6 +1137,7 @@ export interface FileRoutesById {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam_/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1263,6 +1272,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1391,6 +1401,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1523,6 +1534,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam_/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1656,6 +1668,7 @@ export interface RootRouteChildren {
   WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  BiternamMuseumRoute: typeof BiternamMuseumRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
   CodexBestiaryRoute: typeof CodexBestiaryRoute
@@ -2179,6 +2192,13 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/museum': {
+      id: '/biternam_/museum'
+      path: '/biternam/museum'
+      fullPath: '/biternam/museum'
+      preLoaderRoute: typeof BiternamMuseumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bitmap/$block': {
@@ -2801,6 +2821,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  BiternamMuseumRoute: BiternamMuseumRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
   CodexBestiaryRoute: CodexBestiaryRoute,

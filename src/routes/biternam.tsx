@@ -40,6 +40,7 @@ function BiternamPage() {
       <section className="mx-auto max-w-3xl px-6 pb-12">
         <div className="border-t border-border pt-10 font-mono text-[11px] tracking-[0.3em] text-bitcoin">THE CREW</div>
         <p className="mt-2 text-sm text-muted-foreground">Find them in the Oasis. Quest: ASSEMBLE THE CREW.</p>
+        <Link to="/biternam/museum" className="mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ ENTER THE BIT MUSEUM ]</Link>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BITERNAM_CREW.map((c) => (
             <div key={c.id} className="rounded border border-border bg-card/40 p-4 backdrop-blur">
