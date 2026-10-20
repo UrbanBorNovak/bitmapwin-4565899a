@@ -13,7 +13,22 @@ export const askNpcFn = createServerFn({ method: "POST" })
     return askInCharacter(npc.name, npc.persona, data.question);
   });
 
-/** Fixed BIT for a finished quest, once per account. */
+/** Records one quest step on the server; only the next step in order, matching the quest definition. */
+export const recordQuestStepFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ quest: z.string().max(32), index: z.number().int().min(0).max(63), key: z.string().max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { QUESTS, stepKey } = await import("@/lib/biternam-quests");
+    const quest = QUESTS.find((q) => q.id === data.quest);
+    const step = quest?.steps[data.index];
+    if (!quest || !step || stepKey(step) !== data.key) return { ok: false as const, status: "invalid" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: status, error } = await supabaseAdmin.rpc("biternam_record_step", { _user: context.userId, _quest: quest.id, _index: data.index, _key: data.key });
+    if (error) return { ok: false as const, status: "error" };
+    return { ok: status === "ok" || status === "already", status: String(status) };
+  });
+
+/** Fixed BIT for a quest the server saw completed step by step; one atomic payout per account. */
 export const claimQuestRewardFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ address: z.string().min(14).max(100), quest: z.string().max(32) }).parse(d))
@@ -24,10 +39,9 @@ export const claimQuestRewardFn = createServerFn({ method: "POST" })
     const { assertControls } = await import("@/lib/coins.server");
     await assertControls(context.supabase, context.userId, data.address);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const ref = `quest:${quest.id}:${context.userId}`;
-    const { count } = await supabaseAdmin.from("coin_ledger").select("id", { count: "exact", head: true }).eq("reason", "biternam_quest").eq("ref", ref);
-    if ((count ?? 0) > 0) return { ok: true as const, already: true, error: null };
-    const { error } = await supabaseAdmin.rpc("coin_apply", { _address: data.address, _delta: quest.bit, _reason: "biternam_quest", _ref: ref });
+    const { data: status, error } = await supabaseAdmin.rpc("biternam_claim_quest", { _user: context.userId, _quest: quest.id, _steps: quest.steps.length, _address: data.address, _bit: quest.bit });
     if (error) return { ok: false as const, already: false, error: "PAYOUT FAILED — TRY AGAIN" };
+    if (status === "already") return { ok: true as const, already: true, error: null };
+    if (status === "incomplete") return { ok: false as const, already: false, error: "CHAPTER NOT VERIFIED — REPLAY THE STEPS WHILE SIGNED IN" };
     return { ok: true as const, already: false, error: null };
   });

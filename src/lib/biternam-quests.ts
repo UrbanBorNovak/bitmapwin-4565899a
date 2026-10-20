@@ -391,6 +391,9 @@ export const VISIT_REACH = 1.6;
 
 export const npcById = (id: string) => QUEST_NPCS.find((n) => n.id === id) ?? null;
 
+/** Canonical key for a step, checked by the server against the quest definition. */
+export const stepKey = (s: QuestStep) => `${s.kind}:${s.kind === "give" ? `${s.target}>${s.item}` : s.target}`;
+
 /** Where a character stands: just in front of its landmark, facing the plaza. */
 export function npcSpot(npc: QuestNpc) {
   const spec = LANDMARKS.find((l) => l.id === npc.landmarkId)!;
