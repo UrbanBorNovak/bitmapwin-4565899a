@@ -13,6 +13,7 @@ import { SafeHtml } from "@/components/game/SafeHtml";
 import { toast } from "sonner";
 import { getPass } from "@/lib/shadow-vault";
 import { enterShadowRoom } from "@/lib/shadow-room";
+import { tracyCue } from "@/lib/tracy-com";
 
 
 type Spot = { block: number; slug: string; title: string; active: boolean; x: number; z: number; y: number; yaw: number };
@@ -35,10 +36,12 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
     armed.current = false;
     if (!s.active) {
       toast.error("GATEWAY SEALED", { description: `${s.title} IS CLOSED.` });
+      tracyCue({ kind: "sealed", title: s.title, reason: "closed" });
       return;
     }
     if (!getPass(s.slug)) {
       toast("GATEWAY SEALED", { description: `NO SHADOW PASS ON THIS DEVICE FOR ${s.title}.` });
+      tracyCue({ kind: "sealed", title: s.title, reason: "no-pass" });
       return;
     }
     enterShadowRoom({ slug: s.slug, title: s.title });
