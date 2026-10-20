@@ -21,4 +21,8 @@ describe("classifyProposal", () => {
     expect(r.counts.outside).toBe(1);
     expect(r.parcelUnverified).toBe(true);
   });
+  it("detects overlap with a 128-wide build by mapping XL voxels onto 64 cells", () => {
+    const r = classifyProposal([[10, 5, 20, "stone"], [11, 5, 20, "stone"]], [{ dx: 21, dy: 11, dz: 41 }], null, null, 2);
+    expect(r.counts).toEqual({ ok: 1, overlap: 1, outside: 0 });
+  });
 });

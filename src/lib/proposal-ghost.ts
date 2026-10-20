@@ -9,8 +9,10 @@ export function classifyProposal(
   existing: { dx: number; dy: number; dz: number }[],
   parcelIndex: number | null,
   rects: ParcelRect[] | null,
+  /** Existing build resolution factor: 1 for 64-wide, 2 for 128-wide (each XL voxel is half a 64-cell). */
+  f = 1,
 ): { blocks: GhostBlock[]; counts: Record<GhostStatus, number>; parcelUnverified: boolean } {
-  const taken = new Set(existing.map((b) => `${b.dx},${b.dy},${b.dz}`));
+  const taken = new Set(existing.map((b) => `${Math.floor(b.dx / f)},${Math.floor(b.dy / f)},${Math.floor(b.dz / f)}`));
   const rect = parcelIndex === null ? null : rects?.find((r) => r.index === parcelIndex) ?? null;
   const parcelUnverified = parcelIndex !== null && !rect;
   const counts = { ok: 0, overlap: 0, outside: 0 };
