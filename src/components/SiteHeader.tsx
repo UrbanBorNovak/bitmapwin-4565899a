@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  ChevronDown, HelpCircle, Search, X, Gamepad2, Store, Hammer, Compass, User,
+  ChevronDown, HelpCircle, Search, X, Hammer, Compass, User,
   Layers, Sparkles, Globe, Swords, Radio, BookOpen, Building2, ArrowLeftRight, Backpack,
   Map as MapIcon, CalendarClock, History, Gift, Home, Users, Rocket, PenTool, Shield, Package,
   TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
@@ -18,7 +18,7 @@ type NavItem = { to: string; label: string; note?: string };
 type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  play: Gamepad2, trade: Store, create: Hammer, discover: Compass, account: User,
+  play: Globe, trade: MapIcon, guardians: Shield, create: Hammer, discover: Compass, account: User,
 };
 const ITEM_ICONS: Record<string, LucideIcon> = {
   "/play": Layers, "/play/extenders": Sparkles, "/oasis": Globe, "/command": Swords, "/stream": Radio,
@@ -29,6 +29,8 @@ const ITEM_ICONS: Record<string, LucideIcon> = {
   "/world-stats": BarChart3, "/archaeology": Pickaxe, "/my-land": MapIcon, "/passport": IdCard,
   "/ownership": BadgeCheck, "/sdk": Code2, "/docs": FileText, "/api": Terminal, "/dev-tools": Wrench,
   "/forge": Hammer, "/watch": Clapperboard, "/create": Sparkles, "/parcel": MapIcon, "/tools": Wrench,
+  "/colony": Users, "/registry": Package, "/traits": BadgeCheck, "/biternam": BookOpen, "/breed": Sparkles,
+  "/kennels": Building2, "/toon": Clapperboard, "/clips": Clapperboard,
 };
 function ItemIcon({ to, active }: { to: string; active: boolean }) {
   const I = ITEM_ICONS[to] ?? ArrowRight;
@@ -43,80 +45,93 @@ function GroupIcon({ id }: { id: string }) {
   return <I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />;
 }
 
+// Organised by the five pillars, then developers. Each page appears once,
+// in the order a visitor would naturally use it.
 const NAV_GROUPS: NavGroup[] = [
   {
     id: "play",
-    label: "PLAY",
-    note: "Everything you use inside the 3D Oasis",
+    label: "WORLD",
+    note: "Enter the Oasis and everything you do inside it",
     items: [
-      { to: "/play", label: "PLAY // LIVING CARDS", note: "The card game where the world is the deck" },
-      { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
       { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
-      { to: "/command", label: "GUARDIAN COMMAND CENTRE", note: "Send Guardians on patrols, marches and raids" },
-      { to: "/stream", label: "WORLD STREAM", note: "See verified history as it happens" },
       { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
       { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
-      { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
+      { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests in the Oasis" },
+      { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
+      { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
       { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },
+      { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
     ],
   },
   {
     id: "trade",
-    label: "TRADE",
-    note: "Bitcoin land, rentals and confirmed sales",
+    label: "LAND",
+    note: "BITMAPs: buy, rent, verify and research",
     items: [
       { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
       { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
       { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
-      { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT to use in the Oasis" },
+      { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Check who holds a BITMAP on-chain" },
+      { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
+      { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
+      { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
+    ],
+  },
+  {
+    id: "guardians",
+    label: "GUARDIANS",
+    note: "Mint, command and grow your Guardians",
+    items: [
+      { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
+      { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helper agents" },
+      { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
+      { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians and inscribe their pet" },
+      { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
     ],
   },
   {
     id: "create",
     label: "CREATE",
-    note: "Build and publish experiences on your BITMAPs",
+    note: "Build on your BITMAP, make media, deploy experiences",
     items: [
-      { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool in one place" },
+      { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
       { to: "/forge", label: "LAND FORGE", note: "Build voxels on your BITMAP and inscribe them" },
       { to: "/parcel", label: "PARCEL STUDIO", note: "Map and inscribe the real parcels of a BITMAP" },
+      { to: "/kennels", label: "PARCEL FOUNDRY", note: "One Outpost per transaction parcel" },
+      { to: "/registry", label: "MODEL REGISTRY", note: "On-chain 3D models you can place" },
+      { to: "/toon", label: "TOON STUDIO", note: "Script cartoon episodes" },
       { to: "/clips", label: "BITMAP CLIPS", note: "Turn a BITMAP into a 3D video (by @bitlodo)" },
-      { to: "/toon", label: "TOON STUDIO", note: "Script cartoon episodes starring your Guardians" },
-      { to: "/watch", label: "TOON CINEMA", note: "Watch cartoon episodes starring BITMAP Guardians" },
-      { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians and inscribe their pet" },
-      { to: "/kennels", label: "PARCEL FOUNDRY", note: "One Land Forge Outpost per transaction parcel" },
-      { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
-      { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
+      { to: "/studio", label: "EXTENDER STUDIO", note: "Build an Extender" },
       { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
-      { to: "/studio", label: "STUDIO", note: "Build an Extender" },
-      { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
-      { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
+      { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool in one place" },
     ],
   },
   {
     id: "discover",
     label: "DISCOVER",
-    note: "See what is active across the network",
+    note: "What people are building and watching",
     items: [
       { to: "/explore", label: "EXPLORE", note: "Trending BITMAPs and activity" },
-      { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
-      { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
+      { to: "/stream", label: "WORLD STREAM", note: "Verified history as it happens" },
       { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
-      { to: "/builds", label: "COMMUNITY BUILDS", note: "Browse every public BITMAP build" },
+      { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
+      { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
       { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
-      { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
-      { to: "/archaeology", label: "ARCHAEOLOGY FACTS", note: "Trait definitions and block history" },
+      { to: "/watch", label: "TOON CINEMA", note: "Watch episodes and trailers" },
+      { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
     ],
   },
   {
     id: "account",
-    label: "ACCOUNT",
-    note: "Your holdings, proof and developer resources",
+    label: "ME",
+    note: "Your holdings, identity and developer resources",
     items: [
       { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
+      { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
       { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and build unlocks" },
-      { to: "/ownership", label: "OWNERSHIP", note: "Verify on-chain ownership" },
-      { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
+      { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT to use in the Oasis" },
       { to: "/docs", label: "DOCS", note: "Guides and references" },
+      { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
       { to: "/api", label: "API", note: "Public HTTP endpoints" },
       { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
     ],
