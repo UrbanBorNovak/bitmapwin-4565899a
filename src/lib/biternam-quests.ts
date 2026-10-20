@@ -315,6 +315,32 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "c", speaker: "PRESIDENTE B.", mood: "smug", text: "Geothermal hash, cooled by sea breeze. Tornado wants an interview. I said: next block.", next: null },
     ] },
   },
+  {
+    // Fictional parody guest — not the real person; no real quotes, views or endorsement implied.
+    id: "putin-x", name: "PUTIN X", landmarkId: "trading-post", side: -1, voice: 85,
+    persona: "Putin X, a fictional parody guest wearing the Putin X pixel skin. A stone-faced trader of cold storage; not the real person.",
+    script: { id: "npc-putin-x", title: "TRADING POST · COLD STORAGE (PARODY)", start: "a", nodes: [
+      { id: "a", speaker: "PUTIN X", mood: "idle", text: "Marshal. In the far north we keep our sats like our winters: deep, cold and very long.", choices: [
+        { label: "\"Are you the real one?\"", next: "b" },
+        { label: "\"What are you trading?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "PUTIN X", mood: "smug", text: "Nyet. Fictional guest skin in a parody world. Only the chain is real here.", next: null },
+      { id: "c", speaker: "PUTIN X", mood: "smug", text: "Nothing. I only hold. Wierdamoto respects this. Blockamoto does not.", next: null },
+    ] },
+  },
+  {
+    // Fictional parody guest — not the real person; no real quotes, views or endorsement implied.
+    id: "elon-x", name: "ELON X", landmarkId: "miner-rig-1", side: -1, voice: 210,
+    persona: "Elon X, a fictional parody guest wearing the Elon X pixel skin. Wants to launch a BITMAP to orbit; not the real person.",
+    script: { id: "npc-elon-x", title: "MINER RIG 1 · LAUNCH PAD (PARODY)", start: "a", nodes: [
+      { id: "a", speaker: "ELON X", mood: "glitch", text: "Marshal! What if we put a BITMAP on a rocket? Block height... literally.", choices: [
+        { label: "\"Are you the real one?\"", next: "b" },
+        { label: "\"Can BOP code it?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "ELON X", mood: "smug", text: "Parody, friend. A guest skin in a fictional world. Ask the chain what's real.", next: null },
+      { id: "c", speaker: "ELON X", mood: "smug", text: "He already boptimized the launch script. Ships next block. Probably.", next: null },
+    ] },
+  },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
 
 /**
@@ -336,6 +362,13 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   bop: "80367c008deb077805e247ce722911cf706e9df70cdfba01988c57eaa50caab6i0", // DG-9
   // Fictional guest Presidente B. (HTML f07e…i0 → its declared BukeleOG texture).
   bukele: "cddf8dbb1bdd828cd6cad3e16006ef638ee477d3967042c53fa66c7adaa15937i0",
+  // Bitlodo was given as a BRC-420 HTML avatar (d905…i0 "Roaring Bitty - 9"); this is its declared texture.
+  bitlodo: "cc06642fa13f760151e53804792c724fe3ffe38858b91f189f8d3439b282248bi0",
+  nine: "63474e8b8484268c645fe119de1efd5049ebc8644daf28b6f81b9b654e4cf986i0", // 9nie
+  mononaut: "908d426faa34c13c77a7036c1137e67a5e2ea7bb968955ccd25bfdffca72dcfbi0", // PUBG
+  // Fictional parody guests wearing their namesake pixels.
+  "putin-x": "3446711e0296cf21d531ad02ea4fc37a9f55f7085e335644742db2364bc525a7i0",
+  "elon-x": "40ce5b75f4fb19bfdc114fefcf9a57859a55377801356a9b65c989ff4a62dcf6i0",
 };
 
 /** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
@@ -357,6 +390,8 @@ export const BITERNAM_CREW = [
   { id: "ladybird", name: "LADYBIRD", role: "Bitmapper · lucky-spot scout", line: "Lands only on real blocks. Seven spots, seven confirmations." },
   { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
   { id: "bukele", name: "PRESIDENTE B.", role: "Guest · fictional parody", line: "Visiting head of the Volcano Republic. Mines sats with lava. Fictional character, not the real person." },
+  { id: "putin-x", name: "PUTIN X", role: "Guest · fictional parody", line: "Stone-faced visitor from the far north who only ever holds. Fictional character, not the real person." },
+  { id: "elon-x", name: "ELON X", role: "Guest · fictional parody", line: "Wants to launch a BITMAP into orbit. Block height, literally. Fictional character, not the real person." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */
 export const CREW_MISSION_ROLE: Record<string, string> = {
