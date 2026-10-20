@@ -204,6 +204,54 @@ export type Database = {
           },
         ]
       }
+      biternam_quest_claims: {
+        Row: {
+          address: string
+          bit: number
+          created_at: string
+          quest_id: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          bit: number
+          created_at?: string
+          quest_id: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          bit?: number
+          created_at?: string
+          quest_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      biternam_quest_steps: {
+        Row: {
+          created_at: string
+          quest_id: string
+          step_index: number
+          step_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          quest_id: string
+          step_index: number
+          step_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          quest_id?: string
+          step_index?: number
+          step_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bitmap_archaeology_nominations: {
         Row: {
           bitmap_height: number
@@ -4881,6 +4929,20 @@ export type Database = {
       atlas_region_stats: {
         Args: { p_hi: number; p_lo: number }
         Returns: Json
+      }
+      biternam_claim_quest: {
+        Args: {
+          _address: string
+          _bit: number
+          _quest: string
+          _steps: number
+          _user: string
+        }
+        Returns: string
+      }
+      biternam_record_step: {
+        Args: { _index: number; _key: string; _quest: string; _user: string }
+        Returns: string
       }
       bitmap_has_height_trait: {
         Args: { _height: number; _trait: string }

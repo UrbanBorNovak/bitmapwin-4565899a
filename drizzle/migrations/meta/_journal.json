@@ -134,6 +134,13 @@
       "when": 1792515276235,
       "tag": "0018_build_proposals",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792535353311,
+      "tag": "0019_biternam_quest_server_progress",
+      "breakpoints": true
     }
   ]
 }
