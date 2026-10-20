@@ -11,7 +11,7 @@ export const IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 export class ImportError extends Error {}
 const fail = (m: string): never => { throw new ImportError(m); };
 
-export type ImportResult = { blocks: TplBlock[]; note?: string };
+export type ImportResult = { blocks: TplBlock[]; note?: string | undefined };
 
 /** Shift to start at 0 and check the build fits the canvas and block cap. */
 function finish(blocks: TplBlock[], span: number, note?: string): ImportResult {
