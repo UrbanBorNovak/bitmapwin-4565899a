@@ -10,6 +10,8 @@ export type RaidResult = { winner: number; loser: number; spoils: number; rounds
 const MAX_ROUNDS = 12;
 /** Defender fights on home ground. */
 const HOME_ARMOR = 1.15;
+/** Extra armour when the defender's brain is guarding at the moment of arrival. */
+export const GUARD_ARMOR = 1.3;
 
 function rng(seed: string) {
   let h = 2166136261;
@@ -17,10 +19,10 @@ function rng(seed: string) {
   return () => ((h = (Math.imul(h, 1664525) + 1013904223) >>> 0) / 2 ** 32);
 }
 
-export function resolveRaid(attacker: Fighter, defender: Fighter, seed: string): RaidResult {
+export function resolveRaid(attacker: Fighter, defender: Fighter, seed: string, opts: { guarding?: boolean } = {}): RaidResult {
   const roll = rng(seed);
   let aHp = attacker.hp, dHp = defender.hp;
-  const dArmor = defender.armor * HOME_ARMOR;
+  const dArmor = defender.armor * HOME_ARMOR * (opts.guarding ? GUARD_ARMOR : 1);
   // Speed decides who strikes first; ties go to the defender.
   let turn: "a" | "d" = attacker.speed > defender.speed ? "a" : "d";
   const rounds: RaidRound[] = [];

@@ -1,3 +1,4 @@
+import { driveNow } from "@/lib/guardian-brain";
 import { arrivalMs, resolveRaid, type Fighter } from "@/lib/guardian-raid";
 
 const HOLD_SECONDS = 30;
@@ -34,7 +35,7 @@ export async function settleRaids() {
   if (!ms.length) return { settled: 0 };
   const { data: done } = await supabaseAdmin.from("guardian_raids").select("dispatch_id, lap").in("dispatch_id", ms.map((m) => m.id));
   const doneSet = new Set((done ?? []).map((d) => `${d.dispatch_id}:${d.lap}`));
-  type Due = { id: string; a: number; d: number; lap: number };
+  type Due = { id: string; a: number; d: number; lap: number; at: number };
   const due: Due[] = [];
   for (const m of ms) {
     if (m.target_height == null) continue;
@@ -44,7 +45,7 @@ export async function settleRaids() {
     for (let lap = Math.max(0, laps - MAX_LAPS); lap < laps; lap++) {
       const arrive = arrivalMs(start + lap * lapMs, start + (lap + 1) * lapMs, HOLD_SECONDS);
       if (arrive > stop || doneSet.has(`${m.id}:${lap}`)) continue;
-      due.push({ id: m.id, a: Number(m.guardian_height), d: Number(m.target_height), lap });
+      due.push({ id: m.id, a: Number(m.guardian_height), d: Number(m.target_height), lap, at: arrive });
     }
   }
   if (!due.length) return { settled: 0 };
@@ -55,7 +56,7 @@ export async function settleRaids() {
   for (const x of due) {
     const a = byH.get(x.a), d = byH.get(x.d);
     if (!a || !d) continue; // unguarded BITMAP: nobody to fight
-    const r = resolveRaid(a, d, `${x.id}:${x.lap}`);
+    const r = resolveRaid(a, d, `${x.id}:${x.lap}`, { guarding: driveNow(d.height, x.at).drive === "guard" });
     const { error } = await supabaseAdmin.from("guardian_raids").insert({
       dispatch_id: x.id, lap: x.lap, attacker_height: a.height, defender_height: d.height,
       winner_height: r.winner, spoils: r.spoils, log: r.rounds,
