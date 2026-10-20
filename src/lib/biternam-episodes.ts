@@ -1,15 +1,16 @@
 import type { ToonEpisode } from "@/lib/toon-script";
+import type { AvatarModel, AvatarSkin } from "@/lib/toon-avatars";
 
 /** One short Toon Studio vignette per Biternam Part 1 chapter. Original parody; every line is invented. */
 type Cast = ToonEpisode["scenes"][number]["cast"][number];
 type Pose = Cast["pose"];
-const who = (name: string, model: "runner" | "bruiser" | "bot" | "wizard", skin: "hoodie" | "cyber" | "camo" | "gold" | "midnight" | "postpunk" | "sakura") =>
+const who = (name: string, model: AvatarModel, skin: AvatarSkin) =>
   (x: number, z: number, pose: Pose, extra: object = {}): Cast => ({ height: 0, name, x, z, pose, avatar: { model, skin }, ...extra }) as Cast;
-const wierd = who("Wierdamoto", "runner", "hoodie");
+const wierd = who("Wierdamoto", "vendetta", "vendetta");
 const blocka = who("Blockamoto", "bruiser", "midnight");
 const cindy = who("Cindy", "bot", "cyber");
 const king = who("King Odomaxx", "wizard", "gold");
-const grubb = who("Mr. Grubb", "bruiser", "camo");
+const grubb = who("Mr. Grubb", "runner", "camo");
 
 const ep = (title: string, music: NonNullable<ToonEpisode["music"]>, scenes: ToonEpisode["scenes"]): ToonEpisode =>
   ({ title, aspect: "16:9", music, voices: true, style: "ghibli", scenes });

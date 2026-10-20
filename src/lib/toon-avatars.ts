@@ -1,8 +1,8 @@
 // Toon Studio avatar cast: procedural voxel characters with swappable textures.
 // Creative characters only — they carry no on-chain identity (Guardians stay the verified cast).
 
-export type AvatarModel = "runner" | "bruiser" | "bot" | "wizard";
-export type AvatarSkin = "hoodie" | "cyber" | "camo" | "gold" | "midnight" | "sakura" | "postpunk";
+export type AvatarModel = "runner" | "bruiser" | "bot" | "wizard" | "vendetta";
+export type AvatarSkin = "hoodie" | "cyber" | "camo" | "gold" | "midnight" | "sakura" | "postpunk" | "vendetta";
 /** On-chain BITMAP Pixel skin: "px:<inscriptionId>" from the Block 881,133 collection. */
 export type PixelSkin = `px:${string}`;
 export interface ToonAvatar { model: AvatarModel; skin: AvatarSkin | PixelSkin; }
@@ -11,7 +11,7 @@ export const isPixelSkin = (v: unknown): v is PixelSkin => typeof v === "string"
 export const pixelSkin = (inscriptionId: string): PixelSkin => `px:${inscriptionId.toLowerCase()}`;
 
 export const AVATAR_MODELS: { v: AvatarModel; label: string }[] = [
-  { v: "runner", label: "Runner" }, { v: "bruiser", label: "Bruiser" }, { v: "bot", label: "Bot" }, { v: "wizard", label: "Wizard" },
+  { v: "runner", label: "Runner" }, { v: "bruiser", label: "Bruiser" }, { v: "bot", label: "Bot" }, { v: "wizard", label: "Wizard" }, { v: "vendetta", label: "Masked Rebel" },
 ];
 export type Pattern = "stripes" | "circuit" | "camo" | "solid" | "checker" | "petals";
 export const AVATAR_SKINS: { v: AvatarSkin; label: string; base: string; accent: string; skin: string; pattern: Pattern }[] = [
@@ -21,6 +21,7 @@ export const AVATAR_SKINS: { v: AvatarSkin; label: string; base: string; accent:
   { v: "gold", label: "Satoshi Gold", base: "#d9a520", accent: "#fff1b8", skin: "#f1c9a0", pattern: "solid" },
   { v: "midnight", label: "Midnight Check", base: "#20203a", accent: "#8b8bd8", skin: "#7a5238", pattern: "checker" },
   { v: "postpunk", label: "Post-Punk Grey", base: "#3b3d40", accent: "#141414", skin: "#ead6c4", pattern: "solid" },
+  { v: "vendetta", label: "Midnight Cloak", base: "#2a2a30", accent: "#c62828", skin: "#f4f1ea", pattern: "solid" },
   { v: "sakura", label: "Sakura", base: "#f4b6c8", accent: "#c2456b", skin: "#f5d3b5", pattern: "petals" },
 ];
 
@@ -34,6 +35,7 @@ export const MODEL_SHAPE: Record<AvatarModel, { torso: [number, number, number];
   bruiser: { torso: [0.5, 0.42, 0.3], head: 0.26, limb: 0.14, leg: 0.36 },
   bot: { torso: [0.42, 0.42, 0.3], head: 0.32, limb: 0.1, leg: 0.38 },
   wizard: { torso: [0.36, 0.46, 0.24], head: 0.26, limb: 0.09, leg: 0.34 },
+  vendetta: { torso: [0.36, 0.46, 0.22], head: 0.27, limb: 0.09, leg: 0.4 },
 };
 
 /** Limb angles for a pose at time t (s): pure so playback, scrubbing and export match. */
