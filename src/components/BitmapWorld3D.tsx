@@ -2322,7 +2322,28 @@ function PlayerCameraRig({
       cameraTarget.current.set(player.x, g + AVATAR_U * 42, player.z - AVATAR_U * 9);
       cameraLook.current.set(player.x, g, player.z);
     }
-    const transitionSpeed = (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
+    // Landmark establishing shots: first visit to a key building detaches the
+    // camera for a few seconds; any movement key skips it.
+    const nowS = clock.elapsedTime;
+    let shotLive = cinematics.active();
+    if (!shotLive && dropCam.current < 0.05 && !calm.current) {
+      const shot = shotInReach(player.x, player.z, cinematics.seen);
+      if (shot) {
+        cinematics.start(shot, nowS);
+        tracyCue({ kind: "landmark", id: shot.id, title: shot.title, line: shot.line });
+        shotLive = cinematics.active();
+      }
+    }
+    if (shotLive) {
+      const t = nowS - shotLive.startedAt;
+      if (t >= shotLive.shot.duration) cinematics.stop();
+      else {
+        const f = shotFrame(shotLive.shot, t, groundY);
+        cameraTarget.current.set(f.position.x, f.position.y, f.position.z);
+        cameraLook.current.set(f.look.x, f.look.y, f.look.z);
+      }
+    }
+    const transitionSpeed = cinematics.active() ? 2.2 : (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
