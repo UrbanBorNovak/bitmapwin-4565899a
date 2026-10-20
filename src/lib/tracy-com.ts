@@ -72,3 +72,58 @@ export const SECTOR_09_BRIEFING: TracyScript = {
     { id: "go", speaker: "TRACY-9", mood: "smug", text: "Mount up. I'll be on your wrist. Try not to die in a funny way — the park charges extra for those.", next: null },
   ],
 };
+
+/* ---------- OASIS CUES — world events Tracy reacts to ---------- */
+
+export type TracyCue =
+  | { kind: "board"; rideId: string; label: string }
+  | { kind: "sealed"; title: string; reason: "closed" | "no-pass" };
+
+/** One cue per kind+subject at most every `cooldownMs`, so she never nags. */
+export function shouldSpeak(lastAt: number | undefined, now: number, cooldownMs = 45_000) {
+  return lastAt === undefined || now - lastAt >= cooldownMs;
+}
+
+export function cueKey(cue: TracyCue) {
+  return cue.kind === "board" ? `board:${cue.rideId}` : `sealed:${cue.title}`;
+}
+
+const RIDE_QUIPS: Record<string, string> = {
+  tank: "A tank. Subtle. The drones will definitely not notice you now.",
+  cybertruck: "Cybertruck online. Armoured, angular, and somehow still rated for theme-park parking.",
+  bitsaucer: "Bitsaucer's hovering. Keep it above the drones and below the stratosphere, please.",
+  "silver-saucer": "Silver saucer engaged. Very retro. Very visible.",
+  spacecraft: "Spacecraft? For a theme park? Fine. Mind the altitude ceiling.",
+  jetpack: "Jetpack strapped on. Helmet too — park liability insists.",
+  ship: "Ship's afloat. Stay on the water; the land rental fees are brutal.",
+  "adamantine-yacht": "The yacht. Of course. Tip the animatronic crew.",
+  lambo: "Lambo. Classic. The meme writes itself.",
+  testarossa: "Testarossa warming up. Try not to drift into a monument.",
+  "model-s": "Model S, instant torque. Hold on to your hat.",
+  "cyberpunk-genesis-dog": "You're riding the dog. I'm not even going to ask.",
+};
+
+/** Builds the one-line call Tracy makes for a world cue. */
+export function cueScript(cue: TracyCue): TracyScript {
+  const text =
+    cue.kind === "board"
+      ? RIDE_QUIPS[cue.rideId] ?? `${cue.label} is inscribed and ready. Drive like the chain is watching.`
+      : cue.reason === "closed"
+        ? `${cue.title} is sealed tight. Nothing's scheduled behind that gate right now — come back later.`
+        : `${cue.title} won't open without a Shadow Pass on this device. I can't forge one for you, Inspector.`;
+  return {
+    id: cueKey(cue),
+    title: cue.kind === "board" ? `RIDE · ${cue.label}` : "LOCKED STRUCTURE",
+    start: "a",
+    nodes: [{ id: "a", speaker: "TRACY-9", mood: cue.kind === "board" ? "smug" : "alarm", text, next: null }],
+  };
+}
+
+const cueListeners = new Set<(cue: TracyCue) => void>();
+export function tracyCue(cue: TracyCue) {
+  cueListeners.forEach((l) => l(cue));
+}
+export function onTracyCue(l: (cue: TracyCue) => void) {
+  cueListeners.add(l);
+  return () => { cueListeners.delete(l); };
+}

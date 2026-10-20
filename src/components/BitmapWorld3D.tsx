@@ -338,6 +338,7 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
+import { OasisTracy } from "@/components/game/OasisTracy";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
@@ -4845,6 +4846,9 @@ function BitmapWorld3DInner({
         <WorldMusic active={musicOn && !muted} getPos={musicPos} nearLair={nearBossLair} />
 
         <DriveBlur active={driving && cameraMode !== "map"} />
+
+        {/* TRACY-9 — wrist-com quips on boarding a ride or hitting a sealed gate. */}
+        <OasisTracy hidden={cameraMode === "map"} />
 
         {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
         <NightVision active={gear.goggles && cameraMode === "first"} />
