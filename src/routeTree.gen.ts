@@ -81,7 +81,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as BiternamMuseumRouteImport } from './routes/biternam.museum'
+import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
 import { Route as CodexIndexRouteImport } from './routes/codex.index'
@@ -503,9 +503,9 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     getParentRoute: () => rootRouteImport,
   } as any)
 const BiternamMuseumRoute = BiternamMuseumRouteImport.update({
-  id: '/museum',
-  path: '/museum',
-  getParentRoute: () => BiternamRoute,
+  id: '/biternam_/museum',
+  path: '/biternam/museum',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BitmapBlockRoute = BitmapBlockRouteImport.update({
   id: '/bitmap/$block',
@@ -807,7 +807,7 @@ export interface FileRoutesByFullPath {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
-  '/biternam': typeof BiternamRouteWithChildren
+  '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
@@ -940,7 +940,7 @@ export interface FileRoutesByTo {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
-  '/biternam': typeof BiternamRouteWithChildren
+  '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
@@ -1070,7 +1070,7 @@ export interface FileRoutesById {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
-  '/biternam': typeof BiternamRouteWithChildren
+  '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
@@ -1137,7 +1137,7 @@ export interface FileRoutesById {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/biternam/museum': typeof BiternamMuseumRoute
+  '/biternam_/museum': typeof BiternamMuseumRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1534,7 +1534,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
-    | '/biternam/museum'
+    | '/biternam_/museum'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1601,7 +1601,7 @@ export interface RootRouteChildren {
   ArchaeologyRoute: typeof ArchaeologyRoute
   AuthRoute: typeof AuthRoute
   BetaRoute: typeof BetaRoute
-  BiternamRoute: typeof BiternamRouteWithChildren
+  BiternamRoute: typeof BiternamRoute
   BotRoute: typeof BotRoute
   BreedRoute: typeof BreedRoute
   BuildersRoute: typeof BuildersRoute
@@ -1668,6 +1668,7 @@ export interface RootRouteChildren {
   WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  BiternamMuseumRoute: typeof BiternamMuseumRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
   CodexBestiaryRoute: typeof CodexBestiaryRoute
@@ -2193,12 +2194,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/biternam/museum': {
-      id: '/biternam/museum'
-      path: '/museum'
+    '/biternam_/museum': {
+      id: '/biternam_/museum'
+      path: '/biternam/museum'
       fullPath: '/biternam/museum'
       preLoaderRoute: typeof BiternamMuseumRouteImport
-      parentRoute: typeof BiternamRoute
+      parentRoute: typeof rootRouteImport
     }
     '/bitmap/$block': {
       id: '/bitmap/$block'
@@ -2658,18 +2659,6 @@ const ApiRouteChildren: ApiRouteChildren = {
 
 const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
-interface BiternamRouteChildren {
-  BiternamMuseumRoute: typeof BiternamMuseumRoute
-}
-
-const BiternamRouteChildren: BiternamRouteChildren = {
-  BiternamMuseumRoute: BiternamMuseumRoute,
-}
-
-const BiternamRouteWithChildren = BiternamRoute._addFileChildren(
-  BiternamRouteChildren,
-)
-
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
   CollectionsGuardiansRoute: typeof CollectionsGuardiansRoute
@@ -2764,7 +2753,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArchaeologyRoute: ArchaeologyRoute,
   AuthRoute: AuthRoute,
   BetaRoute: BetaRoute,
-  BiternamRoute: BiternamRouteWithChildren,
+  BiternamRoute: BiternamRoute,
   BotRoute: BotRoute,
   BreedRoute: BreedRoute,
   BuildersRoute: BuildersRoute,
@@ -2832,6 +2821,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  BiternamMuseumRoute: BiternamMuseumRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
   CodexBestiaryRoute: CodexBestiaryRoute,

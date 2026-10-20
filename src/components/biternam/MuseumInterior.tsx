@@ -74,7 +74,7 @@ export function MuseumInterior({ onCurator, onExit }: { onCurator: () => void; o
         <mesh position={[0, 3.9, -3.85]}><boxGeometry args={[8, 0.12, 0.1]} /><meshStandardMaterial color={TRIM} /></mesh>
         {/* wall banners: famous blocks */}
         {[-2.6, 0, 2.6].map((x, i) => (
-          <mesh key={x} position={[x, 2.4, -3.88]}><boxGeometry args={[1.4, 1.6, 0.04]} /><meshStandardMaterial color={["#7a1f1f", "#1f3a6b", "#2f5a2f"][i]} /></mesh>
+          <mesh key={x} position={[x, 2.4, -3.88]}><boxGeometry args={[1.4, 1.6, 0.04]} /><meshStandardMaterial color={["#7a1f1f", "#1f3a6b", "#2f5a2f"][i]!} /></mesh>
         ))}
         <Exhibit x={-2} z={-1.5} h={0.5} color="#f7931a" />
         <Exhibit x={0.3} z={-2.2} h={0.9} color="#e9e2d0" />
