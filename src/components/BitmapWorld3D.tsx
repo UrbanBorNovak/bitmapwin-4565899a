@@ -4804,7 +4804,7 @@ function BitmapWorld3DInner({
         {colors ? (
           <div ref={viewShake} className="absolute inset-0 will-change-transform">
           <SafeCanvas
-            dpr={quality.pixelRatio * quality.renderScale}
+            dpr={Math.min(1.5, quality.pixelRatio * quality.renderScale)}
             shadows={quality.shadows ? { type: THREE.PCFSoftShadowMap } : false}
             frameloop="always"
             onCreated={({ gl, scene, camera }) => {
