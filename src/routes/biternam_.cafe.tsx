@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CafeInterior } from "@/components/biternam/CafeInterior";
 import { TracyCom } from "@/components/game/TracyCom";
-import { npcById, questStore } from "@/lib/biternam-quests";
+import { useServerFn } from "@tanstack/react-start";
+import { heldItems, missionScript, missionStepFor, npcById, questStore, stepKey, useQuestState } from "@/lib/biternam-quests";
+import { recordQuestStepFn } from "@/lib/biternam-npc.functions";
 import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/cafe-verbs";
 
@@ -34,6 +36,18 @@ function CafePage() {
   const [distracted, setDistracted] = useState(false);
   const [falling, setFalling] = useState(false);
   const [say, setSay] = useState("Choose a verb, then click something in the café.");
+  const { progress } = useQuestState();
+  const recordStep = useServerFn(recordQuestStepFn);
+  // Frozen when the call opens so the step advancing mid-call never swaps the script.
+  const [mission, setMission] = useState<{ m: ReturnType<typeof missionStepFor>; held: ReturnType<typeof heldItems> } | null>(null);
+
+  // Same server mirror as the Oasis: every advanced step is recorded in order (one retry on failure).
+  useEffect(() => questStore.onAdvance((quest, done, step) => {
+    const index = (questStore.get().step[quest.id] ?? 1) - 1;
+    const data = { quest: quest.id, index, key: stepKey(step) };
+    recordStep({ data }).catch(() => setTimeout(() => { void recordStep({ data }).catch(() => {}); }, 2500));
+    setSay(done ? `QUEST COMPLETE · ${quest.title}` : `QUEST UPDATED · ${quest.title}${step.gives ? " · new item on your wrist" : ""}`);
+  }), [recordStep]);
 
   useEffect(() => {
     try { const s = JSON.parse(localStorage.getItem(KEY) || "{}"); setHeld(s.held ?? []); setDistracted(!!s.distracted); } catch { /* fresh */ }
@@ -44,7 +58,7 @@ function CafePage() {
     if (falling) return;
     const r = resolveCafeVerb(verb, h, { held, distracted, item });
     if (r.text) setSay(r.text);
-    if (r.effect === "talk") setCall(Date.now());
+    if (r.effect === "talk") { setMission({ m: missionStepFor("dev9", progress), held: heldItems(progress) }); setCall(Date.now()); }
     if (r.effect === "exit") navigate({ to: "/map" });
     if (r.effect === "pickup-coin") setHeld((p) => [...p, "coin"]);
     if (r.effect === "distract") { setDistracted(true); setHeld((p) => p.filter((x) => x !== "coin")); }
@@ -71,7 +85,10 @@ function CafePage() {
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
         {call ? (
           <div className="absolute right-4 top-16 z-50">
-            <TracyCom key={call} script={dev9.script} voice={dev9.voice} onEnd={() => { questStore.record("talk", "dev9"); setCall(0); }} />
+            <TracyCom key={call} voice={dev9.voice}
+              script={mission?.m ? missionScript(dev9, mission.m.step, mission.held) : dev9.script}
+              onNode={(id) => { const st = mission?.m?.step; if (st?.kind === "give" && id === "ok") questStore.record("give", `dev9>${st.item}`); }}
+              onEnd={() => { questStore.record("talk", "dev9"); setCall(0); setMission(null); }} />
           </div>
         ) : null}
       </div>
