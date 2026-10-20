@@ -53,7 +53,7 @@ function Rig({ inscriptionId, tint, pose, movingRef, timeRef, attempt }: { inscr
 
   const fitted = useMemo(() => {
     scene.updateMatrixWorld(true);
-    const b = new THREE.Box3().setFromObject(scene);
+    const b = new THREE.Box3().setFromObject(scene, true);
     const size = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
     return { fit: RIG_HEIGHT / Math.max(size.y, 0.0001), c, minY: b.min.y };
   }, [scene]);
