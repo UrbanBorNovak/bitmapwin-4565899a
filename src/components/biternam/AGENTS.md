@@ -1,1 +1,1 @@
-- Biternam interiors (/biternam/museum) are fixed-camera R3F rooms; picking uses client/rect ratios (zoomSafeEvents) and quest progress goes only through questStore. Why: page-size CSS zoom skews default R3F picking; one store keeps Oasis and interiors in sync.
+- Biternam interiors (/biternam/museum, /biternam/cafe) are fixed-camera R3F rooms; picking uses client/rect ratios (zoomSafeEvents) and quest progress goes only through questStore. Why: page-size CSS zoom skews default R3F picking; one store keeps Oasis and interiors in sync.

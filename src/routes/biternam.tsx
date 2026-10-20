@@ -41,6 +41,7 @@ function BiternamPage() {
         <div className="border-t border-border pt-10 font-mono text-[11px] tracking-[0.3em] text-bitcoin">THE CREW</div>
         <p className="mt-2 text-sm text-muted-foreground">Find them in the Oasis. Quests: ASSEMBLE THE CREW, then CH.2 · THE GREY PROTOCOL, where every hero holds one piece of the puzzle.</p>
         <Link to="/biternam/museum" className="mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ ENTER THE BIT MUSEUM ]</Link>
+        <Link to="/biternam/cafe" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ ENTER THE BIT-CAFÉ ]</Link>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BITERNAM_CREW.map((c) => (
             <div key={c.id} className="rounded border border-border bg-card/40 p-4 backdrop-blur">
