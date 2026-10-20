@@ -7,9 +7,9 @@ import { BITERNAM_PART_1 } from "@/lib/biternam-story";
 export const Route = createFileRoute("/biternam")({
   head: () => ({
     meta: [
-      { title: "Biternam · Tracy-Com Wrist Communicator | BITMAPWIN" },
-      { name: "description", content: "Meet Tracy-9, your wrist-com companion for Biternam adventure missions across BITMAP land." },
-      { property: "og:title", content: "Biternam · Tracy-Com Wrist Communicator" },
+      { title: "Biternam · Cindy-Com Wrist Communicator | BITMAPWIN" },
+      { name: "description", content: "Meet Cindy-9, your wrist-com companion for Biternam adventure missions across BITMAP land." },
+      { property: "og:title", content: "Biternam · Cindy-Com Wrist Communicator" },
       { property: "og:description", content: "A retro CRT companion that briefs you before Sector 09: The ASICs of Ozymandias." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -26,7 +26,7 @@ function BiternamPage() {
       <section className="mx-auto max-w-3xl px-6 py-16 font-mono">
         <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · PILOT</div>
         <h1 className="mt-2 font-display text-4xl">Sector 09 briefing</h1>
-        <p className="mt-3 text-muted-foreground">Tracy-9 calls in on your wrist. Press SPACE or click to advance, 1–3 to choose.</p>
+        <p className="mt-3 text-muted-foreground">Cindy-9 calls in on your wrist. Press SPACE or click to advance, 1–3 to choose.</p>
         {ended && (
           <div className="mt-6 flex gap-3">
             <button type="button" className="rounded border border-primary px-3 py-2 text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => { setEnded(false); setRun((r) => r + 1); }}>
@@ -47,6 +47,7 @@ function BiternamPage() {
             <blockquote className="mt-3 border-l-2 border-bitcoin pl-3 font-mono text-sm text-muted-foreground">
               "{c.epigraph}" <span className="text-xs">— {c.source}</span>
             </blockquote>
+            <Link to="/watch" search={{ ep: `biternam-${i + 1}` }} className="mt-3 inline-block rounded border border-signal px-3 py-1.5 font-mono text-xs text-signal hover:bg-signal hover:text-background">[ ▶ WATCH CHAPTER {i + 1} VIGNETTE ]</Link>
             {c.body.map((p, j) => <p key={j} className="mt-3 leading-relaxed text-foreground/90">{p}</p>)}
           </section>
         ))}

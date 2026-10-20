@@ -5,6 +5,7 @@ import { episodeLength, generateEpisode, sceneAt, type ToonEpisode } from "@/lib
 import { styleFilter } from "@/lib/toon-style";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { BEACH_LANDING, CITADEL_TEASER, FORGE_PROMO, PIXELS_HOMECOMING, TRANSMISSION } from "@/lib/toon-teaser";
+import { BITERNAM_EPISODES } from "@/lib/biternam-episodes";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { useQuery } from "@tanstack/react-query";
 import { canEncodeMp4, createXRecorder, X_SIZES } from "@/lib/x-video";
@@ -18,6 +19,7 @@ type Reel = { id: string; tag: string; make: () => ToonEpisode; by?: string | nu
 const REELS: Reel[] = [
   { id: "forge-promo", tag: "PROMO · LAND FORGE", make: () => structuredClone(FORGE_PROMO) },
   { id: "transmission", tag: "TRIBUTE SHORT · PORTAL", make: () => structuredClone(TRANSMISSION) },
+  ...BITERNAM_EPISODES.map((e, i) => ({ id: `biternam-${i + 1}`, tag: `BITERNAM · CHAPTER ${i + 1}`, make: () => structuredClone(e) })),
   { id: "tide-of-iron", tag: "SHORT FILM · 3 MIN", make: () => structuredClone(BEACH_LANDING) },
   { id: "pixels-home", tag: "NEW TRAILER", make: () => structuredClone(PIXELS_HOMECOMING) },
   { id: "citadel", tag: "FEATURED TEASER", make: () => structuredClone(CITADEL_TEASER) },

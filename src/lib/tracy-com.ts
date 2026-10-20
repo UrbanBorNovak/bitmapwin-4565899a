@@ -57,19 +57,19 @@ export const SECTOR_09_BRIEFING: TracyScript = {
   title: "SECTOR 09 · THE ASICS OF OZYMANDIAS",
   start: "hello",
   nodes: [
-    { id: "hello", speaker: "TRACY-9", mood: "smug", text: "Inspector! Tracy-9, node operations. Welcome to Sector 09 — the First Halving District, block 210,000.", next: "brief" },
-    { id: "brief", speaker: "TRACY-9", mood: "alarm", text: "Bad news: the Grand Miner sealed the gates when the subsidy dropped from 50 to 25 BTC. Its drones are not in a hospitable mood.", choices: [
+    { id: "hello", speaker: "CINDY-9", mood: "smug", text: "Inspector! Cindy-9, node operations. Welcome to Sector 09 — the First Halving District, block 210,000.", next: "brief" },
+    { id: "brief", speaker: "CINDY-9", mood: "alarm", text: "Bad news: the Grand Miner sealed the gates when the subsidy dropped from 50 to 25 BTC. Its drones are not in a hospitable mood.", choices: [
       { label: "Ask about the sector gate", next: "gate" },
       { label: "Ask which ride to take", next: "ride" },
       { label: "\"Can I just leave?\"", next: "leave" },
     ] },
-    { id: "gate", speaker: "TRACY-9", mood: "idle", text: "The intake gate wants a Genesis Keycard. A maintenance droid inside still has one. It thinks it's November 2012.", next: "brief" },
-    { id: "ride", speaker: "TRACY-9", mood: "smug", text: "Cybertruck if you like armour, Bitsaucer if you like not touching the ground. Both are inscribed. Neither has cupholders.", next: "brief" },
-    { id: "leave", speaker: "TRACY-9", mood: "glitch", text: "Exit shuttles are 21 BTC one-way. Peak season pricing. Shall we get to work?", choices: [
+    { id: "gate", speaker: "CINDY-9", mood: "idle", text: "The intake gate wants a Genesis Keycard. A maintenance droid inside still has one. It thinks it's November 2012.", next: "brief" },
+    { id: "ride", speaker: "CINDY-9", mood: "smug", text: "Cybertruck if you like armour, Bitsaucer if you like not touching the ground. Both are inscribed. Neither has cupholders.", next: "brief" },
+    { id: "leave", speaker: "CINDY-9", mood: "glitch", text: "Exit shuttles are 21 BTC one-way. Peak season pricing. Shall we get to work?", choices: [
       { label: "Fine. Let's go.", next: "go" },
       { label: "Repeat the briefing", next: "brief" },
     ] },
-    { id: "go", speaker: "TRACY-9", mood: "smug", text: "Mount up. I'll be on your wrist. Try not to die in a funny way — the park charges extra for those.", next: null },
+    { id: "go", speaker: "CINDY-9", mood: "smug", text: "Mount up. I'll be on your wrist. Try not to die in a funny way — the park charges extra for those.", next: null },
   ],
 };
 
@@ -112,7 +112,7 @@ export function cueScript(cue: TracyCue): TracyScript {
       id: cueKey(cue),
       title: `ANOMALY · ${cue.label}`,
       start: "a",
-      nodes: [{ id: "a", speaker: "TRACY-9", mood: "alarm", text: "Signal desync detected. Hold on to your sats — it'll pass in a few seconds.", next: null }],
+      nodes: [{ id: "a", speaker: "CINDY-9", mood: "alarm", text: "Signal desync detected. Hold on to your sats — it'll pass in a few seconds.", next: null }],
     };
   }
   const text =
@@ -125,7 +125,7 @@ export function cueScript(cue: TracyCue): TracyScript {
     id: cueKey(cue),
     title: cue.kind === "board" ? `RIDE · ${cue.label}` : "LOCKED STRUCTURE",
     start: "a",
-    nodes: [{ id: "a", speaker: "TRACY-9", mood: cue.kind === "board" ? "smug" : "alarm", text, next: null }],
+    nodes: [{ id: "a", speaker: "CINDY-9", mood: cue.kind === "board" ? "smug" : "alarm", text, next: null }],
   };
 }
 
