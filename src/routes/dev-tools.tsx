@@ -65,7 +65,7 @@ const TOOLS = [
     body: "Set a rule and get alerted when a matching BITMAP lists. Export it to the open-source bot starter for 24/7 alerts.",
   },
   {
-    to: "/builds" as const,
+    to: "/registry" as const,
     title: "MODEL REGISTRY",
     kind: "live" as const,
     note: "ON-CHAIN GLB",

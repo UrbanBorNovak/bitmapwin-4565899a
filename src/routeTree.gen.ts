@@ -62,6 +62,7 @@ import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PlayRouteImport } from './routes/play'
 import { Route as PlayGuideRouteImport } from './routes/play-guide'
 import { Route as RanksRouteImport } from './routes/ranks'
+import { Route as RegistryRouteImport } from './routes/registry'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
@@ -401,6 +402,11 @@ const PlayGuideRoute = PlayGuideRouteImport.update({
 const RanksRoute = RanksRouteImport.update({
   id: '/ranks',
   path: '/ranks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegistryRoute = RegistryRouteImport.update({
+  id: '/registry',
+  path: '/registry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -837,6 +843,7 @@ export interface FileRoutesByFullPath {
   '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
+  '/registry': typeof RegistryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -963,6 +970,7 @@ export interface FileRoutesByTo {
   '/passport': typeof PassportRoute
   '/payments': typeof PaymentsRoute
   '/play-guide': typeof PlayGuideRoute
+  '/registry': typeof RegistryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -1094,6 +1102,7 @@ export interface FileRoutesById {
   '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
+  '/registry': typeof RegistryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -1226,6 +1235,7 @@ export interface FileRouteTypes {
     | '/play'
     | '/play-guide'
     | '/ranks'
+    | '/registry'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -1352,6 +1362,7 @@ export interface FileRouteTypes {
     | '/passport'
     | '/payments'
     | '/play-guide'
+    | '/registry'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -1482,6 +1493,7 @@ export interface FileRouteTypes {
     | '/play'
     | '/play-guide'
     | '/ranks'
+    | '/registry'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -1613,6 +1625,7 @@ export interface RootRouteChildren {
   PlayRoute: typeof PlayRouteWithChildren
   PlayGuideRoute: typeof PlayGuideRoute
   RanksRoute: typeof RanksRouteWithChildren
+  RegistryRoute: typeof RegistryRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
@@ -2021,6 +2034,13 @@ declare module '@tanstack/react-router' {
       path: '/ranks'
       fullPath: '/ranks'
       preLoaderRoute: typeof RanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/registry': {
+      id: '/registry'
+      path: '/registry'
+      fullPath: '/registry'
+      preLoaderRoute: typeof RegistryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -2740,6 +2760,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayRoute: PlayRouteWithChildren,
   PlayGuideRoute: PlayGuideRoute,
   RanksRoute: RanksRouteWithChildren,
+  RegistryRoute: RegistryRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,
