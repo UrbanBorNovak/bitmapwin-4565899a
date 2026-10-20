@@ -33,7 +33,7 @@ function MuseumPage() {
       </div>
       <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
       {call ? (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2">
           <TracyCom key={call} script={curator.script} voice={curator.voice} onEnd={() => { questStore.record("talk", "curator"); setCall(0); }} />
         </div>
       ) : null}
