@@ -41,11 +41,14 @@ function CafePage() {
   // Frozen when the call opens so the step advancing mid-call never swaps the script.
   const [mission, setMission] = useState<{ m: ReturnType<typeof missionStepFor>; held: ReturnType<typeof heldItems> } | null>(null);
 
-  // Same server mirror as the Oasis: every advanced step is recorded in order (one retry on failure).
+  // Same server mirror as the Oasis: every advanced step is recorded in order; retried on errors or the 2s pacing rule.
   useEffect(() => questStore.onAdvance((quest, done, step) => {
     const index = (questStore.get().step[quest.id] ?? 1) - 1;
     const data = { quest: quest.id, index, key: stepKey(step) };
-    recordStep({ data }).catch(() => setTimeout(() => { void recordStep({ data }).catch(() => {}); }, 2500));
+    const send = (left: number) => recordStep({ data })
+      .then((r) => { if (!r.ok && (r.status === "too_fast" || r.status === "error") && left > 0) setTimeout(() => send(left - 1), 2500); })
+      .catch(() => { if (left > 0) setTimeout(() => send(left - 1), 2500); });
+    void send(3);
     setSay(done ? `QUEST COMPLETE · ${quest.title}` : `QUEST UPDATED · ${quest.title}${step.gives ? " · new item on your wrist" : ""}`);
   }), [recordStep]);
 
@@ -54,17 +57,25 @@ function CafePage() {
   }, []);
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify({ held, distracted })); }, [held, distracted]);
 
-  const hit = (h: CafeHotspot) => {
+  const hitAs = (v: Verb, it: string | null, h: CafeHotspot) => {
     if (falling) return;
-    const r = resolveCafeVerb(verb, h, { held, distracted, item });
+    const r = resolveCafeVerb(v, h, { held, distracted, item: it });
     if (r.text) setSay(r.text);
-    if (r.effect === "talk") { setMission({ m: missionStepFor("dev9", progress), held: heldItems(progress) }); setCall(Date.now()); }
+    if (r.effect === "talk") { const p = questStore.get(); setMission({ m: missionStepFor("dev9", p), held: heldItems(p) }); setCall(Date.now()); }
     if (r.effect === "exit") navigate({ to: "/map" });
     if (r.effect === "pickup-coin") setHeld((p) => [...p, "coin"]);
     if (r.effect === "distract") { setDistracted(true); setHeld((p) => p.filter((x) => x !== "coin")); }
     if (r.effect === "trapdoor") { setFalling(true); setTimeout(() => { setFalling(false); setSay("You land in the doorway, dusty but unconfirmed. Cindy: 'Told you. Never trust a VIP hatch.'"); }, 1800); }
     setItem(null);
   };
+  const hit = (h: CafeHotspot) => hitAs(verb, item, h);
+
+  // Dev-only play-test hook (3D picking is unreliable in headless software rendering).
+  const actRef = useRef(hitAs); actRef.current = hitAs;
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __cafeTest?: unknown }).__cafeTest = { questStore, act: (v: Verb, h: CafeHotspot, it: string | null = null) => actRef.current(v, it, h) };
+  }, []);
 
   const sentence = item ? `USE SAT TOKEN ON ${hover ? CAFE_HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? CAFE_HOTSPOT_NAMES[hover] : ""}`;
 
