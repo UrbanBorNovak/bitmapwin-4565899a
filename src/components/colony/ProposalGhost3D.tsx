@@ -5,23 +5,24 @@ import { OrbitControls } from "@react-three/drei";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
-import { BLOCKS } from "@/lib/voxel-world";
+import type { GhostBlock, GhostStatus } from "@/lib/proposal-ghost";
 
 const SPAN = 64;
-const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
+export const GHOST_HEX: Record<GhostStatus, string> = { ok: "#3fd6e6", overlap: "#f7931a", outside: "#ff3b3b" };
+const COLORS = Object.fromEntries(Object.entries(GHOST_HEX).map(([k, v]) => [k, new THREE.Color(v)])) as Record<GhostStatus, THREE.Color>;
 const noRaycast = () => {};
 
-function Ghost({ blocks }: { blocks: [number, number, number, string][] }) {
+function Ghost({ blocks }: { blocks: GhostBlock[] }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     const m = ref.current;
     if (!m) return;
     const o = new THREE.Object3D();
-    blocks.forEach(([x, y, z, k], i) => {
+    blocks.forEach(([x, y, z, , st], i) => {
       o.position.set(x - SPAN / 2, y + 0.5, z - SPAN / 2);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
-      m.setColorAt(i, COLORS[k] ?? COLORS["stone"]!);
+      m.setColorAt(i, COLORS[st]);
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
@@ -31,13 +32,13 @@ function Ghost({ blocks }: { blocks: [number, number, number, string][] }) {
   return (
     <instancedMesh key={blocks.length} ref={ref} args={[undefined, undefined, blocks.length]} raycast={noRaycast}>
       <boxGeometry args={[0.96, 0.96, 0.96]} />
-      <meshStandardMaterial transparent opacity={0.45} depthWrite={false} emissive="#3fd6e6" emissiveIntensity={0.25} />
+      <meshStandardMaterial transparent opacity={0.6} depthWrite={false} />
     </instancedMesh>
   );
 }
 
 export default function ProposalGhost3D({ height, blocks, model, showLand, showGhost }: {
-  height: number; blocks: [number, number, number, string][]; model: string | null; showLand: boolean; showGhost: boolean;
+  height: number; blocks: GhostBlock[]; model: string | null; showLand: boolean; showGhost: boolean;
 }) {
   const grid = useMemo(() => new THREE.GridHelper(SPAN, 16, "#f7931a", "#2a2a2a"), []);
   return (
