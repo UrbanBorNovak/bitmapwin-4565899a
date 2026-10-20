@@ -11,7 +11,7 @@ const cindy = who("Cindy", "bot", "cyber");
 const king = who("King Odomaxx", "wizard", "gold");
 const grubb = who("Mr. Grubb", "bruiser", "camo");
 
-const ep = (title: string, music: ToonEpisode["music"], scenes: ToonEpisode["scenes"]): ToonEpisode =>
+const ep = (title: string, music: NonNullable<ToonEpisode["music"]>, scenes: ToonEpisode["scenes"]): ToonEpisode =>
   ({ title, aspect: "16:9", music, voices: true, style: "ghibli", scenes });
 
 export const BITERNAM_EPISODES: ToonEpisode[] = [
