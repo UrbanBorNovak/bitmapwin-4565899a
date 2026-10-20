@@ -50,13 +50,19 @@ function Door({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; set
   );
 }
 
+/** The one fixed cinematic angle: aimed at the room centre every frame. */
+function FixedCam() {
+  useFrame(({ camera }) => camera.lookAt(-0.5, 0.6, 0.3));
+  return null;
+}
+
 export function MuseumInterior({ onCurator, onExit }: { onCurator: () => void; onExit: () => void }) {
   const [hotC, setHotC] = useState(false);
   const [hotD, setHotD] = useState(false);
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [7, 7.5, 9], fov: 38 }}
-        onCreated={({ camera }) => camera.lookAt(0, 0.8, 0)} style={{ imageRendering: "pixelated" }}>
+      <SafeCanvas dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42 }} style={{ imageRendering: "pixelated" }}>
+        <FixedCam />
         <color attach="background" args={["#120d14"]} />
         <fog attach="fog" args={["#120d14", 14, 26]} />
         <ambientLight intensity={0.55} color="#ffd9b0" />
