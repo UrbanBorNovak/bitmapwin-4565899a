@@ -33,6 +33,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
+  const [unverified, setUnverified] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const ask = useServerFn(askNpcFn);
   const claim = useServerFn(claimQuestRewardFn);
