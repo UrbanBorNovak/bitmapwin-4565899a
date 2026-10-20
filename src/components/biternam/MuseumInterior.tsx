@@ -3,7 +3,7 @@
  * (1992 adventure-game style), chunky low-res rendering, clickable curator and exit door.
  */
 import { useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+import { events as r3fEvents, useFrame, type RootState } from "@react-three/fiber";
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 
@@ -50,6 +50,16 @@ function Door({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; set
   );
 }
 
+/** Page-size CSS zoom skews R3F's default offset-based picking; use client/rect ratios, which zoom consistently. */
+const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
+  ...r3fEvents(store),
+  compute(e: { clientX: number; clientY: number }, state: RootState) {
+    const r = state.gl.domElement.getBoundingClientRect();
+    state.pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    state.raycaster.setFromCamera(state.pointer, state.camera);
+  },
+});
+
 /** The one fixed cinematic angle: aimed at the room centre every frame. */
 function FixedCam() {
   useFrame(({ camera }) => camera.lookAt(-0.6, -0.6, 1.4));
@@ -61,7 +71,7 @@ export function MuseumInterior({ onCurator, onExit }: { onCurator: () => void; o
   const [hotD, setHotD] = useState(false);
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42 }} style={{ imageRendering: "pixelated" }}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42 }} style={{ imageRendering: "pixelated" }}>
         <FixedCam />
         <color attach="background" args={["#120d14"]} />
         <fog attach="fog" args={["#120d14", 14, 26]} />
