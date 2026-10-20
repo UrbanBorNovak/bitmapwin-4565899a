@@ -310,7 +310,6 @@ function Director({ scene, local, lib }: { scene: ToonScene; local: number; lib:
     camera.position.set(c[0]! + sh * 0.8, c[1]! + sh * 0.5, c[2]!);
     camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
     camera.lookAt(c[3]!, c[4]!, c[5]!);
-    (globalThis as { __toonCam?: unknown }).__toonCam = { p: camera.position.toArray(), line: line?.cam, hs: actorHeights.get(0) };
   });
   return null;
 }
