@@ -26,3 +26,17 @@ d2("crew quest", () => {
     e2(QUESTS.find((q) => q.id === "q3")!.bit).toBe(50);
   });
 });
+
+import { heldItems } from "./biternam-quests";
+d2("chapter 1 mission", () => {
+  i2("picking up items in order fills the wrist inventory and the mission pays 40 BIT", () => {
+    let p = blankProgress();
+    p = applyEvent(p, "pickup", "dust-sample").next; // out of order: ignored
+    e2(heldItems(p)).toHaveLength(0);
+    for (const [k, t] of [["pickup", "skiff-key"], ["talk", "curator"], ["pickup", "dust-sample"], ["pickup", "explorer-lens"], ["visit", "torii"]] as const) p = applyEvent(p, k, t).next;
+    const ch1 = QUESTS.find((q) => q.id === "ch1")!;
+    e2(isComplete(ch1, p)).toBe(true);
+    e2(heldItems(p).map((i) => i.id)).toEqual(["skiff-key", "dust-sample", "explorer-lens"]);
+    e2(ch1.bit).toBe(40);
+  });
+});
