@@ -12,8 +12,13 @@ import { tracyCue } from "@/lib/tracy-com";
 import { WORLD_CELL } from "@/lib/player-state";
 import { LANDMARKS } from "@/lib/world-landmarks";
 import { useWalletSession } from "@/lib/wallet-session";
+import { useNavigate } from "@tanstack/react-router";
+import { saveLastPose } from "@/lib/map-identity";
 
-type Pose = { x: number; z: number };
+/** Oasis landmarks with a walk-in interior. */
+const INTERIORS: Record<string, { to: "/biternam/cafe"; label: string }> = { "bit-cafe": { to: "/biternam/cafe", label: "ENTER BIT-CAFÉ" } };
+
+type Pose = { x: number; z: number; yaw?: number };
 
 const typing = (e: KeyboardEvent) => {
   const t = e.target as HTMLElement | null;
@@ -35,6 +40,10 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   const [logOpen, setLogOpen] = useState(false);
   const [unverified, setUnverified] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
+  const [atLandmark, setAtLandmark] = useState<string | null>(null);
+  const navigate = useNavigate();
+  // Remember the exact spot so leaving the interior drops you back here.
+  const enterInterior = (id: string) => { const { x, z, yaw } = pose.current; saveLastPose({ x, z, yaw: yaw ?? 0 }); navigate({ to: INTERIORS[id]!.to }); };
   const ask = useServerFn(askNpcFn);
   const claim = useServerFn(claimQuestRewardFn);
   const recordStep = useServerFn(recordQuestStepFn);
@@ -54,6 +63,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
       questStore.setNear(nearestNpc(x, z)?.id ?? null);
       const lm = landmarkInReach(x, z);
       if (lm) questStore.record("visit", lm);
+      setAtLandmark(lm);
       for (const it of pendingItems(questStore.get())) {
         const sp = itemSpot(it);
         if (sp && Math.hypot(sp.x - x, sp.z - z) <= PICKUP_REACH * WORLD_CELL) questStore.record("pickup", it.id);
@@ -128,6 +138,12 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
       {nearNpc && !talking ? (
         <button type="button" onClick={() => setTalking({ npc: nearNpc, n: Date.now() })} className="glass-panel pointer-events-auto absolute bottom-40 left-1/2 z-[86] -translate-x-1/2 rounded-full border border-primary/50 px-4 py-2 font-mono text-[12px] tracking-widest text-primary">
           [Q] TALK · {nearNpc.name}
+        </button>
+      ) : null}
+
+      {atLandmark && INTERIORS[atLandmark] && !talking ? (
+        <button type="button" onClick={() => enterInterior(atLandmark)} className="glass-panel pointer-events-auto absolute bottom-52 left-1/2 z-[86] -translate-x-1/2 rounded-full border border-signal/60 px-4 py-2 font-mono text-[12px] tracking-widest text-signal">
+          ⌂ {INTERIORS[atLandmark]!.label}
         </button>
       ) : null}
 
