@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TracyCom } from "@/components/game/TracyCom";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
 import { BITERNAM_PART_1 } from "@/lib/biternam-story";
-import { BITERNAM_CREW, CREW_MISSION_ROLE } from "@/lib/biternam-quests";
+import { BITERNAM_CREW, CREW_MISSION_ROLE, CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
 
 export const Route = createFileRoute("/biternam")({
   head: () => ({
