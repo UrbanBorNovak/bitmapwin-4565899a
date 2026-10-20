@@ -17,6 +17,11 @@ export function SafeCanvas(props: CanvasProps) {
     if (key.startsWith("data-")) continue;
     safe[key] = value;
   }
+  // The site's page-size preference sets CSS zoom on <html>. Bounding rects are
+  // zoomed but canvas styles are not, so measuring by rect makes the canvas
+  // grow by the zoom factor every resize until the GPU gives up. Layout
+  // (offset) sizes are unzoomed and stable.
+  safe["resize"] = { offsetSize: true, ...(props.resize ?? {}) };
   const userCreated = props.onCreated;
   safe["onCreated"] = (state: Parameters<NonNullable<CanvasProps["onCreated"]>>[0]) => {
     const el = state.gl.domElement;
