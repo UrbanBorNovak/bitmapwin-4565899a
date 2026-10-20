@@ -40,4 +40,3 @@
 - Clips: @bitlodo studio vendored unmodified in public/tools/clips; rebuild from upstream. Why: full fidelity, no server state.
 - Marketplace ALL-tab filters use fetchRegistryScope: finite candidate sets intersected with height ranges, checked against bitmap_index. Why: exact totals without loading the 900k+ index.
 - Every R3F canvas goes through SafeCanvas, which measures with offsetSize. Why: the page-size preference sets CSS zoom on <html>; rect-based measuring grows canvases by the zoom factor until WebGL fails.
-- Agent protocol: /api/public/agent-schema is a static bitmapwin.agent/1 JSON-Schema (no data, no writes); MCP proposals accept voxel tuples or absolute-position .bwvx and land only in the signed-in holder's own queue. Why: external agents get one contract without any cross-account writes.

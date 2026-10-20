@@ -1,0 +1,1 @@
+- Agent protocol: /api/public/agent-schema is a static bitmapwin.agent/1 JSON-Schema (no data, no writes); MCP proposals accept voxel tuples or absolute-position .bwvx and land only in the signed-in holder's own queue. Why: external agents get one contract without any cross-account writes.
