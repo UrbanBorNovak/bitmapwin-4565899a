@@ -2341,7 +2341,7 @@ function PlayerCameraRig({
     const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
     // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
-      ((mode === "first" ? 72 : 56) +
+      ((mode === "first" ? 72 : mode === "topdown" ? 34 : 56) +
         gait * (mode === "first" ? 3.5 : 4.8) -
         land.current * (mode === "first" ? 4.2 : 3.8) +
         dropCam.current * (dropState().phase === "freefall" ? 16 : 10)) *
