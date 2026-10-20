@@ -3,7 +3,8 @@
  * A mod can be locked on, or "anomaly surges" swap in a random look for a
  * few seconds at random intervals. Pure overlay: never touches world state.
  */
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { tracyCue } from "@/lib/tracy-com";
 import { VISUAL_MODS, pickSurge, type VisualModId } from "@/lib/visual-mods";
 
@@ -48,7 +49,7 @@ export function WorldVisualMod() {
   if (!id) return null;
   const mod = VISUAL_MODS[id];
   return (
-    <div className="pointer-events-none fixed inset-0 z-20" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
       <div
         className={`absolute inset-0 ${mod.jitter ? "tracy-glitch" : ""}`}
         style={{ backdropFilter: mod.filter, WebkitBackdropFilter: mod.filter }}
@@ -69,19 +70,27 @@ export function WorldVisualMod() {
 export function VisualModControls() {
   const { locked, surges } = useMods();
   const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ right: number; bottom: number } | null>(null);
+  useEffect(() => {
+    if (!open || !btn.current) return;
+    const r = btn.current.getBoundingClientRect();
+    setPos({ right: window.innerWidth - r.right, bottom: window.innerHeight - r.top + 8 });
+  }, [open]);
   const ids = Object.keys(VISUAL_MODS) as VisualModId[];
   return (
     <div className="relative">
       <button
         type="button"
+        ref={btn}
         onClick={() => setOpen((o) => !o)}
         aria-label="FX looks and anomaly surges"
         className={`h-8 rounded-sm px-2 font-mono text-xs ${locked || surges ? "bg-signal text-signal-foreground" : "text-muted-foreground"}`}
       >
         FX
       </button>
-      {open ? (
-        <div className="absolute bottom-full right-0 z-50 mb-2 grid w-80 grid-cols-2 gap-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
+      {open && pos ? createPortal(
+        <div style={{ right: pos.right, bottom: pos.bottom }} onPointerDown={(e) => e.stopPropagation()} className="fixed z-[200] grid w-80 grid-cols-2 gap-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
           <button type="button" onClick={() => set({ locked: null })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${!locked ? "text-bitcoin" : "text-muted-foreground"}`}>
             NORMAL
           </button>
@@ -97,7 +106,8 @@ export function VisualModControls() {
           <button type="button" onClick={triggerSurge} className="block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight text-signal">
             ⚡ GLITCH NOW
           </button>
-        </div>
+        </div>,
+        document.fullscreenElement ?? document.body,
       ) : null}
     </div>
   );
