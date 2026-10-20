@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CITIZENS, citizenAt, needsApproval, useApprovals, approvals, brokerPicks, recheckListing, type Proposal } from "@/lib/agent-colony";
+import { CITIZENS, citizenAt, needsApproval, brokerPicks, recheckListing, type Proposal } from "@/lib/agent-colony";
+import { useProposalStore } from "@/lib/agent-proposals-store";
 import { fetchOffers } from "@/lib/offers";
 import { supabase } from "@/integrations/supabase/client";
 import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
@@ -27,21 +28,22 @@ function useNow() {
 
 function ColonyPage() {
   const t = useNow();
-  const list = useApprovals();
+  const store = useProposalStore();
+  const list = store.list;
   const pending = list.filter((p) => p.status === "pending");
   const [scan, setScan] = useState<string | null>(null);
   /** Approval re-reads the listing; it never builds, signs or submits anything. */
   async function approve(p: Proposal) {
-    if (!p.offerId) return approvals.decide(p.id, true);
+    if (!p.offerId) return store.setStatus(p.id, "approved");
     const { data } = await supabase.from("offers").select("status, price_sats").eq("id", p.offerId).maybeSingle();
     const why = recheckListing(p, data ? { status: data.status, priceSats: Number(data.price_sats ?? 0) } : null);
-    if (why) approvals.markStale(p.id, why); else approvals.decide(p.id, true);
+    await store.setStatus(p.id, why ? "stale" : "approved", why ?? undefined);
   }
   async function askBroker() {
     setScan("Margo is reading the live listings…");
     try {
       const offers = await fetchOffers({ limit: 100 });
-      const n = approvals.proposeTrades(brokerPicks(offers.filter((o) => o.status === "open")));
+      const n = await store.proposeTrades(brokerPicks(offers.filter((o) => o.status === "open")));
       setScan(n > 0 ? `Margo proposed ${n} trade${n > 1 ? "s" : ""}. Nothing happens until you approve.` : "No new listings worth proposing right now.");
     } catch {
       setScan("Couldn't read the marketplace. Try again.");
@@ -104,6 +106,7 @@ function ColonyPage() {
           <button type="button" onClick={askBroker} className="rounded border border-signal/50 px-2 py-0.5 font-mono text-[11px] text-signal">ASK BROKER FOR TRADES</button>
           <span className="font-mono text-[10px] text-muted-foreground">TRADE {needsApproval("trade") ? "NEEDS APPROVAL" : ""} · SPEND {needsApproval("spend") ? "NEEDS APPROVAL" : ""}</span>
         </div>
+        <p className="mt-1 font-mono text-[10px] text-muted-foreground">{store.signedIn ? "SAVED TO YOUR ACCOUNT · ONLY YOU CAN SEE THESE" : "SAVED ON THIS DEVICE · SIGN IN TO KEEP THEM ACROSS DEVICES"}</p>
         {scan && <p className="mt-2 font-mono text-[11px] text-signal">{scan}</p>}
         {list.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">No agent has asked to trade or spend yet. When one does, it shows up here and nothing happens until you approve it.</p>
@@ -121,7 +124,7 @@ function ColonyPage() {
                 {p.status === "pending" ? (
                   <>
                     <button type="button" onClick={() => void approve(p)} className="rounded border border-primary/50 px-2 py-0.5 font-mono text-[11px] text-primary">APPROVE</button>
-                    <button type="button" onClick={() => approvals.decide(p.id, false)} className="rounded border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">REJECT</button>
+                    <button type="button" onClick={() => void store.setStatus(p.id, "rejected")} className="rounded border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">REJECT</button>
                   </>
                 ) : p.status === "approved" ? (
                   <a href={p.href} className="font-mono text-[11px] text-primary underline">OPEN & SIGN IN YOUR WALLET</a>
@@ -133,6 +136,23 @@ function ColonyPage() {
           </ul>
         )}
       </section>
+
+      {store.signedIn && (
+        <section className="glass-panel rounded-[18px] border border-border p-4">
+          <h2 className="font-mono text-[12px] tracking-widest text-signal">AUDIT TRAIL</h2>
+          {store.audit.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No activity yet.</p> : (
+            <ul className="mt-2 space-y-1 font-mono text-[11px]">
+              {store.audit.map((e) => (
+                <li key={e.id} className="flex gap-3 text-muted-foreground">
+                  <span>{new Date(e.created_at).toLocaleString()}</span>
+                  <span className="uppercase text-foreground">{e.event}</span>
+                  <span className="truncate">{e.proposal_id.replace("broker:", "")}{e.detail ? ` · ${e.detail}` : ""}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <Link to="/biternam" className="font-mono text-[11px] text-signal underline">← BITERNAM</Link>
     </main>
