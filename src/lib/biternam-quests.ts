@@ -74,6 +74,8 @@ export type QuestNpc = {
   id: string;
   name: string;
   landmarkId: string;
+  /** -1 stands on the far side of the landmark, so two characters can share one */
+  side?: number;
   /** retro voice pitch in Hz */
   voice: number;
   /** short persona for the free-question channel */
@@ -300,6 +302,19 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "b", speaker: "LADYBIRD", mood: "idle", text: "Follow the sat, not the noise. Fakes smell like grey. Real BITMAPs feel warm under your feet.", next: null },
     ] },
   },
+  {
+    // Fictional parody guest — not the real person; no real quotes, views or endorsement implied.
+    id: "bukele", name: "PRESIDENTE B.", landmarkId: "great-bitcoin-statue", side: -1, voice: 120,
+    persona: "Presidente B., a fictional guest from the Volcano Republic of Biternam. Parody character wearing the BukeleOG pixel skin; not the real person.",
+    script: { id: "npc-bukele", title: "GREAT STATUE · STATE VISIT (PARODY)", start: "a", nodes: [
+      { id: "a", speaker: "PRESIDENTE B.", mood: "smug", text: "Welcome, Marshal. In my Volcano Republic, every block is legal tender and every lava flow mines a sat.", choices: [
+        { label: "\"Are you the real one?\"", next: "b" },
+        { label: "\"Volcano mining?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "PRESIDENTE B.", mood: "idle", text: "Fiction, friend. A guest skin in a parody world. The only thing real here is the chain.", next: null },
+      { id: "c", speaker: "PRESIDENTE B.", mood: "smug", text: "Geothermal hash, cooled by sea breeze. Tornado wants an interview. I said: next block.", next: null },
+    ] },
+  },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
 
 /**
@@ -319,7 +334,7 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   urban: "0701ed49ac70544e4d0909c94a5c910a0bf6bc948c20330732ac910206a08388i0",
   dev9: "f9f64471e1fed505e31f90ec445c576219b9cba5b2646effd05d5e36c5e1b788i0", // MM-9
   bop: "80367c008deb077805e247ce722911cf706e9df70cdfba01988c57eaa50caab6i0", // DG-9
-  // Nayib Bukele (HTML f07e…i0 → BukeleOG texture), reserved until he joins the cast.
+  // Fictional guest Presidente B. (HTML f07e…i0 → its declared BukeleOG texture).
   bukele: "cddf8dbb1bdd828cd6cad3e16006ef638ee477d3967042c53fa66c7adaa15937i0",
 };
 
@@ -341,6 +356,7 @@ export const BITERNAM_CREW = [
   { id: "dudeamoto", name: "DUDEAMOTO", role: "Bitmapper legend", line: "The block abides. Somehow always knows where the best BITMAP is." },
   { id: "ladybird", name: "LADYBIRD", role: "Bitmapper · lucky-spot scout", line: "Lands only on real blocks. Seven spots, seven confirmations." },
   { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
+  { id: "bukele", name: "PRESIDENTE B.", role: "Guest · fictional parody", line: "Visiting head of the Volcano Republic. Mines sats with lava. Fictional character, not the real person." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */
 export const CREW_MISSION_ROLE: Record<string, string> = {
@@ -515,7 +531,7 @@ export const stepKey = (s: QuestStep) => `${s.kind}:${s.kind === "give" ? `${s.t
 export function npcSpot(npc: QuestNpc) {
   const spec = LANDMARKS.find((l) => l.id === npc.landmarkId)!;
   const s = landmarkSpot(spec);
-  const off = spec.span * WORLD_CELL * 0.62;
+  const off = spec.span * WORLD_CELL * 0.62 * (npc.side ?? 1);
   return { x: s.x + Math.cos(spec.yaw + Math.PI * 0.5) * off, z: s.z + Math.sin(spec.yaw + Math.PI * 0.5) * off, yaw: spec.yaw };
 }
 
