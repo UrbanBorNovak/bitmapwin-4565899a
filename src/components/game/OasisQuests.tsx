@@ -10,6 +10,7 @@ import { askNpcFn, claimQuestRewardFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
 import { tracyCue } from "@/lib/tracy-com";
 import { WORLD_CELL } from "@/lib/player-state";
+import { LANDMARKS } from "@/lib/world-landmarks";
 import { useWalletSession } from "@/lib/wallet-session";
 
 type Pose = { x: number; z: number };
@@ -32,6 +33,12 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   const claim = useServerFn(claimQuestRewardFn);
   const wallet = useWalletSession();
   const address = wallet?.ordinalsAddress || wallet?.paymentAddress || null;
+
+  // Dev-only hook for browser play-tests (never shipped: stripped from production builds).
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __biternamTest?: unknown }).__biternamTest = { questStore, heldItems, landmarks: LANDMARKS, pose, cell: WORLD_CELL, nearestNpc };
+  }, [pose]);
 
   // Proximity: who you can talk to, and which landmark you're standing at.
   useEffect(() => {
