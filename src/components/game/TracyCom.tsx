@@ -51,7 +51,7 @@ function Portrait({ mood, talking, blink }: { mood: TracyMood; talking: boolean;
   );
 }
 
-export function TracyCom({ script, onEnd, onNode, className = "", passive = false, voice, avatar }: { script: TracyScript; onEnd?: () => void; /** fires each time a node is entered */ onNode?: (id: string) => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number; /** BITMAP Pixel inscription id shown instead of the drawn face */ avatar?: string }) {
+export function TracyCom({ script, onEnd, onNode, className = "", passive = false, voice, avatar }: { script: TracyScript; onEnd?: () => void; /** fires each time a node is entered */ onNode?: (id: string) => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number; /** BITMAP Pixel inscription id shown instead of the drawn face */ avatar?: string | undefined }) {
   const [nodeId, setNodeId] = useState<string | null>(script.start);
   const [started, setStarted] = useState(() => performance.now());
   const [now, setNow] = useState(() => performance.now());
