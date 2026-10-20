@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { OrbitControls } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { PlacedModel } from "@/components/forge/PlacedModel";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 import { FORGE_MASTER_DELEGATE_ID, delegateSavings, forgeDelegateMetadata } from "@/lib/forge-delegate";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
@@ -963,6 +964,7 @@ function ForgePage() {
                 <OnchainGuardianBody dna={dnaQ.data} />
               </group>
             )}
+            <PlacedModel height={height} span={SPAN} />
             <TerrainMass mass={mass} height={height ?? 0} />
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
