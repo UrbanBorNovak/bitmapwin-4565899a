@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useWalletSession } from "@/lib/wallet-session";
 import { collectForageFn } from "@/lib/guardian-agents.functions";
+import { getShardRaidFn } from "@/lib/shard-raid.functions";
+import { Link } from "@tanstack/react-router";
 import { wireBrain, decideDrive, sensesAt, agentSlots, SYNAPSES, DRIVES, FORAGE_BIT } from "@/lib/guardian-brain";
 
 export function GuardianAgents() {
@@ -28,13 +30,16 @@ export function GuardianAgents() {
   }
   const mine = useQuery(myGuardiansQuery(userId));
   const guardians = mine.data ?? [];
+  const loadRaid = useServerFn(getShardRaidFn);
+  const scouting = minute !== null && guardians.some((g) => decideDrive(wireBrain(g.height), sensesAt(g.height, minute)).drive === "scout");
+  const raid = useQuery({ queryKey: ["shard-raid", userId], enabled: !!userId && scouting, queryFn: () => loadRaid(), staleTime: 60_000 });
   const brains = useMemo(() => guardians.map((g) => ({ g, b: wireBrain(g.height) })), [guardians]);
 
   return (
     <section className="glass-panel rounded-[18px] border border-border p-4">
       <div className="font-mono text-[11px] tracking-widest text-signal">GUARDIAN AGENTS · LOCAL BRAIN</div>
       <p className="mt-1 text-sm text-muted-foreground">
-        Every Guardian you hold is one helper. Each runs a tiny fly-style brain with {SYNAPSES.toLocaleString()} synapses wired from its block, right in your browser — no AI credits used. In the Oasis they move around their own BITMAP by what they chose. When one forages, you can collect a little BIT once a day. They never trade or spend on their own.
+        Every Guardian you hold is one helper. Each runs a tiny fly-style brain with {SYNAPSES.toLocaleString()} synapses wired from its block, right in your browser — no AI credits used. In the Oasis they move around their own BITMAP by what they chose. Guarding ones defend their BITMAP harder in raids, scouting ones spot this hour's raid shards, and when one forages, you can collect a little BIT once a day. They never trade or spend on their own.
       </p>
       {!userId && <p className="mt-3 text-xs text-muted-foreground">Sign in to wake your Guardians.</p>}
       {userId && mine.isSuccess && (
@@ -58,6 +63,15 @@ export function GuardianAgents() {
                   </div>
                 ))}
               </div>
+              {d.drive === "guard" && <div className="mt-2 font-mono text-[11px] text-signal">ON WATCH · +30% ARMOUR IF RAIDED NOW</div>}
+              {d.drive === "scout" && raid.data && (
+                <div className="mt-2 font-mono text-[11px] text-signal">
+                  SHARDS SPOTTED:{" "}
+                  {raid.data.shards.filter((h) => !raid.data!.gathered.includes(h)).map((h) => (
+                    <Link key={h} to="/oasis" search={{ height: h } as never} className="mr-1 text-primary hover:underline">#{h}</Link>
+                  ))}
+                </div>
+              )}
               {d.drive === "forage" && (
                 <button type="button" onClick={() => forage(g.height)} className="mt-2 w-full rounded border border-primary px-2 py-1 font-mono text-[11px] text-primary hover:bg-primary/10">
                   COLLECT {FORAGE_BIT} BIT · ONCE A DAY
