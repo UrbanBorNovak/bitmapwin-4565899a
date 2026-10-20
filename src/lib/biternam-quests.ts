@@ -315,6 +315,12 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   // these are the PNG textures those inscriptions declare, so they paint the rig like every other pixel.
   ladybird: "d377e9e47e39e679d7d9fcac811285327ec1f4b4277ee543a0f46a5462809df5i0",
   dabber: "f9fd5d3fb47643f961feeabc512cab62e4c5f6fed70fd0740c3029a144eff1dfi0",
+  // Urban was given as a BRC-420 HTML avatar (f601…i0); this is its declared texture.
+  urban: "0701ed49ac70544e4d0909c94a5c910a0bf6bc948c20330732ac910206a08388i0",
+  dev9: "f9f64471e1fed505e31f90ec445c576219b9cba5b2646effd05d5e36c5e1b788i0", // MM-9
+  bop: "80367c008deb077805e247ce722911cf706e9df70cdfba01988c57eaa50caab6i0", // DG-9
+  // Nayib Bukele (HTML f07e…i0 → BukeleOG texture), reserved until he joins the cast.
+  bukele: "cddf8dbb1bdd828cd6cad3e16006ef638ee477d3967042c53fa66c7adaa15937i0",
 };
 
 /** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
