@@ -22,7 +22,7 @@ export type CinematicShot = {
   reach: number;
 };
 
-export const CINEMATIC_SHOTS: CinematicShot[] = [
+export const CINEMATIC_SHOTS: CinematicShot[] = ([
   { id: "torii", landmarkId: "torii", title: "SACRED BITMAP TORII GATE", line: "The gate into the plaza. Every walker passes under it once.", move: "rise", duration: 5, reach: 1.6 },
   { id: "bit-cafe", landmarkId: "bit-cafe", title: "BIT CAFE", line: "The meeting house. Gossip here is cheaper than block space.", move: "orbit", duration: 5, reach: 2.2 },
   { id: "tower", landmarkId: "tower", title: "METAVOXEL TOWER", line: "Tallest thing on the sand. If you're lost, look up.", move: "rise", duration: 6, reach: 2.2 },
@@ -30,7 +30,7 @@ export const CINEMATIC_SHOTS: CinematicShot[] = [
   { id: "mayor-pepe", landmarkId: "mayor-pepe", title: "MAYOR PEPE", line: "Centre of the whole map. He sees everything. Mostly memes.", move: "push", duration: 5, reach: 2.4 },
   { id: "bit-museum", landmarkId: "bit-museum", title: "THE BIT MUSEUM", line: "Where the Oasis keeps its history. Only the chain-proven kind.", move: "push", duration: 5, reach: 2.2 },
   { id: "trading-post", landmarkId: "trading-post", title: "THE TRADING POST", line: "Goods in, BIT out. Read the board before you haggle.", move: "orbit", duration: 5, reach: 2 },
-].filter((shot) => LANDMARKS.some((spec) => spec.id === shot.landmarkId));
+] as CinematicShot[]).filter((shot) => LANDMARKS.some((spec) => spec.id === shot.landmarkId));
 
 const specFor = (shot: CinematicShot): LandmarkSpec =>
   LANDMARKS.find((spec) => spec.id === shot.landmarkId)!;
