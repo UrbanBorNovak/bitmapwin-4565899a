@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CITIZENS, citizenAt, needsApproval, useApprovals, approvals } from "@/lib/agent-colony";
+import { CITIZENS, citizenAt, needsApproval, useApprovals, approvals, brokerPicks } from "@/lib/agent-colony";
+import { fetchOffers } from "@/lib/offers";
 import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
 
 export const Route = createFileRoute("/colony")({
@@ -27,6 +28,17 @@ function ColonyPage() {
   const t = useNow();
   const list = useApprovals();
   const pending = list.filter((p) => p.status === "pending");
+  const [scan, setScan] = useState<string | null>(null);
+  async function askBroker() {
+    setScan("Margo is reading the live listings…");
+    try {
+      const offers = await fetchOffers({ limit: 100 });
+      const n = approvals.proposeTrades(brokerPicks(offers.filter((o) => o.status === "open")));
+      setScan(n > 0 ? `Margo proposed ${n} trade${n > 1 ? "s" : ""}. Nothing happens until you approve.` : "No new listings worth proposing right now.");
+    } catch {
+      setScan("Couldn't read the marketplace. Try again.");
+    }
+  }
   const used = new Set(CITIZENS.flatMap((c) => c.route));
   const spots = LANDMARKS.filter((l) => used.has(l.id)).map((l) => ({ l, ...landmarkSpot(l) }));
   const xs = spots.map((s) => s.x), zs = spots.map((s) => s.z);
@@ -81,8 +93,10 @@ function ColonyPage() {
       <section className="glass-panel rounded-[18px] border border-border p-4">
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-[12px] tracking-widest text-primary">OWNER APPROVALS · {pending.length} PENDING</h2>
+          <button type="button" onClick={askBroker} className="rounded border border-signal/50 px-2 py-0.5 font-mono text-[11px] text-signal">ASK BROKER FOR TRADES</button>
           <span className="font-mono text-[10px] text-muted-foreground">TRADE {needsApproval("trade") ? "NEEDS APPROVAL" : ""} · SPEND {needsApproval("spend") ? "NEEDS APPROVAL" : ""}</span>
         </div>
+        {scan && <p className="mt-2 font-mono text-[11px] text-signal">{scan}</p>}
         {list.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">No agent has asked to trade or spend yet. When one does, it shows up here and nothing happens until you approve it.</p>
         ) : (
@@ -90,14 +104,19 @@ function ColonyPage() {
             {list.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-2 rounded border border-border p-2 text-sm">
                 <span className="font-mono text-[11px] uppercase text-signal">{p.kind}</span>
-                <span className="flex-1 text-foreground">{p.summary}</span>
+                {p.item ? (
+                  <div className="min-w-0 flex-1">
+                    <div className="text-foreground"><span className="font-mono">{p.item}</span> · <span className="font-mono text-primary">{p.priceSats?.toLocaleString()} sats</span> <span className="text-xs text-muted-foreground">+ 2% fee</span></div>
+                    <div className="text-xs text-muted-foreground">Why: {p.reason}</div>
+                  </div>
+                ) : <span className="flex-1 text-foreground">{p.summary}</span>}
                 {p.status === "pending" ? (
                   <>
                     <button type="button" onClick={() => approvals.decide(p.id, true)} className="rounded border border-primary/50 px-2 py-0.5 font-mono text-[11px] text-primary">APPROVE</button>
                     <button type="button" onClick={() => approvals.decide(p.id, false)} className="rounded border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">REJECT</button>
                   </>
                 ) : p.status === "approved" ? (
-                  <a href={p.href} className="font-mono text-[11px] text-primary underline">OPEN & SIGN YOURSELF</a>
+                  <a href={p.href} className="font-mono text-[11px] text-primary underline">OPEN & SIGN IN YOUR WALLET</a>
                 ) : <span className="font-mono text-[11px] text-muted-foreground">REJECTED</span>}
               </li>
             ))}
