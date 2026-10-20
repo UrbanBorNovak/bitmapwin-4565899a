@@ -15,7 +15,8 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
 import { RegistryDrawer } from "@/components/forge/RegistryDrawer";
-import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, FORGE_SPAN_XL, type ForgeSpan, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, FORGE_SPAN_XL, type ForgeSpan, decodeBuild, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { forgeBuildQuery } from "@/lib/forge";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
 import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
@@ -378,6 +379,33 @@ function ForgePage() {
   const [boxStart, setBoxStart] = useState<[number, number, number] | null>(null);
   const [perch, setPerch] = useState<[number, number, number] | null>(null);
   const dnaQ = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height !== null });
+  // Smart auto-load: the BITMAP's live on-chain build fills an empty canvas; otherwise we ask first.
+  const chainQ = useQuery(forgeBuildQuery(height));
+  const chainBuild = chainQ.data ?? null;
+  const [pendingLoad, setPendingLoad] = useState<string | null>(null);
+  const loadedFor = useRef<string | null>(null);
+  const loadChainBuild = (force: boolean): void => {
+    if (!chainBuild) return;
+    const span = (chainBuild.span ?? FORGE_SPAN) as ForgeSpan;
+    let decoded: TplBlock[] = [];
+    try { decoded = decodeBuild(chainBuild.data, span); } catch { toast.error("COULD NOT READ THIS ON-CHAIN BUILD"); return; }
+    if (!decoded.length) return;
+    if (!force && world.size > 0) { setPendingLoad(chainBuild.inscriptionId); return; }
+    setXl(span === FORGE_SPAN_XL);
+    const next = new Map<string, TplBlock>();
+    for (const b of decoded) next.set(cellKey(b.dx, b.dy, b.dz), b);
+    setHistory((h) => [...h, world]);
+    setWorld(next);
+    setPendingLoad(null);
+    loadedFor.current = chainBuild.inscriptionId;
+    toast.success(`LOADED ${decoded.length.toLocaleString()} VOXELS FROM ${height}.BITMAP — REMIX AWAY`);
+  };
+  useEffect(() => {
+    if (!chainBuild || loadedFor.current === chainBuild.inscriptionId) return;
+    loadedFor.current = chainBuild.inscriptionId;
+    loadChainBuild(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainBuild?.inscriptionId]);
   useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
   const collectionQ = useQuery(collectionPiecesQuery());
   const [makers, setMakers] = useState<Record<string, string>>({});
@@ -681,6 +709,15 @@ function ForgePage() {
                 <div className="rounded border border-accent/50 px-2 py-1 text-[10px]">
                   {landStatus.data.get(height)!.build && <p className="text-accent">▣ ALREADY BUILT · {landStatus.data.get(height)!.build!.voxels} VOXELS · <a className="underline" target="_blank" rel="noreferrer" href={`https://ordinals.com/inscription/${landStatus.data.get(height)!.build!.inscriptionId}`}>VIEW ↗</a></p>}
                   {landStatus.data.get(height)!.guardian && <p className="text-primary">◆ GUARDIAN · {landStatus.data.get(height)!.guardian!.species} · <a className="underline" target="_blank" rel="noreferrer" href={`https://ordinals.com/inscription/${landStatus.data.get(height)!.guardian!.inscriptionId}`}>VIEW ↗</a></p>}
+                </div>
+              )}
+              {chainBuild && pendingLoad === chainBuild.inscriptionId && (
+                <div className="rounded border border-accent px-2 py-1 text-[10px]">
+                  <p className="text-accent">▣ ON-CHAIN BUILD FOUND · {chainBuild.blockCount.toLocaleString()} VOXELS</p>
+                  <div className="mt-1 flex gap-1">
+                    <button type="button" onClick={() => loadChainBuild(true)} className="rounded border border-primary bg-primary/10 px-2 py-0.5 text-foreground">LOAD ONTO CANVAS</button>
+                    <button type="button" onClick={() => setPendingLoad(null)} className="rounded border border-border px-2 py-0.5 text-muted-foreground">DISMISS</button>
+                  </div>
                 </div>
               )}
               {height !== null && (
