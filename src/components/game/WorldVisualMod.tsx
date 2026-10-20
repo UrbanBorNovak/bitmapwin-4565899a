@@ -81,7 +81,7 @@ export function VisualModControls() {
         FX
       </button>
       {open ? (
-        <div className="absolute right-0 top-9 z-50 w-48 space-y-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
+        <div className="absolute bottom-full right-0 z-50 mb-2 w-48 space-y-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
           <button type="button" onClick={() => set({ locked: null })} className={`block w-full px-2 py-1 text-left ${!locked ? "text-bitcoin" : "text-muted-foreground"}`}>
             NORMAL
           </button>
