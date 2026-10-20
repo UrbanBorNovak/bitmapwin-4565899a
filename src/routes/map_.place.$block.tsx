@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ATLAS_CAPACITY, atlasEra } from "@/lib/atlas-geometry";
 import { atlasDistrictNeighbors, atlasPlaceStory } from "@/lib/atlas-places";
 import { landscapeFor } from "@/lib/land-biome";
+import { PlaceChainLore } from "@/components/atlas/PlaceChainLore";
 
 export const Route = createFileRoute("/map_/place/$block")({
   loader: ({ params }) => {
@@ -64,6 +65,9 @@ function PlaceStoryPage() {
           <div className="mt-5 max-w-3xl space-y-5 text-lg leading-8 text-foreground/90 md:text-xl md:leading-9">
             <p>{place.story[0]}</p>
             <p>{place.story[1]}</p>
+          </div>
+          <PlaceChainLore height={place.height} />
+          <div>
           </div>
           <div className="mt-9 border-l-2 border-signal bg-signal/5 p-5">
             <p className="label text-signal">THE LANDSCAPE</p>

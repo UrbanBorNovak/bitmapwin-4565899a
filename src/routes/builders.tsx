@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BuilderEarnCard } from "@/components/builders/BuilderEarnCard";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { extendersQuery, extenderStatsQuery, categoryLabel } from "@/lib/extenders";
 import { shortenAddress } from "@/lib/registry";
@@ -94,7 +93,6 @@ function BuildersPage() {
             </li>
           ))}
         </ol>
-        <BuilderEarnCard />
       </section>
 
       <section className="mt-10">
