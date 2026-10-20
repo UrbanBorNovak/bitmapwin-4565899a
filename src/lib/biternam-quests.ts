@@ -250,13 +250,64 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "c", speaker: "BITOSHI", mood: "idle", text: "dev9. Unreasonable man. Respect him. Doesn't mean I trust you.", next: null },
     ] },
   },
+  {
+    id: "jahbooble", name: "JAHBOOBLE", landmarkId: "torii", voice: 160,
+    persona: "jahbooble, a devoted Bitmapper and gatekeeper of good vibes. Knows every newcomer by block and greets them like family.",
+    script: { id: "npc-jahbooble", title: "TORII GATE · WELCOME POST", start: "a", nodes: [
+      { id: "a", speaker: "JAHBOOBLE", mood: "smug", text: "Bless up, Marshal. Another soul through the gate. Every block you claim is a seat at the table.", choices: [
+        { label: "\"What makes a real Bitmapper?\"", next: "b" },
+      ] },
+      { id: "b", speaker: "JAHBOOBLE", mood: "idle", text: "Hold your own keys, build on your own block, and show up when the crew calls. Unreasonable, every one of us.", next: null },
+    ] },
+  },
+  {
+    id: "mr-shiddy", name: "MR SHIDDY", landmarkId: "bit-museum", voice: 125,
+    persona: "Mr Shiddy, Bitmapper and engineer. Blunt, hands-on, fixes anything with a soldering iron and a straight face.",
+    script: { id: "npc-mr-shiddy", title: "BIT MUSEUM · SERVICE HATCH", start: "a", nodes: [
+      { id: "a", speaker: "MR SHIDDY", mood: "idle", text: "Don't touch that panel. It's load-bearing. Everything here is load-bearing if you engineer it right.", choices: [
+        { label: "\"What are you fixing?\"", next: "b" },
+      ] },
+      { id: "b", speaker: "MR SHIDDY", mood: "smug", text: "The parts Blockamoto said couldn't be fixed. Engineering is just refusing to accept 'unreasonable' as an answer.", next: null },
+    ] },
+  },
+  {
+    id: "space-monnkey", name: "SPACE MONNKEY", landmarkId: "tower", voice: 240,
+    persona: "Space Monnkey, an insane graphic designer. Hyperactive, sees colour palettes in block hashes, turns every surface into art.",
+    script: { id: "npc-space-monnkey", title: "METAVOXEL TOWER · ROOFTOP STUDIO", start: "a", nodes: [
+      { id: "a", speaker: "SPACE MONNKEY", mood: "glitch", text: "OOK OOK! Don't move. Your silhouette against this hash is PERFECT. Hex 0xF7931A, pure orange chaos.", choices: [
+        { label: "\"Are you okay?\"", next: "b" },
+      ] },
+      { id: "b", speaker: "SPACE MONNKEY", mood: "smug", text: "Never. Okay is grey. Grey is Blockamoto. I paint at escape velocity.", next: null },
+    ] },
+  },
+  {
+    id: "dudeamoto", name: "DUDEAMOTO", landmarkId: "arena", voice: 140,
+    persona: "Dudeamoto, a laid-back Bitmapper legend. Speaks slowly, abides, and somehow always knows where the best block is.",
+    script: { id: "npc-dudeamoto", title: "THE ARENA · BLEACHERS", start: "a", nodes: [
+      { id: "a", speaker: "DUDEAMOTO", mood: "idle", text: "Yeah, well, that's just like, your fee estimate, man.", choices: [
+        { label: "\"Any advice?\"", next: "b" },
+      ] },
+      { id: "b", speaker: "DUDEAMOTO", mood: "smug", text: "The block abides. Hold your BITMAP, stay chill, let the halvings come to you.", next: null },
+    ] },
+  },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
 
-/** The Biternam crew — shown as a cast list on /biternam. */
+/**
+ * On-chain BITMAP Pixels avatars (block 881,133 collection) worn by crew members.
+ * Only ids present in the collection manifest; members without one keep their voxel palette.
+ */
+export const CREW_PIXEL_AVATAR: Record<string, string> = {
+  "mr-shiddy": "6302c7eb37f47ba6c205f7b3f3346e1b40ce02b6616c779107da020bc31a5af0i0",
+  dudeamoto: "ee028483cf27c3ccd98b22df265dc32579fa7c3aec763a96c54b6a7d01625b2di0",
+  tornado: "75e3588e2fad36befc0fbbf7a21354340dee290f2839d19c35db68a79648d5aei0",
+  wierdamoto: "02a42a16913bfcdb1d48323850c1a2fab1633e4c1e151bc64c2bd8a5a5cdfacfi0",
+};
+
+/** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
 export const BITERNAM_CREW = [
   { id: "wierdamoto", name: "WIERDAMOTO", role: "Masked rebel leader", line: "Theatrical keeper of self-custody. Every sat belongs to its holder." },
-  { id: "dev9", name: "DEV9", role: "The veteran", line: "Old dev, ex-military, reads raw transactions like intercepted signals." },
-  { id: "bop", name: "BOP", role: "The programmer", line: "Ships overnight. Makes hard things feel smooth." },
+  { id: "dev9", name: "DEV9", role: "The veteran · Marauder", line: "Old dev, ex-military, reads raw transactions like intercepted signals." },
+  { id: "bop", name: "BOP", role: "God-tier programmer · the Boptimization standard", line: "Writes code the compiler learns from. If it isn't boptimized, it isn't finished." },
   { id: "nine", name: "9", role: "Culture leader", line: "Gathers the Bitmappers and gives the park its soul." },
   { id: "tornado", name: "TORNADO H. THOMPSON", role: "Gonzo anchor of Bitmap News", line: "Goes live every block. Signs off with the height." },
   { id: "dabber", name: "ELEVATED DABBER", role: "Summit visionary", line: "Sees every BITMAP from above and blows the FUD away like smoke." },
@@ -264,6 +315,10 @@ export const BITERNAM_CREW = [
   { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
   { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
   { id: "bitoshi", name: "BITOSHI", role: "The cook who broke bad", line: "Cooks pure block matter in an RV past the western rig. Stay out of his mempool." },
+  { id: "jahbooble", name: "JAHBOOBLE", role: "Bitmapper · keeper of the gate", line: "Greets every newcomer like family. Bless up, hold your keys." },
+  { id: "mr-shiddy", name: "MR SHIDDY", role: "Bitmapper & engineer", line: "Fixes what Blockamoto called unfixable. Everything is load-bearing." },
+  { id: "space-monnkey", name: "SPACE MONNKEY", role: "Insane graphic designer", line: "Sees palettes in block hashes. Paints at escape velocity." },
+  { id: "dudeamoto", name: "DUDEAMOTO", role: "Bitmapper legend", line: "The block abides. Somehow always knows where the best BITMAP is." },
   { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */

@@ -24,6 +24,10 @@ const LOOK: Record<string, Look> = {
   bitlodo: { body: "#232328", head: "#ebd0b5", accent: "#00e5ff" }, // director vest, tally light
   mononaut: { body: "#2f3e46", head: "#e2c2a4", accent: "#f7931a" }, // trenchcoat, orange loupe
   sunset: { body: "#3a0ca3", head: "#ebd2b9", accent: "#f72585" }, // twilight, synth pink
+  jahbooble: { body: "#1f7a3a", head: "#8a5a3c", accent: "#ffd23f" },
+  "mr-shiddy": { body: "#5a4a32", head: "#e0b894", accent: "#ff8c1a" },
+  "space-monnkey": { body: "#6a2fd6", head: "#8b5a2b", accent: "#39ff88" },
+  dudeamoto: { body: "#8a6a4a", head: "#e6c3a0", accent: "#f7931a" },
 };
 
 function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boolean }) {
