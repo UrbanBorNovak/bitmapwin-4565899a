@@ -14,6 +14,7 @@ import { Route as ApiRouteImport } from './routes/api'
 import { Route as ArchaeologyRouteImport } from './routes/archaeology'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BetaRouteImport } from './routes/beta'
+import { Route as BiternamRouteImport } from './routes/biternam'
 import { Route as BotRouteImport } from './routes/bot'
 import { Route as BreedRouteImport } from './routes/breed'
 import { Route as BuildersRouteImport } from './routes/builders'
@@ -159,6 +160,11 @@ const AuthRoute = AuthRouteImport.update({
 const BetaRoute = BetaRouteImport.update({
   id: '/beta',
   path: '/beta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BiternamRoute = BiternamRouteImport.update({
+  id: '/biternam',
+  path: '/biternam',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BotRoute = BotRouteImport.update({
@@ -777,6 +783,7 @@ export interface FileRoutesByFullPath {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
+  '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
@@ -905,6 +912,7 @@ export interface FileRoutesByTo {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
+  '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
@@ -1030,6 +1038,7 @@ export interface FileRoutesById {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
+  '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
@@ -1160,6 +1169,7 @@ export interface FileRouteTypes {
     | '/archaeology'
     | '/auth'
     | '/beta'
+    | '/biternam'
     | '/bot'
     | '/breed'
     | '/builders'
@@ -1288,6 +1298,7 @@ export interface FileRouteTypes {
     | '/archaeology'
     | '/auth'
     | '/beta'
+    | '/biternam'
     | '/bot'
     | '/breed'
     | '/builders'
@@ -1412,6 +1423,7 @@ export interface FileRouteTypes {
     | '/archaeology'
     | '/auth'
     | '/beta'
+    | '/biternam'
     | '/bot'
     | '/breed'
     | '/builders'
@@ -1541,6 +1553,7 @@ export interface RootRouteChildren {
   ArchaeologyRoute: typeof ArchaeologyRoute
   AuthRoute: typeof AuthRoute
   BetaRoute: typeof BetaRoute
+  BiternamRoute: typeof BiternamRoute
   BotRoute: typeof BotRoute
   BreedRoute: typeof BreedRoute
   BuildersRoute: typeof BuildersRoute
@@ -1659,6 +1672,13 @@ declare module '@tanstack/react-router' {
       path: '/beta'
       fullPath: '/beta'
       preLoaderRoute: typeof BetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam': {
+      id: '/biternam'
+      path: '/biternam'
+      fullPath: '/biternam'
+      preLoaderRoute: typeof BiternamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bot': {
@@ -2652,6 +2672,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArchaeologyRoute: ArchaeologyRoute,
   AuthRoute: AuthRoute,
   BetaRoute: BetaRoute,
+  BiternamRoute: BiternamRoute,
   BotRoute: BotRoute,
   BreedRoute: BreedRoute,
   BuildersRoute: BuildersRoute,
