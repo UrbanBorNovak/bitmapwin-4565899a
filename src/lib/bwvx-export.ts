@@ -199,3 +199,15 @@ export function downloadBwvx(blocks: TplBlock[], name: string, span = 64) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
   return { bytes: bytes.length };
 }
+
+/** Agent proposal tuples [x, y, z, kind] → Forge blocks, so proposals export through the same open formats. */
+export function tuplesToBlocks(tuples: [number, number, number, string][]): TplBlock[] {
+  return (tuples ?? []).map(([dx, dy, dz, k]) => ({ dx, dy, dz, k: k as TplBlock["k"] }));
+}
+
+/** Base64 BWVX2 payload for the copy-paste loader (validated first). */
+export function bwvxPayload(blocks: TplBlock[], span = 64): string {
+  const bytes = exportBwvxBytes(blocks, span);
+  let s = ""; for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s);
+}
