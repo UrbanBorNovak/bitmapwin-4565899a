@@ -104,10 +104,17 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
 
   const claimQuest = async (id: string) => {
     if (!address) return setNote("CONNECT A VERIFIED WALLET TO CLAIM BIT");
-    const r = await claim({ data: { address, quest: id } }).catch(() => ({ ok: false as const, already: false, error: "PAYOUT FAILED — TRY AGAIN" }));
-    if (r.ok) { questStore.markClaimed(id); setNote(r.already ? "ALREADY CLAIMED ON THIS ACCOUNT" : "BIT PAID"); }
+    const r: { ok: boolean; already: boolean; error: string | null; unverified?: boolean } = await claim({ data: { address, quest: id } }).catch(() => ({ ok: false, already: false, error: "PAYOUT FAILED — TRY AGAIN" }));
+    if (r.ok) { setUnverified(null); questStore.markClaimed(id); setNote(r.already ? "ALREADY CLAIMED ON THIS ACCOUNT" : "BIT PAID"); }
+    else if (r.unverified) { setUnverified(id); setLogOpen(true); return; }
     else setNote(r.error ?? "PAYOUT FAILED");
     setTimeout(() => setNote(null), 4000);
+  };
+  const replay = (id: string) => {
+    questStore.replay(id);
+    setUnverified(null);
+    setNote("CHAPTER RESTARTED · PLAY IT THROUGH WHILE SIGNED IN");
+    setTimeout(() => setNote(null), 4500);
   };
 
   if (hidden) return null;
@@ -171,6 +178,17 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
                     <button type="button" disabled={claimed} onClick={() => void claimQuest(quest.id)} className="mt-1 rounded border border-primary/50 px-2 py-0.5 text-[11px] text-primary disabled:opacity-50">
                       {claimed ? `BADGE · ${quest.badge}` : `CLAIM ${quest.bit} BIT`}
                     </button>
+                  ) : null}
+                  {unverified === quest.id ? (
+                    <div role="alert" className="mt-2 rounded-[10px] border border-signal/50 bg-signal/10 p-2 text-[11px] leading-relaxed">
+                      <div className="tracking-widest text-signal">CHAPTER NOT VERIFIED</div>
+                      <p className="mt-1 text-foreground/85">This device shows the chapter finished, but your account didn't see every step. That happens if you played it signed out or before step checks existed.</p>
+                      <p className="mt-1 text-foreground/85">Sign in, then replay it. Steps your account already saw are kept, and BIT you already earned is never lost.</p>
+                      <div className="mt-2 flex gap-2">
+                        <button type="button" onClick={() => replay(quest.id)} className="rounded border border-primary/60 px-2 py-0.5 text-primary">REPLAY CHAPTER</button>
+                        <button type="button" onClick={() => setUnverified(null)} className="rounded border border-border px-2 py-0.5 text-muted-foreground">LATER</button>
+                      </div>
+                    </div>
                   ) : null}
                 </div>
               );
