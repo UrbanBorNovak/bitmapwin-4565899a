@@ -1,15 +1,29 @@
 /**
  * Retro 2.5D Bit Museum interior: one fixed, high-angle cinematic camera
- * (1992 adventure-game style), chunky low-res rendering, clickable curator and exit door.
+ * (1992 adventure-game style), chunky low-res rendering, verb-bar hotspots.
  */
-import { useRef, useState } from "react";
-import { events as r3fEvents, useFrame, type RootState } from "@react-three/fiber";
+import { useRef, type ReactNode } from "react";
+import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import type { Hotspot } from "@/lib/museum-verbs";
 
 const WALL = "#3a2e3f", FLOOR = "#6b4a32", TRIM = "#f7931a", GLASS = "#28e0ff";
 
-function Exhibit({ x, z, h, color }: { x: number; z: number; h: number; color: string }) {
+type HotProps = { id: Hotspot; onHit: (h: Hotspot) => void; onHover: (h: Hotspot | null) => void };
+
+function Hot({ id, onHit, onHover, children, ...rest }: HotProps & { children: ReactNode; position?: [number, number, number]; rotation?: [number, number, number] }) {
+  return (
+    <group {...rest}
+      onClick={(e: ThreeEvent<MouseEvent>) => { e.stopPropagation(); onHit(id); }}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => { e.stopPropagation(); onHover(id); }}
+      onPointerOut={() => onHover(null)}>
+      {children}
+    </group>
+  );
+}
+
+function Exhibit({ x, z, h, color, glow = 0.35 }: { x: number; z: number; h: number; color: string; glow?: number }) {
   const g = useRef<Group>(null);
   useFrame(({ clock }) => { if (g.current) g.current.rotation.y = clock.elapsedTime * 0.5 + x; });
   return (
@@ -17,19 +31,18 @@ function Exhibit({ x, z, h, color }: { x: number; z: number; h: number; color: s
       <mesh position-y={0.5} castShadow><boxGeometry args={[1, 1, 1]} /><meshStandardMaterial color="#2a2230" /></mesh>
       <mesh position-y={1.02}><boxGeometry args={[1.1, 0.04, 1.1]} /><meshStandardMaterial color={TRIM} /></mesh>
       <group ref={g} position-y={1.1 + h / 2}>
-        <mesh><boxGeometry args={[0.45, h, 0.45]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} /></mesh>
+        <mesh><boxGeometry args={[0.45, h, 0.45]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={glow} /></mesh>
       </group>
       <mesh position-y={1.6}><boxGeometry args={[0.9, 1.1, 0.9]} /><meshStandardMaterial color={GLASS} transparent opacity={0.12} /></mesh>
     </group>
   );
 }
 
-function Curator({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; setHot: (b: boolean) => void }) {
+function Curator({ hot }: { hot: boolean }) {
   const g = useRef<Group>(null);
   useFrame(({ clock }) => { if (g.current) g.current.position.y = Math.sin(clock.elapsedTime * 2) * 0.03; });
   return (
-    <group ref={g} position={[1.4, 0, -0.4]} rotation-y={-0.5} onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onPointerOver={() => { setHot(true); document.body.style.cursor = "pointer"; }} onPointerOut={() => { setHot(false); document.body.style.cursor = ""; }}>
+    <group ref={g}>
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hot ? 1 : 0.45} /></mesh>
       <mesh position={[-0.12, 0.35, 0]}><boxGeometry args={[0.18, 0.7, 0.2]} /><meshStandardMaterial color="#3b2f4a" /></mesh>
       <mesh position={[0.12, 0.35, 0]}><boxGeometry args={[0.18, 0.7, 0.2]} /><meshStandardMaterial color="#3b2f4a" /></mesh>
@@ -40,12 +53,13 @@ function Curator({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; 
   );
 }
 
-function Door({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; setHot: (b: boolean) => void }) {
+function Lens() {
+  const g = useRef<Group>(null);
+  useFrame(({ clock }) => { if (g.current) { g.current.rotation.y = clock.elapsedTime * 2; g.current.position.y = 0.25 + Math.sin(clock.elapsedTime * 3) * 0.06; } });
   return (
-    <group position={[-4.2, 0, 3.98]} onClick={(e) => { e.stopPropagation(); onClick(); }}
-      onPointerOver={() => { setHot(true); document.body.style.cursor = "pointer"; }} onPointerOut={() => { setHot(false); document.body.style.cursor = ""; }}>
-      <mesh position-y={1.3}><boxGeometry args={[1.5, 2.6, 0.1]} /><meshStandardMaterial color="#1b1418" emissive={GLASS} emissiveIntensity={hot ? 0.5 : 0.15} /></mesh>
-      <mesh position-y={2.7}><boxGeometry args={[1.8, 0.15, 0.15]} /><meshStandardMaterial color={TRIM} /></mesh>
+    <group ref={g}>
+      <mesh rotation-x={Math.PI / 2}><torusGeometry args={[0.18, 0.05, 6, 12]} /><meshStandardMaterial color="#c9a14a" emissive={TRIM} emissiveIntensity={0.6} /></mesh>
+      <mesh position={[0, 0, 0.3]}><boxGeometry args={[0.06, 0.06, 0.3]} /><meshStandardMaterial color="#5a3d29" /></mesh>
     </group>
   );
 }
@@ -60,49 +74,46 @@ const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
   },
 });
 
-/** The one fixed cinematic angle: aimed at the room centre every frame. */
 function FixedCam() {
   useFrame(({ camera }) => camera.lookAt(-0.6, -0.6, 1.4));
   return null;
 }
 
-export function MuseumInterior({ onCurator, onExit }: { onCurator: () => void; onExit: () => void }) {
-  const [hotC, setHotC] = useState(false);
-  const [hotD, setHotD] = useState(false);
+export function MuseumInterior({ onHit, onHover, hover, hasLens, solved }: {
+  onHit: (h: Hotspot) => void; onHover: (h: Hotspot | null) => void; hover: Hotspot | null; hasLens: boolean; solved: boolean;
+}) {
+  const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42 }} style={{ imageRendering: "pixelated" }}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42 }} style={{ imageRendering: "pixelated" }}
+        onPointerMissed={() => onHover(null)}>
         <FixedCam />
         <color attach="background" args={["#120d14"]} />
         <fog attach="fog" args={["#120d14", 14, 26]} />
         <ambientLight intensity={0.55} color="#ffd9b0" />
         <pointLight position={[0, 4, 0]} intensity={30} color="#ffb060" castShadow />
         <pointLight position={[-3, 2.5, -3]} intensity={8} color={GLASS} />
-        {/* floor tiles */}
         {Array.from({ length: 64 }, (_, i) => {
           const x = (i % 8) - 3.5, z = Math.floor(i / 8) - 3.5;
           return <mesh key={i} position={[x, -0.05, z]} receiveShadow><boxGeometry args={[0.98, 0.1, 0.98]} /><meshStandardMaterial color={(i + Math.floor(i / 8)) % 2 ? FLOOR : "#5a3d29"} /></mesh>;
         })}
-        {/* back walls only — classic cutaway room */}
         <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.2]} /><meshStandardMaterial color={WALL} /></mesh>
         <mesh position={[-4, 2, 0]}><boxGeometry args={[0.2, 4, 8]} /><meshStandardMaterial color={WALL} /></mesh>
         <mesh position={[-4.5, 2, 4]}><boxGeometry args={[1, 4, 0.2]} /><meshStandardMaterial color={WALL} /></mesh>
         <mesh position={[0, 3.9, -3.85]}><boxGeometry args={[8, 0.12, 0.1]} /><meshStandardMaterial color={TRIM} /></mesh>
-        {/* wall banners: famous blocks */}
         {[-2.6, 0, 2.6].map((x, i) => (
           <mesh key={x} position={[x, 2.4, -3.88]}><boxGeometry args={[1.4, 1.6, 0.04]} /><meshStandardMaterial color={["#7a1f1f", "#1f3a6b", "#2f5a2f"][i]!} /></mesh>
         ))}
-        <Exhibit x={-2} z={-1.5} h={0.5} color="#f7931a" />
-        <Exhibit x={0.3} z={-2.2} h={0.9} color="#e9e2d0" />
-        <Exhibit x={-2.6} z={1.4} h={0.7} color={GLASS} />
-        <Curator onClick={onCurator} hot={hotC} setHot={setHotC} />
-        <Door onClick={onExit} hot={hotD} setHot={setHotD} />
+        <Hot id="genesis" {...hp}><Exhibit x={-2} z={-1.5} h={0.5} color="#f7931a" glow={hover === "genesis" ? 0.9 : 0.35} /></Hot>
+        <Hot id="pizza" {...hp}><Exhibit x={0.3} z={-2.2} h={0.9} color="#e9e2d0" glow={hover === "pizza" ? 0.9 : 0.35} /></Hot>
+        <Hot id="glass" {...hp}><Exhibit x={-2.6} z={1.4} h={0.7} color={solved ? TRIM : GLASS} glow={solved ? 1.2 : hover === "glass" ? 0.9 : 0.35} /></Hot>
+        {!hasLens ? <Hot id="lens" {...hp} position={[1.6, 0, 2.2]}><Lens /></Hot> : null}
+        <Hot id="curator" {...hp} position={[1.4, 0, -0.4]} rotation={[0, -0.5, 0]}><Curator hot={hover === "curator"} /></Hot>
+        <Hot id="door" {...hp} position={[-4.2, 0, 3.98]}>
+          <mesh position-y={1.3}><boxGeometry args={[1.5, 2.6, 0.1]} /><meshStandardMaterial color="#1b1418" emissive={GLASS} emissiveIntensity={hover === "door" ? 0.5 : 0.15} /></mesh>
+          <mesh position-y={2.7}><boxGeometry args={[1.8, 0.15, 0.15]} /><meshStandardMaterial color={TRIM} /></mesh>
+        </Hot>
       </SafeCanvas>
-      {hotC || hotD ? (
-        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded border border-primary/60 bg-background/80 px-3 py-1 font-mono text-[12px] tracking-widest text-primary">
-          {hotC ? "[ TALK ] MUSEUM CURATOR" : "[ EXIT ] BACK TO THE OASIS"}
-        </div>
-      ) : null}
     </div>
   );
 }
