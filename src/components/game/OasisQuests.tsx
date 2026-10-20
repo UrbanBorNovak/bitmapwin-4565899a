@@ -5,7 +5,7 @@
 import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TracyCom } from "@/components/game/TracyCom";
-import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, stepKey, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
+import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, indoorRedirectScript, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, stepKey, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
 import { askNpcFn, claimQuestRewardFn, recordQuestStepFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
 import { tracyCue } from "@/lib/tracy-com";
@@ -97,7 +97,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   useEffect(() => { if (talking && nearId !== talking.npc.id) { setTalking(null); setReply(null); } }, [nearId, talking]);
 
   // Hang up when the call ends, so finishing a step never restarts the conversation with idle chat.
-  const endCall = () => { if (talking) { questStore.record("talk", talking.npc.id); setTalking(null); setReply(null); } };
+  const endCall = () => { if (talking) { if (!talking.mission?.step.indoors) questStore.record("talk", talking.npc.id); setTalking(null); setReply(null); } };
   // A hero waiting on a mission step speaks their own lines; give steps offer your wrist inventory.
   // Frozen when the call opens: the step advancing mid-call must not swap the script under you.
   const mission = talking?.mission ?? null;
@@ -152,7 +152,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
           {reply ? (
             <TracyCom key={reply.n} script={{ id: "reply", title: "OPEN CHANNEL", start: "a", nodes: [{ id: "a", speaker: reply.npc.name, mood: "idle", text: reply.text, next: null }] }} voice={reply.npc.voice} onEnd={() => setReply(null)} />
           ) : (
-            <TracyCom key={talking.n} script={mission ? missionScript(talking.npc, mission.step, talking.held) : talking.npc.script} voice={talking.npc.voice} onEnd={endCall} onNode={onMissionNode} />
+            <TracyCom key={talking.n} script={mission?.step.indoors ? indoorRedirectScript(talking.npc) : mission ? missionScript(talking.npc, mission.step, talking.held) : talking.npc.script} voice={talking.npc.voice} onEnd={endCall} onNode={onMissionNode} />
           )}
           <form className="glass-panel flex gap-2 rounded-[14px] border border-border p-2 font-mono text-[12px]" onSubmit={(e) => { e.preventDefault(); void sendQuestion(); }}>
             <input value={q} onChange={(e) => setQ(e.target.value)} maxLength={240} placeholder={`Ask ${talking.npc.name.toLowerCase()} anything…`} aria-label="Question" className="min-w-0 flex-1 rounded bg-muted px-2 py-1 text-foreground outline-none" />
