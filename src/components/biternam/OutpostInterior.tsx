@@ -55,7 +55,7 @@ function Flask({ hot }: { hot: boolean }) {
     <group>
       <mesh position-y={0.5}><boxGeometry args={[1.4, 1, 0.7]} /><meshStandardMaterial color="#5c5a55" /></mesh>
       {[-0.4, 0, 0.4].map((x, i) => (
-        <mesh key={i} ref={i === 1 ? m : undefined} position={[x, 1.3, 0]}><cylinderGeometry args={[0.12, 0.18, 0.55, 8]} /><meshStandardMaterial color={BLUE} emissive={BLUE} emissiveIntensity={0.6} transparent opacity={0.85} /></mesh>
+        <mesh key={i} ref={i === 1 ? m : null} position={[x, 1.3, 0]}><cylinderGeometry args={[0.12, 0.18, 0.55, 8]} /><meshStandardMaterial color={BLUE} emissive={BLUE} emissiveIntensity={0.6} transparent opacity={0.85} /></mesh>
       ))}
     </group>
   );
