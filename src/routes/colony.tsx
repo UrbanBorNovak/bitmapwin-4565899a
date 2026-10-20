@@ -27,9 +27,10 @@ function ColonyPage() {
   const t = useNow();
   const list = useApprovals();
   const pending = list.filter((p) => p.status === "pending");
-  const spots = LANDMARKS.map((l) => ({ l, ...landmarkSpot(l) }));
+  const used = new Set(CITIZENS.flatMap((c) => c.route));
+  const spots = LANDMARKS.filter((l) => used.has(l.id)).map((l) => ({ l, ...landmarkSpot(l) }));
   const xs = spots.map((s) => s.x), zs = spots.map((s) => s.z);
-  const pad = 40;
+  const pad = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs)) * 0.15 + 1;
   const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad, minZ = Math.min(...zs) - pad, maxZ = Math.max(...zs) + pad;
   const px = (x: number) => ((x - minX) / (maxX - minX)) * 100;
   const pz = (z: number) => ((z - minZ) / (maxZ - minZ)) * 100;
