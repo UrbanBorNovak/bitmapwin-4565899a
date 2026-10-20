@@ -36,7 +36,7 @@ export type ProposalVerdict = {
  * parcel holders only the cells their parcel exclusively owns.
  */
 export function validateBuildProposal(
-  input: { blocks: [number, number, number, string][]; parcelIndex?: number; modelInscriptionId?: string },
+  input: { blocks: [number, number, number, string][]; parcelIndex?: number | undefined; modelInscriptionId?: string | undefined },
   rights: { role: ProposalRole; parcels: number[] },
   rects: ParcelRect[] | null,
 ): ProposalVerdict {
