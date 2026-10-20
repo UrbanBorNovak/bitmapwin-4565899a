@@ -346,7 +346,7 @@ import { ColonyCitizens } from "@/components/game/ColonyCitizens";
 import { CinematicBars } from "@/components/game/CinematicBars";
 import { cinematics, shotFrame, shotInReach, SKIP_KEYS } from "@/lib/oasis-cinematics";
 import { tracyCue, onTracyCue } from "@/lib/tracy-com";
-import { bulletTime, bulletFrame, cueToBullet, type BulletEvent } from "@/lib/oasis-bullet-time";
+import { bulletTime, stepBulletCam, cueToBullet, type BulletEvent } from "@/lib/oasis-bullet-time";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
