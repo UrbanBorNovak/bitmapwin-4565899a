@@ -75,7 +75,7 @@ export function VisualModControls() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Visual mods"
+        aria-label="FX looks and anomaly surges"
         className={`h-8 rounded-sm px-2 font-mono text-xs ${locked || surges ? "bg-signal text-signal-foreground" : "text-muted-foreground"}`}
       >
         FX
