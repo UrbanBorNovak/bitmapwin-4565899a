@@ -5,7 +5,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
-import { QUEST_NPCS, npcSpot, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
+import { QUEST_NPCS, itemSpot, npcSpot, pendingItems, useQuestState, type QuestItem, type QuestNpc } from "@/lib/biternam-quests";
 import { groundY } from "@/lib/world-terrain";
 
 type Look = { body: string; head: string; accent: string };
@@ -52,7 +52,30 @@ function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boole
   );
 }
 
+/** A spinning glowing pickup; only shown while its quest step is current. */
+function Item({ item, unit }: { item: QuestItem; unit: number }) {
+  const p = itemSpot(item);
+  const g = useRef<Group>(null);
+  const s = unit * 1.2;
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (g.current && p) { g.current.position.set(p.x, groundY(p.x, p.z) + s * (0.9 + Math.sin(t * 2.4) * 0.12), p.z); g.current.rotation.y = t * 1.6; }
+  });
+  if (!p) return null;
+  return (
+    <group ref={g}>
+      <mesh><octahedronGeometry args={[s * 0.28]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={1.4} /></mesh>
+      <mesh rotation-x={Math.PI / 2}><torusGeometry args={[s * 0.45, s * 0.03, 6, 24]} /><meshBasicMaterial color="#28e0ff" /></mesh>
+    </group>
+  );
+}
+
 export function QuestNpcs({ unit }: { unit: number }) {
-  const { nearId } = useQuestState();
-  return <>{QUEST_NPCS.map((n) => <Npc key={n.id} npc={n} unit={unit} active={nearId === n.id} />)}</>;
+  const { nearId, progress } = useQuestState();
+  return (
+    <>
+      {QUEST_NPCS.map((n) => <Npc key={n.id} npc={n} unit={unit} active={nearId === n.id} />)}
+      {pendingItems(progress).map((it) => <Item key={it.id} item={it} unit={unit} />)}
+    </>
+  );
 }

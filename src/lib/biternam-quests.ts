@@ -9,8 +9,42 @@ import { LANDMARKS, landmarkSpot } from "./world-landmarks";
 import { WORLD_CELL } from "./player-state";
 import type { TracyScript } from "./tracy-com";
 
-export type QuestStep = { kind: "talk" | "visit"; target: string; label: string };
+export type QuestStep = { kind: "talk" | "visit" | "pickup"; target: string; label: string; /** Cindy-9 calls in when this step is done */ cindy?: string };
 export type Quest = { id: string; title: string; blurb: string; steps: QuestStep[]; bit: number; badge: string };
+
+/** Wrist inventory items: each floats at a landmark until its pickup step is reached and done. */
+export type QuestItem = { id: string; name: string; icon: string; landmarkId: string; blurb: string };
+export const QUEST_ITEMS: QuestItem[] = [
+  { id: "skiff-key", name: "HOVER-SKIFF KEY", icon: "⚿", landmarkId: "trading-post", blurb: "Wierdamoto's skiff. Two years of dust trails on the odometer." },
+  { id: "dust-sample", name: "DUST SAMPLE", icon: "✧", landmarkId: "arena", blurb: "Forty thousand tiny outputs in a jar. Blockamoto's calling card." },
+  { id: "explorer-lens", name: "EXPLORER LENS", icon: "◉", landmarkId: "tower", blurb: "Shows where a sat really went. The block explorer never lies." },
+];
+export const itemById = (id: string) => QUEST_ITEMS.find((i) => i.id === id) ?? null;
+
+/** Where an item floats: the side of its landmark opposite the character spot. */
+export function itemSpot(item: QuestItem) {
+  const spec = LANDMARKS.find((l) => l.id === item.landmarkId);
+  if (!spec) return null;
+  const s = landmarkSpot(spec);
+  const off = spec.span * WORLD_CELL * 0.62;
+  return { x: s.x - Math.cos(spec.yaw + Math.PI * 0.5) * off, z: s.z - Math.sin(spec.yaw + Math.PI * 0.5) * off };
+}
+export const PICKUP_REACH = 0.7; // BITMAPS
+
+/** Items you hold: every pickup step already passed in any quest. */
+export function heldItems(p: QuestProgress): QuestItem[] {
+  const out: QuestItem[] = [];
+  for (const q of QUESTS) q.steps.forEach((s, i) => {
+    if (s.kind === "pickup" && i < (p.step[q.id] ?? 0)) { const it = itemById(s.target); if (it && !out.includes(it)) out.push(it); }
+  });
+  return out;
+}
+/** Items waiting in the world right now (current step of some quest). */
+export function pendingItems(p: QuestProgress): QuestItem[] {
+  const out: QuestItem[] = [];
+  for (const q of QUESTS) { const s = q.steps[p.step[q.id] ?? 0]; if (s?.kind === "pickup") { const it = itemById(s.target); if (it) out.push(it); } }
+  return out;
+}
 
 export type QuestNpc = {
   id: string;
@@ -143,6 +177,17 @@ export const BITERNAM_CREW = [
 
 export const QUESTS: Quest[] = [
   {
+    id: "ch1", title: "CH.1 · THE LAW AROUND HERE", bit: 40, badge: "MARSHAL",
+    blurb: "Blockamoto is dusting the park again. Get your skiff, collect the evidence and report at the gate.",
+    steps: [
+      { kind: "pickup", target: "skiff-key", label: "Find your hover-skiff key at the Trading Post", cindy: "Key's in your pocket, Marshal. Try not to park the skiff on a monument this time." },
+      { kind: "talk", target: "curator", label: "Ask the curator about the dust storm", cindy: "Block 367,853. Twelve thousand transactions. That's not weather, that's a signature." },
+      { kind: "pickup", target: "dust-sample", label: "Collect a dust sample in the Arena", cindy: "Bagged it. Don't sneeze. That jar is worth more in fees than it is in sats." },
+      { kind: "pickup", target: "explorer-lens", label: "Recover the explorer lens at the Metavoxel Tower", cindy: "The lens! Now we can follow the sat instead of the rumours." },
+      { kind: "visit", target: "torii", label: "Report at the Torii Gate", cindy: "Evidence logged. Blockamoto knows you're here now. Welcome to BITERNAM, Inspector." },
+    ],
+  },
+  {
     id: "q1", title: "THE FIRST HALVING LOCKOUT", bit: 30, badge: "GATEKEEPER",
     blurb: "The Torii gate thinks it is 2012. Find the Genesis Keycard and wake it up.",
     steps: [
@@ -231,7 +276,7 @@ const KEY = "bitmapwin:biternam-quests";
 let state: QuestProgress | null = null;
 let near: string | null = null;
 const listeners = new Set<() => void>();
-const advListeners = new Set<(q: Quest, done: boolean) => void>();
+const advListeners = new Set<(q: Quest, done: boolean, step: QuestStep) => void>();
 const emit = () => listeners.forEach((f) => f());
 
 function load(): QuestProgress {
@@ -254,11 +299,11 @@ export const questStore = {
     const { next, advanced } = applyEvent(load(), kind, target);
     if (!advanced.length) return;
     save(next);
-    advanced.forEach((q) => advListeners.forEach((f) => f(q, isComplete(q, next))));
+    advanced.forEach((q) => { const st = q.steps[(next.step[q.id] ?? 1) - 1]!; advListeners.forEach((f) => f(q, isComplete(q, next), st)); });
   },
   markClaimed(id: string) { const p = load(); if (!p.claimed.includes(id)) save({ ...p, claimed: [...p.claimed, id] }); },
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
-  onAdvance(fn: (q: Quest, done: boolean) => void) { advListeners.add(fn); return () => { advListeners.delete(fn); }; },
+  onAdvance(fn: (q: Quest, done: boolean, step: QuestStep) => void) { advListeners.add(fn); return () => { advListeners.delete(fn); }; },
 };
 
 export function useQuestState() {

@@ -5,9 +5,11 @@
 import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TracyCom } from "@/components/game/TracyCom";
-import { QUESTS, isComplete, landmarkInReach, nearestNpc, npcById, questStore, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
+import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, pendingItems, nearestNpc, npcById, questStore, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
 import { askNpcFn, claimQuestRewardFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
+import { tracyCue } from "@/lib/tracy-com";
+import { WORLD_CELL } from "@/lib/player-state";
 import { useWalletSession } from "@/lib/wallet-session";
 
 type Pose = { x: number; z: number };
@@ -38,12 +40,17 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
       questStore.setNear(nearestNpc(x, z)?.id ?? null);
       const lm = landmarkInReach(x, z);
       if (lm) questStore.record("visit", lm);
+      for (const it of pendingItems(questStore.get())) {
+        const sp = itemSpot(it);
+        if (sp && Math.hypot(sp.x - x, sp.z - z) <= PICKUP_REACH * WORLD_CELL) questStore.record("pickup", it.id);
+      }
     }, 250);
     return () => clearInterval(id);
   }, [pose]);
 
-  useEffect(() => questStore.onAdvance((quest, done) => {
+  useEffect(() => questStore.onAdvance((quest, done, step) => {
     questChime(done);
+    if (step.cindy) tracyCue({ kind: "mission", id: `${quest.id}:${step.target}:${step.kind}`, title: quest.title, line: step.cindy });
     setNote(done ? `QUEST COMPLETE · ${quest.title} · +${quest.bit} BIT READY` : `QUEST UPDATED · ${quest.title}`);
     setTimeout(() => setNote(null), 4500);
   }), []);
@@ -83,6 +90,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
 
   if (hidden) return null;
   const nearNpc = nearId ? npcById(nearId) : null;
+  const held = heldItems(progress);
 
   return (
     <>
@@ -116,6 +124,14 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
         </div>
         {logOpen ? (
           <div className="glass-panel mt-2 w-[min(300px,80vw)] space-y-3 rounded-[14px] border border-border p-3">
+            <div>
+              <div className="text-[11px] tracking-widest text-signal">WRIST INVENTORY</div>
+              {held.length ? (
+                <ul className="mt-1 space-y-1">
+                  {held.map((it) => <li key={it.id} className="text-[11px]" title={it.blurb}><span className="mr-1 text-primary">{it.icon}</span>{it.name}</li>)}
+                </ul>
+              ) : <p className="text-[11px] text-muted-foreground">Empty. Items glow orange in the world.</p>}
+            </div>
             {QUESTS.map((quest) => {
               const at = progress.step[quest.id] ?? 0;
               const done = isComplete(quest, progress);
