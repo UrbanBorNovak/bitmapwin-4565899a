@@ -55,7 +55,7 @@ export function MuseumInterior({ onCurator, onExit }: { onCurator: () => void; o
   const [hotD, setHotD] = useState(false);
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas dpr={0.45} shadows gl={{ antialias: false }} camera={{ position: [7, 7.5, 9], fov: 38 }}
+      <SafeCanvas dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [7, 7.5, 9], fov: 38 }}
         onCreated={({ camera }) => camera.lookAt(0, 0.8, 0)} style={{ imageRendering: "pixelated" }}>
         <color attach="background" args={["#120d14"]} />
         <fog attach="fog" args={["#120d14", 14, 26]} />
