@@ -103,7 +103,8 @@ export type Proposal = {
   item?: string;
   priceSats?: number;
   reason?: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "stale";
+  staleWhy?: string;
   createdAt: number;
 };
 
@@ -147,6 +148,9 @@ export const approvals = {
     if (rows.length) save([...rows, ...load()].slice(0, 50));
     return rows.length;
   },
+  markStale(id: string, why: string) {
+    save(load().map((p) => (p.id === id && p.status === "pending" ? { ...p, status: "stale", staleWhy: why } : p)));
+  },
   decide(id: string, approve: boolean) { save(decide(load(), id, approve)); },
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
 };
@@ -171,4 +175,12 @@ export function brokerPicks(listings: ListingLite[], max = 3): BrokerPick[] {
     if (l.bitmapHeight < 100_000) why.push("early block (under 100,000)");
     return { offerId: l.id, height: l.bitmapHeight, item: `${l.bitmapHeight}.bitmap`, priceSats: l.priceSats, reason: why.join(" · ") };
   });
+}
+
+/** Pure: is a broker proposal still valid against the listing as it is right now? */
+export function recheckListing(p: Pick<Proposal, "priceSats">, current: { status: string; priceSats: number } | null): string | null {
+  if (!current) return "Listing no longer exists";
+  if (current.status !== "open") return `Listing is ${current.status === "spent" ? "sold" : current.status}`;
+  if (current.priceSats !== p.priceSats) return `Price changed to ${current.priceSats.toLocaleString()} sats`;
+  return null;
 }

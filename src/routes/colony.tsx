@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CITIZENS, citizenAt, needsApproval, useApprovals, approvals, brokerPicks } from "@/lib/agent-colony";
+import { CITIZENS, citizenAt, needsApproval, useApprovals, approvals, brokerPicks, recheckListing, type Proposal } from "@/lib/agent-colony";
 import { fetchOffers } from "@/lib/offers";
+import { supabase } from "@/integrations/supabase/client";
 import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
 
 export const Route = createFileRoute("/colony")({
@@ -29,6 +30,13 @@ function ColonyPage() {
   const list = useApprovals();
   const pending = list.filter((p) => p.status === "pending");
   const [scan, setScan] = useState<string | null>(null);
+  /** Approval re-reads the listing; it never builds, signs or submits anything. */
+  async function approve(p: Proposal) {
+    if (!p.offerId) return approvals.decide(p.id, true);
+    const { data } = await supabase.from("offers").select("status, price_sats").eq("id", p.offerId).maybeSingle();
+    const why = recheckListing(p, data ? { status: data.status, priceSats: Number(data.price_sats ?? 0) } : null);
+    if (why) approvals.markStale(p.id, why); else approvals.decide(p.id, true);
+  }
   async function askBroker() {
     setScan("Margo is reading the live listings…");
     try {
@@ -112,11 +120,13 @@ function ColonyPage() {
                 ) : <span className="flex-1 text-foreground">{p.summary}</span>}
                 {p.status === "pending" ? (
                   <>
-                    <button type="button" onClick={() => approvals.decide(p.id, true)} className="rounded border border-primary/50 px-2 py-0.5 font-mono text-[11px] text-primary">APPROVE</button>
+                    <button type="button" onClick={() => void approve(p)} className="rounded border border-primary/50 px-2 py-0.5 font-mono text-[11px] text-primary">APPROVE</button>
                     <button type="button" onClick={() => approvals.decide(p.id, false)} className="rounded border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">REJECT</button>
                   </>
                 ) : p.status === "approved" ? (
                   <a href={p.href} className="font-mono text-[11px] text-primary underline">OPEN & SIGN IN YOUR WALLET</a>
+                ) : p.status === "stale" ? (
+                  <span className="font-mono text-[11px] text-muted-foreground">OUT OF DATE · {p.staleWhy}</span>
                 ) : <span className="font-mono text-[11px] text-muted-foreground">REJECTED</span>}
               </li>
             ))}
