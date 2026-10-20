@@ -1118,6 +1118,54 @@ export type Database = {
         }
         Relationships: []
       }
+      build_proposals: {
+        Row: {
+          bitmap_height: number
+          block_count: number
+          blocks: Json
+          created_at: string
+          decided_at: string | null
+          id: string
+          model_inscription_id: string | null
+          note: string | null
+          parcel_index: number | null
+          proposer_address: string
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          bitmap_height: number
+          block_count: number
+          blocks: Json
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          model_inscription_id?: string | null
+          note?: string | null
+          parcel_index?: number | null
+          proposer_address: string
+          role: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          bitmap_height?: number
+          block_count?: number
+          blocks?: Json
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          model_inscription_id?: string | null
+          note?: string | null
+          parcel_index?: number | null
+          proposer_address?: string
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       builder_follows: {
         Row: {
           builder_address: string
