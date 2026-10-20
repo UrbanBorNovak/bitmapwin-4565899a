@@ -66,14 +66,19 @@ function makeGrassTexture() {
   return texture;
 }
 
+const HEIGHT_MIN = -256;
+const HEIGHT_RANGE = 768;
+
 function makeTerrainHeightmap() {
-  const data = new Float32Array(HEIGHTMAP_RESOLUTION * HEIGHTMAP_RESOLUTION * 4);
+  // 8-bit RGBA with 16-bit height packed in R/G: float textures trip
+  // "texture format and sampler type mismatch" on many GPUs.
+  const data = new Uint8Array(HEIGHTMAP_RESOLUTION * HEIGHTMAP_RESOLUTION * 4);
   const texture = new THREE.DataTexture(
     data,
     HEIGHTMAP_RESOLUTION,
     HEIGHTMAP_RESOLUTION,
     THREE.RGBAFormat,
-    THREE.FloatType,
+    THREE.UnsignedByteType,
   );
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
@@ -84,7 +89,7 @@ function makeTerrainHeightmap() {
 }
 
 function fillTerrainHeightmap(texture: THREE.DataTexture, centreX: number, centreZ: number) {
-  const data = texture.image.data as Float32Array;
+  const data = texture.image.data as Uint8Array;
   const half = HEIGHTMAP_SPAN / 2;
   const step = HEIGHTMAP_SPAN / (HEIGHTMAP_RESOLUTION - 1);
   let offset = 0;
@@ -92,10 +97,11 @@ function fillTerrainHeightmap(texture: THREE.DataTexture, centreX: number, centr
     const worldZ = centreZ - half + z * step;
     for (let x = 0; x < HEIGHTMAP_RESOLUTION; x += 1) {
       const height = groundY(centreX - half + x * step, worldZ);
-      data[offset] = height;
-      data[offset + 1] = height;
-      data[offset + 2] = height;
-      data[offset + 3] = 1;
+      const packed = Math.round(THREE.MathUtils.clamp((height - HEIGHT_MIN) / HEIGHT_RANGE, 0, 1) * 65535);
+      data[offset] = packed >> 8;
+      data[offset + 1] = packed & 255;
+      data[offset + 2] = 0;
+      data[offset + 3] = 255;
       offset += 4;
     }
   }
@@ -234,6 +240,9 @@ function WindGrassMaterial({
         varying vec3 vInstanceColor;
         varying vec3 vWorldPosition;
 
+        float decodeHeight(vec4 t) {
+          return (t.r * 255.0 * 256.0 + t.g * 255.0) / 65535.0 * ${"${HEIGHT_RANGE.toFixed(1)}"} + ${"${HEIGHT_MIN.toFixed(1)}"};
+        }
         float terrainHeight(vec2 worldXZ) {
           vec2 mapMin = uHeightmapCentre - vec2(uHeightmapSpan * 0.5);
           vec2 pixel = clamp(
@@ -245,10 +254,10 @@ function WindGrassMaterial({
           vec2 blend = smoothstep(vec2(0.0), vec2(1.0), fract(pixel));
           vec2 texel = vec2(1.0 / uHeightmapResolution);
           vec2 uv00 = (base + vec2(0.5)) * texel;
-          float h00 = texture2D(uHeightmap, uv00).r;
-          float h10 = texture2D(uHeightmap, uv00 + vec2(texel.x, 0.0)).r;
-          float h01 = texture2D(uHeightmap, uv00 + vec2(0.0, texel.y)).r;
-          float h11 = texture2D(uHeightmap, uv00 + texel).r;
+          float h00 = decodeHeight(texture2D(uHeightmap, uv00));
+          float h10 = decodeHeight(texture2D(uHeightmap, uv00 + vec2(texel.x, 0.0)));
+          float h01 = decodeHeight(texture2D(uHeightmap, uv00 + vec2(0.0, texel.y)));
+          float h11 = decodeHeight(texture2D(uHeightmap, uv00 + texel));
           return mix(mix(h00, h10, blend.x), mix(h01, h11, blend.x), blend.y);
         }
 

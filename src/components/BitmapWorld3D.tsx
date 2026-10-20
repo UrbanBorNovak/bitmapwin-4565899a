@@ -762,8 +762,10 @@ function BuiltBitmapBeacons({ mapView }: { mapView: boolean }) {
   const heights = useMemo(() => (built.data?.built ?? []).map((b) => b.height), [built.data]);
   const [signal, setSignal] = useState("#55dbea");
   useEffect(() => {
+    // CSS tokens are oklch(); Three.Color can't parse that, so resolve via canvas.
     const v = getComputedStyle(document.documentElement).getPropertyValue("--signal").trim();
-    if (v) setSignal(v);
+    const ctx = v ? document.createElement("canvas").getContext("2d") : null;
+    if (ctx) { ctx.fillStyle = "#55dbea"; ctx.fillStyle = v; ctx.fillRect(0, 0, 1, 1); const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data; setSignal(`rgb(${r}, ${g}, ${b})`); }
   }, []);
   return <OwnedBitmapBeacons heights={heights} bitcoin={signal} mapView={mapView} />;
 }
@@ -4805,14 +4807,17 @@ function BitmapWorld3DInner({
           <div ref={viewShake} className="absolute inset-0 will-change-transform">
           <SafeCanvas
             dpr={Math.min(1.5, quality.pixelRatio * quality.renderScale)}
-            shadows={quality.shadows ? { type: THREE.PCFSoftShadowMap } : false}
+            shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false}
             frameloop="always"
             onCreated={({ gl, scene, camera }) => {
               glRef.current = gl;
               // Warm shaders off the main thread so the first seconds don't hitch.
-              const warm = () => { void gl.compileAsync?.(scene, camera).catch(() => {}); };
-              window.setTimeout(warm, 300);
-              window.setTimeout(warm, 3000);
+              // Without parallel compile, compileAsync blocks the main thread for seconds.
+              if (gl.getContext().getExtension("KHR_parallel_shader_compile")) {
+                const warm = () => { void gl.compileAsync?.(scene, camera).catch(() => {}); };
+                window.setTimeout(warm, 300);
+                window.setTimeout(warm, 3000);
+              }
               // WebXR ready — the render loop switches to the headset when a
               // session starts, and back to the screen when it ends.
               gl.xr.enabled = true;
