@@ -100,6 +100,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
               offerId: ask.id,
               buyerPaymentAddress: wallet.paymentAddress,
               buyerOrdinalsAddress: wallet.ordinalsAddress,
+              expectedPriceSats: ask.priceSats,
               ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
               ...(keyCandidates(wallet).length > 0
               ? { paymentPublicKeyHex: keyCandidates(wallet) }

@@ -27,6 +27,7 @@ export const buildPurchaseFn = createServerFn({ method: "POST" })
               .max(4),
           ])
           .optional(),
+        expectedPriceSats: z.number().int().positive(),
       })
       .parse(data),
   )
@@ -38,6 +39,7 @@ export const buildPurchaseFn = createServerFn({ method: "POST" })
       buyerOrdinalsAddress: data.buyerOrdinalsAddress,
       tapInternalKeyHex: data.tapInternalKeyHex,
       paymentPublicKeyHex: data.paymentPublicKeyHex,
+      expectedPriceSats: data.expectedPriceSats,
     });
   });
 
