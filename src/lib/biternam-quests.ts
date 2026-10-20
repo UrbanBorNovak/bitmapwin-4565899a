@@ -16,6 +16,7 @@ export type QuestStep = {
   /** talk/give: item this character hands you when the step completes */ gives?: string;
   /** the character's own lines for this step (replaces their idle chat while the step is current) */ say?: string[];
   /** give: line when you hand over the wrong thing */ wrong?: string;
+  /** only completes inside this interior route; in the Oasis the character just points you there */ indoors?: string;
 };
 export type Quest = { id: string; title: string; blurb: string; steps: QuestStep[]; bit: number; badge: string };
 
@@ -34,6 +35,7 @@ export const QUEST_ITEMS: QuestItem[] = [
   { id: "sky-coords", name: "SKY COORDINATES", icon: "✦", blurb: "Dabber's sketch from the high ground: the grey cloud starts over the western rig." },
   { id: "dusk-frequency", name: "DUSK FREQUENCY", icon: "◐", blurb: "A pink-to-cyan tone in a glass vial. The sound of the Bitmappers coming home." },
   { id: "patched-key", name: "PATCHED FORK KEY", icon: "⚿", blurb: "BOP rewrote it in ten seconds. It now opens the bedrock instead of forking it." },
+  { id: "hazmat-suit", name: "HAZMAT SUIT", icon: "☢", blurb: "Yellow, crinkly, stencilled VISITORS · NO EXCEPTIONS. Bitoshi's one house rule." },
   { id: "blue-sample", name: "BLUE OP_RETURN SAMPLE", icon: "◆", blurb: "Bitoshi's 99.1% pure block matter. No custodial sweep can fake this signature." },
   { id: "bedrock-seal", name: "BEDROCK SEAL", icon: "⬢", blurb: "Urban's master seal. One-owner ground, stamped into every tile." },
 ];
@@ -369,7 +371,8 @@ export const QUESTS: Quest[] = [
         say: ["1138.bitmap. Swooshing around lost in some large UTXO. Somebody called it a sale. Unreasonable.", "There's a cook past the western rig. Bitoshi. He knows what real block matter looks like. Suits not welcome."],
         cindy: "dev9 says look for the smoke past the western rig. And don't call it a sale." },
       { kind: "visit", target: "miner-rig-4", label: "Find the smoke past the western rig", cindy: "There it is. An RV that survived three halvings. Smells like solder and unconfirmed inputs." },
-      { kind: "talk", target: "bitoshi", gives: "blue-sample", label: "Win over Bitoshi inside his RV",
+      { kind: "pickup", target: "hazmat-suit", indoors: "/biternam/outpost", label: "Suit up inside Bitoshi's RV", cindy: "Very fetching. Now he might actually talk to you." },
+      { kind: "talk", target: "bitoshi", gives: "blue-sample", indoors: "/biternam/outpost", label: "Win over Bitoshi inside his RV",
         say: ["You wore the suit. Fine. You're not a tourist.", "Here. Blue OP_RETURN, ninety-nine point one. Show it to the mask. A sweep has no recipe. A sale has a buyer."],
         cindy: "Crystal pure. Now take it to Wierdamoto at the Trading Post." },
       { kind: "give", target: "wierdamoto", item: "blue-sample", label: "Prove it to the mask at the Trading Post",
@@ -414,6 +417,14 @@ export function missionScript(npc: QuestNpc, step: QuestStep, held: QuestItem[])
     );
   }
   return { id: `mission-${npc.id}`, title: `${npc.name} · MISSION`, start: "s0", nodes };
+}
+
+/** Overworld call for a step that only completes indoors: the character sends you inside, nothing is recorded. */
+export function indoorRedirectScript(npc: QuestNpc): TracyScript {
+  return { id: `indoors-${npc.id}`, title: `${npc.name} · NOT OUT HERE`, start: "s0", nodes: [
+    { id: "s0", speaker: npc.name, mood: "alarm", text: "NOT OUT HERE. Every buzzard in the Oasis is listening. Get inside the RV.", next: "s1" },
+    { id: "s1", speaker: npc.name, mood: "idle", text: "And put the suit on. No suit, no sample. Door's right behind me.", next: null },
+  ] };
 }
 
 export const NPC_REACH = 0.9; // BITMAPS
