@@ -1893,7 +1893,9 @@ function PlayerCameraRig({
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const key = event.key.toLowerCase();
-      if (cinematics.active() && SKIP_KEYS.has(key)) cinematics.stop();
+      // Only a fresh press skips: a key already held when the shot began keeps
+      // auto-repeating, and those repeats must not cancel the flyby.
+      if (!event.repeat && cinematics.active() && SKIP_KEYS.has(key)) cinematics.stop();
       if (event.code === "Space" && !event.repeat) {
         jumpRequested.current = true;
         event.preventDefault();
