@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CafeInterior } from "@/components/biternam/CafeInterior";
 import { TracyCom } from "@/components/game/TracyCom";
 import { useServerFn } from "@tanstack/react-start";
-import { heldItems, missionScript, missionStepFor, npcById, questStore, stepKey, useQuestState } from "@/lib/biternam-quests";
+import { heldItems, missionScript, missionStepFor, npcById, questStore, stepKey } from "@/lib/biternam-quests";
 import { recordQuestStepFn } from "@/lib/biternam-npc.functions";
 import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/cafe-verbs";
@@ -36,7 +36,6 @@ function CafePage() {
   const [distracted, setDistracted] = useState(false);
   const [falling, setFalling] = useState(false);
   const [say, setSay] = useState("Choose a verb, then click something in the café.");
-  const { progress } = useQuestState();
   const recordStep = useServerFn(recordQuestStepFn);
   // Frozen when the call opens so the step advancing mid-call never swaps the script.
   const [mission, setMission] = useState<{ m: ReturnType<typeof missionStepFor>; held: ReturnType<typeof heldItems> } | null>(null);
