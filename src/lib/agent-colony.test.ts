@@ -31,7 +31,7 @@ describe("broker picks", () => {
     expect(_bp(L).map((p) => p.offerId)).toEqual(["b", "d", "a"]);
   });
   it("shows item, price and reason", () => {
-    const p = _bp(L)[0];
+    const p = _bp(L)[0]!;
     expect(p.item).toBe("9000.bitmap");
     expect(p.priceSats).toBe(10000);
     expect(p.reason).toContain("50% below the median ask of 20,000 sats");

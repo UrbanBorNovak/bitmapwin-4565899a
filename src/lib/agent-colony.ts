@@ -155,15 +155,15 @@ export const useApprovals = () => useSyncExternalStore(approvals.subscribe, appr
 
 /* ---------- broker: picks from real open listings ---------- */
 
-export type ListingLite = { id: string; bitmapHeight: number; priceSats: number; status: string };
+export type ListingLite = { id: string; bitmapHeight: number | null; priceSats: number; status: string };
 export type BrokerPick = { offerId: string; height: number; item: string; priceSats: number; reason: string };
 
 /** Pure: cheapest open listings, each with a reason grounded in the listing data itself. */
 export function brokerPicks(listings: ListingLite[], max = 3): BrokerPick[] {
-  const open = listings.filter((l) => l.status === "open" && l.priceSats > 0);
+  const open = listings.filter((l): l is ListingLite & { bitmapHeight: number } => l.status === "open" && l.priceSats > 0 && l.bitmapHeight != null);
   if (open.length === 0) return [];
   const sorted = [...open].sort((a, b) => a.priceSats - b.priceSats);
-  const median = sorted[Math.floor(sorted.length / 2)].priceSats;
+  const median = sorted[Math.floor(sorted.length / 2)]?.priceSats ?? 0;
   return sorted.slice(0, max).map((l, i) => {
     const pct = median > 0 ? Math.round((1 - l.priceSats / median) * 100) : 0;
     const why = [i === 0 ? "Lowest price among open listings" : `#${i + 1} cheapest open listing`];
