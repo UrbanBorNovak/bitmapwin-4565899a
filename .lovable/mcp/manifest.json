@@ -334,6 +334,155 @@
           }
         },
         "outputSchema": null
+      },
+      {
+        "name": "get_parcel_boundaries",
+        "title": "Get parcel boundaries",
+        "description": "Derive a BITMAP's parcel tiles on the 64-cell Forge canvas from its block's real transaction sizes (Parcel Floor Metric, one owner per cell).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000000,
+              "description": "Bitcoin block height."
+            }
+          },
+          "required": [
+            "height"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "inspect_build",
+        "title": "Inspect existing build",
+        "description": "Show what is already built on a BITMAP: the chain-verified Land Forge build, parcel-holder builds, HTML on the land and any placed Model Registry model.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000000,
+              "description": "Bitcoin block height."
+            }
+          },
+          "required": [
+            "height"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "submit_build_proposal",
+        "title": "Submit build proposal",
+        "description": "Save a structured voxel build proposal for a BITMAP or parcel you hold. Ownership is checked live on chain and blocks are clipped to your own ground; nothing is inscribed, signed or placed — you review it in Land Forge.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000000,
+              "description": "BITMAP block height."
+            },
+            "parcelIndex": {
+              "description": "Parcel tx index when building as a parcel holder; omit to build as the BITMAP holder.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "blocks": {
+              "maxItems": 12000,
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "additionalItems": false,
+                "minItems": 4,
+                "maxItems": 4
+              },
+              "description": "Voxels [x, y, z, kind] on the 64-cell canvas; kind is a Forge block id."
+            },
+            "modelInscriptionId": {
+              "description": "Optional Model Registry inscription id (BITMAP holder only).",
+              "type": "string"
+            },
+            "note": {
+              "description": "Why the agent proposes this build.",
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "height",
+            "blocks"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_build_proposals",
+        "title": "My build proposals",
+        "description": "List the signed-in holder's saved build proposals and whether each was applied or rejected.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max rows (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
       }
     ]
   }
