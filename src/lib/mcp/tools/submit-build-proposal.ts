@@ -6,7 +6,7 @@ import { buildProposalSchema } from "@/lib/agent-build-schema";
 export default defineTool({
   name: "submit_build_proposal",
   title: "Submit build proposal",
-  description: "Save a structured voxel build proposal for a BITMAP or parcel you hold. Ownership is checked live on chain and blocks are clipped to your own ground; nothing is inscribed, signed or placed — you review it in Land Forge.",
+  description: "Save a structured voxel build proposal (voxel tuples and/or a base64 .bwvx payload) for a BITMAP or parcel you hold. Ownership is checked live on chain and blocks are clipped to your own ground; nothing is inscribed, signed or placed — you review it in Land Forge.",
   inputSchema: buildProposalSchema,
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async (input, ctx) => {
@@ -32,7 +32,12 @@ export default defineTool({
     }
     const block = role === "parcel" ? await buildBlockBytes(input.height).catch(() => null) : null;
     const rects = block && block.covered >= block.txCount ? parcelRects([...block.bytes]) : null;
-    const verdict = validateBuildProposal(input, { role, parcels }, rects);
+    let tuples = input.blocks ?? [];
+    if (input.bwvxBase64) {
+      const { bwvxToTuples } = await import("@/lib/agent-build-schema");
+      try { tuples = [...tuples, ...bwvxToTuples(input.bwvxBase64)]; } catch (e) { return errorResult(`Invalid .bwvx payload: ${(e as Error).message}`); }
+    }
+    const verdict = validateBuildProposal({ ...input, blocks: tuples }, { role, parcels }, rects);
     if (!verdict.ok || !proposer || role === "none") return errorResult(verdict.reason ?? "Not allowed.");
     const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("build_proposals").insert({

@@ -390,7 +390,7 @@
       {
         "name": "submit_build_proposal",
         "title": "Submit build proposal",
-        "description": "Save a structured voxel build proposal for a BITMAP or parcel you hold. Ownership is checked live on chain and blocks are clipped to your own ground; nothing is inscribed, signed or placed — you review it in Land Forge.",
+        "description": "Save a structured voxel build proposal (voxel tuples and/or a base64 .bwvx payload) for a BITMAP or parcel you hold. Ownership is checked live on chain and blocks are clipped to your own ground; nothing is inscribed, signed or placed — you review it in Land Forge.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -414,6 +414,8 @@
               "maximum": 9007199254740991
             },
             "blocks": {
+              "default": [],
+              "description": "Voxels [x, y, z, kind] on the 64-cell canvas; kind is a Forge block id.",
               "maxItems": 12000,
               "type": "array",
               "items": {
@@ -441,8 +443,13 @@
                 "additionalItems": false,
                 "minItems": 4,
                 "maxItems": 4
-              },
-              "description": "Voxels [x, y, z, kind] on the 64-cell canvas; kind is a Forge block id."
+              }
+            },
+            "bwvxBase64": {
+              "description": "Optional portable .bwvx (BWVX1/BWVX2) payload, base64. Keeps absolute canvas positions and is merged with `blocks`.",
+              "type": "string",
+              "maxLength": 2000000,
+              "pattern": "^[A-Za-z0-9+/=\\s]*$"
             },
             "modelInscriptionId": {
               "description": "Optional Model Registry inscription id (BITMAP holder only).",
@@ -455,8 +462,7 @@
             }
           },
           "required": [
-            "height",
-            "blocks"
+            "height"
           ]
         },
         "outputSchema": null
@@ -481,6 +487,93 @@
               "maximum": 50
             }
           }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_lease_status",
+        "title": "Get lease status",
+        "description": "Show the active lease on a BITMAP (lessee, BIT rate, start/end) and any open lease offers. Leases are BIT-only and grant build + shop rights for their term.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000000,
+              "description": "BITMAP block height."
+            }
+          },
+          "required": [
+            "height"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_floor_prices",
+        "title": "Get floor prices",
+        "description": "Cheapest open marketplace listings (sats) overall and within an optional block-height range, from real open offers only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "minHeight": {
+              "description": "Lowest block height.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "maxHeight": {
+              "description": "Highest block height.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "limit": {
+              "description": "How many cheapest listings to return (default 5).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "discover_open_parcels",
+        "title": "Discover open parcels",
+        "description": "For one BITMAP, list every parcel tile (Mondrian rect) with its live on-chain holder and whether it already carries a verified build, so agents can find unbuilt ground.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000000,
+              "description": "BITMAP block height."
+            }
+          },
+          "required": [
+            "height"
+          ]
         },
         "outputSchema": null
       }

@@ -10,6 +10,7 @@ import { FORGE_MAX_BLOCKS, FORGE_SPAN } from "@/lib/voxel-populate";
 import { inRect, type ParcelRect } from "@/lib/forge-parcels";
 import { isRegisteredModel } from "@/lib/model-registry";
 import type { TplBlock } from "@/lib/voxel-templates";
+import { bwvxBoxes } from "@/lib/bwvx-export";
 
 export const AGENT_SCHEMA = "bitmapwin.agent/1";
 export const BLOCK_KINDS = BLOCKS.map((b) => b.id) as BlockId[];
@@ -18,7 +19,8 @@ export const buildProposalSchema = {
   height: z.number().int().min(0).max(10_000_000).describe("BITMAP block height."),
   parcelIndex: z.number().int().min(0).optional().describe("Parcel tx index when building as a parcel holder; omit to build as the BITMAP holder."),
   blocks: z.array(z.tuple([z.number().int(), z.number().int(), z.number().int(), z.string()]))
-    .max(FORGE_MAX_BLOCKS).describe("Voxels [x, y, z, kind] on the 64-cell canvas; kind is a Forge block id."),
+    .max(FORGE_MAX_BLOCKS).default([]).describe("Voxels [x, y, z, kind] on the 64-cell canvas; kind is a Forge block id."),
+  bwvxBase64: z.string().max(2_000_000).regex(/^[A-Za-z0-9+/=\s]*$/).optional().describe("Optional portable .bwvx (BWVX1/BWVX2) payload, base64. Keeps absolute canvas positions and is merged with `blocks`."),
   modelInscriptionId: z.string().optional().describe("Optional Model Registry inscription id (BITMAP holder only)."),
   note: z.string().max(500).optional().describe("Why the agent proposes this build."),
 };
@@ -73,3 +75,17 @@ export function validateBuildProposal(
 export const parcelBoundaryJson = (r: ParcelRect) => ({
   index: r.index, name: `${r.index}`, rect: [r.x0, r.z0, r.x1, r.z1], ownedCells: r.cells.size, sizeClass: r.size,
 });
+
+/** Expands a base64 .bwvx payload into absolute [x,y,z,kind] tuples (no origin shift). */
+export function bwvxToTuples(b64: string): [number, number, number, string][] {
+  const boxes = bwvxBoxes(b64.replace(/\s+/g, ""));
+  const out: [number, number, number, string][] = [];
+  for (const b of boxes) {
+    const kind = BLOCKS[b.k]?.id ?? "?";
+    for (let x = b.x0; x <= b.x1; x++) for (let y = b.y0; y <= b.y1; y++) for (let z = b.z0; z <= b.z1; z++) {
+      out.push([x, y, z, kind]);
+      if (out.length > FORGE_MAX_BLOCKS) throw new Error(`Too many blocks (max ${FORGE_MAX_BLOCKS}).`);
+    }
+  }
+  return out;
+}
