@@ -346,7 +346,7 @@ import { ColonyCitizens } from "@/components/game/ColonyCitizens";
 import { CinematicBars } from "@/components/game/CinematicBars";
 import { cinematics, shotFrame, shotInReach, SKIP_KEYS } from "@/lib/oasis-cinematics";
 import { tracyCue, onTracyCue } from "@/lib/tracy-com";
-import { bulletTime, bulletFrame, cueToBullet, type BulletEvent } from "@/lib/oasis-bullet-time";
+import { bulletTime, stepBulletCam, cueToBullet, type BulletEvent } from "@/lib/oasis-bullet-time";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
@@ -2404,23 +2404,23 @@ function PlayerCameraRig({
     // Matrix-style bullet-time sweep on specific events (boarding a ride,
     // anomaly surges, sealed gates, hard landings). Never during a landmark
     // flyby or the Battle Drop camera.
-    if (pendingBullet.current && !cinematics.active() && dropCam.current < 0.05 && mode !== "topdown") {
-      bulletTime.trigger(pendingBullet.current, nowS, camYaw.current ?? player.yaw);
-    }
+    const f = stepBulletCam({
+      pending: pendingBullet.current,
+      now: nowS,
+      mode,
+      blocked: !!cinematics.active() || dropCam.current >= 0.05,
+      yaw: camYaw.current ?? player.yaw,
+      unit: AVATAR_U,
+    });
     pendingBullet.current = null;
     let bulletRoll = 0;
     bulletFov.current = 1;
-    const bShot = cinematics.active() ? null : bulletTime.active();
-    if (bShot) {
-      const f = bulletFrame(bShot, nowS - bShot.startedAt, AVATAR_U);
-      if (f.done) bulletTime.stop();
-      else {
-        const gy = groundY(player.x, player.z) + player.y;
-        cameraTarget.current.set(player.x + f.offset.x, gy + f.offset.y, player.z + f.offset.z);
-        cameraLook.current.set(player.x, gy + f.lookY, player.z);
-        bulletRoll = f.roll;
-        bulletFov.current = f.fovScale;
-      }
+    if (f) {
+      const gy = groundY(player.x, player.z) + player.y;
+      cameraTarget.current.set(player.x + f.offset.x, gy + f.offset.y, player.z + f.offset.z);
+      cameraLook.current.set(player.x, gy + f.lookY, player.z);
+      bulletRoll = f.roll;
+      bulletFov.current = f.fovScale;
     }
     const transitionSpeed = cinematics.active() ? 2.2 : bulletTime.active() ? 14 : (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
