@@ -36,7 +36,7 @@
 - Oasis touch input is sampled and damped in the camera frame loop, with immediate movement release; touch pads are world-relative and navigation reserves their space. Why: smooth, frame-rate-independent controls without drifting or overlapping thumbs.
 - Public game/chain tables (dispatches, spoils, forge modules/builds, kits, custody, genesis minters, spawn points, oasis voxels, kennels) stay world-readable via RLS but expose only non-account columns through column-level GRANTs; internal user uuids are read only by server code. Why: shared world state is public, account linkage is not.
 - Subdirectories have their own AGENTS.md; read it before changing files there.
-- Marketplace Bitmon pattern filter (BitmonPatternFilter + block-stats patternHeightsQuery) matches only verified block_stats.pattern records and is separate from Guardian species/rarity; groups above PATTERN_GROUP_MAX are refused, never truncated. Why: Bitmons are block shapes, Guardians are Oasis creatures.
-- Clips: @bitlodo studio vendored unmodified in public/tools/clips; rebuild from upstream. Why: full fidelity, no server state.
-- Marketplace ALL-tab filters use fetchRegistryScope: finite candidate sets intersected with height ranges, checked against bitmap_index. Why: exact totals without loading the 900k+ index.
-- Every R3F canvas goes through SafeCanvas, which measures with offsetSize. Why: the page-size preference sets CSS zoom on <html>; rect-based measuring grows canvases by the zoom factor until WebGL fails.
+- Marketplace Bitmon pattern filter (BitmonPatternFilter + block-stats patternHeightsQuery) matches only verified block_stats.pattern records, separate from Guardian species; groups above PATTERN_GROUP_MAX are refused, never truncated. Why: Bitmons are block shapes, not creatures.
+- Clips: @bitlodo studio vendored unmodified in public/tools/clips. Why: full fidelity.
+- Marketplace ALL-tab filters use fetchRegistryScope (finite candidate sets × height ranges, checked in bitmap_index). Why: exact totals without loading the full index.
+- Every R3F canvas goes through SafeCanvas (offsetSize measuring). Why: page-size CSS zoom on <html> makes rect measuring grow canvases until WebGL fails.
