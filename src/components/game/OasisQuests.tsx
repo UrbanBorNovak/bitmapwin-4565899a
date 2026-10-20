@@ -22,7 +22,12 @@ const typing = (e: KeyboardEvent) => {
 
 export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hidden?: boolean }) {
   const { progress, nearId } = useQuestState();
-  const [talking, setTalking] = useState<{ npc: QuestNpc; n: number } | null>(null);
+  const [talking, setTalkingRaw] = useState<{ npc: QuestNpc; n: number; mission: ReturnType<typeof missionStepFor>; held: ReturnType<typeof heldItems> } | null>(null);
+  const setTalking = (t: { npc: QuestNpc; n: number } | null) => {
+    if (!t) return setTalkingRaw(null);
+    const p = questStore.get();
+    setTalkingRaw({ ...t, mission: missionStepFor(t.npc.id, p), held: heldItems(p) });
+  };
   const [reply, setReply] = useState<{ n: number; npc: QuestNpc; text: string } | null>(null);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -76,9 +81,11 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   // Walking away hangs up.
   useEffect(() => { if (talking && nearId !== talking.npc.id) { setTalking(null); setReply(null); } }, [nearId, talking]);
 
-  const endCall = () => { if (talking) questStore.record("talk", talking.npc.id); };
+  // Hang up when the call ends, so finishing a step never restarts the conversation with idle chat.
+  const endCall = () => { if (talking) { questStore.record("talk", talking.npc.id); setTalking(null); setReply(null); } };
   // A hero waiting on a mission step speaks their own lines; give steps offer your wrist inventory.
-  const mission = talking ? missionStepFor(talking.npc.id, progress) : null;
+  // Frozen when the call opens: the step advancing mid-call must not swap the script under you.
+  const mission = talking?.mission ?? null;
   const onMissionNode = (id: string) => {
     if (talking && mission?.step.kind === "give" && id === "ok") questStore.record("give", `${talking.npc.id}>${mission.step.item}`);
   };
@@ -117,7 +124,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
           {reply ? (
             <TracyCom key={reply.n} script={{ id: "reply", title: "OPEN CHANNEL", start: "a", nodes: [{ id: "a", speaker: reply.npc.name, mood: "idle", text: reply.text, next: null }] }} voice={reply.npc.voice} onEnd={() => setReply(null)} />
           ) : (
-            <TracyCom key={`${talking.n}:${mission?.quest.id ?? ""}`} script={mission ? missionScript(talking.npc, mission.step, held) : talking.npc.script} voice={talking.npc.voice} onEnd={endCall} onNode={onMissionNode} />
+            <TracyCom key={talking.n} script={mission ? missionScript(talking.npc, mission.step, talking.held) : talking.npc.script} voice={talking.npc.voice} onEnd={endCall} onNode={onMissionNode} />
           )}
           <form className="glass-panel flex gap-2 rounded-[14px] border border-border p-2 font-mono text-[12px]" onSubmit={(e) => { e.preventDefault(); void sendQuestion(); }}>
             <input value={q} onChange={(e) => setQ(e.target.value)} maxLength={240} placeholder={`Ask ${talking.npc.name.toLowerCase()} anything…`} aria-label="Question" className="min-w-0 flex-1 rounded bg-muted px-2 py-1 text-foreground outline-none" />
