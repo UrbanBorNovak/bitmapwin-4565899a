@@ -17,3 +17,17 @@ describe("tracy-com", () => {
     expect(validateScript({ id: "x", title: "", start: "a", nodes: [{ id: "a", speaker: "", text: "", next: "zz" }] })).toHaveLength(1);
   });
 });
+
+import { cueScript, shouldSpeak } from "./tracy-com";
+describe("tracy oasis cues", () => {
+  it("speaks first time, then waits 45s per subject", () => {
+    expect(shouldSpeak(undefined, 0)).toBe(true);
+    expect(shouldSpeak(1000, 40_000)).toBe(false);
+    expect(shouldSpeak(1000, 46_000)).toBe(true);
+  });
+  it("cue scripts are valid one-line calls", () => {
+    const s = cueScript({ kind: "sealed", title: "X", reason: "no-pass" });
+    expect(validateScript(s)).toEqual([]);
+    expect(cueScript({ kind: "board", rideId: "tank", label: "TANK" }).nodes[0].text).toMatch(/tank/i);
+  });
+});
