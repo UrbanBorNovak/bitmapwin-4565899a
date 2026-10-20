@@ -35,6 +35,7 @@ function CafePage() {
   const [held, setHeld] = useState<string[]>([]);
   const [distracted, setDistracted] = useState(false);
   const [falling, setFalling] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [say, setSay] = useState("Choose a verb, then click something in the café.");
   const recordStep = useServerFn(recordQuestStepFn);
   // Frozen when the call opens so the step advancing mid-call never swaps the script.
@@ -53,8 +54,10 @@ function CafePage() {
 
   useEffect(() => {
     try { const s = JSON.parse(localStorage.getItem(KEY) || "{}"); setHeld(s.held ?? []); setDistracted(!!s.distracted); } catch { /* fresh */ }
+    setLoaded(true);
   }, []);
-  useEffect(() => { localStorage.setItem(KEY, JSON.stringify({ held, distracted })); }, [held, distracted]);
+  // Save only after loading, or the first render's defaults overwrite saved room progress.
+  useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify({ held, distracted })); }, [loaded, held, distracted]);
 
   const hitAs = (v: Verb, it: string | null, h: CafeHotspot) => {
     if (falling) return;
