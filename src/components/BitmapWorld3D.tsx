@@ -2446,7 +2446,7 @@ function PlayerCameraRig({
         gait * (mode === "first" ? 3.5 : 4.8) -
         land.current * (mode === "first" ? 4.2 : 3.8) +
         dropCam.current * (dropState().phase === "freefall" ? 16 : 10)) *
-      zoom;
+      zoom * bulletFov.current;
 
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
       perspective.fov = damp(perspective.fov, targetFov, 8, delta);
