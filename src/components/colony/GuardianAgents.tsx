@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { myGuardiansQuery } from "@/lib/bitmon-queries";
-import { wireBrain, decideDrive, sensesAt, agentSlots, SYNAPSES, DRIVES } from "@/lib/guardian-brain";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { useWalletSession } from "@/lib/wallet-session";
+import { collectForageFn } from "@/lib/guardian-agents.functions";
+import { wireBrain, decideDrive, sensesAt, agentSlots, SYNAPSES, DRIVES, FORAGE_BIT } from "@/lib/guardian-brain";
 
 export function GuardianAgents() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -14,6 +18,14 @@ export function GuardianAgents() {
     const id = setInterval(tick, 15000);
     return () => clearInterval(id);
   }, []);
+  const collect = useServerFn(collectForageFn);
+  const wallet = useWalletSession();
+  const address = wallet?.ordinalsAddress || wallet?.paymentAddress || null;
+  async function forage(height: number) {
+    if (!address) return toast.error("Connect a verified wallet to earn BIT");
+    const r = await collect({ data: { height, address } });
+    r.ok ? toast.success(`+${r.bit} BIT foraged by #${height}`) : toast.error(r.error);
+  }
   const mine = useQuery(myGuardiansQuery(userId));
   const guardians = mine.data ?? [];
   const brains = useMemo(() => guardians.map((g) => ({ g, b: wireBrain(g.height) })), [guardians]);
@@ -22,7 +34,7 @@ export function GuardianAgents() {
     <section className="glass-panel rounded-[18px] border border-border p-4">
       <div className="font-mono text-[11px] tracking-widest text-signal">GUARDIAN AGENTS · LOCAL BRAIN</div>
       <p className="mt-1 text-sm text-muted-foreground">
-        Every Guardian you hold is one helper. Each runs a tiny fly-style brain with {SYNAPSES.toLocaleString()} synapses wired from its block, right in your browser — no AI credits used. They never trade or spend on their own.
+        Every Guardian you hold is one helper. Each runs a tiny fly-style brain with {SYNAPSES.toLocaleString()} synapses wired from its block, right in your browser — no AI credits used. In the Oasis they move around their own BITMAP by what they chose. When one forages, you can collect a little BIT once a day. They never trade or spend on their own.
       </p>
       {!userId && <p className="mt-3 text-xs text-muted-foreground">Sign in to wake your Guardians.</p>}
       {userId && mine.isSuccess && (
@@ -46,6 +58,11 @@ export function GuardianAgents() {
                   </div>
                 ))}
               </div>
+              {d.drive === "forage" && (
+                <button type="button" onClick={() => forage(g.height)} className="mt-2 w-full rounded border border-primary px-2 py-1 font-mono text-[11px] text-primary hover:bg-primary/10">
+                  COLLECT {FORAGE_BIT} BIT · ONCE A DAY
+                </button>
+              )}
             </li>
           );
         })}
