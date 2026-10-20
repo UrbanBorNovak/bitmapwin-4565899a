@@ -4,9 +4,9 @@ import {
   Layers, Sparkles, Globe, Swords, Radio, BookOpen, Building2, ArrowLeftRight, Backpack,
   Map as MapIcon, CalendarClock, History, Gift, Home, Users, Rocket, PenTool, Shield, Package,
   TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
-  FileText, Terminal, Wrench, ArrowRight, Clapperboard, type LucideIcon,
+  FileText, Terminal, Wrench, ArrowRight, Clapperboard, Menu as MenuIcon, type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
