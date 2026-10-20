@@ -408,7 +408,7 @@ const EMPTY_OWNERS: Map<number, string> = new Map();
 const EMPTY_MODELS: BitmapModel[] = [];
 
 type CameraMove = "mined" | "full" | "tip" | "visit";
-type CameraMode = "map" | "third" | "first";
+type CameraMode = "map" | "third" | "first" | "topdown";
 type HoveredDistrict = { height: number; x: number; y: number };
 type SelectedDistrict = { height: number; owner: string | null };
 
@@ -2314,6 +2314,13 @@ function PlayerCameraRig({
         cameraLook.current.z + (lkz - cameraLook.current.z) * w,
       );
     }
+    // 2D view: a high, steep, narrow-lens camera straight over the avatar,
+    // north-up, so the world reads like a classic top-down map.
+    if (mode === "topdown" && dropCam.current < 0.5) {
+      const g = groundY(player.x, player.z) + player.y;
+      cameraTarget.current.set(player.x, g + AVATAR_U * 42, player.z - AVATAR_U * 9);
+      cameraLook.current.set(player.x, g, player.z);
+    }
     const transitionSpeed = (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
@@ -3157,7 +3164,7 @@ const WorldScene = memo(function WorldScene({
       ) : null}
 
       {cameraMode !== "map" ? <GuardianMount unit={AVATAR_U} pose={pose} /> : null}
-      {cameraMode === "third" && (!driving || rideIsWorn(ride.id) || ride.id === "cyberpunk-genesis-dog") ? (
+      {(cameraMode === "third" || cameraMode === "topdown") && (!driving || rideIsWorn(ride.id) || ride.id === "cyberpunk-genesis-dog") ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
@@ -3532,7 +3539,7 @@ function BitmapWorld3DInner({
       }
       // O changes perspective; C belongs to chat in the minimal HUD.
       if (key === "o") {
-        setCameraMode((current) => (current === "first" ? "third" : "first"));
+        setCameraMode((current) => (current === "first" ? "third" : current === "third" ? "topdown" : "first"));
         return;
       }
       if (key === "p") {
@@ -4853,6 +4860,10 @@ function BitmapWorld3DInner({
         {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
         <NightVision active={gear.goggles && cameraMode === "first"} />
 
+        {/* VISUAL MODS — locked looks plus brief random anomaly surges. */}
+        <WorldVisualMod />
+        {cameraMode === "topdown" ? <div className="pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 font-mono text-[10px] tracking-[0.2em] text-signal">2D VIEW · O TO CYCLE</div> : null}
+
         {/* DAMAGE — a bite or a bullet is felt: red edges, a kick, a heartbeat. */}
         {exploring ? (
           <DamageVeil
@@ -5103,6 +5114,23 @@ function BitmapWorld3DInner({
           >
             <Eye /> <span className="hidden sm:inline">1ST</span>
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="2D top-down camera"
+            aria-pressed={cameraMode === "topdown"}
+            title="2D top-down camera"
+            className={
+              cameraMode === "topdown"
+                ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90"
+                : "rounded-sm text-muted-foreground"
+            }
+            onClick={() => setCameraMode("topdown")}
+          >
+            <span className="font-mono text-xs">2D</span>
+          </Button>
+          <VisualModControls />
           <Button
             type="button"
             variant="ghost"
@@ -5511,7 +5539,7 @@ function BitmapWorld3DInner({
               large
               label={cameraMode === "first" ? "First person view (O)" : "Third person view (O)"}
               icon={cameraMode === "first" ? <Eye /> : <Orbit />}
-              onClick={() => setCameraMode((current) => (current === "first" ? "third" : "first"))}
+              onClick={() => setCameraMode((current) => (current === "first" ? "third" : current === "third" ? "topdown" : "first"))}
             />
             <HudIconButton large label="Chat (C)" icon={<MessageSquare />} onClick={() => setChatOpen(true)} />
             <div className="oasis-extra-tools contents"><HudIconButton
