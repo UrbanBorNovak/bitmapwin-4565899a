@@ -127,6 +127,13 @@
       "when": 1792508541173,
       "tag": "0017_agent_proposals",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792600000000,
+      "tag": "0018_build_proposals",
+      "breakpoints": true
     }
   ]
 }
