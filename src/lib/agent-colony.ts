@@ -99,12 +99,12 @@ export type Proposal = {
   /** where the owner completes it themselves, e.g. a BITMAP page */
   href: string;
   /** trade proposals from a real listing */
-  offerId?: string;
-  item?: string;
-  priceSats?: number;
-  reason?: string;
+  offerId?: string | undefined;
+  item?: string | undefined;
+  priceSats?: number | undefined;
+  reason?: string | undefined;
   status: "pending" | "approved" | "rejected" | "stale";
-  staleWhy?: string;
+  staleWhy?: string | undefined;
   createdAt: number;
 };
 
@@ -135,17 +135,21 @@ export const approvals = {
     const next: Proposal = { ...p, id: `${p.citizenId}:${Date.now()}`, status: "pending", createdAt: Date.now() };
     save([next, ...load()].slice(0, 50));
   },
-  /** Broker queues real listings once each; already-queued offers are skipped. */
-  proposeTrades(picks: BrokerPick[]) {
-    const have = new Set(load().map((p) => p.offerId).filter(Boolean));
-    const fresh = picks.filter((p) => !have.has(p.offerId));
+  /** Pure-ish: turn picks into new pending proposals, skipping offers already in `existing`. */
+  toProposals(picks: BrokerPick[], existing: Proposal[]): Proposal[] {
+    const have = new Set(existing.map((p) => p.offerId).filter(Boolean));
     const now = Date.now();
-    const rows: Proposal[] = fresh.map((p, i) => ({
-      id: `broker:${p.offerId}`, citizenId: "broker", kind: "trade", status: "pending", createdAt: now + i,
+    return picks.filter((p) => !have.has(p.offerId)).map((p, i) => ({
+      id: `broker:${p.offerId}`, citizenId: "broker", kind: "trade" as const, status: "pending" as const, createdAt: now + i,
       summary: `Buy ${p.item} for ${p.priceSats.toLocaleString()} sats`, href: `/bitmap/${p.height}`,
       offerId: p.offerId, item: p.item, priceSats: p.priceSats, reason: p.reason,
     }));
-    if (rows.length) save([...rows, ...load()].slice(0, 50));
+  },
+  add(rows: Proposal[]) { if (rows.length) save([...rows, ...load()].slice(0, 50)); },
+  clear(ids: string[]) { const s = new Set(ids); save(load().filter((p) => !s.has(p.id))); },
+  proposeTrades(picks: BrokerPick[]) {
+    const rows = approvals.toProposals(picks, load());
+    approvals.add(rows);
     return rows.length;
   },
   markStale(id: string, why: string) {
