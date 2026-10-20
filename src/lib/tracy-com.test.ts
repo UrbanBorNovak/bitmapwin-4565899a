@@ -31,3 +31,10 @@ describe("tracy oasis cues", () => {
     expect(cueScript({ kind: "board", rideId: "tank", label: "TANK" }).nodes[0]!.text).toMatch(/tank/i);
   });
 });
+
+import { pickSurge } from "./visual-mods";
+describe("visual mod surges", () => {
+  it("never repeats the current mod", () => {
+    for (let r = 0; r < 1; r += 0.1) expect(pickSurge("vcr", r)).not.toBe("vcr");
+  });
+});
