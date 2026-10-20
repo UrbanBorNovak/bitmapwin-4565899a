@@ -316,7 +316,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       </div>
       <p className="pointer-events-none absolute bottom-14 left-3 font-mono text-[8px] tracking-[0.2em] text-signal/60">SYS: ONLINE · VEC.SYNC · CLICK NODE TO LOCK</p>
       {card && (
-        <div className="pointer-events-none absolute right-3 top-8 w-[268px] border border-signal/50 bg-background/85 p-2 font-mono text-[10px] shadow-[0_0_24px_-6px_var(--signal)]">
+        <div className="pointer-events-none absolute right-3 top-8 z-20 w-[268px] border border-signal/50 bg-background/85 p-2 font-mono text-[10px] shadow-[0_0_24px_-6px_var(--signal)]">
           <p className="mb-1 text-[8px] tracking-[0.25em] text-signal">{lock ? "◉ TARGET LOCKED" : "○ SCANNING"}</p>
           <p className="text-foreground">{card.title}</p>
           <p className="mt-1 line-clamp-3 text-muted-foreground">{card.summary}</p>
@@ -327,6 +327,21 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
             <span>EVENT_HASH</span><span className="text-signal">0x{hash(card.id)}</span>
             <span>T</span><span className="text-foreground">{new Date(card.occurredAt).toLocaleString()}</span>
           </div>
+          {lock && card.bitmapHeight != null && (
+            <div className="pointer-events-auto mt-2 flex items-center gap-3 border-t border-border pt-2">
+              <div className="relative h-20 w-20 shrink-0">
+                <span className="absolute inset-0 animate-spin rounded-full border-2 border-dashed border-signal/70 [animation-duration:6s]" />
+                <span className="absolute inset-1 animate-ping rounded-full border border-bitcoin/40 [animation-duration:2.4s]" />
+                <img src={`/api/public/og/bitmap/${card.bitmapHeight}`} alt={`Inside ${card.bitmapHeight}.BITMAP`}
+                  className="absolute inset-2 h-16 w-16 rounded-full object-cover shadow-[0_0_18px_var(--signal)]" style={{ imageRendering: "pixelated" }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[8px] tracking-[0.2em] text-signal">PORTAL OPEN</p>
+                <a href={`/oasis?height=${card.bitmapHeight}`} onClick={() => beep(400, 2400, 220, 0.05)}
+                  className="btn-term mt-1 inline-block text-[10px]">[ ENTER ]</a>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <div className="flex items-center gap-2 border-t border-signal/30 px-3 py-2 font-mono text-[10px]">
