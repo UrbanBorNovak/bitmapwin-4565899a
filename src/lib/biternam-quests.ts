@@ -311,8 +311,10 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   dudeamoto: "ee028483cf27c3ccd98b22df265dc32579fa7c3aec763a96c54b6a7d01625b2di0",
   tornado: "75e3588e2fad36befc0fbbf7a21354340dee290f2839d19c35db68a79648d5aei0",
   wierdamoto: "02a42a16913bfcdb1d48323850c1a2fab1633e4c1e151bc64c2bd8a5a5cdfacfi0",
-  ladybird: "51eb2282e2204775d16d5ead54276f721b93b49231ff335eb0cc321af1a5a72fi0",
-  dabber: "61af654858dd63b1342794ad9b6af2a0f829f0ebbfcc0c354d1c1ebfb26790fai0",
+  // Ladybird and Dabber were given as BRC-420 HTML avatars (51eb…i0 "Kitty", 61af…i0 "Ninja Dabber");
+  // these are the PNG textures those inscriptions declare, so they paint the rig like every other pixel.
+  ladybird: "d377e9e47e39e679d7d9fcac811285327ec1f4b4277ee543a0f46a5462809df5i0",
+  dabber: "f9fd5d3fb47643f961feeabc512cab62e4c5f6fed70fd0740c3029a144eff1dfi0",
 };
 
 /** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
