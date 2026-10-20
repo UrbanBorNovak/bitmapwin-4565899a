@@ -69,3 +69,22 @@ export const agentSlots = (guardiansHeld: number) => Math.max(0, Math.floor(guar
 /** Drives a brain may act on alone; anything costing BIT or sats is never here. */
 export const AUTONOMOUS_DRIVES: ReadonlySet<Drive> = new Set(DRIVES);
 export const COST_REAL_CREDITS = 0;
+
+/** BIT a Guardian earns when its brain picks forage — once per Guardian per UTC day. */
+export const FORAGE_BIT = 5;
+export const forageRef = (height: number, now = Date.now()) => `gagent:${height}:${new Date(now).toISOString().slice(0, 10)}`;
+export const driveNow = (height: number, now = Date.now()) => decideDrive(wireBrain(height), sensesAt(height, Math.floor(now / 60000)));
+
+/** Offset from the Guardian's home BITMAP centre, in cells, for its current drive. */
+export function driveOffset(drive: Drive, height: number, tSec: number): { dx: number; dz: number; moving: boolean } {
+  const ph = (height % 997) * 0.37;
+  const orbit = (r: number, w: number) => ({ dx: Math.cos(tSec * w + ph) * r, dz: Math.sin(tSec * w + ph) * r, moving: true });
+  switch (drive) {
+    case "rest": return { dx: 0, dz: 0, moving: false };
+    case "guard": return { dx: Math.sin(tSec * 0.8 + ph) * 0.25, dz: 0.3, moving: true };
+    case "patrol": return orbit(0.4, 0.25);
+    case "scout": return orbit(1.2, 0.12);
+    case "socialise": return orbit(0.6, 0.08);
+    case "forage": return { dx: Math.sin(tSec * 0.5 + ph) * 0.35, dz: Math.sin(tSec * 0.31 + ph) * 0.35, moving: true };
+  }
+}
