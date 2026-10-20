@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CITIZENS, citizenAt, needsApproval, brokerPicks, recheckListing, type Proposal } from "@/lib/agent-colony";
 import { useProposalStore } from "@/lib/agent-proposals-store";
@@ -19,6 +19,70 @@ export const Route = createFileRoute("/colony")({
   }),
   component: ColonyPage,
 });
+
+type BuildRow = { id: string; bitmap_height: number; parcel_index: number | null; role: string; block_count: number; note: string | null; status: string; created_at: string; blocks: [number, number, number, string][] };
+
+/** Top-down preview: highest voxel per column, brighter = taller. */
+function BuildTopView({ blocks }: { blocks: [number, number, number, string][] }) {
+  const top = new Map<number, number>();
+  let max = 1;
+  for (const [x, y, z] of blocks) { const k = x * 64 + z; if ((top.get(k) ?? -1) < y) top.set(k, y); if (y > max) max = y; }
+  return (
+    <svg viewBox="0 0 64 64" className="h-28 w-28 shrink-0 rounded border border-border bg-background" aria-label="Build preview from above">
+      {[...top].map(([k, y]) => <rect key={k} x={Math.floor(k / 64)} y={k % 64} width={1} height={1} className="fill-primary" opacity={0.3 + 0.7 * (y / max)} />)}
+    </svg>
+  );
+}
+
+function BuildProposals() {
+  const navigate = useNavigate();
+  const [rows, setRows] = useState<BuildRow[] | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const load = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    setSignedIn(!!u.user);
+    if (!u.user) { setRows([]); return; }
+    const { data } = await supabase.from("build_proposals").select("id, bitmap_height, parcel_index, role, block_count, note, status, created_at, blocks").order("created_at", { ascending: false }).limit(20);
+    setRows((data ?? []) as unknown as BuildRow[]);
+  };
+  useEffect(() => { void load(); }, []);
+  const decide = async (r: BuildRow, status: "applied" | "rejected") => {
+    await supabase.from("build_proposals").update({ status }).eq("id", r.id);
+    if (status === "applied") {
+      void navigate({ to: "/forge", search: { height: r.bitmap_height, ...(r.parcel_index !== null ? { parcel: r.parcel_index } : {}), proposal: r.id } });
+    } else void load();
+  };
+  return (
+    <section className="glass-panel rounded-[18px] border border-border p-4">
+      <h2 className="font-mono text-[12px] tracking-widest text-primary">AGENT BUILD PROPOSALS · {rows?.filter((r) => r.status === "pending").length ?? 0} PENDING</h2>
+      <p className="mt-1 text-xs text-muted-foreground">Builds your agents suggested for land you hold. Opening one puts it on the Land Forge canvas; nothing is inscribed until you do it yourself.</p>
+      {!signedIn ? <p className="mt-2 text-sm text-muted-foreground">Sign in to see build proposals from your agents.</p>
+        : rows === null ? <p className="mt-2 font-mono text-[11px] text-muted-foreground">LOADING…</p>
+        : rows.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No build proposals yet.</p> : (
+        <ul className="mt-3 grid gap-2 md:grid-cols-2">
+          {rows.map((r) => (
+            <li key={r.id} className="flex gap-3 rounded border border-border p-2">
+              <BuildTopView blocks={r.blocks ?? []} />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="font-mono text-sm text-foreground">{r.bitmap_height}.bitmap{r.parcel_index !== null ? ` · parcel #${r.parcel_index}` : ""}</div>
+                <div className="font-mono text-[11px] text-signal">{r.block_count.toLocaleString()} VOXELS · {new Date(r.created_at).toLocaleDateString()}</div>
+                {r.note && <div className="text-xs text-muted-foreground">Why: {r.note}</div>}
+                {r.status === "pending" ? (
+                  <div className="flex gap-1 pt-1">
+                    <button type="button" onClick={() => void decide(r, "applied")} className="rounded border border-primary/50 px-2 py-0.5 font-mono text-[11px] text-primary">OPEN IN LAND FORGE</button>
+                    <button type="button" onClick={() => void decide(r, "rejected")} className="rounded border border-border px-2 py-0.5 font-mono text-[11px] text-muted-foreground">REJECT</button>
+                  </div>
+                ) : r.status === "applied" ? (
+                  <Link to="/forge" search={{ height: r.bitmap_height, ...(r.parcel_index !== null ? { parcel: r.parcel_index } : {}), proposal: r.id }} className="font-mono text-[11px] text-primary underline">REOPEN IN LAND FORGE</Link>
+                ) : <span className="font-mono text-[11px] text-muted-foreground">REJECTED</span>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 function useNow() {
   const [t, setT] = useState<number | null>(null);
@@ -136,6 +200,8 @@ function ColonyPage() {
           </ul>
         )}
       </section>
+
+      <BuildProposals />
 
       {store.signedIn && (
         <section className="glass-panel rounded-[18px] border border-border p-4">
