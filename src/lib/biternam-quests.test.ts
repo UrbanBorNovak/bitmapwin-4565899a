@@ -5,7 +5,7 @@ import { validateScript } from "./tracy-com";
 describe("biternam quests", () => {
   it("steps only advance in order", () => {
     const p = applyEvent(blankProgress(), "talk", "wierdamoto").next;
-    expect(p.step.q1 ?? 0).toBe(0);
+    expect(p.step['q1'] ?? 0).toBe(0);
   });
   it("The First Halving Lockout completes after four talks and pays 30 BIT", () => {
     let p = blankProgress();
