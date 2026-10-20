@@ -5,7 +5,7 @@
 import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TracyCom } from "@/components/game/TracyCom";
-import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
+import { PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, stepKey, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
 import { askNpcFn, claimQuestRewardFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
 import { tracyCue } from "@/lib/tracy-com";

@@ -77,3 +77,15 @@ describe("CH.2 the grey protocol", () => {
     expect(missionStepFor("dev9", p)?.step.item).toBe("press-pass");
   });
 });
+
+import { describe as d2, it as i2, expect as e2 } from "vitest";
+import { QUESTS as QS, stepKey as sk } from "./biternam-quests";
+d2("server step keys", () => {
+  i2("give steps key on hero and item", () => {
+    const ch2 = QS.find((q) => q.id === "ch2")!;
+    e2(sk(ch2.steps[1]!)).toBe("give:dev9>press-pass");
+  });
+  i2("every step key in a quest is distinct per index", () => {
+    for (const q of QS) e2(q.steps.map(sk).length).toBe(q.steps.length);
+  });
+});
