@@ -52,8 +52,8 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
     const onKey = (e: KeyboardEvent) => {
       if (typing(e) || e.repeat) return;
       const k = e.key.toLowerCase();
-      if (k === "e" && !talking && nearId) { const npc = npcById(nearId); if (npc) setTalking({ npc, n: Date.now() }); }
-      if (k === "j") setLogOpen((o) => !o);
+      if (k === "q" && !talking && nearId) { const npc = npcById(nearId); if (npc) setTalking({ npc, n: Date.now() }); }
+      if (k === "b") setLogOpen((o) => !o);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -88,7 +88,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
     <>
       {nearNpc && !talking ? (
         <button type="button" onClick={() => setTalking({ npc: nearNpc, n: Date.now() })} className="glass-panel pointer-events-auto absolute bottom-40 left-1/2 z-[86] -translate-x-1/2 rounded-full border border-primary/50 px-4 py-2 font-mono text-[12px] tracking-widest text-primary">
-          [E] TALK · {nearNpc.name}
+          [Q] TALK · {nearNpc.name}
         </button>
       ) : null}
 
@@ -111,7 +111,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
 
       <div className="pointer-events-auto absolute left-3 top-1/2 z-[84] -translate-y-1/2 font-mono">
         <div className="flex gap-1">
-          <button type="button" onClick={() => setLogOpen((o) => !o)} className="glass-panel rounded-full border border-border px-3 py-1 text-[11px] tracking-widest text-signal">[J] QUESTS</button>
+          <button type="button" onClick={() => setLogOpen((o) => !o)} className="glass-panel rounded-full border border-border px-3 py-1 text-[11px] tracking-widest text-signal">[B] QUESTS</button>
           <button type="button" aria-label={muted ? "Unmute voices" : "Mute voices"} onClick={() => { voice.setMuted(!muted); setMuted(!muted); }} className="glass-panel rounded-full border border-border px-2 py-1 text-[11px] text-muted-foreground">{muted ? "VOICE OFF" : "VOICE ON"}</button>
         </div>
         {logOpen ? (
