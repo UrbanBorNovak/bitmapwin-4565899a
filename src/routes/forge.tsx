@@ -480,6 +480,15 @@ function ForgePage() {
     setWorld(next);
   }, [world]);
 
+  const [fileOver, setFileOver] = useState(false);
+  const loadVoxelFile = (file: File) => {
+    void import("@/lib/voxel-import").then((m) => m.importVoxelFile(file, SPAN)).then((r) => {
+      setPicked({ id: `file:${file.name}:${Date.now()}`, name: file.name.replace(/\.(bwvx|vox)$/i, ""), sphere: "bricks", blocks: r.blocks, author: null, bitCost: 0 });
+      setTool("stamp"); setTurns(0);
+      toast.success(`Imported ${r.blocks.length.toLocaleString()} blocks — click the land to place`, { description: r.note });
+    }).catch((err) => toast.error("Import failed", { description: String(err?.message ?? err) }));
+  };
+
   const buildStep = useCallback(() => {
     const s = bp.steps[bpStep];
     if (!s) { setAuto(false); return; }
@@ -969,7 +978,18 @@ function ForgePage() {
           </div>
         </aside>
 
-        <div className="relative order-first h-[460px] overflow-hidden rounded-lg border border-border bg-card/40 lg:order-none lg:h-[620px]">
+        <div
+          data-testid="forge-dropzone"
+          className="relative order-first h-[460px] overflow-hidden rounded-lg border border-border bg-card/40 lg:order-none lg:h-[620px]"
+          onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setFileOver(true); } }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFileOver(false); }}
+          onDrop={(e) => { e.preventDefault(); setFileOver(false); const f = e.dataTransfer.files?.[0]; if (f) loadVoxelFile(f); }}
+        >
+          {fileOver && (
+            <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center border-2 border-dashed border-accent bg-background/70 font-mono text-xs text-accent backdrop-blur-sm">
+              DROP .BWVX OR .VOX TO LOAD AS A PIECE
+            </div>
+          )}
           {tool === "stamp" && hover && (
             <div className="pointer-events-none absolute right-2 top-2 z-10 rounded border border-border bg-background/80 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur">
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
@@ -1050,12 +1070,7 @@ function ForgePage() {
                 <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
                   e.target.value = "";
-                  if (!file) return;
-                  void import("@/lib/voxel-import").then((m) => m.importVoxelFile(file, SPAN)).then((r) => {
-                    setPicked({ id: `file:${file.name}:${Date.now()}`, name: file.name.replace(/\.(bwvx|vox)$/i, ""), sphere: "bricks", blocks: r.blocks, author: null, bitCost: 0 });
-                    setTool("stamp"); setTurns(0);
-                    toast.success(`Imported ${r.blocks.length.toLocaleString()} blocks — click the land to place`, { description: r.note });
-                  }).catch((err) => toast.error("Import failed", { description: String(err?.message ?? err) }));
+                  if (file) loadVoxelFile(file);
                 }} />
               </label>
               <div className="flex items-center rounded border border-border" title="Floor level (Q/E) — only needed to build in mid-air">
@@ -1108,6 +1123,7 @@ function ForgePage() {
                     </span>
                     <button type="button" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void navigator.clipboard.writeText(FORGE_UNPACK_JS).then(() => toast.success("Unpacker copied — thank you for building!"))}>COPY UNPACKER JS</button>
                     <button type="button" data-testid="forge-glb" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBuildGlb(parcelBlocks, `bitmap-${height}`)).then((r) => toast.success(`.GLB saved · ${r.boxes} boxes · ${(r.bytes / 1024).toFixed(1)} KB`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .GLB</button>
+                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .BWVX</button>
                   </div>
                 );
               })()}

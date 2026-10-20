@@ -181,3 +181,21 @@ export function loadBwvxMesh(THREE: typeof import("three"), b64: string) {
   mesh.computeBoundingSphere();
   return mesh;
 }
+
+/** Raw .bwvx bytes (BWVX2 greedy boxes) for Forge blocks; validated before any byte is emitted. */
+export function exportBwvxBytes(blocks: TplBlock[], span = 64): Uint8Array {
+  if (!Array.isArray(blocks) || !blocks.length) throw new Error("Nothing to export yet");
+  assertExportableBuild(blocks, span);
+  const b64 = encodeBuildV2(blocks, span as 64 | 128);
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+
+/** Download a portable .bwvx file that Land Forge (and the /sdk loader) can read back. */
+export function downloadBwvx(blocks: TplBlock[], name: string, span = 64) {
+  const bytes = exportBwvxBytes(blocks, span);
+  const url = URL.createObjectURL(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `${name}.bwvx`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return { bytes: bytes.length };
+}
