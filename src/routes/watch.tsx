@@ -47,6 +47,9 @@ export const Route = createFileRoute("/watch")({
         { name: "twitter:player", content: player },
         { name: "twitter:player:width", content: "1280" },
         { name: "twitter:player:height", content: "720" },
+        { name: "twitter:image", content: "https://bitmapwin.app/social-card.jpg" },
+        { name: "twitter:image:alt", content: "BitmapWin Toon Cinema" },
+        { property: "og:image", content: "https://bitmapwin.app/social-card.jpg" },
         { property: "og:url", content: player },
       ],
     };

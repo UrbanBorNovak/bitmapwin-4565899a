@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
@@ -36,11 +36,33 @@ export const Route = createFileRoute("/embed/bitmap/$block")({
   component: EmbedBitmap,
 });
 
+function hasWebGL() {
+  try {
+    const c = document.createElement("canvas");
+    return Boolean(c.getContext("webgl2") || c.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
 function EmbedBitmap() {
   const tipHeight = useChainTip();
   const { block } = Route.useLoaderData();
   const inhabited = useQuery(inhabitedQuery());
   const isInhabited = inhabited.data?.has(block) ?? false;
+  const [gl] = useState(hasWebGL);
+  if (!gl) {
+    // Player frames without 3D support show the same still used for the share card.
+    return (
+      <a href={`https://bitmapwin.app/bitmap/${block}`} target="_blank" rel="noopener noreferrer"
+        className="relative block h-dvh w-full bg-background">
+        <img src={`/api/public/og/bitmap/${block}.png`} alt={`${block}.BITMAP`} className="h-full w-full object-contain" />
+        <span className="hud-panel absolute bottom-3 left-1/2 -translate-x-1/2 px-2 py-1 font-mono text-xs text-bitcoin">
+          OPEN {block}.BITMAP ON BITMAPWIN
+        </span>
+      </a>
+    );
+  }
   return (
     <div className="embed-lite relative h-dvh w-full overflow-hidden bg-background">
       <OasisWorldGuard>
