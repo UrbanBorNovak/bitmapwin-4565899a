@@ -8,7 +8,9 @@ import type { Group, Mesh } from "three";
 import { QUEST_NPCS, npcSpot, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
 import { groundY } from "@/lib/world-terrain";
 
-const LOOK: Record<string, { body: string; head: string; accent: string }> = {
+type Look = { body: string; head: string; accent: string };
+const DROID: Look = { body: "#7a7f86", head: "#a9b0b8", accent: "#28e0ff" };
+const LOOK: Record<string, Look> = {
   droid: { body: "#7a7f86", head: "#a9b0b8", accent: "#28e0ff" },
   curator: { body: "#3b2f4a", head: "#e9c9a8", accent: "#f7931a" },
   wierdamoto: { body: "#111114", head: "#f4f1ea", accent: "#c41e1e" },
@@ -19,7 +21,7 @@ function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boole
   const p = npcSpot(npc);
   const g = useRef<Group>(null);
   const ring = useRef<Mesh>(null);
-  const look = LOOK[npc.id] ?? LOOK.droid;
+  const look = LOOK[npc.id] ?? DROID;
   const s = unit * 1.4;
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
