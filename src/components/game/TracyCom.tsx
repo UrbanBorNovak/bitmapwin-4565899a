@@ -51,7 +51,7 @@ function Portrait({ mood, talking, blink }: { mood: TracyMood; talking: boolean;
   );
 }
 
-export function TracyCom({ script, onEnd, className = "", passive = false, voice }: { script: TracyScript; onEnd?: () => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number }) {
+export function TracyCom({ script, onEnd, onNode, className = "", passive = false, voice }: { script: TracyScript; onEnd?: () => void; /** fires each time a node is entered */ onNode?: (id: string) => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number }) {
   const [nodeId, setNodeId] = useState<string | null>(script.start);
   const [started, setStarted] = useState(() => performance.now());
   const [now, setNow] = useState(() => performance.now());
@@ -81,10 +81,13 @@ export function TracyCom({ script, onEnd, className = "", passive = false, voice
   // re-renders constantly — a changing goTo would keep resetting the hang-up timer.
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
+  const onNodeRef = useRef(onNode);
+  onNodeRef.current = onNode;
   const goTo = useCallback((next: ReturnType<typeof advance>) => {
     if (!next) { setNodeId(null); onEndRef.current?.(); return; }
     lastShown.current = 0;
     setNodeId(next.id);
+    onNodeRef.current?.(next.id);
     setStarted(performance.now());
   }, []);
 

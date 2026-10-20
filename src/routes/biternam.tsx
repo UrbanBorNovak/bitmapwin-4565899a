@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TracyCom } from "@/components/game/TracyCom";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
 import { BITERNAM_PART_1 } from "@/lib/biternam-story";
-import { BITERNAM_CREW } from "@/lib/biternam-quests";
+import { BITERNAM_CREW, CREW_MISSION_ROLE } from "@/lib/biternam-quests";
 
 export const Route = createFileRoute("/biternam")({
   head: () => ({
@@ -39,7 +39,7 @@ function BiternamPage() {
       </section>
       <section className="mx-auto max-w-3xl px-6 pb-12">
         <div className="border-t border-border pt-10 font-mono text-[11px] tracking-[0.3em] text-bitcoin">THE CREW</div>
-        <p className="mt-2 text-sm text-muted-foreground">Find them in the Oasis. Quest: ASSEMBLE THE CREW.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Find them in the Oasis. Quests: ASSEMBLE THE CREW, then CH.2 · THE GREY PROTOCOL, where every hero holds one piece of the puzzle.</p>
         <Link to="/biternam/museum" className="mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ ENTER THE BIT MUSEUM ]</Link>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BITERNAM_CREW.map((c) => (
@@ -47,6 +47,7 @@ function BiternamPage() {
               <div className="font-display text-xl" data-no-translate>{c.name}</div>
               <div className="font-mono text-[11px] tracking-[0.2em] text-signal">{c.role.toUpperCase()}</div>
               <p className="mt-2 text-sm text-foreground/85">{c.line}</p>
+              {CREW_MISSION_ROLE[c.id] ? <p className="mt-2 font-mono text-[11px] text-bitcoin">CH.2 · {CREW_MISSION_ROLE[c.id]}</p> : null}
             </div>
           ))}
         </div>

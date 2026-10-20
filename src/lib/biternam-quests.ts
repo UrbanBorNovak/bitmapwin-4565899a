@@ -9,21 +9,38 @@ import { LANDMARKS, landmarkSpot } from "./world-landmarks";
 import { WORLD_CELL } from "./player-state";
 import type { TracyScript } from "./tracy-com";
 
-export type QuestStep = { kind: "talk" | "visit" | "pickup"; target: string; label: string; /** Cindy-9 calls in when this step is done */ cindy?: string };
+export type QuestStep = {
+  kind: "talk" | "visit" | "pickup" | "give"; target: string; label: string;
+  /** Cindy-9 calls in when this step is done */ cindy?: string;
+  /** give: the item this character needs handed over (removed from the wrist) */ item?: string;
+  /** talk/give: item this character hands you when the step completes */ gives?: string;
+  /** the character's own lines for this step (replaces their idle chat while the step is current) */ say?: string[];
+  /** give: line when you hand over the wrong thing */ wrong?: string;
+};
 export type Quest = { id: string; title: string; blurb: string; steps: QuestStep[]; bit: number; badge: string };
 
 /** Wrist inventory items: each floats at a landmark until its pickup step is reached and done. */
-export type QuestItem = { id: string; name: string; icon: string; landmarkId: string; blurb: string };
+export type QuestItem = { id: string; name: string; icon: string; /** where it floats in the world; omitted for items a character hands you */ landmarkId?: string; blurb: string };
 export const QUEST_ITEMS: QuestItem[] = [
   { id: "skiff-key", name: "HOVER-SKIFF KEY", icon: "⚿", landmarkId: "trading-post", blurb: "Wierdamoto's skiff. Two years of dust trails on the odometer." },
   { id: "dust-sample", name: "DUST SAMPLE", icon: "✧", landmarkId: "arena", blurb: "Forty thousand tiny outputs in a jar. Blockamoto's calling card." },
   { id: "explorer-lens", name: "EXPLORER LENS", icon: "◉", landmarkId: "tower", blurb: "Shows where a sat really went. The block explorer never lies." },
   { id: "architect-blueprint", name: "MASTER BLUEPRINT", icon: "⌗", landmarkId: "miner-rig-3", blurb: "PROJECT_BITERNAM // REVISION: ∞ // ARCHITECT: URBAN. The coordinate maths for the ground under your boots." },
+  // CH.2 · THE GREY PROTOCOL — handed between the heroes
+  { id: "press-pass", name: "BITMAP NEWS PRESS PASS", icon: "▣", blurb: "Laminated. Signed by Tornado H. Thompson. Smells faintly of coffee and adrenaline." },
+  { id: "cipher-note", name: "DEV9'S CIPHER NOTE", icon: "✉", blurb: "Three txids, one written backwards. 'Find the one who remembers every record.'" },
+  { id: "utxo-map", name: "UTXO MAP", icon: "⌖", blurb: "Mononaut's chart. Every arrow ends at the Arena, where the camera never stops rolling." },
+  { id: "fork-key", name: "BLOCKAMOTO'S FORK KEY", icon: "⚷", landmarkId: "mayor-pepe", blurb: "Cold, grey, and very centralised. Locked by a shader nobody here wrote." },
+  { id: "sky-coords", name: "SKY COORDINATES", icon: "✦", blurb: "Dabber's sketch from the high ground: the grey cloud starts over the western rig." },
+  { id: "dusk-frequency", name: "DUSK FREQUENCY", icon: "◐", blurb: "A pink-to-cyan tone in a glass vial. The sound of the Bitmappers coming home." },
+  { id: "patched-key", name: "PATCHED FORK KEY", icon: "⚿", blurb: "BOP rewrote it in ten seconds. It now opens the bedrock instead of forking it." },
+  { id: "bedrock-seal", name: "BEDROCK SEAL", icon: "⬢", blurb: "Urban's master seal. One-owner ground, stamped into every tile." },
 ];
 export const itemById = (id: string) => QUEST_ITEMS.find((i) => i.id === id) ?? null;
 
 /** Where an item floats: the side of its landmark opposite the character spot. */
 export function itemSpot(item: QuestItem) {
+  if (!item.landmarkId) return null;
   const spec = LANDMARKS.find((l) => l.id === item.landmarkId);
   if (!spec) return null;
   const s = landmarkSpot(spec);
@@ -32,13 +49,16 @@ export function itemSpot(item: QuestItem) {
 }
 export const PICKUP_REACH = 0.7; // BITMAPS
 
-/** Items you hold: every pickup step already passed in any quest. */
+/** Items you hold: picked up or handed over in passed steps, minus anything you gave away. */
 export function heldItems(p: QuestProgress): QuestItem[] {
-  const out: QuestItem[] = [];
+  const ids: string[] = [];
   for (const q of QUESTS) q.steps.forEach((s, i) => {
-    if (s.kind === "pickup" && i < (p.step[q.id] ?? 0)) { const it = itemById(s.target); if (it && !out.includes(it)) out.push(it); }
+    if (i >= (p.step[q.id] ?? 0)) return;
+    if (s.kind === "pickup") ids.push(s.target);
+    if (s.kind === "give" && s.item) { const k = ids.lastIndexOf(s.item); if (k >= 0) ids.splice(k, 1); }
+    if (s.gives) ids.push(s.gives);
   });
-  return out;
+  return [...new Set(ids)].map(itemById).filter((x): x is QuestItem => !!x);
 }
 /** Items waiting in the world right now (current step of some quest). */
 export function pendingItems(p: QuestProgress): QuestItem[] {
@@ -229,7 +249,21 @@ export const BITERNAM_CREW = [
   { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
   { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
   { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
-];
+] as { id: string; name: string; role: string; line: string; mission?: string }[];
+/** What each hero does in CH.2 · THE GREY PROTOCOL. */
+export const CREW_MISSION_ROLE: Record<string, string> = {
+  tornado: "Breaks the story and makes you press.",
+  dev9: "Checks your credentials, hands over a cipher.",
+  mononaut: "Decodes the cipher into a UTXO map.",
+  bitlodo: "Finds on camera where Blockamoto buried the key.",
+  dabber: "Spots from the high ground where the grey begins.",
+  sunset: "Turns the sky reading into the Dusk Frequency.",
+  bop: "Cracks the Fork Key in ten seconds.",
+  urban: "Forges the Bedrock Seal from the patched key.",
+  nine: "Rings the Dusk Frequency to gather everyone.",
+  wierdamoto: "Takes the seal and ends the Grey Protocol.",
+};
+
 
 export const QUESTS: Quest[] = [
   {
@@ -276,6 +310,44 @@ export const QUESTS: Quest[] = [
     ],
   },
   {
+    id: "ch2", title: "CH.2 · THE GREY PROTOCOL", bit: 100, badge: "BITMAPPER",
+    blurb: "Blockamoto plans to fork the bedrock and grey out the sky. It takes all ten Bitmappers to stop him.",
+    steps: [
+      { kind: "talk", target: "tornado", gives: "press-pass", label: "Catch the breaking story at Satoshi's Statue",
+        say: ["BREAKING, MARSHAL. Blockamoto just bought every billboard in the Oasis. They all say the same thing: GREY IS THE NEW ORANGE.", "My sources won't talk to strangers. The best source in this park drinks bad espresso and trusts nobody without credentials. Here. You're press now."],
+        cindy: "A press pass. dev9 at the Bit Café checks credentials before he even says hello." },
+      { kind: "give", target: "dev9", item: "press-pass", gives: "cipher-note", label: "Show the right credentials to the man in the café",
+        say: ["You again. I don't talk to tourists. Show me why I should."], wrong: "That's not credentials, that's clutter. Try again, Marshal.",
+        cindy: "A cipher with one txid written backwards. Someone who remembers every record could read it. Mononaut charts the mempool at the mining yard." },
+      { kind: "give", target: "mononaut", item: "cipher-note", gives: "utxo-map", label: "Find someone who reads txids like weather",
+        say: ["Charts don't lie. Hand me whatever you're holding that has numbers on it."], wrong: "No numbers on that. I need the txids.",
+        cindy: "Every arrow on Mononaut's map ends at the Arena. A camera there never stops rolling." },
+      { kind: "give", target: "bitlodo", item: "utxo-map", label: "Ask the director what his camera saw",
+        say: ["Quiet on set! You've got something for my storyboard?"], wrong: "Lovely prop, wrong scene. I need to know where to point the lens.",
+        cindy: "Bitlodo's footage: Blockamoto buried something at the feet of the tallest statue on the map. That's Mayor Pepe." },
+      { kind: "pickup", target: "fork-key", label: "Dig at the feet of the tallest statue",
+        cindy: "The Fork Key. It's locked with a shader nobody here wrote. Before you go anywhere, get a view from higher ground." },
+      { kind: "talk", target: "dabber", gives: "sky-coords", label: "Get the view from the high ground",
+        say: ["Whoa, you dug that up right under my feet? Respect.", "From up here I can see where the grey starts. Way out west, over the lonely rig. Wrote it down for you, friend."],
+        cindy: "Out west, at the lonely rig. Bitmap Sunset watches the horizon there." },
+      { kind: "give", target: "sunset", item: "sky-coords", gives: "dusk-frequency", label: "Bring the sky reading to the one who paints it",
+        say: ["The horizon feels wrong tonight. Do you have a reading? Something from up high?"], wrong: "That doesn't come from the sky, darling.",
+        cindy: "The Dusk Frequency. Hold on to it, someone will need it to call everyone home. Now get that key cracked. BOP is at Miner Rig 1." },
+      { kind: "give", target: "bop", item: "fork-key", gives: "patched-key", label: "Have the programmer crack the locked thing",
+        say: ["ok what've you got. something locked? hand it over."], wrong: "nice, but that's not locked. give me the locked thing.",
+        cindy: "Patched. The key opens the bedrock now. Urban at Miner Rig 3 is the only one who can seal it." },
+      { kind: "give", target: "urban", item: "patched-key", gives: "bedrock-seal", label: "Seal the ground with the one who laid it",
+        say: ["Blockamoto tried to fork my bedrock? With what, a grey crayon? Give me the key."], wrong: "That's not a key. I build with keys, kid.",
+        cindy: "The Bedrock Seal. One owner per tile, forever. Now the people need to hear it. 9 is at the Great Statue." },
+      { kind: "give", target: "nine", item: "dusk-frequency", label: "Give the culture leader a sound to gather everyone",
+        say: ["The Bitmappers are scattered. I need something they'll all recognise. A sound. A colour."], wrong: "Beautiful, but nobody gathers for that.",
+        cindy: "The statue is ringing pink and cyan. Everyone is coming home. Take the seal to Wierdamoto at the Trading Post." },
+      { kind: "give", target: "wierdamoto", item: "bedrock-seal", label: "Hand the seal to the mask at the Trading Post",
+        say: ["So. The grey protocol. Ten of us against one man with billboards. Show me what we built."], wrong: "A fine trinket. Not a revolution.",
+        cindy: "The billboards are going orange again. Blockamoto's fork failed. Ten heroes, one ground. Welcome to the Bitmappers, Marshal." },
+    ],
+  },
+  {
     id: "egg-architect", title: "THE ARCHITECT'S SEAL", bit: 77, badge: "ARCHITECT'S SEAL",
     blurb: "Some say the world was drawn by hand. Ask the engineer the question nobody asks.",
     steps: [
@@ -284,6 +356,35 @@ export const QUESTS: Quest[] = [
     ],
   },
 ];
+
+/** The current mission step a character is waiting on, if any (talk/give with their own lines). */
+export function missionStepFor(npcId: string, p: QuestProgress): { quest: Quest; step: QuestStep } | null {
+  for (const quest of QUESTS) {
+    const step = quest.steps[p.step[quest.id] ?? 0];
+    if (step && step.target === npcId && step.say?.length && (step.kind === "talk" || step.kind === "give")) return { quest, step };
+  }
+  return null;
+}
+
+/** Builds the call for a mission step; for a give step the last line offers every held item. "ok" = right item. */
+export function missionScript(npc: QuestNpc, step: QuestStep, held: QuestItem[]): TracyScript {
+  const say = step.say ?? [];
+  const nodes: TracyScript["nodes"] = say.map((text, i) => ({ id: `s${i}`, speaker: npc.name, mood: "idle" as const, text, next: i < say.length - 1 ? `s${i + 1}` : null }));
+  if (step.kind === "give") {
+    const last = nodes[nodes.length - 1]!;
+    delete last.next;
+    last.choices = [
+      ...held.map((it) => ({ label: `Hand over: ${it.name}`, next: it.id === step.item ? "ok" : "no" })),
+      { label: "\"I don't have it yet.\"", next: "later" },
+    ];
+    nodes.push(
+      { id: "ok", speaker: npc.name, mood: "smug", text: "That's the one. Good work, Marshal.", next: null },
+      { id: "no", speaker: npc.name, mood: "alarm", text: step.wrong ?? "Not that.", next: null },
+      { id: "later", speaker: npc.name, mood: "idle", text: "Then come back when you do.", next: null },
+    );
+  }
+  return { id: `mission-${npc.id}`, title: `${npc.name} · MISSION`, start: "s0", nodes };
+}
 
 export const NPC_REACH = 0.9; // BITMAPS
 export const VISIT_REACH = 1.6;
@@ -331,7 +432,8 @@ export function applyEvent(p: QuestProgress, kind: QuestStep["kind"], target: st
   for (const q of QUESTS) {
     const i = step[q.id] ?? 0;
     const s = q.steps[i];
-    if (s && s.kind === kind && s.target === target) { step[q.id] = i + 1; advanced.push(q); }
+    const key = s?.kind === "give" ? `${s.target}>${s.item}` : s?.target;
+    if (s && s.kind === kind && key === target) { step[q.id] = i + 1; advanced.push(q); }
   }
   return { next: advanced.length ? { ...p, step } : p, advanced };
 }
