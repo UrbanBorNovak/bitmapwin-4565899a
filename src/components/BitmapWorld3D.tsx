@@ -1869,6 +1869,9 @@ function PlayerCameraRig({
   /** S in third person turns the body round to face the way it walks. */
   const turnGoal = useRef<number | null>(null);
   const sHeld = useRef(false);
+  /** Third person on foot: the orbit camera's own heading, independent of the body. */
+  const camYaw = useRef<number | null>(null);
+  const camDrag = useRef(0);
   const bob = useRef(0);
   const arm = useRef(1);
   const jumpRequested = useRef(false);
@@ -1993,6 +1996,14 @@ function PlayerCameraRig({
     };
     canvas.addEventListener("pointerdown", lock);
     document.addEventListener("mousemove", look);
+    // Third person: drag with any mouse button to orbit the camera round the body.
+    const orbit = (event: MouseEvent) => {
+      if (mode !== "third" || event.buttons === 0 || camYaw.current === null) return;
+      camYaw.current -= event.movementX * 0.0045;
+      camDrag.current += Math.abs(event.movementX);
+    };
+    canvas.addEventListener("mousemove", orbit);
+    const cleanupOrbit = () => canvas.removeEventListener("mousemove", orbit);
     return () => {
       canvas.removeEventListener("pointerdown", lock);
       document.removeEventListener("mousemove", look);
