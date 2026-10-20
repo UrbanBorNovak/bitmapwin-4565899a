@@ -289,7 +289,7 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="border-t border-border lg:hidden" aria-label="Main navigation">
+      <nav className="relative border-t border-border lg:hidden" aria-label="Main navigation">
         <button
           type="button"
           aria-expanded={mobileOpen}
@@ -310,7 +310,7 @@ export function SiteHeader() {
           )}
         </button>
         {mobileOpen && (
-          <div className="nav-menu fixed inset-x-0 bottom-0 top-[6.2rem] z-50 overflow-y-auto border-t border-border bg-background">
+          <div className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto shadow-lg border-t border-border bg-background">
             {NAV_GROUPS.map((group) => {
               const expanded = mobileSection === group.id;
               const hasCurrent = group.items.some((i) => itemIsActive(i.to));
