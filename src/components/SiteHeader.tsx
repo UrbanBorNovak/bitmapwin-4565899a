@@ -146,6 +146,11 @@ export function SiteHeader() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   const itemIsActive = (to: string) => pathname === to || (to !== "/play" && pathname.startsWith(`${to}/`));
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSection, setMobileSection] = useState<string | null>(null);
+  const currentGroup = NAV_GROUPS.find((g) => g.items.some((i) => itemIsActive(i.to)));
+  const currentItem = currentGroup?.items.find((i) => itemIsActive(i.to));
+  useEffect(() => setMobileOpen(false), [pathname]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -284,65 +289,77 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="flex items-center divide-x divide-border overflow-visible border-t border-border px-3 py-1 lg:hidden" aria-label="Main navigation">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.id} className="relative min-w-0 flex-1">
-            <button
-              type="button"
-              aria-expanded={openGroup === group.id}
-              onClick={() => setOpenGroup((v) => (v === group.id ? null : group.id))}
-              className={`nav-trigger label flex w-full items-center justify-center gap-1 px-1 py-2 sm:px-3 ${
-                openGroup === group.id ? "is-active border border-border text-foreground" : ""
-              }`}
-            >
-              <GroupIcon id={group.id} />
-              <span className="hidden min-[400px]:inline">{group.label}</span>
-              <ChevronDown className="hidden size-3 sm:block" />
-            </button>
-            {openGroup === group.id && (
-              <div className={`nav-menu fixed left-3 right-3 top-[5.55rem] z-50 max-h-[calc(100dvh-6.5rem)] overflow-y-auto border border-border bg-background sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 sm:w-80 ${group.id === "account" ? "sm:left-auto sm:right-0" : ""}`}>
-                <div className="sticky top-0 z-10 border-b border-border bg-surface px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="label text-bitcoin">{group.label}</div>
-                    {group.id === "play" ? <span className="label text-[0.5rem]">OASIS ONLINE</span> : null}
-                  </div>
-                  <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
-                </div>
-                <div className={group.id === "play" ? "space-y-1 p-2" : ""}>
-                  {group.items.map((item, index) => {
-                    const active = itemIsActive(item.to);
-                    const divider = group.id === "play" && (index === 2 || index === 5);
-                    return (
-                      <div key={item.to} className={divider ? "border-t border-border pt-1" : undefined}>
-                        <Link
-                          to={item.to}
-                          activeOptions={{ exact: true }}
-                          onClick={() => setOpenGroup(null)}
-                          aria-current={active ? "page" : undefined}
-                          className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
-                        >
-                            <div className="flex items-center gap-3">
+      <nav className="border-t border-border lg:hidden" aria-label="Main navigation">
+        <button
+          type="button"
+          aria-expanded={mobileOpen}
+          onClick={() => {
+            setMobileOpen((v) => !v);
+            setMobileSection(currentGroup?.id ?? null);
+          }}
+          className="flex min-h-11 w-full items-center justify-between gap-2 px-3 py-2"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            {mobileOpen ? <X className="size-4 text-bitcoin" /> : <MenuIcon className="size-4" />}
+            <span className="label">{mobileOpen ? "CLOSE MENU" : "MENU"}</span>
+          </span>
+          {currentItem && (
+            <span className="label truncate text-bitcoin">
+              {currentGroup?.label} · {currentItem.label}
+            </span>
+          )}
+        </button>
+        {mobileOpen && (
+          <div className="nav-menu fixed inset-x-0 bottom-0 top-[6.2rem] z-50 overflow-y-auto border-t border-border bg-background">
+            {NAV_GROUPS.map((group) => {
+              const expanded = mobileSection === group.id;
+              const hasCurrent = group.items.some((i) => itemIsActive(i.to));
+              return (
+                <section key={group.id} className="border-b border-border">
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    onClick={() => setMobileSection((v) => (v === group.id ? null : group.id))}
+                    className={`flex min-h-12 w-full items-center gap-3 px-4 py-3 text-left ${expanded ? "bg-surface" : ""}`}
+                  >
+                    <span className={hasCurrent ? "text-bitcoin" : "text-muted-foreground"}><GroupIcon id={group.id} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`label block ${hasCurrent ? "text-bitcoin" : "text-foreground"}`}>{group.label}</span>
+                      <span className="block truncate font-mono text-[10px] text-muted-foreground">{group.note}</span>
+                    </span>
+                    <span className="label text-[0.55rem] text-muted-foreground">{group.items.length}</span>
+                    <ChevronDown className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
+                  </button>
+                  {expanded && (
+                    <ul className="pb-2">
+                      {group.items.map((item) => {
+                        const active = itemIsActive(item.to);
+                        return (
+                          <li key={item.to}>
+                            <Link
+                              to={item.to}
+                              activeOptions={{ exact: true }}
+                              onClick={() => setMobileOpen(false)}
+                              aria-current={active ? "page" : undefined}
+                              className={`group flex min-h-11 items-center gap-3 border-l-2 py-2 pl-5 pr-4 ${active ? "border-bitcoin bg-surface" : "border-transparent hover:bg-surface"}`}
+                            >
                               <ItemIcon to={item.to} active={active} />
-                              <div className="min-w-0">
-                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
-                              </div>
-                            </div>
-                        </Link>
-                      </div>
-                    );
-                  })}
-                </div>
-                {group.id === "play" ? (
-                  <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                    <span className="label">9 COMMANDS</span>
-                    <span className="label text-bitcoin">READY</span>
-                  </div>
-                ) : null}
-              </div>
-            )}
+                              <span className="min-w-0 flex-1">
+                                <span className={`label block ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</span>
+                                {item.note && <span className="block truncate text-[11px] text-muted-foreground">{item.note}</span>}
+                              </span>
+                              {active && <span className="label text-[0.5rem] text-bitcoin">YOU ARE HERE</span>}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </section>
+              );
+            })}
           </div>
-        ))}
+        )}
       </nav>
     </header>
   );
