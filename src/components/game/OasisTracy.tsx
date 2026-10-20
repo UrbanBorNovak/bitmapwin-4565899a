@@ -33,7 +33,7 @@ export function OasisTracy({ hidden = false }: { hidden?: boolean }) {
 
   if (!call || hidden) return null;
   return (
-    <div className="pointer-events-none absolute right-3 top-16 z-[85]">
+    <div className="pointer-events-none absolute right-3 top-32 z-[85]">
       <TracyCom key={call.n} passive script={call.script} onEnd={() => setCall(null)} />
     </div>
   );
