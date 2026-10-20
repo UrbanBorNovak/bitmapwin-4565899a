@@ -1,6 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ClientOnly } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { forgeBuildQuery, forgeLandQuery } from "@/lib/forge";
+import { asSpan, decodeBuild, FORGE_SPAN } from "@/lib/voxel-populate";
+import { mergeParcelBuilds, parcelRects } from "@/lib/forge-parcels";
+import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { classifyProposal } from "@/lib/proposal-ghost";
 const ProposalGhost3D = lazy(() => import("@/components/colony/ProposalGhost3D"));
 import { CITIZENS, citizenAt, needsApproval, brokerPicks, recheckListing, type Proposal } from "@/lib/agent-colony";
 import { useProposalStore } from "@/lib/agent-proposals-store";
@@ -39,13 +45,26 @@ function BuildTopView({ blocks }: { blocks: [number, number, number, string][] }
 function GhostCompare({ r }: { r: BuildRow }) {
   const [land, setLand] = useState(true);
   const [ghost, setGhost] = useState(true);
+  const build = useQuery(forgeBuildQuery(r.bitmap_height));
+  const landQ = useQuery(forgeLandQuery(r.bitmap_height));
+  const sizes = useQuery(blockSizeMapQuery(r.bitmap_height));
+  const ready = !build.isLoading && !landQ.isLoading && (r.parcel_index === null || !sizes.isLoading);
+  const result = useMemo(() => {
+    const span = asSpan(build.data?.span);
+    // Compare on the 64-cell canvas; XL builds are compared at their own resolution only when span matches.
+    const base = build.data?.data && span === FORGE_SPAN ? decodeBuild(build.data.data, span) : [];
+    const existing = mergeParcelBuilds(base, (landQ.data?.parcels ?? []).map((p) => ({ ...p, blocks: decodeBuild(p.data) })), 1);
+    const rects = sizes.data?.classes ? parcelRects(sizes.data.classes) : null;
+    return classifyProposal(r.blocks ?? [], existing, r.parcel_index, rects);
+  }, [build.data, landQ.data, sizes.data, r]);
+  const c = result.counts;
   const tog = (on: boolean) => `rounded border px-2 py-0.5 font-mono text-[10px] ${on ? "border-signal text-signal" : "border-border text-muted-foreground"}`;
   return (
     <div className="mt-2 space-y-1">
       <div className="h-72 w-full overflow-hidden rounded border border-border bg-background">
         <ClientOnly fallback={null}>
           <Suspense fallback={<p className="p-2 font-mono text-[11px] text-muted-foreground">LOADING 3D…</p>}>
-            <ProposalGhost3D height={r.bitmap_height} blocks={r.blocks ?? []} model={r.model_inscription_id} showLand={land} showGhost={ghost} />
+            <ProposalGhost3D height={r.bitmap_height} blocks={result.blocks} model={r.model_inscription_id} showLand={land} showGhost={ghost} />
           </Suspense>
         </ClientOnly>
       </div>
@@ -53,6 +72,17 @@ function GhostCompare({ r }: { r: BuildRow }) {
         <button type="button" onClick={() => setLand(!land)} className={tog(land)}>EXISTING LAND</button>
         <button type="button" onClick={() => setGhost(!ghost)} className={tog(ghost)}>PROPOSED (GHOST)</button>
         {r.model_inscription_id && <span className="font-mono text-[10px] text-primary">+ REGISTERED MODEL</span>}
+      </div>
+      <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]" aria-label="Legend">
+        {!ready ? <span className="text-muted-foreground">CHECKING LAND…</span> : <>
+          <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5" style={{ background: "#3fd6e6" }} />FREE GROUND · {c.ok}</span>
+          <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5" style={{ background: "#f7931a" }} />OVERLAPS EXISTING BUILD · {c.overlap}</span>
+          <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5" style={{ background: "#ff3b3b" }} />OUTSIDE PARCEL · {c.outside}</span>
+          {result.parcelUnverified && <span className="text-destructive">PARCEL MAP UNAVAILABLE · GROUND NOT VERIFIED</span>}
+          {c.overlap + c.outside === 0 ? <span className="text-signal">✓ CLEAN</span> : <span className="text-primary">REVIEW BEFORE OPENING</span>}
+        </>}
+      </div>
+      <div>
         <span className="font-mono text-[10px] text-muted-foreground">DRAG TO ORBIT · SCROLL TO ZOOM</span>
       </div>
     </div>
