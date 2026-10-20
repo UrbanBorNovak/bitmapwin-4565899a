@@ -50,7 +50,7 @@ function Portrait({ mood, talking, blink }: { mood: TracyMood; talking: boolean;
   );
 }
 
-export function TracyCom({ script, onEnd, className = "" }: { script: TracyScript; onEnd?: () => void; className?: string }) {
+export function TracyCom({ script, onEnd, className = "", passive = false }: { script: TracyScript; onEnd?: () => void; className?: string; passive?: boolean }) {
   const [nodeId, setNodeId] = useState<string | null>(script.start);
   const [started, setStarted] = useState(() => performance.now());
   const [now, setNow] = useState(() => performance.now());
@@ -92,6 +92,7 @@ export function TracyCom({ script, onEnd, className = "" }: { script: TracyScrip
   }, [node, done, script, goTo, bleep]);
 
   useEffect(() => {
+    if (passive) return;
     const onKey = (e: KeyboardEvent) => {
       if (!node) return;
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); step(); }
@@ -100,7 +101,14 @@ export function TracyCom({ script, onEnd, className = "" }: { script: TracyScrip
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [node, done, step]);
+  }, [node, done, step, passive]);
+
+  // Passive calls (in-world) never take the keyboard and hang up on their own.
+  useEffect(() => {
+    if (!passive || !done || node?.choices?.length) return;
+    const t = setTimeout(() => goTo(advance(script, node!)), 4000);
+    return () => clearTimeout(t);
+  }, [passive, done, node, script, goTo]);
 
   if (!node) return null;
   const glitch = node.mood === "glitch";
@@ -133,7 +141,7 @@ export function TracyCom({ script, onEnd, className = "" }: { script: TracyScrip
             ))}
           </div>
         ) : (
-          <div className="mt-1 text-right text-[10px] text-muted-foreground">{done ? "SPACE / CLICK ▸" : "SPACE TO SKIP"}</div>
+          <div className="mt-1 text-right text-[10px] text-muted-foreground">{passive ? "CLICK TO DISMISS" : done ? "SPACE / CLICK ▸" : "SPACE TO SKIP"}</div>
         )}
       </div>
       <div className="flex justify-between px-2 pt-1 text-[10px] text-muted-foreground">
