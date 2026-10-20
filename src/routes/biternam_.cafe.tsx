@@ -46,7 +46,7 @@ function CafePage() {
     const index = (questStore.get().step[quest.id] ?? 1) - 1;
     const data = { quest: quest.id, index, key: stepKey(step) };
     const send = (left: number) => recordStep({ data })
-      .then((r) => { if (!r.ok && (r.status === "too_fast" || r.status === "error") && left > 0) setTimeout(() => send(left - 1), 2500); })
+      .then((r) => { if (!r.ok && (r.status === "too_fast" || r.status === "out_of_order" || r.status === "error") && left > 0) setTimeout(() => send(left - 1), 2500); })
       .catch(() => { if (left > 0) setTimeout(() => send(left - 1), 2500); });
     void send(3);
     setSay(done ? `QUEST COMPLETE · ${quest.title}` : `QUEST UPDATED · ${quest.title}${step.gives ? " · new item on your wrist" : ""}`);
