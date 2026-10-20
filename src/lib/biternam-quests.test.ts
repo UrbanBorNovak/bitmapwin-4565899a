@@ -94,8 +94,8 @@ d2("chapter replay", () => {
   i2("restarts only that chapter and keeps every earned reward", () => {
     const p = { step: { ch2: 10, ch1: 5 }, claimed: ["ch1", "egg-architect"] };
     const r = replayQuest(p, "ch2");
-    e2(r.step.ch2 ?? 0).toBe(0);
-    e2(r.step.ch1).toBe(5);
+    e2(r.step['ch2'] ?? 0).toBe(0);
+    e2(r.step['ch1']).toBe(5);
     e2(r.claimed).toEqual(["ch1", "egg-architect"]);
   });
 });
