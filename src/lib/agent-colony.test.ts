@@ -37,3 +37,17 @@ describe("broker picks", () => {
     expect(p.reason).toContain("50% below the median ask of 20,000 sats");
   });
 });
+
+import { recheckListing as _rc, brokerPicks as _bp2 } from "./agent-colony";
+describe("broker recheck on approval", () => {
+  it("rejects sold, cancelled, missing and repriced listings", () => {
+    expect(_rc({ priceSats: 100 }, null)).toBe("Listing no longer exists");
+    expect(_rc({ priceSats: 100 }, { status: "spent", priceSats: 100 })).toBe("Listing is sold");
+    expect(_rc({ priceSats: 100 }, { status: "cancelled", priceSats: 100 })).toBe("Listing is cancelled");
+    expect(_rc({ priceSats: 100 }, { status: "open", priceSats: 120 })).toBe("Price changed to 120 sats");
+    expect(_rc({ priceSats: 100 }, { status: "open", priceSats: 100 })).toBeNull();
+  });
+  it("skips listings without a block number", () => {
+    expect(_bp2([{ id: "x", bitmapHeight: null, priceSats: 1, status: "open" }])).toEqual([]);
+  });
+});
