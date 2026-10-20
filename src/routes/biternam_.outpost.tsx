@@ -60,10 +60,10 @@ function OutpostPage() {
     if (blasting) return;
     const r = resolveOutpostVerb(v, h, { suited, item: it });
     if (r.text) setSay(r.text);
-    if (r.effect === "talk") { setMission(missionStepFor("bitoshi", questStore.get())); setCall(Date.now()); }
+    if (r.effect === "talk") { if (suited) questStore.record("pickup", "hazmat-suit"); setMission(missionStepFor("bitoshi", questStore.get())); setCall(Date.now()); }
     if (r.effect === "exit") navigate({ to: "/map" });
     if (r.effect === "pickup-suit") setHasSuit(true);
-    if (r.effect === "wear-suit") { setSuited(true); setHasSuit(false); }
+    if (r.effect === "wear-suit") { questStore.record("pickup", "hazmat-suit"); setSuited(true); setHasSuit(false); }
     if (r.effect === "blast") { setBlasting(true); setTimeout(() => { setBlasting(false); setSay("You land in the salt, eyebrows singed. Cindy: 'Contaminated with dust. Re-org in sector 7. Try NOT opening the stove.'"); }, 1800); }
     setItem(null);
   };
