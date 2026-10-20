@@ -2076,8 +2076,8 @@ function PlayerCameraRig({
       const mag = Math.min(1, Math.hypot(f, s));
       if (mag > 0.01) {
         const cy = camYaw.current;
-        const dx = Math.sin(cy) * f - Math.cos(cy) * s;
-        const dz = Math.cos(cy) * f + Math.sin(cy) * s;
+        const dx = Math.sin(cy) * f + Math.cos(cy) * s;
+        const dz = Math.cos(cy) * f - Math.sin(cy) * s;
         player.yaw = damp(player.yaw, Math.atan2(dx, dz), 12, delta, true);
         // Ease the camera in behind the run when nobody is dragging it.
         if (camDrag.current === 0 && f > 0.1) camYaw.current = damp(camYaw.current, player.yaw, 1.2 * f, delta, true);
@@ -2293,9 +2293,10 @@ function PlayerCameraRig({
       const back = AVATAR_U * (riding ? 11.6 + gait * 2.7 : 4.75 + gait * 1.15);
       const shoulder = riding ? 0 : AVATAR_U * 1.05;
       const side = shoulder - steer.current * AVATAR_U * (riding ? 2 : 1.05);
-      const idealX = player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side;
+      const vy = camYaw.current ?? player.yaw;
+      const idealX = player.x - Math.sin(vy) * back + Math.cos(vy) * side;
       const idealY = player.y + ground + AVATAR_U * (riding ? 3.15 - gait * 0.55 : 2 - gait * 0.16) - dip;
-      const idealZ = player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side;
+      const idealZ = player.z - Math.cos(vy) * back - Math.sin(vy) * side;
       // Spring arm: shorten the boom when trees or raised ground sit between the
       // avatar's head and the ideal camera spot, so the lens never sinks into
       // leaves or terrain. Pull in fast, ease back out slowly.
@@ -2321,9 +2322,9 @@ function PlayerCameraRig({
       // Keep the avatar on the lower third and reveal more space in front.
       const lead = riding ? 0.16 + gait * 0.16 : 0.22 + gait * 0.18;
       cameraLook.current.set(
-        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
+        player.x + player.vx * lead + Math.sin(vy) * AVATAR_U * (riding ? 3.1 : 4.2),
         player.y + ground + AVATAR_U * (riding ? 0.78 : 0.98),
-        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
+        player.z + player.vz * lead + Math.cos(vy) * AVATAR_U * (riding ? 3.1 : 4.2),
       );
     }
     // Battle Drop cinematic: ramp view in the plane, a high chase in freefall
@@ -2397,7 +2398,7 @@ function PlayerCameraRig({
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
     camera.quaternion.slerp(
       targetRotation.current,
-      1 - Math.exp(-(mode === "first" ? 20 : 7) * delta),
+      1 - Math.exp(-(mode === "first" ? 20 : transitionSpeed) * delta),
     );
     // Lean last, on top of the settled look, so turning banks the frame without
     // ever pulling the camera off its target.
