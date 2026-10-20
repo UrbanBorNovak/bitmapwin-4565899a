@@ -372,7 +372,7 @@ export function missionScript(npc: QuestNpc, step: QuestStep, held: QuestItem[])
   const nodes: TracyScript["nodes"] = say.map((text, i) => ({ id: `s${i}`, speaker: npc.name, mood: "idle" as const, text, next: i < say.length - 1 ? `s${i + 1}` : null }));
   if (step.kind === "give") {
     const last = nodes[nodes.length - 1]!;
-    last.next = undefined;
+    delete last.next;
     last.choices = [
       ...held.map((it) => ({ label: `Hand over: ${it.name}`, next: it.id === step.item ? "ok" : "no" })),
       { label: "\"I don't have it yet.\"", next: "later" },
