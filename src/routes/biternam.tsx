@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { TracyCom } from "@/components/game/TracyCom";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
+import { BITERNAM_PART_1 } from "@/lib/biternam-story";
 
 export const Route = createFileRoute("/biternam")({
   head: () => ({
