@@ -196,10 +196,12 @@ export async function buildPurchase(input: {
   paymentPublicKeyHex?: string | string[] | undefined;
   /** price the buyer saw; any difference blocks the purchase before signing */
   expectedPriceSats?: number | undefined;
+  /** public API callers may omit the price check; the app always sends it */
+  apiCaller?: boolean | undefined;
 }): Promise<PurchaseQuote> {
   const offer = await loadOffer(input.offerId);
   const { listingChangeReason } = await import("@/lib/purchase-guard");
-  const changed = listingChangeReason(input.expectedPriceSats, { status: offer.status, priceSats: Number(offer.price_sats) });
+  const changed = listingChangeReason(input.expectedPriceSats ?? (input.apiCaller ? Number(offer.price_sats) : undefined), { status: offer.status, priceSats: Number(offer.price_sats) });
   if (changed) throw new Error(changed);
   if (offer.seller_address && offer.seller_address === input.buyerOrdinalsAddress) {
     throw new Error("This is your own listing");

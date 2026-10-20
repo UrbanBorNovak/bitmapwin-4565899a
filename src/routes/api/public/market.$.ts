@@ -242,6 +242,8 @@ async function post(path: string, request: Request) {
         buyerOrdinalsAddress: address,
         tapInternalKeyHex: z.string().regex(/^[0-9a-fA-F]{64}$/).optional(),
         paymentPublicKeyHex: z.string().regex(/^[0-9a-fA-F]{66}$|^[0-9a-fA-F]{130}$/).optional(),
+        // optional for API callers; when sent, a changed price blocks the build
+        expectedPriceSats: z.number().int().positive().optional(),
       })
       .parse(body);
     await limit(`hold:addr:${d.buyerOrdinalsAddress}`, G.RATE_LIMITS.holdPerWallet);
@@ -258,7 +260,7 @@ async function post(path: string, request: Request) {
       throw new ApiError(`Too many live checkout holds (max ${G.MAX_LIVE_HOLDS_PER_BUYER}) — finish or wait 90s`, 429);
     }
     const { buildPurchase } = await import("@/lib/purchase.server");
-    return json(await buildPurchase(d));
+    return json(await buildPurchase({ ...d, apiCaller: true }));
   }
 
   if (path === "buy/broadcast") {
