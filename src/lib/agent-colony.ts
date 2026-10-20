@@ -126,7 +126,8 @@ export const approvals = {
   get: () => (typeof window === "undefined" ? EMPTY : load()),
   /** Agents call this for any trade or spend; it is queued, never executed. */
   propose(p: Omit<Proposal, "id" | "status" | "createdAt">) {
-    save([{ ...p, id: `${p.citizenId}:${Date.now()}`, status: "pending", createdAt: Date.now() }, ...load()].slice(0, 50));
+    const next: Proposal = { ...p, id: `${p.citizenId}:${Date.now()}`, status: "pending", createdAt: Date.now() };
+    save([next, ...load()].slice(0, 50));
   },
   decide(id: string, approve: boolean) { save(decide(load(), id, approve)); },
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
