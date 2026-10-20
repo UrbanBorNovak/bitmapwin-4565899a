@@ -1,10 +1,11 @@
 /**
  * Decides whether an inscription transfer is a real marketplace sale.
- * Ordinal marketplaces (Magic Eden, Ordswap, BitmapWin) sign the seller's
- * inscription input with SIGHASH_SINGLE|ANYONECANPAY, so the seller payout is
- * the output at the same index as the inscription input, and the buyer adds
- * their own funding input(s). Anything else (sweeps, change, self-sends) is a
- * transfer with price 0.
+ * Ordinal swaps (Magic Eden, Ordswap, BitmapWin, OKX…) all share one shape:
+ * the seller's inscription input plus buyer-funded inputs, the inscription
+ * landing at a new address, and a seller payout funded by the buyer. Payout
+ * position varies between marketplaces, so the price is the seller's NET gain
+ * (seller outputs minus the seller's own non-inscription inputs), capped by
+ * what other parties put in. Sweeps, change and self-sends price at 0.
  */
 export type SaleTx = {
   vin: Array<{ prevout?: { value: number; scriptpubkey_address?: string | null } | null }>;
@@ -16,15 +17,27 @@ export function salePriceOf(tx: SaleTx, inscriptionVin: number, inscriptionVout:
   // Change exclusion: a 1-input tx has no buyer funding, so no payout is a price.
   if (tx.vin.length < 2) return 0;
   if (tx.vin[inscriptionVin]?.prevout?.scriptpubkey_address !== seller) return 0;
-  // Buyer funding input: at least one input must come from someone else.
-  const buyerFunded = tx.vin.some((v, i) => i !== inscriptionVin && v.prevout?.scriptpubkey_address && v.prevout.scriptpubkey_address !== seller);
-  if (!buyerFunded) return 0;
-  // Postage: the inscription must land with a different address.
   const buyer = tx.vout[inscriptionVout]?.scriptpubkey_address ?? null;
   if (!buyer || buyer === seller) return 0;
-  // Exact seller payout at the paired index.
-  if (inscriptionVin === inscriptionVout) return 0;
-  const payout = tx.vout[inscriptionVin];
-  if (!payout || payout.scriptpubkey_address !== seller || payout.value <= 0) return 0;
-  return payout.value;
+
+  let sellerIn = 0;
+  let otherIn = 0;
+  tx.vin.forEach((v, i) => {
+    if (i === inscriptionVin) return;
+    const addr = v.prevout?.scriptpubkey_address;
+    if (!addr || !v.prevout) return;
+    if (addr === seller) sellerIn += v.prevout.value;
+    else otherIn += v.prevout.value;
+  });
+  // Buyer funding input required.
+  if (otherIn <= 0) return 0;
+
+  let sellerOut = 0;
+  tx.vout.forEach((o, i) => {
+    if (i !== inscriptionVout && o.scriptpubkey_address === seller) sellerOut += o.value;
+  });
+  const net = sellerOut - sellerIn;
+  // The payout must be new money from someone else, not the seller's own change.
+  if (net <= 0 || net > otherIn) return 0;
+  return net;
 }
