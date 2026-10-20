@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+const PortalLive3D = lazy(() =>
+  import("@/components/BitmapTerritory3D").then((m) => ({ default: m.BitmapTerritory3D })),
+);
 import type { ProvenanceEvent } from "@/lib/passport";
 import { CHAIN_RECORDS } from "@/lib/chain-records";
 
@@ -332,8 +335,11 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
               <div className="relative h-20 w-20 shrink-0">
                 <span className="absolute inset-0 animate-spin rounded-full border-2 border-dashed border-signal/70 [animation-duration:6s]" />
                 <span className="absolute inset-1 animate-ping rounded-full border border-bitcoin/40 [animation-duration:2.4s]" />
-                <img src={`/api/public/og/bitmap/${card.bitmapHeight}`} alt={`Inside ${card.bitmapHeight}.BITMAP`}
-                  className="absolute inset-2 h-16 w-16 rounded-full object-cover shadow-[0_0_18px_var(--signal)]" style={{ imageRendering: "pixelated" }} />
+                <div className="absolute inset-2 h-16 w-16 overflow-hidden rounded-full shadow-[0_0_18px_var(--signal)]" aria-label={`Live 3D view inside ${card.bitmapHeight}.BITMAP`}>
+                  <Suspense fallback={<div className="h-full w-full animate-pulse bg-muted" />}>
+                    <PortalLive3D key={card.bitmapHeight} height={card.bitmapHeight} />
+                  </Suspense>
+                </div>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[8px] tracking-[0.2em] text-signal">PORTAL OPEN</p>
