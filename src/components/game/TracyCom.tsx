@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { voiceBlip } from "@/lib/synth-voice";
 import { advance, nodeById, typedLength, type TracyMood, type TracyScript } from "@/lib/tracy-com";
 
 /** Tiny synth chirp — no audio files. */
@@ -50,7 +51,7 @@ function Portrait({ mood, talking, blink }: { mood: TracyMood; talking: boolean;
   );
 }
 
-export function TracyCom({ script, onEnd, className = "", passive = false }: { script: TracyScript; onEnd?: () => void; className?: string; passive?: boolean }) {
+export function TracyCom({ script, onEnd, className = "", passive = false, voice }: { script: TracyScript; onEnd?: () => void; className?: string; passive?: boolean; /** retro voice pitch (Hz); Cindy-9 by default */ voice?: number }) {
   const [nodeId, setNodeId] = useState<string | null>(script.start);
   const [started, setStarted] = useState(() => performance.now());
   const [now, setNow] = useState(() => performance.now());
@@ -70,11 +71,11 @@ export function TracyCom({ script, onEnd, className = "", passive = false }: { s
   }, []);
 
   useEffect(() => {
-    if (shown > lastShown.current && shown % 3 === 0 && node?.text[shown - 1]?.trim()) {
-      bleep(node.mood === "glitch" ? 180 + Math.random() * 600 : 520 + (shown % 5) * 40);
+    if (shown > lastShown.current && shown % 2 === 0 && node?.text[shown - 1]?.trim()) {
+      voiceBlip(node.text[shown - 1]!, voice ?? 260, node.mood === "glitch");
     }
     lastShown.current = shown;
-  }, [shown, node, bleep]);
+  }, [shown, node, voice]);
 
   // Held in a ref: callers pass inline callbacks, and the 60fps typing clock
   // re-renders constantly — a changing goTo would keep resetting the hang-up timer.

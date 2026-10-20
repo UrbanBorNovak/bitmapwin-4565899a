@@ -31,3 +31,4 @@
 - toon-audio.ts synthesizes Toon Studio sound offline from episode JSON; x-video muxes it as AAC. Why: no audio assets, identical preview and export.
 - Toon Cinema (src/lib/toon-cinema*.ts): creators insert toon_submissions (trigger forces pending); only has_role admin can approve; /watch reads approved rows through an anon server fn exposing no account columns. Why: nothing reaches the public cinema without review.
 - Creator channel handles (src/lib/release-kit.ts) sync to creator_channels (owner-only RLS, clean @handles) for signed-in users, with localStorage as the signed-out fallback. Why: links follow the account across devices without exposing them publicly.
+- Biternam quests (src/lib/biternam-quests.ts): characters stand at existing landmarks, quest progress is device-local, and BIT is paid only by claimQuestRewardFn with fixed amounts once per account; free questions go through askNpcFn in character. Why: same trust model as exploration milestones.

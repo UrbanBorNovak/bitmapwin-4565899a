@@ -340,6 +340,8 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { OasisTracy } from "@/components/game/OasisTracy";
+import { OasisQuests } from "@/components/game/OasisQuests";
+import { QuestNpcs } from "@/components/game/QuestNpcs";
 import { CinematicBars } from "@/components/game/CinematicBars";
 import { cinematics, shotFrame, shotInReach, SKIP_KEYS } from "@/lib/oasis-cinematics";
 import { tracyCue } from "@/lib/tracy-com";
@@ -3029,6 +3031,7 @@ const WorldScene = memo(function WorldScene({
           hills and mountains. They stand in the same fixed spots in every
           view, so the overview map shows the same world you walk in. */}
       <Landmarks boost={cameraMode === "map" ? 8 : 1} />
+      <QuestNpcs unit={AVATAR_U} />
       <TerrainModels />
       <LandSkins pose={pose} focus={selectedHeight} />
       {cameraMode !== "map" ? (
@@ -4884,6 +4887,7 @@ function BitmapWorld3DInner({
 
         {/* TRACY-9 — wrist-com quips on boarding a ride or hitting a sealed gate. */}
         <OasisTracy hidden={cameraMode === "map"} />
+        <OasisQuests pose={pose} hidden={cameraMode === "map"} />
         <CinematicBars hidden={cameraMode === "map"} />
 
         {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
