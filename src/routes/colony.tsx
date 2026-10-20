@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { ClientOnly } from "@tanstack/react-router";
+const ProposalGhost3D = lazy(() => import("@/components/colony/ProposalGhost3D"));
 import { CITIZENS, citizenAt, needsApproval, brokerPicks, recheckListing, type Proposal } from "@/lib/agent-colony";
 import { useProposalStore } from "@/lib/agent-proposals-store";
 import { fetchOffers } from "@/lib/offers";
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/colony")({
   component: ColonyPage,
 });
 
-type BuildRow = { id: string; bitmap_height: number; parcel_index: number | null; role: string; block_count: number; note: string | null; status: string; created_at: string; blocks: [number, number, number, string][] };
+type BuildRow = { id: string; bitmap_height: number; parcel_index: number | null; role: string; block_count: number; note: string | null; model_inscription_id: string | null; status: string; created_at: string; blocks: [number, number, number, string][] };
 
 /** Top-down preview: highest voxel per column, brighter = taller. */
 function BuildTopView({ blocks }: { blocks: [number, number, number, string][] }) {
@@ -34,7 +36,31 @@ function BuildTopView({ blocks }: { blocks: [number, number, number, string][] }
   );
 }
 
+function GhostCompare({ r }: { r: BuildRow }) {
+  const [land, setLand] = useState(true);
+  const [ghost, setGhost] = useState(true);
+  const tog = (on: boolean) => `rounded border px-2 py-0.5 font-mono text-[10px] ${on ? "border-signal text-signal" : "border-border text-muted-foreground"}`;
+  return (
+    <div className="mt-2 space-y-1">
+      <div className="h-72 w-full overflow-hidden rounded border border-border bg-background">
+        <ClientOnly fallback={null}>
+          <Suspense fallback={<p className="p-2 font-mono text-[11px] text-muted-foreground">LOADING 3D…</p>}>
+            <ProposalGhost3D height={r.bitmap_height} blocks={r.blocks ?? []} model={r.model_inscription_id} showLand={land} showGhost={ghost} />
+          </Suspense>
+        </ClientOnly>
+      </div>
+      <div className="flex flex-wrap items-center gap-1">
+        <button type="button" onClick={() => setLand(!land)} className={tog(land)}>EXISTING LAND</button>
+        <button type="button" onClick={() => setGhost(!ghost)} className={tog(ghost)}>PROPOSED (GHOST)</button>
+        {r.model_inscription_id && <span className="font-mono text-[10px] text-primary">+ REGISTERED MODEL</span>}
+        <span className="font-mono text-[10px] text-muted-foreground">DRAG TO ORBIT · SCROLL TO ZOOM</span>
+      </div>
+    </div>
+  );
+}
+
 function BuildProposals() {
+  const [open, setOpen] = useState<string | null>(null);
   const navigate = useNavigate();
   const [rows, setRows] = useState<BuildRow[] | null>(null);
   const [signedIn, setSignedIn] = useState(false);
@@ -42,7 +68,7 @@ function BuildProposals() {
     const { data: u } = await supabase.auth.getUser();
     setSignedIn(!!u.user);
     if (!u.user) { setRows([]); return; }
-    const { data } = await supabase.from("build_proposals").select("id, bitmap_height, parcel_index, role, block_count, note, status, created_at, blocks").order("created_at", { ascending: false }).limit(20);
+    const { data } = await supabase.from("build_proposals").select("id, bitmap_height, parcel_index, role, block_count, note, model_inscription_id, status, created_at, blocks").order("created_at", { ascending: false }).limit(20);
     setRows((data ?? []) as unknown as BuildRow[]);
   };
   useEffect(() => { void load(); }, []);
@@ -61,7 +87,8 @@ function BuildProposals() {
         : rows.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No build proposals yet.</p> : (
         <ul className="mt-3 grid gap-2 md:grid-cols-2">
           {rows.map((r) => (
-            <li key={r.id} className="flex gap-3 rounded border border-border p-2">
+            <li key={r.id} className={`rounded border border-border p-2 ${open === r.id ? "md:col-span-2" : ""}`}>
+              <div className="flex gap-3">
               <BuildTopView blocks={r.blocks ?? []} />
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="font-mono text-sm text-foreground">{r.bitmap_height}.bitmap{r.parcel_index !== null ? ` · parcel #${r.parcel_index}` : ""}</div>
@@ -75,7 +102,10 @@ function BuildProposals() {
                 ) : r.status === "applied" ? (
                   <Link to="/forge" search={{ height: r.bitmap_height, ...(r.parcel_index !== null ? { parcel: r.parcel_index } : {}), proposal: r.id }} className="font-mono text-[11px] text-primary underline">REOPEN IN LAND FORGE</Link>
                 ) : <span className="font-mono text-[11px] text-muted-foreground">REJECTED</span>}
+                <button type="button" onClick={() => setOpen(open === r.id ? null : r.id)} className="block font-mono text-[11px] text-signal underline">{open === r.id ? "HIDE 3D COMPARE" : "COMPARE IN 3D"}</button>
               </div>
+              </div>
+              {open === r.id && <GhostCompare r={r} />}
             </li>
           ))}
         </ul>
