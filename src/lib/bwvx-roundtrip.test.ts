@@ -20,7 +20,7 @@ describe(".bwvx round trip", () => {
 import { tuplesToBlocks, bwvxPayload, bwvxBoxes } from "./bwvx-export";
 describe("agent proposal export", () => {
   it("proposal tuples export to .bwvx and read back identically", () => {
-    const t: [number, number, number, string][] = [[1, 0, 1, "stone"], [1, 1, 1, "stone"], [5, 0, 2, "grass"]];
+    const t: [number, number, number, string][] = [[0, 0, 0, "stone"], [0, 1, 0, "stone"], [4, 0, 1, "grass"]];
     const back = parseBwvx(exportBwvxBytes(tuplesToBlocks(t))).blocks.map(key).sort();
     expect(back).toEqual(t.map(([x, y, z, k]) => `${x},${y},${z},${k}`).sort());
   });
