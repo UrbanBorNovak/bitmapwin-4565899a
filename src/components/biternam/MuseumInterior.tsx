@@ -28,7 +28,7 @@ function Curator({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; 
   const g = useRef<Group>(null);
   useFrame(({ clock }) => { if (g.current) g.current.position.y = Math.sin(clock.elapsedTime * 2) * 0.03; });
   return (
-    <group ref={g} position={[1.5, 0, 0.5]} rotation-y={-0.5} onClick={(e) => { e.stopPropagation(); onClick(); }}
+    <group ref={g} position={[1.4, 0, -0.4]} rotation-y={-0.5} onClick={(e) => { e.stopPropagation(); onClick(); }}
       onPointerOver={() => { setHot(true); document.body.style.cursor = "pointer"; }} onPointerOut={() => { setHot(false); document.body.style.cursor = ""; }}>
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hot ? 1 : 0.45} /></mesh>
       <mesh position={[-0.12, 0.35, 0]}><boxGeometry args={[0.18, 0.7, 0.2]} /><meshStandardMaterial color="#3b2f4a" /></mesh>
@@ -52,7 +52,7 @@ function Door({ onClick, hot, setHot }: { onClick: () => void; hot: boolean; set
 
 /** The one fixed cinematic angle: aimed at the room centre every frame. */
 function FixedCam() {
-  useFrame(({ camera }) => camera.lookAt(-0.5, 0.6, 0.3));
+  useFrame(({ camera }) => camera.lookAt(-0.6, -0.6, 1.4));
   return null;
 }
 
