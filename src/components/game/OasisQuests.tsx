@@ -16,7 +16,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { saveLastPose } from "@/lib/map-identity";
 
 /** Oasis landmarks with a walk-in interior. */
-const INTERIORS: Record<string, { to: "/biternam/cafe"; label: string }> = { "bit-cafe": { to: "/biternam/cafe", label: "ENTER BIT-CAFÉ" } };
+const INTERIORS: Record<string, { to: "/biternam/cafe" | "/biternam/outpost"; label: string }> = { "bit-cafe": { to: "/biternam/cafe", label: "ENTER BIT-CAFÉ" }, "miner-rig-4": { to: "/biternam/outpost", label: "ENTER COOK OUTPOST" } };
 
 type Pose = { x: number; z: number; yaw?: number };
 

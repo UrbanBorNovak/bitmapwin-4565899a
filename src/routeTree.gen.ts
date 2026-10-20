@@ -83,6 +83,7 @@ import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BiternamCafeRouteImport } from './routes/biternam_.cafe'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
+import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
 import { Route as CodexIndexRouteImport } from './routes/codex.index'
@@ -513,6 +514,11 @@ const BiternamMuseumRoute = BiternamMuseumRouteImport.update({
   path: '/biternam/museum',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamOutpostRoute = BiternamOutpostRouteImport.update({
+  id: '/biternam_/outpost',
+  path: '/biternam/outpost',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BitmapBlockRoute = BitmapBlockRouteImport.update({
   id: '/bitmap/$block',
   path: '/bitmap/$block',
@@ -882,6 +888,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/cafe': typeof BiternamCafeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
+  '/biternam/outpost': typeof BiternamOutpostRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1012,6 +1019,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/cafe': typeof BiternamCafeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
+  '/biternam/outpost': typeof BiternamOutpostRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1147,6 +1155,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam_/cafe': typeof BiternamCafeRoute
   '/biternam_/museum': typeof BiternamMuseumRoute
+  '/biternam_/outpost': typeof BiternamOutpostRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1283,6 +1292,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/biternam/cafe'
     | '/biternam/museum'
+    | '/biternam/outpost'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1413,6 +1423,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/biternam/cafe'
     | '/biternam/museum'
+    | '/biternam/outpost'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1547,6 +1558,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/biternam_/cafe'
     | '/biternam_/museum'
+    | '/biternam_/outpost'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1682,6 +1694,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BiternamCafeRoute: typeof BiternamCafeRoute
   BiternamMuseumRoute: typeof BiternamMuseumRoute
+  BiternamOutpostRoute: typeof BiternamOutpostRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
   CodexBestiaryRoute: typeof CodexBestiaryRoute
@@ -2219,6 +2232,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/museum'
       fullPath: '/biternam/museum'
       preLoaderRoute: typeof BiternamMuseumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/outpost': {
+      id: '/biternam_/outpost'
+      path: '/biternam/outpost'
+      fullPath: '/biternam/outpost'
+      preLoaderRoute: typeof BiternamOutpostRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bitmap/$block': {
@@ -2843,6 +2863,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BiternamCafeRoute: BiternamCafeRoute,
   BiternamMuseumRoute: BiternamMuseumRoute,
+  BiternamOutpostRoute: BiternamOutpostRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
   CodexBestiaryRoute: CodexBestiaryRoute,
