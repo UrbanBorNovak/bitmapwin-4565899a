@@ -73,4 +73,18 @@ describe("MCP build tools", () => {
     expect(((await call(boundaries, { height: 1 })).structuredContent!["parcels"] as unknown[]).length).toBe(2);
     expect((await call(inspect, { height: 1 })).structuredContent!["districtBuild"]).toBeNull();
   });
+
+  it("accepts a .bwvx payload at absolute positions", async () => {
+    const { exportBwvxBytes } = await import("@/lib/bwvx-export");
+    const bytes = exportBwvxBytes([{ dx: 5, dy: 0, dz: 7, k: "stone" }, { dx: 6, dy: 0, dz: 7, k: "stone" }], 64);
+    let bin = ""; for (const v of bytes) bin += String.fromCharCode(v);
+    const r = await call(submit, { height: 1, bwvxBase64: btoa(bin) });
+    expect(r.isError).toBeUndefined();
+    expect((inserted[0] as { blocks: number[][] }).blocks).toEqual([[5, 0, 7, "stone"], [6, 0, 7, "stone"]]);
+  });
+
+  it("refuses a malformed .bwvx payload", async () => {
+    expect((await call(submit, { height: 1, bwvxBase64: "AAAA" })).isError).toBe(true);
+    expect(inserted).toHaveLength(0);
+  });
 });

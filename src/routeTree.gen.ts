@@ -116,6 +116,7 @@ import { Route as TraitsIndexRouteImport } from './routes/traits.index'
 import { Route as TraitsTraitRouteImport } from './routes/traits.$trait'
 import { Route as TraitsRanksRouteImport } from './routes/traits.ranks'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicAgentSchemaRouteImport } from './routes/api/public/agent-schema'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
 import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
@@ -675,6 +676,11 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAgentSchemaRoute = ApiPublicAgentSchemaRouteImport.update({
+  id: '/public/agent-schema',
+  path: '/public/agent-schema',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
   id: '/public/coin-rewards',
   path: '/public/coin-rewards',
@@ -897,6 +903,7 @@ export interface FileRoutesByFullPath {
   '/ranks/': typeof RanksIndexRoute
   '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
@@ -1024,6 +1031,7 @@ export interface FileRoutesByTo {
   '/ranks': typeof RanksIndexRoute
   '/traits': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
@@ -1156,6 +1164,7 @@ export interface FileRoutesById {
   '/ranks/': typeof RanksIndexRoute
   '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
@@ -1289,6 +1298,7 @@ export interface FileRouteTypes {
     | '/ranks/'
     | '/traits/'
     | '/.lovable/oauth/consent'
+    | '/api/public/agent-schema'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
@@ -1416,6 +1426,7 @@ export interface FileRouteTypes {
     | '/ranks'
     | '/traits'
     | '/.lovable/oauth/consent'
+    | '/api/public/agent-schema'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
@@ -1547,6 +1558,7 @@ export interface FileRouteTypes {
     | '/ranks/'
     | '/traits/'
     | '/.lovable/oauth/consent'
+    | '/api/public/agent-schema'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
@@ -2414,6 +2426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/agent-schema': {
+      id: '/api/public/agent-schema'
+      path: '/public/agent-schema'
+      fullPath: '/api/public/agent-schema'
+      preLoaderRoute: typeof ApiPublicAgentSchemaRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/coin-rewards': {
       id: '/api/public/coin-rewards'
       path: '/public/coin-rewards'
@@ -2585,6 +2604,7 @@ const ApiPublicBlocksHeightRouteWithChildren =
   )
 
 interface ApiRouteChildren {
+  ApiPublicAgentSchemaRoute: typeof ApiPublicAgentSchemaRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicCrawlBssRoute: typeof ApiPublicCrawlBssRoute
   ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
@@ -2601,6 +2621,7 @@ interface ApiRouteChildren {
 }
 
 const ApiRouteChildren: ApiRouteChildren = {
+  ApiPublicAgentSchemaRoute: ApiPublicAgentSchemaRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicCrawlBssRoute: ApiPublicCrawlBssRoute,
   ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
