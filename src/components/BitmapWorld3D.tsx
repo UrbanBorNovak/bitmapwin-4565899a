@@ -340,6 +340,9 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { OasisTracy } from "@/components/game/OasisTracy";
+import { CinematicBars } from "@/components/game/CinematicBars";
+import { cinematics, shotFrame, shotInReach, SKIP_KEYS } from "@/lib/oasis-cinematics";
+import { tracyCue } from "@/lib/tracy-com";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
@@ -1890,6 +1893,7 @@ function PlayerCameraRig({
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const key = event.key.toLowerCase();
+      if (cinematics.active() && SKIP_KEYS.has(key)) cinematics.stop();
       if (event.code === "Space" && !event.repeat) {
         jumpRequested.current = true;
         event.preventDefault();
