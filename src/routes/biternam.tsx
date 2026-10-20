@@ -47,6 +47,7 @@ function BiternamPage() {
             <blockquote className="mt-3 border-l-2 border-bitcoin pl-3 font-mono text-sm text-muted-foreground">
               "{c.epigraph}" <span className="text-xs">— {c.source}</span>
             </blockquote>
+            <Link to="/watch" search={{ ep: `biternam-${i + 1}` }} className="mt-3 inline-block rounded border border-signal px-3 py-1.5 font-mono text-xs text-signal hover:bg-signal hover:text-background">[ ▶ WATCH CHAPTER {i + 1} VIGNETTE ]</Link>
             {c.body.map((p, j) => <p key={j} className="mt-3 leading-relaxed text-foreground/90">{p}</p>)}
           </section>
         ))}
