@@ -276,7 +276,7 @@ const KEY = "bitmapwin:biternam-quests";
 let state: QuestProgress | null = null;
 let near: string | null = null;
 const listeners = new Set<() => void>();
-const advListeners = new Set<(q: Quest, done: boolean) => void>();
+const advListeners = new Set<(q: Quest, done: boolean, step: QuestStep) => void>();
 const emit = () => listeners.forEach((f) => f());
 
 function load(): QuestProgress {
@@ -299,11 +299,11 @@ export const questStore = {
     const { next, advanced } = applyEvent(load(), kind, target);
     if (!advanced.length) return;
     save(next);
-    advanced.forEach((q) => advListeners.forEach((f) => f(q, isComplete(q, next))));
+    advanced.forEach((q) => { const st = q.steps[(next.step[q.id] ?? 1) - 1]!; advListeners.forEach((f) => f(q, isComplete(q, next), st)); });
   },
   markClaimed(id: string) { const p = load(); if (!p.claimed.includes(id)) save({ ...p, claimed: [...p.claimed, id] }); },
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
-  onAdvance(fn: (q: Quest, done: boolean) => void) { advListeners.add(fn); return () => { advListeners.delete(fn); }; },
+  onAdvance(fn: (q: Quest, done: boolean, step: QuestStep) => void) { advListeners.add(fn); return () => { advListeners.delete(fn); }; },
 };
 
 export function useQuestState() {
