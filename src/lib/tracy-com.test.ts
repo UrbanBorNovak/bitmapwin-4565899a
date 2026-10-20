@@ -28,6 +28,6 @@ describe("tracy oasis cues", () => {
   it("cue scripts are valid one-line calls", () => {
     const s = cueScript({ kind: "sealed", title: "X", reason: "no-pass" });
     expect(validateScript(s)).toEqual([]);
-    expect(cueScript({ kind: "board", rideId: "tank", label: "TANK" }).nodes[0].text).toMatch(/tank/i);
+    expect(cueScript({ kind: "board", rideId: "tank", label: "TANK" }).nodes[0]!.text).toMatch(/tank/i);
   });
 });
