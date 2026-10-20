@@ -5,7 +5,8 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
-import { QUEST_NPCS, itemSpot, npcSpot, pendingItems, useQuestState, type QuestItem, type QuestNpc } from "@/lib/biternam-quests";
+import { CREW_PIXEL_AVATAR, QUEST_NPCS, itemSpot, npcSpot, pendingItems, useQuestState, type QuestItem, type QuestNpc } from "@/lib/biternam-quests";
+import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { groundY } from "@/lib/world-terrain";
 
 type Look = { body: string; head: string; accent: string };
@@ -40,6 +41,17 @@ function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boole
   const architect = npc.id === "urban";
   const look = LOOK[npc.id] ?? DROID;
   const s = unit * 1.4;
+  const skin = CREW_PIXEL_AVATAR[npc.id];
+  const still = useRef(false);
+  const voxel = (
+    <>
+      <mesh position={[-s * 0.1, s * 0.25, 0]}><boxGeometry args={[s * 0.14, s * 0.5, s * 0.16]} /><meshStandardMaterial color={look.body} /></mesh>
+      <mesh position={[s * 0.1, s * 0.25, 0]}><boxGeometry args={[s * 0.14, s * 0.5, s * 0.16]} /><meshStandardMaterial color={look.body} /></mesh>
+      <mesh position={[0, s * 0.75, 0]}><boxGeometry args={[s * 0.42, s * 0.5, s * 0.24]} /><meshStandardMaterial color={look.body} /></mesh>
+      <mesh position={[0, s * 1.18, 0]}><boxGeometry args={[s * 0.32, s * 0.32, s * 0.3]} /><meshStandardMaterial color={look.head} /></mesh>
+      <mesh position={[0, s * 1.2, s * 0.16]}><boxGeometry args={[s * 0.24, s * 0.06, s * 0.02]} /><meshBasicMaterial color={look.accent} /></mesh>
+    </>
+  );
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     if (g.current) {
@@ -68,11 +80,11 @@ function Npc({ npc, unit, active }: { npc: QuestNpc; unit: number; active: boole
           </group>
         </>
       )}
-      <mesh position={[-s * 0.1, s * 0.25, 0]}><boxGeometry args={[s * 0.14, s * 0.5, s * 0.16]} /><meshStandardMaterial color={look.body} /></mesh>
-      <mesh position={[s * 0.1, s * 0.25, 0]}><boxGeometry args={[s * 0.14, s * 0.5, s * 0.16]} /><meshStandardMaterial color={look.body} /></mesh>
-      <mesh position={[0, s * 0.75, 0]}><boxGeometry args={[s * 0.42, s * 0.5, s * 0.24]} /><meshStandardMaterial color={look.body} /></mesh>
-      <mesh position={[0, s * 1.18, 0]}><boxGeometry args={[s * 0.32, s * 0.32, s * 0.3]} /><meshStandardMaterial color={look.head} /></mesh>
-      <mesh position={[0, s * 1.2, s * 0.16]}><boxGeometry args={[s * 0.24, s * 0.06, s * 0.02]} /><meshBasicMaterial color={look.accent} /></mesh>
+      {skin ? (
+        <group scale={s * 1.1}>
+          <ToonPixelRig inscriptionId={skin} pose="idle" movingRef={still} fallback={voxel} />
+        </group>
+      ) : voxel}
       <mesh position={[0, s * 1.75, 0]}><octahedronGeometry args={[s * 0.1]} /><meshBasicMaterial color={look.accent} /></mesh>
     </group>
   );
