@@ -40,4 +40,3 @@
 - Clips: @bitlodo studio vendored unmodified in public/tools/clips; rebuild from upstream. Why: full fidelity, no server state.
 - Marketplace ALL-tab filters use fetchRegistryScope: finite candidate sets intersected with height ranges, checked against bitmap_index. Why: exact totals without loading the 900k+ index.
 - Every R3F canvas goes through SafeCanvas, which measures with offsetSize. Why: the page-size preference sets CSS zoom on <html>; rect-based measuring grows canvases by the zoom factor until WebGL fails.
-- Agent schemas (src/lib/agent-build-schema.ts, bitmapwin.agent/1) are shared by MCP tools and the app; build proposals are clipped server-side to the proposer's live-held ground (Parcel Floor Metric), only registered models are allowed, and they are stored owner-only in build_proposals as suggestions — never inscribed, signed or placed. Why: agents get structure without bypassing ownership.
