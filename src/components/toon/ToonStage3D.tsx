@@ -90,7 +90,7 @@ import { FORGE_SPAN } from "@/lib/voxel-populate";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
-import { ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
+import { ModelGear, ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { AVATAR_SKINS, isPixelSkin } from "@/lib/toon-avatars";
 import { DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";

@@ -90,6 +90,7 @@ export function ToonAvatarBody({ avatar, pose, timeRef, movingRef }: { avatar: T
         {avatar.model === "runner" && <mesh position={[0, sh.head + 0.03, -0.02]}><boxGeometry args={[sh.head * 1.05, 0.06, sh.head * 1.05]} />{cloth}</mesh>}
         {avatar.model === "bot" && <mesh position={[0, sh.head + 0.12, 0]}><boxGeometry args={[0.03, 0.16, 0.03]} /><meshStandardMaterial color={s.accent} emissive={s.accent} emissiveIntensity={0.6} /></mesh>}
         {avatar.model === "wizard" && <mesh position={[0, sh.head + 0.17, 0]}><coneGeometry args={[sh.head * 0.75, 0.34, 4]} />{cloth}</mesh>}
+        {avatar.model === "vendetta" && <mesh position={[0, sh.head + 0.04, 0]}><cylinderGeometry args={[sh.head * 0.9, sh.head * 0.9, 0.03, 16]} /><meshStandardMaterial color="#111" /></mesh>}
         {avatar.model === "bruiser" && <mesh position={[0, sh.head * 0.25, sh.head / 2 + 0.03]}><boxGeometry args={[sh.head * 0.9, 0.05, 0.04]} /><meshStandardMaterial color={s.accent} /></mesh>}
       </group>
     </group>
