@@ -40,3 +40,4 @@
 - Clips: @bitlodo studio vendored unmodified in public/tools/clips; rebuild from upstream. Why: full fidelity, no server state.
 - Marketplace ALL-tab filters use fetchRegistryScope: finite candidate sets intersected with height ranges, checked against bitmap_index. Why: exact totals without loading the 900k+ index.
 - Every R3F canvas goes through SafeCanvas, which measures with offsetSize. Why: the page-size preference sets CSS zoom on <html>; rect-based measuring grows canvases by the zoom factor until WebGL fails.
+- Biternam interiors (src/components/biternam/*, /biternam/museum) are fixed-camera R3F rooms whose picking uses client/rect ratios (zoomSafeEvents) and which record quest progress only through questStore. Why: page-size CSS zoom skews default R3F picking, and one store keeps Oasis and interiors in sync.
