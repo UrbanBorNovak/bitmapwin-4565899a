@@ -28,14 +28,14 @@ export function SafeCanvas(props: CanvasProps) {
       // Stay well under the hard limit: MSAA buffers also count toward VRAM.
       const limit = Math.min(maxRb, dims?.[0] ?? maxRb, dims?.[1] ?? maxRb, 4096);
       const fit = () => {
-        const { width, height } = state.size;
+        const live = state.get();
+        const { width, height } = live.size;
         if (!width || !height) return;
-        const dpr = state.viewport.dpr;
+        const dpr = live.viewport.dpr;
         const cap = Math.min(limit / (width * dpr), limit / (height * dpr), 1);
         if (cap < 1) state.setDpr(Math.max(0.5, dpr * cap * 0.98));
       };
       fit();
-      state.events.connected; // no-op: keep state referenced
       window.addEventListener("resize", () => setTimeout(fit, 50));
     } catch {
       // Older contexts without these parameters keep the default size.
