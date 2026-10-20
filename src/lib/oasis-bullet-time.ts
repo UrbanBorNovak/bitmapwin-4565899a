@@ -55,7 +55,7 @@ export function bulletFrame(shot: BulletShot, t: number, unit: number) {
     fovScale: 1 - Math.sin(p * Math.PI) * 0.28,
     /** Small dutch roll in the middle of the arc. */
     roll: Math.sin(p * Math.PI * 2) * 0.08 * shot.dir,
-    done: p >= 1,
+    done: t >= BULLET_DURATION - 1e-6,
   };
 }
 
