@@ -5064,7 +5064,7 @@ function BitmapWorld3DInner({
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex items-center gap-1 p-0.5 pl-2"
+          className="hud-panel absolute right-3 top-[9.5rem] z-[70] flex items-center gap-1 p-0.5 pl-2"
         >
           <span className="hud-telemetry-title">VIEW</span>
           <Button
