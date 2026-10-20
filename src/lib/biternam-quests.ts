@@ -428,6 +428,13 @@ export const blankProgress = (): QuestProgress => ({ step: {}, claimed: [] });
 
 export const isComplete = (q: Quest, p: QuestProgress) => (p.step[q.id] ?? 0) >= q.steps.length;
 
+/** Pure: reset one quest to step 0, keeping every claim and every other quest's progress. */
+export function replayQuest(p: QuestProgress, id: string): QuestProgress {
+  const step = { ...p.step };
+  delete step[id];
+  return { ...p, step };
+}
+
 /** Advance every quest whose current step matches the event. Steps only go forward. */
 export function applyEvent(p: QuestProgress, kind: QuestStep["kind"], target: string): { next: QuestProgress; advanced: Quest[] } {
   const step = { ...p.step };
@@ -471,6 +478,8 @@ export const questStore = {
     advanced.forEach((q) => { const st = q.steps[(next.step[q.id] ?? 1) - 1]!; advListeners.forEach((f) => f(q, isComplete(q, next), st)); });
   },
   markClaimed(id: string) { const p = load(); if (!p.claimed.includes(id)) save({ ...p, claimed: [...p.claimed, id] }); },
+  /** Restart one quest's steps so they can be re-recorded while signed in; claimed rewards and other quests stay. */
+  replay(id: string) { save(replayQuest(load(), id)); },
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
   onAdvance(fn: (q: Quest, done: boolean, step: QuestStep) => void) { advListeners.add(fn); return () => { advListeners.delete(fn); }; },
 };
