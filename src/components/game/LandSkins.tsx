@@ -50,12 +50,17 @@ function useSkinTexture(inscriptionId: string | null) {
       const response = await fetch(skinUrl(inscriptionId));
       if (!response.ok) throw new Error(String(response.status));
       const bitmap = await createImageBitmap(await response.blob());
+      // Empty or oversized images would fail texImage2D; skip them.
+      if (!bitmap.width || !bitmap.height || bitmap.width > 4096 || bitmap.height > 4096) {
+        throw new Error("unsupported size");
+      }
       const made = new THREE.Texture(bitmap as unknown as TexImageSource);
       made.colorSpace = THREE.SRGBColorSpace;
-      // Pixel art stays crisp; every BITMAP image is small and square.
+      // Pixel art stays crisp. No mipmaps: odd-sized or exotic-format
+      // inscriptions make glGenerateMipmap fail on some GPUs.
       made.magFilter = THREE.NearestFilter;
-      made.minFilter = THREE.LinearMipmapLinearFilter;
-      made.generateMipmaps = true;
+      made.minFilter = THREE.NearestFilter;
+      made.generateMipmaps = false;
       made.needsUpdate = true;
       textureCache.set(inscriptionId, made);
       if (alive) setTexture(made);
