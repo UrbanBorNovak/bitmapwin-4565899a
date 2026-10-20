@@ -28,8 +28,8 @@ export const BITERNAM_EPISODES: ToonEpisode[] = [
       lines: [{ at: 1, dur: 4, speaker: 0, text: "A free week at BITERNAM? Nothing is free.", style: "speech", cam: "two" }] },
   ]),
   ep("CH.3 · THE PEACE OF THE PEOPLES", "chill", [
-    { block: 0, set: "oasis", duration: 8, shot: "wide", cast: [king(-6, 0, "talk"), grubb(6, 0, "talk")],
-      lines: [{ at: 1, dur: 4, speaker: 0, text: "Never trust a deal signed after the third round.", style: "thought", cam: "two" }] },
+    { block: 0, set: "oasis", duration: 8, shot: "orbit", cast: [king(-6, 0, "talk"), grubb(6, 0, "talk")],
+      lines: [{ at: 1, dur: 4, speaker: 0, text: "Never trust a deal signed after the third round.", style: "thought", cam: "auto" }] },
     { block: 0, set: "oasis", duration: 7, shot: "orbit", transition: "fade", cast: [king(0, 0, "dance", { emote: "love" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "The whole planet for a crate of rigs? Deal!", style: "shout", cam: "close" }] },
   ]),
@@ -41,8 +41,8 @@ export const BITERNAM_EPISODES: ToonEpisode[] = [
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Bitmappers! Follow me to unlimited unconfirmed glory!", style: "shout", cam: "close" }] },
   ]),
   ep("CH.5 · THE POINT OF FREQUENTING SALOONS", "tension", [
-    { block: 0, set: "studio", duration: 8, shot: "wide", cast: [blocka(-6, 2, "talk"), grubb(6, 2, "talk")],
-      lines: [{ at: 1, dur: 4, speaker: 1, text: "One more round. I'm paying in testnet coins.", style: "speech", cam: "two" }] },
+    { block: 0, set: "studio", duration: 8, shot: "orbit", cast: [blocka(-6, 2, "talk"), grubb(6, 2, "talk")],
+      lines: [{ at: 1, dur: 4, speaker: 1, text: "One more round. I'm paying in testnet coins.", style: "speech", cam: "auto" }] },
     { block: 0, set: "studio", duration: 7, shot: "dolly", transition: "cut", cast: [blocka(0, 2, "idle", { emote: "surprised" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "I'll get you, Wierdamoto.", style: "shout", cam: "close" }] },
   ]),
@@ -61,7 +61,7 @@ export const BITERNAM_EPISODES: ToonEpisode[] = [
   ]),
   ep("CH.8 · WHEN THE OPERATOR GETS INVOLVED", "adventure", [
     { block: 0, set: "oasis", duration: 8, shot: "orbit", cast: [wierd(-6, 0, "idle"), cindy(6, 0, "wave")],
-      lines: [{ at: 1, dur: 4, speaker: 1, text: "Don't scare the tourist. Then tell him everything.", style: "thought", cam: "two" }] },
+      lines: [{ at: 1, dur: 4, speaker: 1, text: "Don't scare the tourist. Then tell him everything.", style: "thought", cam: "auto" }] },
     { block: 0, set: "oasis", duration: 7, shot: "dutch", transition: "cut", sfx: "BAM!", cast: [blocka(0, 0, "combat")],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "I'll get you, Wierdamoto!", style: "shout", cam: "close" }] },
   ]),
