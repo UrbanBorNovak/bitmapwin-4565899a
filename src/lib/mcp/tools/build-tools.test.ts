@@ -57,7 +57,11 @@ describe("MCP build tools", () => {
     state.holder = "bc1pother";
     state.parcels = [{ index: 0, inscriptionId: "x", ownerAddress: "bc1pholder" }];
     expect((await call(submit, { height: 1, parcelIndex: 1, blocks: [[0, 0, 0, "stone"]] })).isError).toBe(true);
-    const r = await call(submit, { height: 1, parcelIndex: 0, blocks: [[0, 0, 0, "stone"], [63, 0, 63, "stone"]] });
+    const { parcelRects } = await import("@/lib/forge-parcels");
+    const [own, other] = parcelRects([1, 8]).map((p) => [...p.cells][0]!);
+    const r = await call(submit, { height: 1, parcelIndex: 0, blocks: [[Math.floor(own! / 64), 0, own! % 64, "stone"], [Math.floor(other! / 64), 0, other! % 64, "stone"]] });
+    expect(r.isError).toBeUndefined();
+    expect((inserted[0] as { block_count: number; role: string }).role).toBe("parcel");
     expect((r.structuredContent!["dropped"] as { notYourGround: number }).notYourGround).toBeGreaterThan(0);
   });
 
