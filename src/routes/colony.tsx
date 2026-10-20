@@ -51,11 +51,12 @@ function GhostCompare({ r }: { r: BuildRow }) {
   const ready = !build.isLoading && !landQ.isLoading && (r.parcel_index === null || !sizes.isLoading);
   const result = useMemo(() => {
     const span = asSpan(build.data?.span);
-    // Compare on the 64-cell canvas; XL builds are compared at their own resolution only when span matches.
-    const base = build.data?.data && span === FORGE_SPAN ? decodeBuild(build.data.data, span) : [];
-    const existing = mergeParcelBuilds(base, (landQ.data?.parcels ?? []).map((p) => ({ ...p, blocks: decodeBuild(p.data) })), 1);
+    // XL (128-wide) builds are compared by mapping each voxel onto its 64-cell.
+    const f = span / FORGE_SPAN;
+    const base = build.data?.data ? decodeBuild(build.data.data, span) : [];
+    const existing = mergeParcelBuilds(base, (landQ.data?.parcels ?? []).map((p) => ({ ...p, blocks: decodeBuild(p.data) })), f);
     const rects = sizes.data?.classes ? parcelRects(sizes.data.classes) : null;
-    return classifyProposal(r.blocks ?? [], existing, r.parcel_index, rects);
+    return classifyProposal(r.blocks ?? [], existing, r.parcel_index, rects, f);
   }, [build.data, landQ.data, sizes.data, r]);
   const c = result.counts;
   const tog = (on: boolean) => `rounded border px-2 py-0.5 font-mono text-[10px] ${on ? "border-signal text-signal" : "border-border text-muted-foreground"}`;
