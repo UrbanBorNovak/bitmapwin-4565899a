@@ -61,3 +61,13 @@ describe("standing limbs", () => {
     }
   });
 });
+
+describe("biternam cast", () => {
+  it("every character wears a different model and Wierdamoto is the masked rebel", async () => {
+    const { BITERNAM_EPISODES } = await import("./biternam-episodes");
+    const by = new Map<string, string>();
+    for (const e of BITERNAM_EPISODES) for (const s of e.scenes) for (const c of s.cast) by.set(c.name, c.avatar!.model);
+    expect(by.get("Wierdamoto")).toBe("vendetta");
+    expect(new Set(by.values()).size).toBe(by.size);
+  });
+});

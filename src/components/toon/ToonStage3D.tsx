@@ -90,7 +90,7 @@ import { FORGE_SPAN } from "@/lib/voxel-populate";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
-import { ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
+import { ModelGear, ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { AVATAR_SKINS, isPixelSkin } from "@/lib/toon-avatars";
 import { DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
@@ -179,6 +179,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
           timeRef={timeRef}
           fallback={<ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />}
         />
+        {!isPixelSkin(actor.avatar.skin) && <ModelGear model={actor.avatar.model} accent={AVATAR_SKINS.find((k) => k.v === actor.avatar!.skin)?.accent ?? "#f7931a"} />}
         {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} slot={slot} scene={scene} />}
       </group>
     );
