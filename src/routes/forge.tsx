@@ -14,6 +14,7 @@ import { FORGE_MASTER_DELEGATE_ID, delegateSavings, forgeDelegateMetadata } from
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
+import { RegistryDrawer } from "@/components/forge/RegistryDrawer";
 import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, FORGE_SPAN_XL, type ForgeSpan, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
@@ -982,6 +983,7 @@ function ForgePage() {
               <span className="mx-1 h-4 w-px bg-border" />
               <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
               <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
+              <RegistryDrawer height={height} canPlace={role === "bitmap"} />
               <label title="Import a .bwvx or MagicaVoxel .vox file as a piece" data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
                 ⇪ IMPORT .BWVX/.VOX
                 <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
