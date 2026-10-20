@@ -42,6 +42,6 @@ export const claimQuestRewardFn = createServerFn({ method: "POST" })
     const { data: status, error } = await supabaseAdmin.rpc("biternam_claim_quest", { _user: context.userId, _quest: quest.id, _steps: quest.steps.length, _address: data.address, _bit: quest.bit });
     if (error) return { ok: false as const, already: false, error: "PAYOUT FAILED — TRY AGAIN" };
     if (status === "already") return { ok: true as const, already: true, error: null };
-    if (status === "incomplete") return { ok: false as const, already: false, error: "CHAPTER NOT VERIFIED — REPLAY THE STEPS WHILE SIGNED IN" };
+    if (status === "incomplete") return { ok: false as const, already: false, unverified: true, error: "CHAPTER NOT VERIFIED" };
     return { ok: true as const, already: false, error: null };
   });
