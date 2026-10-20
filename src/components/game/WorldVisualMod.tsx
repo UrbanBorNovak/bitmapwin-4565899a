@@ -81,20 +81,20 @@ export function VisualModControls() {
         FX
       </button>
       {open ? (
-        <div className="absolute bottom-full right-0 z-50 mb-2 w-48 space-y-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
-          <button type="button" onClick={() => set({ locked: null })} className={`block w-full px-2 py-1 text-left ${!locked ? "text-bitcoin" : "text-muted-foreground"}`}>
+        <div className="absolute bottom-full right-0 z-50 mb-2 grid w-80 grid-cols-2 gap-1 rounded-sm border border-border bg-card/95 p-2 font-mono text-[11px] backdrop-blur">
+          <button type="button" onClick={() => set({ locked: null })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${!locked ? "text-bitcoin" : "text-muted-foreground"}`}>
             NORMAL
           </button>
           {ids.map((id) => (
-            <button key={id} type="button" onClick={() => set({ locked: id })} className={`block w-full px-2 py-1 text-left ${locked === id ? "text-bitcoin" : "text-muted-foreground hover:text-foreground"}`}>
+            <button key={id} type="button" onClick={() => set({ locked: id })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${locked === id ? "text-bitcoin" : "text-muted-foreground hover:text-foreground"}`}>
               {VISUAL_MODS[id].label}
             </button>
           ))}
-          <div className="my-1 border-t border-border" />
-          <button type="button" onClick={() => set({ surges: !surges })} className={`block w-full px-2 py-1 text-left ${surges ? "text-signal" : "text-muted-foreground"}`}>
+          <div className="col-span-2 border-t border-border" />
+          <button type="button" onClick={() => set({ surges: !surges })} className={`block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight ${surges ? "text-signal" : "text-muted-foreground"}`}>
             RANDOM SURGES: {surges ? "ON" : "OFF"}
           </button>
-          <button type="button" onClick={triggerSurge} className="block w-full px-2 py-1 text-left text-signal">
+          <button type="button" onClick={triggerSurge} className="block h-auto min-h-0 w-full px-2 py-1 text-left leading-tight text-signal">
             ⚡ GLITCH NOW
           </button>
         </div>
