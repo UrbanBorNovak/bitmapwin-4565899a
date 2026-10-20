@@ -115,6 +115,37 @@ function SdkPage() {
         <BwvxTryViewer />
       </section>
 
+      <section className="mt-12 border border-border bg-surface p-5" id="interop">
+        <h2 className="display text-2xl">INTEROPERABILITY — USING EXPORTS ELSEWHERE</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Land Forge and the Colony build proposals export the same build three ways. Each export stays one mesh, so it draws in one draw call.</p>
+        <dl className="mt-4 grid gap-4 text-sm md:grid-cols-2">
+          <div>
+            <dt className="font-mono text-xs text-signal">.BWVX · COORDINATES</dt>
+            <dd className="mt-1 text-muted-foreground">Raw BWVX2 bytes: a "BW2\0" header, then 7-byte boxes (x0 y0 z0 x1 y1 z1 kind), with inclusive bounds and y pointing up. One unit is one block on the 64-block canvas. Exported files keep their canvas positions. When a file is imported into Land Forge, it is shifted so its lowest corner sits at 0,0,0; the shape is unchanged and you choose where to place it. Base64 text of the same bytes is also accepted.</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-xs text-signal">.GLB · COLOURS</dt>
+            <dd className="mt-1 text-muted-foreground">glTF 2.0 binary file: one node, one mesh and one primitive with POSITION, NORMAL and COLOR_0. The colours are vertex colours in linear RGB, taken from each block's top colour in the Forge palette. There are no textures or UVs, and the material is standard with roughness 0.75. One unit is one block.</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-xs text-signal">THREE.JS LOADER · DEPENDENCIES</dt>
+            <dd className="mt-1 text-muted-foreground">Needs only <code>three</code> as an ES module (tested with r185) and the browser's <code>atob</code>. It returns one InstancedMesh with one instance per box. "Copy Three.js loader" in Colony adds a ready-made <code>PAYLOAD</code> export: <code>scene.add(loadBWVX(PAYLOAD))</code>. Use <code>showBWVX</code> to swap builds safely.</dd>
+          </div>
+          <div>
+            <dt className="font-mono text-xs text-signal">OTHER ENGINES</dt>
+            <dd className="mt-1 text-muted-foreground">
+              <b>Blender:</b> File → Import → glTF 2.0. To see the colours, set the material's Base Color to a Color Attribute node.
+              <b> Unreal:</b> import the .glb with the Interchange importer, then multiply Vertex Color into Base Color.
+              <b> Godot:</b> drag the .glb into the project and turn on Vertex Color → Use as Albedo.
+              <b> Unity:</b> use glTFast, with a shader that reads vertex colour.
+              <b> Babylon.js / web:</b> load the .glb with any glTF loader.
+              <b> Bitcoin:</b> inscribe .bwvx data as the build payload. Land Forge and the Oasis read it directly.
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+
       <section className="mt-12">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="display text-2xl">RUNTIME API — CODE THAT ACTUALLY RUNS</h2>
