@@ -34,6 +34,7 @@ export const QUEST_ITEMS: QuestItem[] = [
   { id: "sky-coords", name: "SKY COORDINATES", icon: "✦", blurb: "Dabber's sketch from the high ground: the grey cloud starts over the western rig." },
   { id: "dusk-frequency", name: "DUSK FREQUENCY", icon: "◐", blurb: "A pink-to-cyan tone in a glass vial. The sound of the Bitmappers coming home." },
   { id: "patched-key", name: "PATCHED FORK KEY", icon: "⚿", blurb: "BOP rewrote it in ten seconds. It now opens the bedrock instead of forking it." },
+  { id: "blue-sample", name: "BLUE OP_RETURN SAMPLE", icon: "◆", blurb: "Bitoshi's 99.1% pure block matter. No custodial sweep can fake this signature." },
   { id: "bedrock-seal", name: "BEDROCK SEAL", icon: "⬢", blurb: "Urban's master seal. One-owner ground, stamped into every tile." },
 ];
 export const itemById = (id: string) => QUEST_ITEMS.find((i) => i.id === id) ?? null;
@@ -235,6 +236,18 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "b", speaker: "9", mood: "smug", text: "A reason to gather. Tornado broadcasts, we light the statue, everyone comes home. Tell dev9 the crew is ready.", next: null },
     ] },
   },
+  {
+    id: "bitoshi", name: "BITOSHI", landmarkId: "miner-rig-4", voice: 150,
+    persona: "Bitoshi, the cook who broke bad. A once-revered script engineer cooking pure block matter in an RV out past the western rig. Paranoid, brilliant, obsessed with purity.",
+    script: { id: "npc-bitoshi", title: "SALT FLAT RV · THE COOK", start: "a", nodes: [
+      { id: "a", speaker: "BITOSHI", mood: "alarm", text: "STAY OUT OF MY MEMPOOL. You smell like a custodial wallet.", choices: [
+        { label: "\"What are you cooking?\"", next: "b" },
+        { label: "\"dev9 sent me.\"", next: "c" },
+      ] },
+      { id: "b", speaker: "BITOSHI", mood: "smug", text: "Ninety-nine point one percent pure. Zero dust. Batch-efficient. Tourists get Turdinals. I make Tordinals.", next: null },
+      { id: "c", speaker: "BITOSHI", mood: "idle", text: "dev9. Unreasonable man. Respect him. Doesn't mean I trust you.", next: null },
+    ] },
+  },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
 
 /** The Biternam crew — shown as a cast list on /biternam. */
@@ -248,6 +261,7 @@ export const BITERNAM_CREW = [
   { id: "bitlodo", name: "BITLODO", role: "Cinema maestro", line: "Directs every raid like a movie. Frame by frame, forever." },
   { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
   { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
+  { id: "bitoshi", name: "BITOSHI", role: "The cook who broke bad", line: "Cooks pure block matter in an RV past the western rig. Stay out of his mempool." },
   { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */
@@ -345,6 +359,22 @@ export const QUESTS: Quest[] = [
       { kind: "give", target: "wierdamoto", item: "bedrock-seal", label: "Hand the seal to the mask at the Trading Post",
         say: ["So. The grey protocol. Ten of us against one man with billboards. Show me what we built."], wrong: "A fine trinket. Not a revolution.",
         cindy: "The billboards are going orange again. Blockamoto's fork failed. Ten heroes, one ground. Welcome to the Bitmappers, Marshal." },
+    ],
+  },
+  {
+    id: "ch3", title: "CH.3 · BREAKING BLOCK", bit: 50, badge: "VOID RUNNER",
+    blurb: "A ghost sweep keeps drifting through the void. Find the cook past the western rig and prove it was never a sale.",
+    steps: [
+      { kind: "talk", target: "dev9", label: "Ask dev9 about the ghost sweep at the Bit-Café",
+        say: ["1138.bitmap. Swooshing around lost in some large UTXO. Somebody called it a sale. Unreasonable.", "There's a cook past the western rig. Bitoshi. He knows what real block matter looks like. Suits not welcome."],
+        cindy: "dev9 says look for the smoke past the western rig. And don't call it a sale." },
+      { kind: "visit", target: "miner-rig-4", label: "Find the smoke past the western rig", cindy: "There it is. An RV that survived three halvings. Smells like solder and unconfirmed inputs." },
+      { kind: "talk", target: "bitoshi", gives: "blue-sample", label: "Win over Bitoshi inside his RV",
+        say: ["You wore the suit. Fine. You're not a tourist.", "Here. Blue OP_RETURN, ninety-nine point one. Show it to the mask. A sweep has no recipe. A sale has a buyer."],
+        cindy: "Crystal pure. Now take it to Wierdamoto at the Trading Post." },
+      { kind: "give", target: "wierdamoto", item: "blue-sample", label: "Prove it to the mask at the Trading Post",
+        say: ["The ghost of 1138. One input, change back to the sender. Show me your proof."], wrong: "That proves nothing about a sweep.",
+        cindy: "Case closed. No sale, just one more BITMAP in the void. Welcome to the Void Runners, Marshal." },
     ],
   },
   {
