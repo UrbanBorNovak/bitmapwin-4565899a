@@ -16,20 +16,20 @@ const ep = (title: string, music: NonNullable<ToonEpisode["music"]>, scenes: Too
 
 export const BITERNAM_EPISODES: ToonEpisode[] = [
   ep("CH.1 · THE LAW AROUND HERE", "tension", [
-    { block: 210000, duration: 8, shot: "crane", sfx: "BAM!", cast: [wierd(0, 2, "walk", { to: { x: 0, z: -2 }, moveStart: 0, moveEnd: 4 })],
+    { block: 210000, set: "oasis", duration: 8, shot: "crane", sfx: "BAM!", cast: [wierd(0, 2, "walk", { to: { x: 0, z: -2 }, moveStart: 0, moveEnd: 4 })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "The chain doesn't forget. Neither do I.", style: "thought", cam: "establish" }] },
-    { block: 210000, duration: 7, shot: "dutch", transition: "cut", cast: [wierd(0, 0, "combat")],
+    { block: 210000, set: "oasis", duration: 7, shot: "dutch", transition: "cut", cast: [wierd(0, 0, "combat")],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Two years chasing Blockamoto. Two years of dust.", style: "speech", cam: "close" }] },
   ]),
   ep("CH.2 · THE ART OF PRODUCT PLACEMENT", "chill", [
-    { block: 840000, duration: 8, shot: "dolly", sfx: "SATS!", cast: [wierd(0, 0, "idle", { emote: "surprised" })],
+    { block: 840000, set: "studio", duration: 8, shot: "dolly", sfx: "SATS!", cast: [wierd(0, 0, "idle", { emote: "surprised" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Read the fine print, kid. It's inscribed.", style: "thought", cam: "close" }] },
-    { block: 840000, duration: 7, shot: "orbit", transition: "iris", cast: [wierd(0, 0, "dance", { emote: "happy" })],
+    { block: 840000, set: "studio", duration: 7, shot: "orbit", transition: "iris", cast: [wierd(0, 0, "dance", { emote: "happy" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "A free week at BITERNAM? Nothing is free.", style: "speech", cam: "two" }] },
   ]),
   ep("CH.3 · THE PEACE OF THE PEOPLES", "chill", [
-    { block: 0, set: "oasis", duration: 8, shot: "wide", cast: [king(-3, 0, "talk"), grubb(3, 0, "talk")],
-      lines: [{ at: 1, dur: 4, speaker: 0, text: "Never trust a deal signed after the third round.", style: "thought", cam: "two" }] },
+    { block: 0, set: "oasis", duration: 8, shot: "orbit", cast: [king(-6, 0, "talk"), grubb(6, 0, "talk")],
+      lines: [{ at: 1, dur: 4, speaker: 0, text: "Never trust a deal signed after the third round.", style: "thought", cam: "auto" }] },
     { block: 0, set: "oasis", duration: 7, shot: "orbit", transition: "fade", cast: [king(0, 0, "dance", { emote: "love" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "The whole planet for a crate of rigs? Deal!", style: "shout", cam: "close" }] },
   ]),
@@ -41,8 +41,8 @@ export const BITERNAM_EPISODES: ToonEpisode[] = [
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Bitmappers! Follow me to unlimited unconfirmed glory!", style: "shout", cam: "close" }] },
   ]),
   ep("CH.5 · THE POINT OF FREQUENTING SALOONS", "tension", [
-    { block: 0, set: "studio", duration: 8, shot: "wide", cast: [blocka(-3, 2, "talk"), grubb(3, 2, "talk")],
-      lines: [{ at: 1, dur: 4, speaker: 1, text: "One more round. I'm paying in testnet coins.", style: "speech", cam: "two" }] },
+    { block: 0, set: "studio", duration: 8, shot: "orbit", cast: [blocka(-6, 2, "talk"), grubb(6, 2, "talk")],
+      lines: [{ at: 1, dur: 4, speaker: 1, text: "One more round. I'm paying in testnet coins.", style: "speech", cam: "auto" }] },
     { block: 0, set: "studio", duration: 7, shot: "dolly", transition: "cut", cast: [blocka(0, 2, "idle", { emote: "surprised" })],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "I'll get you, Wierdamoto.", style: "shout", cam: "close" }] },
   ]),
@@ -60,8 +60,8 @@ export const BITERNAM_EPISODES: ToonEpisode[] = [
       lines: [{ at: 1, dur: 4, speaker: 0, text: "Girl, you're Cindy-9 now. Great for the CV.", style: "speech", cam: "two" }] },
   ]),
   ep("CH.8 · WHEN THE OPERATOR GETS INVOLVED", "adventure", [
-    { block: 0, set: "oasis", duration: 8, shot: "orbit", cast: [wierd(-2, 0, "idle"), cindy(2, 0, "wave")],
-      lines: [{ at: 1, dur: 4, speaker: 1, text: "Don't scare the tourist. Then tell him everything.", style: "thought", cam: "two" }] },
+    { block: 0, set: "oasis", duration: 8, shot: "orbit", cast: [wierd(-6, 0, "idle"), cindy(6, 0, "wave")],
+      lines: [{ at: 1, dur: 4, speaker: 1, text: "Don't scare the tourist. Then tell him everything.", style: "thought", cam: "auto" }] },
     { block: 0, set: "oasis", duration: 7, shot: "dutch", transition: "cut", sfx: "BAM!", cast: [blocka(0, 0, "combat")],
       lines: [{ at: 1, dur: 4, speaker: 0, text: "I'll get you, Wierdamoto!", style: "shout", cam: "close" }] },
   ]),
