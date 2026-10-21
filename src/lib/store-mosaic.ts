@@ -35,9 +35,19 @@ P.place=function(size){var sq=null;
  outer:for(var i=0;i<this.rows.length;i++){var ss=this.rows[i].slots.slice();for(var j=0;j<ss.length;j++)if(ss[j].r>=size){sq=this.fill(ss[j],size);break outer}}
  if(!sq){var nr=this.addRow(),s={x:0,y:nr.y,r:this.w};nr.slots.push(s);nr.map[0]=s;sq=this.fill(s,size)}
  this.slots.push(sq)};
-function draw(el,h){var cv=document.createElement('canvas');cv.width=cv.height=512;cv.setAttribute('aria-label',h+'.bitmap');
+/* Size classes per tx. With MZ.base: the site's byte feed. Without it (sovereign shop): straight from public
+   mempool explorers, same rule as the server (one side per decimal order above 10,000 sats). */
+var EXP=['https://mempool.emzy.de/api','https://mempool.space/api'];
+function viaExp(h,i){if(i>=EXP.length)return Promise.reject(0);var b=EXP[i];
+ return fetch(b+'/block-height/'+h).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(hs){hs=hs.trim();if(!/^[0-9a-f]{64}$/.test(hs))throw 0;
+  return fetch(b+'/v1/block/'+hs+'/summary')}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rows){
+  var c=[];for(var k=0;k<rows.length;k++){var v=rows[k]&&rows[k].value;if(typeof v==='number'&&v>=0)c.push(Math.max(1,Math.min(8,Math.floor(Math.log10(Math.max(1,v)))-4)))}if(!c.length)throw 0;return c})
+ .catch(function(){return viaExp(h,i+1)})}
+function classes(h){if(!MZ.base)return viaExp(h,0);
  return fetch(MZ.base+'/api/public/blocks/'+h).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()}).then(function(b){
-  var u=new Uint8Array(b),cls=[];for(var i=0;i<u.length;i++)cls.push(Math.max(1,Math.min(8,u[i]||1)));if(!cls.length)throw 0;
+  var u=new Uint8Array(b),c=[];for(var i=0;i<u.length;i++)c.push(Math.max(1,Math.min(8,u[i]||1)));return c})}
+function draw(el,h){var cv=document.createElement('canvas');cv.width=cv.height=512;cv.setAttribute('aria-label',h+'.bitmap');
+ return classes(h).then(function(cls){if(!cls.length)throw 0;
   var L=new M(cls),W=L.w,s=512/W,x=cv.getContext('2d'),ac='#f7931a';
   x.fillStyle='#050607';x.fillRect(0,0,512,512);
   for(var k=0;k<L.slots.length;k++){var q=L.slots[k],g=s>=3?Math.max(.5,s*.08):0;x.fillStyle=ac;x.globalAlpha=1;
