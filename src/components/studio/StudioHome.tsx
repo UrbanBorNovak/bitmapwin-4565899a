@@ -65,10 +65,10 @@ export function StudioHome() {
         title="EXPERIENCES"
         lead="Script what happens on a tile: games, shops, galleries and live places."
         tools={[
-          { title: "EXTENDERS", icon: <Code2 className="h-4 w-4" />, note: "Describe it in plain words, test it on a tile, publish and deploy.", link: <Link to="/studio" search={{ tool: "extenders" }} className={cta}>OPEN</Link> },
+          { title: "MAKE AN EXPERIENCE", icon: <Code2 className="h-4 w-4" />, note: "Describe → edit & test → publish → deploy, in one guided path.", link: <Link to="/make" className={cta}>START</Link> },
           { title: "DESCRIBE A PLACE", icon: <Package className="h-4 w-4" />, note: "Turn a sentence into a working place on your land.", link: <Link to="/create" className={cta}>OPEN</Link> },
           { title: "SDK", icon: <Code2 className="h-4 w-4" />, note: "Reference and playground for the world code.", link: <Link to="/sdk" className={cta}>READ</Link> },
-          { title: "CLIPS", icon: <Clapperboard className="h-4 w-4" />, note: "Record and cut short clips of your world.", link: <Link to="/clips" className={cta}>OPEN</Link> },
+          { title: "CLIPS", icon: <Clapperboard className="h-4 w-4" />, note: "Turn any BITMAP into a 3D video (tool by @bitlodo).", link: <Link to="/clips" className={cta}>OPEN</Link> },
         ]}
       />
 
@@ -80,7 +80,7 @@ export function StudioHome() {
           { title: "MODEL REGISTRY", icon: <Layers className="h-4 w-4" />, note: "Open BWVX pieces you can stamp into builds; makers earn royalties.", link: <Link to="/registry" className={cta}>BROWSE</Link> },
           { title: "COLLECTIONS", icon: <Boxes className="h-4 w-4" />, note: "BITMAP collections: Pixels, Emporium, Free Ross, Guardians.", link: <Link to="/collections" className={cta}>BROWSE</Link> },
           { title: "MARKETPLACE", icon: <Store className="h-4 w-4" />, note: "List and buy with wallet-signed transactions.", link: <Link to="/marketplace" className={cta}>OPEN</Link> },
-          { title: "STORE KIT", icon: <Package className="h-4 w-4" />, note: "Package builds as kits for other makers.", link: <Link to="/store-kit" className={cta}>OPEN</Link> },
+          { title: "STORE KIT", icon: <Package className="h-4 w-4" />, note: "Launch your own BITMAP shop.", link: <Link to="/store-kit" className={cta}>OPEN</Link> },
         ]}
       />
     </div>

@@ -1,3 +1,4 @@
+import { ExperienceFlow } from "@/components/studio/ExperienceFlow";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
@@ -78,6 +79,7 @@ function PlaygroundPage() {
 
   return (
     <div className="mx-auto max-w-[1250px] px-4 py-10 md:px-8 md:py-14">
+      <ExperienceFlow current="edit" />
       <div className="label text-bitcoin">BEDROCK · SDK</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">SDK PLAYGROUND</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">

@@ -1,3 +1,4 @@
+import { ExperienceFlow } from "@/components/studio/ExperienceFlow";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -253,6 +254,7 @@ function CreatePage() {
   if (!session) {
     return (
       <div className="mx-auto max-w-[900px] px-4 py-20 md:px-8">
+        <ExperienceFlow current="describe" />
         <div className="label text-bitcoin">BEDROCK · CREATE WITH AI</div>
         <h1 className="display mt-3 text-3xl md:text-5xl">CREATE WITH AI</h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
@@ -266,6 +268,7 @@ function CreatePage() {
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-10 md:px-8 md:py-14">
+      <ExperienceFlow current="describe" />
       <MvpFlowRail active="deploy" {...(searchHeight === undefined ? {} : { height: searchHeight })} />
       <div className="mx-auto mt-4 grid max-w-[1600px] gap-px border border-border px-0 md:grid-cols-2">
         <Link
