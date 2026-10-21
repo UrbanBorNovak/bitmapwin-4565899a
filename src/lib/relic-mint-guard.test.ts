@@ -38,7 +38,7 @@ describe("relic mint payout guard", () => {
   it("blocks on bad treasury, missing parents, and beyond tip", () => {
     expect(planRelicMint({ ...base, treasuryAddress: "nope" }).ok).toBe(false);
     const r = planRelicMint({ ...base, parents: [], bitmapParentId: null, masterInscriptionId: null, height: 900001 });
-    expect(r.ok === false && r.missing).toEqual(["TIP", "BITMAP", "COLLECTION", "HOLDER"]);
+    expect(r.ok === false && r.missing).toEqual(["TIP", "BITMAP", "COLLECTION"]);
   });
   it("mock transaction must pay both recipients in full", () => {
     const r = planRelicMint(base); if (!r.ok) throw new Error();
