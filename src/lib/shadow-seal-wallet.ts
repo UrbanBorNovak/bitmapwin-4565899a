@@ -111,8 +111,38 @@ export async function assertPlainCoin(c: { txid: string; vout: number }) {
 
 /* ── device storage ── */
 const K = { held: "bitmapwin:sealed-notes", recv: "bitmapwin:sealed-recv", sent: "bitmapwin:sealed-sent", undo: "bitmapwin:sealed-undo" };
-const read = <T,>(k: string, d: T): T => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
-const write = (k: string, v: unknown) => localStorage.setItem(k, JSON.stringify(v));
+/**
+ * Fail-closed storage. A missing record is empty; an unreadable, unparseable or wrongly shaped
+ * record THROWS (never silently becomes "nothing pending", which would unblock competing transfers
+ * or drop notes). Writes are read back and verified, and a damaged record is never overwritten.
+ */
+export class VaultStorageError extends Error {}
+const isOut = (o: unknown): o is { txid: string; vout: number } =>
+  !!o && typeof o === "object" && /^[0-9a-f]{64}$/i.test(String((o as { txid?: unknown }).txid)) && Number.isInteger((o as { vout?: unknown }).vout);
+const isHeld = (h: unknown) => !!h && typeof h === "object" && isOut((h as HeldSealed).mine) && !!(h as HeldSealed).c?.note?.genesis;
+const VALID: Record<string, (v: unknown) => boolean> = {};
+const shapeOk = (k: string, v: unknown) => (VALID[k] ? VALID[k]!(v) : true);
+const read = <T,>(k: string, d: T): T => {
+  let raw: string | null;
+  try { raw = localStorage.getItem(k); } catch { throw new VaultStorageError("BROWSER STORAGE IS UNAVAILABLE — NOTHING CHANGED"); }
+  if (raw == null) return d;
+  let v: unknown;
+  try { v = JSON.parse(raw); } catch { throw new VaultStorageError(`DAMAGED VAULT RECORD (${k}) — RESTORE A BACKUP; NOTHING WAS CHANGED`); }
+  if (!shapeOk(k, v)) throw new VaultStorageError(`DAMAGED VAULT RECORD (${k}) — RESTORE A BACKUP; NOTHING WAS CHANGED`);
+  return v as T;
+};
+const write = (k: string, v: unknown) => {
+  read(k, null); // refuses to overwrite a damaged record
+  const s = JSON.stringify(v);
+  try { localStorage.setItem(k, s); } catch { throw new VaultStorageError("COULD NOT SAVE TO BROWSER STORAGE (FULL OR BLOCKED) — NOTHING SENT"); }
+  let back: string | null = null;
+  try { back = localStorage.getItem(k); } catch { /* fallthrough */ }
+  if (back !== s) throw new VaultStorageError("BROWSER STORAGE DID NOT KEEP THE SAVE — NOTHING SENT");
+};
+VALID[K.held] = (v) => Array.isArray(v) && v.every(isHeld);
+VALID[K.undo] = (v) => !!v && typeof v === "object" && !Array.isArray(v) && Object.values(v).every((b) => Array.isArray(b) && b.every(isHeld));
+VALID[K.recv] = (v) => !!v && typeof v === "object" && !Array.isArray(v) && Object.values(v).every(isOut);
+VALID[K.sent] = (v) => Array.isArray(v);
 export const sealStore = {
   held: () => read<HeldSealed[]>(K.held, []), setHeld: (v: HeldSealed[]) => write(K.held, v),
   recv: () => read<Record<string, Reveal>>(K.recv, {}), setRecv: (v: Record<string, Reveal>) => write(K.recv, v),
@@ -201,9 +231,13 @@ export type PendingTransfer = {
   txid: string; rawHex: string; anchor: { txid: string; vout: number };
   /** wallet address + network the transfer was signed for — recovery only shows it to that wallet */
   address: string; network: BtcNetwork;
+  /** full bundle before the spend + notes kept on output 0, so recovery never depends on other records */
+  before?: HeldSealed[]; kept?: HeldSealed[];
   sent: { label: string; code: string }[]; at: string; unknown?: boolean;
 };
 const PK = "bitmapwin:sealed-pending";
+VALID[PK] = (v) => Array.isArray(v) && v.every((p) => p && /^[0-9a-f]{64}$/i.test(p.txid) && typeof p.rawHex === "string" && isOut(p.anchor) && typeof p.address === "string" && Array.isArray(p.sent)
+  && (p.before === undefined || (Array.isArray(p.before) && p.before.every(isHeld))) && (p.kept === undefined || (Array.isArray(p.kept) && p.kept.every(isHeld))));
 export const pendingStore = {
   all: () => read<PendingTransfer[]>(PK, []),
   /** Only the transfers signed by this wallet on this network. */
@@ -261,6 +295,7 @@ export async function withAnchorLock<T>(anchor: { txid: string; vout: number }, 
 /* ── signing intents: written BEFORE the wallet opens, so a crash/reload mid-popup is never forgotten ── */
 export type SigningIntent = { anchor: { txid: string; vout: number }; address: string; network: BtcNetwork; at: string; /** random id of this signing attempt */ attempt?: string };
 const IK = "bitmapwin:sealed-intent";
+VALID[IK] = (v) => Array.isArray(v) && v.every((i) => i && isOut(i.anchor) && typeof i.address === "string");
 export const intentStore = {
   all: () => read<SigningIntent[]>(IK, []),
   onAnchor: (a: { txid: string; vout: number }) => read<SigningIntent[]>(IK, []).filter((i) => sealKey(i.anchor) === sealKey(a)),
@@ -291,6 +326,7 @@ export async function runLockedTransfer(o: {
   return withAnchorLock(anchor, async () => {
     const attempt = newAttempt();
     intentStore.put({ anchor, address: o.address, network, at: now(), attempt });
+    if (!intentStore.isCurrent(anchor, attempt)) throw new VaultStorageError("COULD NOT SAVE THE SIGNING LOCK — WALLET NOT OPENED");
     let r: Awaited<ReturnType<typeof prepareTransfer>>;
     try {
       r = await prepareTransfer({ ...o, allHeld: sealStore.held() });
@@ -306,11 +342,21 @@ export async function runLockedTransfer(o: {
       intentStore.dropAttempt(anchor, attempt);
       throw new Error("NOTES ON THIS COIN CHANGED WHILE SIGNING — SIGNATURE DISCARDED, NOTHING SENT");
     }
-    sealStore.setUndo({ ...sealStore.undo(), [r.txid]: o.bundle });
-    pendingStore.put({ txid: r.txid, rawHex: r.rawHex, anchor, address: o.address, network, sent: r.sent, at: now() });
-    sealStore.setSent([...sealStore.sent(), ...r.sent.map((x) => ({ ...x, at: now() }))]);
-    sealStore.setHeld([...heldNow.filter((h) => sealKey(h.mine) !== ck), ...r.kept]);
-    intentStore.dropAttempt(anchor, attempt);
+    // 1) The signed transfer record is the commit point. If it can't be saved, discard the signature:
+    //    the intent stays (coin blocked as "interrupted") and every note is still on the coin.
+    try {
+      pendingStore.put({ txid: r.txid, rawHex: r.rawHex, anchor, address: o.address, network, sent: r.sent, at: now(), before: o.bundle, kept: r.kept });
+    } catch (e) {
+      try { pendingStore.drop(r.txid); } catch { /* leave whatever is there; read is fail-closed */ }
+      throw new VaultStorageError(`COULD NOT SAVE THE SIGNED TRANSFER — SIGNATURE DISCARDED, NOTHING SENT, NOTES UNCHANGED (${(e as Error).message})`);
+    }
+    // 2) Secondary records. If these fail the pending record still holds before + kept, and repairHeld() fixes notes on next load.
+    try {
+      sealStore.setUndo({ ...sealStore.undo(), [r.txid]: o.bundle });
+      sealStore.setSent([...sealStore.sent(), ...r.sent.map((x) => ({ ...x, at: now() }))]);
+      sealStore.setHeld([...heldNow.filter((h) => sealKey(h.mine) !== ck), ...r.kept]);
+    } catch { /* recovered from the pending record */ }
+    try { intentStore.dropAttempt(anchor, attempt); } catch { /* pending record already blocks the coin */ }
     const cur = o.currentWallet();
     return { ...r, walletChanged: cur !== o.address || networkOf(cur ?? "") !== network };
   }, o.locks);
@@ -330,4 +376,23 @@ export async function clearInterrupted(anchor: { txid: string; vout: number }, o
     intentStore.drop(anchor); res = "CLEARED";
   });
   return res;
+}
+
+/** Notes as they should be: any held note still on an anchor with a saved transfer is replaced by that transfer's kept notes. */
+export function repairedHeld(held: HeldSealed[], pending: PendingTransfer[]): HeldSealed[] {
+  let out = held;
+  for (const p of pending) {
+    if (!p.kept) continue;
+    const ak = sealKey(p.anchor);
+    if (!out.some((h) => sealKey(h.mine) === ak)) continue;
+    const have = new Set(out.filter((h) => sealKey(h.mine) !== ak).map((h) => noteKey(h.c.note.genesis) + "@" + sealKey(h.mine)));
+    out = [...out.filter((h) => sealKey(h.mine) !== ak), ...p.kept.filter((h) => !have.has(noteKey(h.c.note.genesis) + "@" + sealKey(h.mine)))];
+  }
+  return out;
+}
+/** Loads notes, repairing from saved transfers; writes back only if something changed. Throws on damaged records. */
+export function loadHeld(): HeldSealed[] {
+  const h = sealStore.held(), fixed = repairedHeld(h, pendingStore.all());
+  if (fixed !== h) { try { sealStore.setHeld(fixed); } catch { /* still correct in memory */ } }
+  return fixed;
 }
