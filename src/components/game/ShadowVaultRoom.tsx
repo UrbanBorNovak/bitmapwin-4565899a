@@ -377,7 +377,7 @@ export function ShadowVaultRoom() {
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3 font-mono text-[10px] text-signal">
         <div className="space-y-1">
           <div className="border border-signal/40 bg-background/70 px-2 py-1">
-            ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
+            ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "ENTERED WITH A SEALED KEYCARD · WHISPERS NEED A PASS"}
           </div>
           {l1Note.data ? (
             l1Note.data.status === "confirmed" ? (

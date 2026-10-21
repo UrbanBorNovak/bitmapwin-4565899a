@@ -5,6 +5,7 @@
 import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { TracyCom } from "@/components/game/TracyCom";
+import { SealedRelicsPanel } from "@/components/shadow/SealedRelicsPanel";
 import { CREW_PIXEL_AVATAR, PICKUP_REACH, QUESTS, heldItems, isComplete, itemSpot, landmarkInReach, indoorRedirectScript, missionScript, missionStepFor, pendingItems, nearestNpc, npcById, questStore, stepKey, useQuestState, type QuestNpc } from "@/lib/biternam-quests";
 import { askNpcFn, claimQuestRewardFn, recordQuestStepFn } from "@/lib/biternam-npc.functions";
 import { questChime, voice } from "@/lib/synth-voice";
@@ -185,6 +186,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
                 </ul>
               ) : <p className="text-[11px] text-muted-foreground">Empty. Items glow orange in the world.</p>}
             </div>
+            <SealedRelicsPanel compact />
             {QUESTS.map((quest) => {
               const at = progress.step[quest.id] ?? 0;
               const done = isComplete(quest, progress);
