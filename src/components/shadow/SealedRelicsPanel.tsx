@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { relicStateLabel, relicStore, unlocks, useSealedRelics } from "@/lib/sealed-relics";
+import { keycardDenial, relicStateLabel, relicStore, unlocks, useSealedRelics } from "@/lib/sealed-relics";
 
 /** Sealed vault notes that are Biternam relics or Shadow Gate keycards. */
 export function SealedRelicsPanel({ compact = false }: { compact?: boolean }) {
@@ -19,6 +19,7 @@ export function SealedRelicsPanel({ compact = false }: { compact?: boolean }) {
                 {r.kind.type === "keycard" ? `KEYCARD · ${r.kind.slug}` : r.item?.name ?? r.label}
               </span>
               <span className={unlocks(r.state) ? "text-signal" : "text-muted-foreground"}>{relicStateLabel(r.state)}</span>
+              {r.kind.type === "keycard" && !unlocks(r.state) ? (() => { const d = keycardDenial([r], r.kind.slug); return d ? <span className="w-full text-[10px] text-muted-foreground">{d.reason} Next: {d.next}</span> : null; })() : null}
             </li>
           ))}
         </ul>
