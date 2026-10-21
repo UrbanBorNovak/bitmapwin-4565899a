@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RELIC_KINDS, RELIC_LABEL, TIER_LABEL, relicMasterHtml, relicMetadata, relicTribute, verifyRelic, withinTip, type RelicKind } from "@/lib/marauder-relics";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { CollectionParentBadge } from "@/components/CollectionParentBadge";
@@ -35,6 +35,7 @@ function RelicTxPreview({ height, tip, metadataBytes }: { height: number; tip: n
   const [rate, setRate] = useState("5");
   const [res, setRes] = useState<Awaited<ReturnType<typeof relicPreviewFn>> | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => { setRes(null); }, [height, tip, metadataBytes, addr, rate]);
   const run = async () => {
     setBusy(true); setRes(null);
     try {
@@ -127,7 +128,7 @@ function Relics() {
             <p className="text-accent">{check?.ok ? "✓ MATCHES THE BLOCK" : "✗ DOES NOT MATCH"} · {meta.v.split(";").length} VOXELS · 1 DRAW</p>
             <p className="text-primary">TIER: {TIER_LABEL[meta.r]}</p>
             <RelicPayoutReview height={height} tip={tip} />
-            <RelicTxPreview key={`${kind}-${height}`} height={height} tip={tip} metadataBytes={json.length} />
+            <RelicTxPreview height={height} tip={tip} metadataBytes={json.length} />
             <div>
               <p className="text-muted-foreground">RELIC DATA (TAG 5) · {json.length} BYTES</p>
               <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px]">{json}</pre>
