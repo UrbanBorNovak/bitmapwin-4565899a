@@ -19,7 +19,7 @@ function RelicPayoutReview({ height, tip }: { height: number; tip: number }) {
     parents: [], bitmapParentId: null, masterInscriptionId: null });
   const payoutOk = plan.ok || !plan.missing.some((m) => m === "HOLDER" || m === "TREASURY" || m === "TIP");
   return (
-    <div className="space-y-1 rounded border border-border p-2">
+    <div className="space-y-1 rounded border border-border bg-card p-2">
       <p className="text-muted-foreground">TRIBUTE: {t.total} SATS · {t.holder} TO BITMAP HOLDER · {t.treasury} TO TREASURY (+ MINER FEE)</p>
       <p className={holder ? "text-accent" : "text-destructive"}>
         HOLDER: {q.isLoading ? "CHECKING CHAIN…" : holder ? `${holder.slice(0, 10)}…${holder.slice(-6)} (VERIFIED LIVE)` : `NOT VERIFIED${q.data?.note ? ` — ${q.data.note}` : ""}`}
@@ -50,7 +50,7 @@ function RelicTxPreview({ height, tip, metadataBytes }: { height: number; tip: n
     finally { setBusy(false); }
   };
   return (
-    <div className="space-y-2 rounded border border-border p-2">
+    <div className="space-y-2 rounded border border-border bg-card p-2">
       <p className="text-primary">UNSIGNED TRANSACTION PREVIEW</p>
       <input value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="RELIC GOES TO (YOUR ADDRESS)" className="w-full rounded border border-border bg-background px-2 py-1 text-foreground" />
       <div className="flex gap-2">
