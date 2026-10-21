@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { BroadcastUnknown, VaultStorageError, loadHeld, restoreBackup, repairedHeld, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, VaultStorageError, loadHeld, restoreBackup, recoverInterruptedRestore, repairedHeld, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -538,7 +538,7 @@ describe("restoring backups with damaged or outdated recovery records", () => {
     reset();
     const r = await go();
     const pBefore = mem.get(PK);
-    const res = await restoreBackup(old, { outspend: unspent });
+    const res = await restoreBackup(old, { outspend: unspent, locks });
     expect(mem.get(PK)).toBe(pBefore);
     expect(res.restored).toEqual([]);
     expect(labels()).toEqual(["Key", "Map"]);
@@ -554,7 +554,7 @@ describe("restoring backups with damaged or outdated recovery records", () => {
     const a = go((p) => new Promise((res) => { release = () => res(mockWallet(p)); }));
     await new Promise((r) => setTimeout(r, 0));
     sealStore.setHeld([]); // pretend notes list was lost
-    const res = await restoreBackup(old, { outspend: unspent });
+    const res = await restoreBackup(old, { outspend: unspent, locks });
     expect(res.skippedInFlight.sort()).toEqual(["Key", "Map", "Pass"]);
     expect(intentStore.onAnchor(coin)).toHaveLength(1);
     release(); await a;
@@ -564,7 +564,7 @@ describe("restoring backups with damaged or outdated recovery records", () => {
   it("an interrupted signing survives a restore and still blocks new transfers", async () => {
     reset();
     intentStore.put({ anchor: { txid: coin.txid, vout: coin.vout }, address, network: "mainnet", at: "t", attempt: "x" });
-    await restoreBackup(old, { outspend: unspent });
+    await restoreBackup(old, { outspend: unspent, locks });
     expect(intentStore.onAnchor(coin)).toHaveLength(1);
     const spy = vi.fn(mockWallet);
     await expect(go(spy)).rejects.toThrow(/INTERRUPTED/);
@@ -573,38 +573,148 @@ describe("restoring backups with damaged or outdated recovery records", () => {
   });
   it("notes whose coin is spent on Bitcoin are not resurrected", async () => {
     reset(); sealStore.setHeld([]);
-    const res = await restoreBackup(old, { outspend: async () => ({ spent: true, txid: "f".repeat(64) }) });
+    const res = await restoreBackup(old, { outspend: async () => ({ spent: true, txid: "f".repeat(64) }), locks });
     expect(res.skippedSpent.sort()).toEqual(["Key", "Map", "Pass"]);
     expect(sealStore.held()).toEqual([]);
     globalThis.localStorage = real;
   });
   it("if the coin can't be checked, nothing is restored", async () => {
     reset(); sealStore.setHeld([]);
-    await expect(restoreBackup(old, { outspend: async () => { throw new Error("down"); } })).rejects.toThrow(/NOTHING RESTORED/);
+    await expect(restoreBackup(old, { outspend: async () => { throw new Error("down"); }, locks })).rejects.toThrow(/NOTHING RESTORED/);
     expect(sealStore.held()).toEqual([]);
     globalThis.localStorage = real;
   });
   it("a damaged transfer or signing record stops the restore and is never overwritten", async () => {
     for (const key of [PK, IK]) {
       reset(); mem.set(key, "{bad");
-      await expect(restoreBackup(old, { outspend: unspent })).rejects.toThrow(/DAMAGED/);
+      await expect(restoreBackup(old, { outspend: unspent, locks })).rejects.toThrow(/DAMAGED/);
       expect(mem.get(key)).toBe("{bad");
     }
     globalThis.localStorage = real;
   });
   it("a damaged notes list is healed from the backup, with every note once", async () => {
     reset(); mem.set(HK, JSON.stringify([{ junk: true }]));
-    const res = await restoreBackup(old, { outspend: unspent });
+    const res = await restoreBackup(old, { outspend: unspent, locks });
     expect(res.restored.sort()).toEqual(["Key", "Map", "Pass"]);
     expect(labels()).toEqual(["Key", "Map", "Pass"]);
-    await restoreBackup(old, { outspend: unspent }); // twice: no duplicates
+    await restoreBackup(old, { outspend: unspent, locks }); // twice: no duplicates
     expect(labels()).toEqual(["Key", "Map", "Pass"]);
     globalThis.localStorage = real;
   });
   it("a malformed backup file changes nothing", async () => {
     reset(); const before = new Map(mem);
-    await expect(restoreBackup({ held: [{ junk: 1 }] }, { outspend: unspent })).rejects.toThrow(/NOT A VALID/);
+    await expect(restoreBackup({ held: [{ junk: 1 }] }, { outspend: unspent, locks })).rejects.toThrow(/NOT A VALID/);
     expect(mem).toEqual(before);
     globalThis.localStorage = real;
+  });
+});
+
+describe("restore under storage failures, reloads, tab races and wallet switches", () => {
+  const mem = new Map<string, string>();
+  let failSet = new Set<string>();
+  const store = {
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => { if (failSet.has(k)) throw new DOMException("quota", "QuotaExceededError"); mem.set(k, v); },
+    removeItem: (k: string) => void mem.delete(k),
+  } as unknown as Storage;
+  const real = globalThis.localStorage;
+  const lk = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (lk.has(name)) return cb(null); lk.add(name); try { return await cb({}); } finally { lk.delete(name); } } };
+  const HK = "bitmapwin:sealed-notes", SK = "bitmapwin:sealed-sent", JK = "bitmapwin:sealed-restore-journal", PK = "bitmapwin:sealed-pending";
+  const unspent = async () => ({ spent: false });
+  const old = { held: bundle, recv: {}, sent: [{ label: "Old", code: "SEAL-x", at: "t" }] };
+  const reset = () => { mem.clear(); failSet = new Set(); lk.clear(); globalThis.localStorage = store; sealStore.setHeld([]); };
+  const go = (sign: (p: string) => Promise<string> = mockWallet) =>
+    runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign, currentWallet: () => address, locks });
+  const done = () => { globalThis.localStorage = real; };
+
+  it("a save failing halfway puts every record back as before (all or nothing)", async () => {
+    reset(); const before = new Map(mem);
+    failSet.add(SK); // notes list saves, then sent list fails
+    await expect(restoreBackup(old, { outspend: unspent, locks, address })).rejects.toThrow(/PUT BACK AS BEFORE/);
+    expect(mem).toEqual(before);
+    done();
+  });
+  it("if even the safety record can't be saved, nothing is touched", async () => {
+    reset(); const before = new Map(mem); failSet.add(JK);
+    await expect(restoreBackup(old, { outspend: unspent, locks, address })).rejects.toThrow(/SAFETY RECORD/);
+    expect(mem).toEqual(before);
+    done();
+  });
+  it("a crash mid-restore is undone on reload, without touching an unfinished transfer", async () => {
+    reset(); sealStore.setHeld(bundle);
+    const r = await go(); const pend = mem.get(PK); const heldBefore = mem.get(HK);
+    mem.set(JK, JSON.stringify({ prev: { [HK]: heldBefore, "bitmapwin:sealed-recv": null, [SK]: mem.get(SK) ?? null } }));
+    mem.set(HK, JSON.stringify(bundle)); // half-written stale notes
+    const l = loadHeld(); // "reload"
+    expect(mem.has(JK)).toBe(false);
+    expect(mem.get(PK)).toBe(pend);
+    expect(l.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map"]);
+    expect(l.every((h) => h.mine.txid === r.txid)).toBe(true);
+    done();
+  });
+  it("a damaged safety record blocks the vault instead of being ignored", () => {
+    reset(); mem.set(JK, "{bad");
+    expect(() => loadHeld()).toThrow(/DAMAGED/);
+    expect(() => recoverInterruptedRestore()).toThrow(/DAMAGED/);
+    expect(mem.get(JK)).toBe("{bad");
+    done();
+  });
+  it("Bitcoin checks are discarded if the wallet switches during them", async () => {
+    reset(); let cur: string | null = address;
+    const slow = async () => { cur = "bc1qother0000000000000000000000000000000"; return { spent: false }; };
+    await expect(restoreBackup(old, { outspend: slow, locks, address, currentWallet: () => cur })).rejects.toThrow(/WALLET OR NETWORK CHANGED/);
+    expect(sealStore.held()).toEqual([]);
+    done();
+  });
+  it("Bitcoin checks are discarded after a network switch", async () => {
+    reset(); let cur: string | null = address;
+    const slow = async () => { cur = "tb1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"; return { spent: false }; };
+    await expect(restoreBackup(old, { outspend: slow, locks, address, currentWallet: () => cur })).rejects.toThrow(/CHANGED/);
+    done();
+  });
+  it("two tabs restoring at once: the second is refused", async () => {
+    reset(); let release!: () => void;
+    const slow = () => new Promise<{ spent: boolean }>((res) => { release = () => res({ spent: false }); });
+    const a = restoreBackup(old, { outspend: slow, locks, address });
+    lk.add("bitmapwin:seal-restore"); // tab A has reached the write step
+    await expect(restoreBackup(old, { outspend: unspent, locks, address })).rejects.toThrow(/ANOTHER TAB IS RESTORING/);
+    lk.delete("bitmapwin:seal-restore"); release(); await a;
+    expect(sealStore.held().map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+    done();
+  });
+  it("a tab that starts signing during the Bitcoin check wins: the restore skips that coin", async () => {
+    reset(); sealStore.setHeld(bundle);
+    let release!: () => void;
+    const slow = () => new Promise<{ spent: boolean }>((res) => { release = () => res({ spent: false }); });
+    sealStore.setHeld([]);
+    const rest = restoreBackup(old, { outspend: slow, locks, address });
+    await new Promise((r) => setTimeout(r, 0));
+    sealStore.setHeld(bundle);
+    const tx = await go(); // other tab signs and files a transfer while restore waits
+    release();
+    const res = await rest;
+    expect(res.restored).toEqual([]); // nothing resurrected
+    expect(res.skippedInFlight).toEqual(["Pass"]); // the given note stays given
+    expect(sealStore.held().map((h) => h.c.note.label).sort()).toEqual(["Key", "Map"]);
+    expect(sealStore.held().every((h) => h.mine.txid === tx.txid)).toBe(true);
+    expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([tx.txid]);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/UNFINISHED TRANSFER/);
+    expect(spy).not.toHaveBeenCalled();
+    done();
+  });
+  it("a tab holding the coin's signing lock (wallet popup open) keeps the coin out of the restore", async () => {
+    reset(); lk.add(`bitmapwin:seal-anchor:${coin.txid}:${coin.vout}`);
+    const res = await restoreBackup(old, { outspend: unspent, locks, address });
+    expect(res.skippedInFlight).toHaveLength(3);
+    expect(sealStore.held()).toEqual([]);
+    done();
+  });
+  it("without a lock manager restore refuses rather than race", async () => {
+    reset();
+    await expect(restoreBackup(old, { outspend: unspent, address })).rejects.toThrow(/TWO TABS/);
+    done();
   });
 });

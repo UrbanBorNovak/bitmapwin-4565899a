@@ -392,53 +392,110 @@ export function repairedHeld(held: HeldSealed[], pending: PendingTransfer[]): He
 }
 /** Loads notes, repairing from saved transfers; writes back only if something changed. Throws on damaged records. */
 export function loadHeld(): HeldSealed[] {
+  recoverInterruptedRestore();
   const h = sealStore.held(), fixed = repairedHeld(h, pendingStore.all());
   if (fixed !== h) { try { sealStore.setHeld(fixed); } catch { /* still correct in memory */ } }
   return fixed;
 }
 
-/* ── guarded backup restore ── */
+/* ── guarded backup restore: locked, journaled (all-or-nothing), wallet-scoped ── */
 export type RestoreResult = { restored: string[]; skippedSpent: string[]; skippedInFlight: string[] };
-/** Writes a backup-owned record; may replace a DAMAGED notes/recv/sent record (never pending or intent records). */
-const healWrite = (k: string, v: unknown) => {
-  try { read(k, null); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; try { localStorage.removeItem(k); } catch { throw new VaultStorageError("BROWSER STORAGE IS UNAVAILABLE — NOTHING CHANGED"); } }
-  write(k, v);
-};
+const JK = "bitmapwin:sealed-restore-journal";
+const RESTORE_KEYS = [K.held, K.recv, K.sent];
+const rawGet = (k: string) => { try { return localStorage.getItem(k); } catch { throw new VaultStorageError("BROWSER STORAGE IS UNAVAILABLE — NOTHING CHANGED"); } };
+const rawPut = (k: string, v: string | null) => { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); if (localStorage.getItem(k) !== v) throw new Error("not kept"); };
+/**
+ * If a restore was cut off (crash, reload, storage failure), put the notes/recv/sent records back
+ * exactly as they were before it. Never touches signing or signed-transfer records.
+ */
+export function recoverInterruptedRestore(): boolean {
+  const j = rawGet(JK);
+  if (j == null) return false;
+  let prev: Record<string, string | null>;
+  try { prev = JSON.parse(j).prev; if (!prev || typeof prev !== "object") throw 0; }
+  catch { throw new VaultStorageError(`DAMAGED VAULT RECORD (${JK}) — RESTORE A BACKUP; NOTHING WAS CHANGED`); }
+  try { for (const k of RESTORE_KEYS) rawPut(k, prev[k] ?? null); localStorage.removeItem(JK); }
+  catch { throw new VaultStorageError("AN INTERRUPTED RESTORE COULDN'T BE UNDONE YET — NOTHING ELSE CHANGED, TRY AGAIN"); }
+  return true;
+}
+/** Holds the restore lock and every listed anchor lock at once (ifAvailable); busy anchors are reported, not waited on. */
+async function withLocks(lm: LockLike, names: string[], fn: (busy: Set<string>) => Promise<void>, busy = new Set<string>()): Promise<void> {
+  if (!names.length) return fn(busy);
+  const [n, ...rest] = names;
+  await lm.request(n!, { mode: "exclusive", ifAvailable: true }, async (l) => { if (!l) busy.add(n!); await withLocks(lm, rest, fn, busy); });
+}
 /**
  * Restores a backup without ever erasing an unfinished signing or signed transfer, resurrecting
- * notes whose coin is spent, or freeing a coin for a competing transfer. Fails closed.
+ * notes whose coin is spent, or freeing a coin for a competing transfer.
+ * All writes are journaled first: either every record is replaced or none is (recovered on next load).
  */
-export async function restoreBackup(backup: unknown, o: { outspend: (x: { txid: string; vout: number }) => Promise<{ spent: boolean; txid?: string }> }): Promise<RestoreResult> {
+export async function restoreBackup(backup: unknown, o: {
+  outspend: (x: { txid: string; vout: number }) => Promise<{ spent: boolean; txid?: string }>;
+  locks?: LockLike; address?: string | null; currentWallet?: () => string | null;
+}): Promise<RestoreResult> {
   const b = backup as { held?: unknown; recv?: unknown; sent?: unknown };
   if (!b || typeof b !== "object" || !VALID[K.held]!(b.held ?? []) || !VALID[K.recv]!(b.recv ?? {}) || !VALID[K.sent]!(b.sent ?? []))
     throw new Error("THIS IS NOT A VALID SEALED-NOTES BACKUP — NOTHING CHANGED");
-  // Recovery records are read fail-closed: a damaged one stops the restore entirely.
-  const pending = pendingStore.all(), intents = intentStore.all();
-  const blocked = new Set([...pending.map((p) => sealKey(p.anchor)), ...intents.map((i) => sealKey(i.anchor))]);
-  let current: HeldSealed[] = [];
-  try { current = sealStore.held(); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; }
-  const have = new Set(current.map((h) => noteKey(h.c.note.genesis)));
-  const res: RestoreResult = { restored: [], skippedSpent: [], skippedInFlight: [] };
-  const add: HeldSealed[] = [];
-  for (const h of (b.held ?? []) as HeldSealed[]) {
-    const nk = noteKey(h.c.note.genesis);
-    if (have.has(nk) || add.some((x) => noteKey(x.c.note.genesis) === nk)) continue;
-    if (blocked.has(sealKey(h.mine))) { res.skippedInFlight.push(h.c.note.label); continue; }
+  const lm = o.locks ?? (typeof navigator !== "undefined" ? (navigator as unknown as { locks?: LockLike }).locks : undefined);
+  if (!lm) throw new Error("THIS BROWSER CAN'T PREVENT TWO TABS CHANGING THE VAULT AT ONCE — USE AN UP-TO-DATE BROWSER");
+  const startWallet = o.address ?? null, startNet = networkOf(startWallet ?? "");
+  const walletMoved = () => { const c = o.currentWallet ? o.currentWallet() : startWallet; return c !== startWallet || networkOf(c ?? "") !== startNet; };
+  const bHeld = (b.held ?? []) as HeldSealed[];
+  // 1) Bitcoin checks, outside any lock (they're slow). Results are only trusted for the wallet that asked.
+  const spent = new Set<string>();
+  for (const a of [...new Set(bHeld.map((h) => sealKey(h.mine)))]) {
+    const h = bHeld.find((x) => sealKey(x.mine) === a)!;
     let os: { spent: boolean } | null = null;
     try { os = await o.outspend(h.mine); } catch { /* unavailable */ }
     if (!os) throw new Error("COULDN'T CHECK A NOTE'S COIN ON BITCOIN — NOTHING RESTORED, TRY AGAIN");
-    if (os.spent) { res.skippedSpent.push(h.c.note.label); continue; }
-    add.push(h); res.restored.push(h.c.note.label);
+    if (os.spent) spent.add(a);
   }
-  // Re-check recovery records right before writing (another tab may have started signing meanwhile).
-  const p2 = pendingStore.all(), i2 = intentStore.all();
-  const finalAdd = add.filter((h) => ![...p2.map((p) => p.anchor), ...i2.map((i) => i.anchor)].some((a) => sealKey(a) === sealKey(h.mine)));
-  healWrite(K.held, repairedHeld([...current, ...finalAdd], p2));
-  let recv: Record<string, Reveal> = {}, sent: { label: string; code: string; at: string }[] = [];
-  try { recv = sealStore.recv(); } catch { /* healed below */ }
-  try { sent = sealStore.sent(); } catch { /* healed below */ }
-  healWrite(K.recv, { ...(b.recv as Record<string, Reveal> ?? {}), ...recv });
-  const codes = new Set(sent.map((s) => s.code));
-  healWrite(K.sent, [...sent, ...((b.sent ?? []) as typeof sent).filter((s) => !codes.has(s.code))]);
-  return res;
+  if (walletMoved()) throw new Error("YOUR WALLET OR NETWORK CHANGED DURING THE CHECK — THOSE RESULTS WERE DISCARDED, NOTHING RESTORED");
+  // 2) Under the restore lock + every affected anchor lock: re-read, decide, journal, write — no awaits between.
+  const anchors = [...new Set(bHeld.map((h) => sealKey(h.mine)))].sort();
+  let res: RestoreResult | null = null, err: unknown = null;
+  await lm.request("bitmapwin:seal-restore", { mode: "exclusive", ifAvailable: true }, async (rl) => {
+    if (!rl) { err = new Error("ANOTHER TAB IS RESTORING A BACKUP — WAIT FOR IT TO FINISH"); return; }
+    await withLocks(lm, anchors.map((a) => `bitmapwin:seal-anchor:${a}`), async (busyNames) => {
+      try {
+        recoverInterruptedRestore();
+        if (walletMoved()) throw new Error("YOUR WALLET OR NETWORK CHANGED DURING THE CHECK — THOSE RESULTS WERE DISCARDED, NOTHING RESTORED");
+        const pending = pendingStore.all(), intents = intentStore.all(); // fail closed on damage
+        const blocked = new Set([...pending.map((p) => sealKey(p.anchor)), ...intents.map((i) => sealKey(i.anchor)), ...[...busyNames].map((n) => n.replace("bitmapwin:seal-anchor:", ""))]);
+        let current: HeldSealed[] = [], recv: Record<string, Reveal> = {}, sent: { label: string; code: string; at: string }[] = [];
+        try { current = sealStore.held(); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; }
+        try { recv = sealStore.recv(); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; }
+        try { sent = sealStore.sent(); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; }
+        const have = new Set(current.map((h) => noteKey(h.c.note.genesis)));
+        const r: RestoreResult = { restored: [], skippedSpent: [], skippedInFlight: [] };
+        const add: HeldSealed[] = [];
+        for (const h of bHeld) {
+          const nk = noteKey(h.c.note.genesis);
+          if (have.has(nk) || add.some((x) => noteKey(x.c.note.genesis) === nk)) continue;
+          if (blocked.has(sealKey(h.mine))) { r.skippedInFlight.push(h.c.note.label); continue; }
+          if (spent.has(sealKey(h.mine))) { r.skippedSpent.push(h.c.note.label); continue; }
+          add.push(h); r.restored.push(h.c.note.label);
+        }
+        const codes = new Set(sent.map((x) => x.code));
+        const next: Record<string, string> = {
+          [K.held]: JSON.stringify(repairedHeld([...current, ...add], pending)),
+          [K.recv]: JSON.stringify({ ...(b.recv as Record<string, Reveal> ?? {}), ...recv }),
+          [K.sent]: JSON.stringify([...sent, ...((b.sent ?? []) as typeof sent).filter((x) => !codes.has(x.code))]),
+        };
+        const prev: Record<string, string | null> = {};
+        for (const k of RESTORE_KEYS) prev[k] = rawGet(k);
+        try { rawPut(JK, JSON.stringify({ prev })); } catch { throw new VaultStorageError("COULD NOT SAVE THE RESTORE SAFETY RECORD — NOTHING RESTORED"); }
+        try { for (const k of RESTORE_KEYS) rawPut(k, next[k]!); }
+        catch {
+          try { recoverInterruptedRestore(); } catch { /* journal stays; undone on next load */ }
+          throw new VaultStorageError("COULD NOT SAVE THE RESTORED NOTES — EVERYTHING WAS PUT BACK AS BEFORE");
+        }
+        try { localStorage.removeItem(JK); } catch { /* harmless: next load would undo; but all writes landed */ }
+        if (rawGet(JK) != null) { recoverInterruptedRestore(); throw new VaultStorageError("COULD NOT FINISH THE RESTORE — EVERYTHING WAS PUT BACK AS BEFORE"); }
+        res = r;
+      } catch (e) { err = e; }
+    });
+  });
+  if (err) throw err;
+  return res!;
 }
