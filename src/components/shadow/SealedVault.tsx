@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  assertPlainCoin, broadcastTx, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
+  BroadcastUnknown, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -92,11 +92,23 @@ export function SealedVault() {
     for (const h of groups[quickCoin]!) { const n = noteKey(h.c.note.genesis); if (quickPick[n]) g[n] = quickTo.trim(); }
     setGive(g); setReview(quickCoin);
   });
+  const [unknown, setUnknown] = useState(false);
   const broadcast = () => run(async () => {
     if (!signed) return;
+    if (unknown) {
+      // A previous attempt had no reply: look the txid up before ever re-sending.
+      const seen = await txSeenOnChain(signed.txid);
+      if (seen === "seen") { setSentTx(signed.txid); setUnknown(false); setMsg("✓ IT DID REACH BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); return; }
+      if (seen === "unknown") throw new Error("STILL CAN'T REACH BITCOIN — OUTCOME UNKNOWN, NOTES KEPT AS THEY ARE");
+    }
     if (!window.confirm("Send this signed transaction to Bitcoin now? This can't be undone.")) return;
-    const t = await broadcastTx(signed.rawHex);
-    setSentTx(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+    try {
+      const t = await broadcastTx(signed.rawHex, signed.txid);
+      setUnknown(false); setSentTx(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+    } catch (e) {
+      if (e instanceof BroadcastUnknown) setUnknown(true);
+      throw e;
+    }
   });
   async function run(f: () => Promise<void>) { setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
@@ -146,8 +158,12 @@ export function SealedVault() {
   const cancel = (txid: string) => run(async () => {
     const before = sealStore.undo()[txid];
     if (!before) return;
+    const seen = await txSeenOnChain(txid);
+    if (seen === "seen") { setSentTx(txid); setUnknown(false); throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED"); }
+    if (seen === "unknown") throw new Error("COULDN'T CHECK BITCOIN — NOT CANCELLED, TRY AGAIN SHORTLY");
     const os = await mempoolChain().outspend(before[0]!.mine);
     if (os.spent) throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED HERE");
+    setUnknown(false);
     const next = [...held.filter((h) => h.mine.txid !== txid), ...before];
     store(next); setSigned(null); setMsg("PREPARED SPEND CANCELLED — NOTES ARE BACK ON THEIR COIN"); void check(next);
   });
@@ -254,13 +270,14 @@ export function SealedVault() {
           <div className="text-primary">SIGNED BY YOUR WALLET · NOT SENT. Send it yourself, then give each recipient their code.</div>
           <div className="mt-1">TRANSACTION {short(signed.txid)} · <a className="text-signal underline" href="https://mempool.space/tx/push" target="_blank" rel="noreferrer">BROADCAST AT MEMPOOL.SPACE</a></div>
           {sentTx ? <div className="mt-1 text-signal">✓ SENT · <a className="underline" href={`https://mempool.space/tx/${sentTx}`} target="_blank" rel="noreferrer">VIEW ON MEMPOOL</a></div>
-            : <button disabled={busy} onClick={broadcast} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1 text-primary">[ SEND TO BITCOIN NOW ]</button>}
+            : <button disabled={busy} onClick={broadcast} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1 text-primary">{unknown ? "[ CHECK ON BITCOIN FIRST ]" : "[ SEND TO BITCOIN NOW ]"}</button>}
           <textarea readOnly rows={2} value={signed.rawHex} onFocus={(e) => e.target.select()} className="mt-1 w-full rounded border border-border bg-background px-2 py-1" data-no-translate />
           {signed.sent.map((s) => (
             <div key={s.code} className="mt-2"><div>CODE FOR THE RECIPIENT OF "{s.label}"</div>
               <textarea readOnly rows={2} value={s.code} onFocus={(e) => e.target.select()} className="w-full rounded border border-border bg-background px-2 py-1" data-no-translate /></div>
           ))}
-          <button onClick={() => cancel(signed.txid)} className="mt-2 text-muted-foreground hover:text-foreground">[ I DIDN'T SEND IT — CANCEL ]</button>
+          {unknown ? <div className="mt-2 text-primary">OUTCOME UNKNOWN — every note stays as prepared. Press CHECK ON BITCOIN FIRST before cancelling or retrying.</div> : null}
+          {!sentTx ? <button disabled={busy} onClick={() => cancel(signed.txid)} className="mt-2 text-muted-foreground hover:text-foreground">[ I DIDN'T SEND IT — CANCEL ]</button> : null}
         </div>
       ) : null}
 

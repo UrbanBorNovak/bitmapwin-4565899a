@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -73,23 +73,48 @@ describe("give-or-keep review + mock wallet signing", () => {
   });
 });
 
-describe("broadcast failures (mocked network, nothing sent)", () => {
-  const txid = "d".repeat(64);
-  it("returns the txid on success", async () => {
-    const f = vi.fn(async () => new Response(txid, { status: 200 }));
-    expect(await broadcastTx("00", f as unknown as typeof fetch)).toBe(txid);
+describe("broadcast outcomes (mocked network, nothing sent)", () => {
+  const F = (f: (u: string, i?: RequestInit) => Promise<Response>) => f as unknown as typeof fetch;
+  const signedTx = () => prepareTransfer({ bundle, allHeld: bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: mockWallet });
+
+  it("returns the txid when Bitcoin accepts it", async () => {
+    const s = await signedTx();
+    expect(await broadcastTx(s.rawHex, s.txid, F(async () => new Response(s.txid)))).toBe(s.txid);
   });
-  it("surfaces a node rejection", async () => {
-    const f = async () => new Response("sendrawtransaction RPC error: bad-txns-inputs-missingorspent", { status: 400 });
-    await expect(broadcastTx("00", f as unknown as typeof fetch)).rejects.toThrow(/REJECTED.*missingorspent/);
+  it("a definite node rejection is reported as rejected", async () => {
+    const s = await signedTx();
+    await expect(broadcastTx(s.rawHex, s.txid, F(async () => new Response("bad-txns-inputs-missingorspent", { status: 400 })))).rejects.toThrow(/REJECTED/);
   });
-  it("reports a network outage as not sent", async () => {
-    const f = async () => { throw new TypeError("Failed to fetch"); };
-    await expect(broadcastTx("00", f as unknown as typeof fetch)).rejects.toThrow(/NOT SENT/);
+  it("'already in mempool' counts as sent", async () => {
+    const s = await signedTx();
+    expect(await broadcastTx(s.rawHex, s.txid, F(async () => new Response("txn-already-in-mempool", { status: 400 })))).toBe(s.txid);
   });
-  it("refuses an unexpected reply", async () => {
-    const f = async () => new Response("<html>oops</html>", { status: 200 });
-    await expect(broadcastTx("00", f as unknown as typeof fetch)).rejects.toThrow(/UNEXPECTED/);
+  it("a timeout is UNKNOWN, never 'not sent'", async () => {
+    const s = await signedTx();
+    const hang = F((_u, i) => new Promise((_, rej) => i?.signal?.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError")))));
+    const e = await broadcastTx(s.rawHex, s.txid, hang, 20).catch((x) => x);
+    expect(e).toBeInstanceOf(BroadcastUnknown);
+    expect((e as BroadcastUnknown).txid).toBe(s.txid);
+  });
+  it("a dropped connection, a 5xx, or an odd reply are UNKNOWN", async () => {
+    const s = await signedTx();
+    await expect(broadcastTx(s.rawHex, s.txid, F(async () => { throw new TypeError("Failed to fetch"); }))).rejects.toBeInstanceOf(BroadcastUnknown);
+    await expect(broadcastTx(s.rawHex, s.txid, F(async () => new Response("bad gateway", { status: 502 })))).rejects.toBeInstanceOf(BroadcastUnknown);
+    await expect(broadcastTx(s.rawHex, s.txid, F(async () => new Response("<html>")))).rejects.toBeInstanceOf(BroadcastUnknown);
+  });
+  it("after an unknown outcome, the txid lookup decides: seen / absent / still unknown", async () => {
+    const s = await signedTx();
+    expect(await txSeenOnChain(s.txid, F(async (u) => { expect(u).toContain(s.txid); return new Response('{"confirmed":false}'); }))).toBe("seen");
+    expect(await txSeenOnChain(s.txid, F(async () => new Response("Transaction not found", { status: 404 })))).toBe("absent");
+    expect(await txSeenOnChain(s.txid, F(async () => { throw new TypeError("offline"); }))).toBe("unknown");
+    expect(await txSeenOnChain(s.txid, F(async () => new Response("", { status: 503 })))).toBe("unknown");
+  });
+  it("every bundle note is preserved through an unknown outcome: kept + given cover the whole bundle", async () => {
+    const before = JSON.stringify(bundle);
+    const s = await signedTx();
+    await broadcastTx(s.rawHex, s.txid, F(async () => { throw new TypeError("x"); })).catch(() => {});
+    expect(JSON.stringify(bundle)).toBe(before);
+    expect([...s.kept.map((h) => h.c.note.label), ...s.sent.map((x) => x.label)].sort()).toEqual(["Key", "Map", "Pass"]);
   });
 });
 
