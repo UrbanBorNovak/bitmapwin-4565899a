@@ -92,11 +92,23 @@ export function SealedVault() {
     for (const h of groups[quickCoin]!) { const n = noteKey(h.c.note.genesis); if (quickPick[n]) g[n] = quickTo.trim(); }
     setGive(g); setReview(quickCoin);
   });
+  const [unknown, setUnknown] = useState(false);
   const broadcast = () => run(async () => {
     if (!signed) return;
+    if (unknown) {
+      // A previous attempt had no reply: look the txid up before ever re-sending.
+      const seen = await txSeenOnChain(signed.txid);
+      if (seen === "seen") { setSentTx(signed.txid); setUnknown(false); setMsg("✓ IT DID REACH BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); return; }
+      if (seen === "unknown") throw new Error("STILL CAN'T REACH BITCOIN — OUTCOME UNKNOWN, NOTES KEPT AS THEY ARE");
+    }
     if (!window.confirm("Send this signed transaction to Bitcoin now? This can't be undone.")) return;
-    const t = await broadcastTx(signed.rawHex);
-    setSentTx(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+    try {
+      const t = await broadcastTx(signed.rawHex, signed.txid);
+      setUnknown(false); setSentTx(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+    } catch (e) {
+      if (e instanceof BroadcastUnknown) setUnknown(true);
+      throw e;
+    }
   });
   async function run(f: () => Promise<void>) { setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
@@ -146,8 +158,12 @@ export function SealedVault() {
   const cancel = (txid: string) => run(async () => {
     const before = sealStore.undo()[txid];
     if (!before) return;
+    const seen = await txSeenOnChain(txid);
+    if (seen === "seen") { setSentTx(txid); setUnknown(false); throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED"); }
+    if (seen === "unknown") throw new Error("COULDN'T CHECK BITCOIN — NOT CANCELLED, TRY AGAIN SHORTLY");
     const os = await mempoolChain().outspend(before[0]!.mine);
     if (os.spent) throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED HERE");
+    setUnknown(false);
     const next = [...held.filter((h) => h.mine.txid !== txid), ...before];
     store(next); setSigned(null); setMsg("PREPARED SPEND CANCELLED — NOTES ARE BACK ON THEIR COIN"); void check(next);
   });
