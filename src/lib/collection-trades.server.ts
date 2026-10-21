@@ -9,6 +9,8 @@ import { salePriceOf } from "@/lib/sale-structure";
 const RECHECK_HOURS = 48;
 const BATCH = 6;
 const MAX_HOPS = 25;
+/** Payouts below this are postage/dust refunds in distribution txs, not sales. */
+const MIN_SALE_SATS = 1000;
 
 export type CollectionTradeRow = {
   txid: string; inscriptionId: string; sellerAddress: string | null; buyerAddress: string | null;
@@ -85,7 +87,7 @@ export async function crawlCollection(collection: string, ids: string[], priorit
   const { data: ours } = await db.from("offers").select("buyer_txid").in("inscription_id", picked).not("buyer_txid", "is", null);
   const ourTx = new Set((ours ?? []).map((o) => o.buyer_txid));
   const results = await Promise.all(picked.map(async (id) => ({ id, t: await traceVerified(id).catch(() => null) })));
-  const rows = results.flatMap(({ id, t }) => (t ?? []).filter((x) => x.priceSats > 0).map((x) => ({
+  const rows = results.flatMap(({ id, t }) => (t ?? []).filter((x) => x.priceSats >= MIN_SALE_SATS).map((x) => ({
     txid: x.txid, collection, inscription_id: id, seller_address: x.seller, buyer_address: x.buyer,
     price_sats: x.priceSats, block_height: x.blockHeight, block_time: x.blockTime,
     source: ourTx.has(x.txid) ? "BITMAPWIN" : "OTHER MARKETPLACE",
