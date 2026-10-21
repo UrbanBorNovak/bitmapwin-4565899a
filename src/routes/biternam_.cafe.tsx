@@ -59,6 +59,13 @@ function CafePage() {
   }, []);
   // Save only after loading, or the first render's defaults overwrite saved room progress.
   useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify({ held, distracted })); }, [loaded, held, distracted]);
+  // Lounge music starts on the first tap (browsers block autoplay) and respects the site-wide mute.
+  useEffect(() => {
+    const go = () => { if (localStorage.getItem("bitmapwin:sound-muted") !== "1") startCafeMusic(); };
+    window.addEventListener("pointerdown", go, { once: true });
+    return () => { window.removeEventListener("pointerdown", go); stopCafeMusic(); };
+  }, []);
+  useEffect(() => { setCafeMusicHot(distracted); }, [distracted]);
 
   const hitAs = (v: Verb, it: string | null, h: CafeHotspot) => {
     if (falling) return;
