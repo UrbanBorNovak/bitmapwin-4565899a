@@ -94,6 +94,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "CREATE",
     note: "Build on your BITMAP, make media, deploy experiences",
     items: [
+      { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
       { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
       { to: "/forge", label: "LAND FORGE", note: "Build voxels on your BITMAP and inscribe them" },
       { to: "/parcel", label: "PARCEL STUDIO", note: "Map and inscribe the real parcels of a BITMAP" },
@@ -101,7 +102,6 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/registry", label: "MODEL REGISTRY", note: "On-chain 3D models you can place" },
       { to: "/toon", label: "TOON STUDIO", note: "Script cartoon episodes" },
       { to: "/clips", label: "BITMAP CLIPS", note: "Turn a BITMAP into a 3D video (by @bitlodo)" },
-      { to: "/studio", label: "EXTENDER STUDIO", note: "Build an Extender" },
       { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
       { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool in one place" },
     ],
