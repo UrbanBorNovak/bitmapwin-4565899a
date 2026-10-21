@@ -1,6 +1,7 @@
 import { useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { EcoGallery } from "./EcoGallery";
 
 /** Every other Biternam interior as a Toon film set, voxel style matching BiternamSets. Animations read the timeline. */
 type V3 = [number, number, number];
@@ -78,7 +79,7 @@ export const ROOMS: Record<string, RoomSpec> = {
     { p: [-28, 8, -20], s: [12, 16, 10], c: "#3a3e46" }, { p: [-28, 22, -14.9], s: [10, 3, 0.2], c: "#000", e: T, anim: "pulse" }] },
 };
 
-function Room({ s, timeRef }: { s: RoomSpec; timeRef: MutableRefObject<number> }) {
+function Room({ s, timeRef, name }: { s: RoomSpec; timeRef: MutableRefObject<number>; name: string }) {
   const g = useRef<Group>(null);
   useFrame(() => { const t = timeRef.current;
     g.current?.children.forEach((c, i) => { const a = s.props[i]?.anim; if (!a) return;
@@ -96,6 +97,7 @@ function Room({ s, timeRef }: { s: RoomSpec; timeRef: MutableRefObject<number> }
         <mesh position={[0, 20, -30]}><boxGeometry args={[100, 40, 2]} /><meshStandardMaterial color={s.wall} /></mesh>
         <mesh position={[-50, 20, 0]}><boxGeometry args={[2, 40, 70]} /><meshStandardMaterial color={s.wall} /></mesh>
         <mesh position={[50, 20, 0]}><boxGeometry args={[2, 40, 70]} /><meshStandardMaterial color={s.wall} /></mesh>
+        <EcoGallery seed={name} trim={s.accent} />
       </>}
       {s.open && s.floor !== s.wall && <mesh position={[0, -0.6, 0]}><boxGeometry args={[100, 1, 70]} /><meshStandardMaterial color={s.floor} /></mesh>}
       <group ref={g}>
@@ -107,7 +109,7 @@ function Room({ s, timeRef }: { s: RoomSpec; timeRef: MutableRefObject<number> }
 
 export function BiternamRoomSet({ room, timeRef }: { room: string; timeRef: MutableRefObject<number> }) {
   const s = ROOMS[room];
-  return s ? <Room s={s} timeRef={timeRef} /> : null;
+  return s ? <Room s={s} timeRef={timeRef} name={room} /> : null;
 }
 
 /** Where cameras and wandering extras may go inside each film set (stage units; extras walk in units ÷10). */
