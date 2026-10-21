@@ -12,49 +12,61 @@ import { getAllShadowGatesFn } from "@/lib/shadow-assets.functions";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { toast } from "sonner";
 import { getPass } from "@/lib/shadow-vault";
-import { keycardDenial, relicStore } from "@/lib/sealed-relics";
+import { relicStore } from "@/lib/sealed-relics";
+import { GateAccess } from "@/lib/gate-access";
 import { enterShadowRoom } from "@/lib/shadow-room";
 import { tracyCue } from "@/lib/tracy-com";
 
 
 type Spot = { block: number; slug: string; title: string; active: boolean; x: number; z: number; y: number; yaw: number };
 
+/**
+ * Test harness (dev builds only): `window.__bwGateHarness = { x, z }` replaces the
+ * visitor's position for gate checks, and `window.__bwGates` lists archway spots.
+ * Production builds never read either.
+ */
+type Harness = { x: number; z: number } | null | undefined;
+const harnessPose = (): Harness => (import.meta.env.DEV && typeof window !== "undefined" ? (window as unknown as { __bwGateHarness?: Harness }).__bwGateHarness : null);
+
 const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const ref = useRef<THREE.Group>(null);
   const veil = useRef<THREE.MeshStandardMaterial>(null);
-  const armed = useRef(true);
-  /** this gate refused a keycard while the visitor stood in it */
-  const denied = useRef(false);
+  const gate = useRef(new GateAccess());
   // A RECHECK (or any fresh Bitcoin check) re-tests this gate in place, no walking away needed.
-  useEffect(() => relicStore.subscribe(() => { if (denied.current) armed.current = true; }), []);
+  useEffect(() => relicStore.subscribe(() => gate.current.relicsChanged()), []);
+  // STEPPING THROUGH — the pass is checked on this device only.
+  const step = (p: { x: number; z: number } | null) => {
+    const dist = p ? Math.hypot(p.x - s.x, p.z - s.z) : Infinity;
+    const a = gate.current.tick(dist, unit * 2.6, { slug: s.slug, active: s.active, hasPass: !!getPass(s.slug), relics: relicStore.get() });
+    if (a.kind === "closed") {
+      toast.error("GATEWAY SEALED", { description: `${s.title} IS CLOSED.` });
+      tracyCue({ kind: "sealed", title: s.title, reason: "closed" });
+    } else if (a.kind === "deny") {
+      if (!a.recheck) void relicStore.refresh();
+      toast("GATEWAY SEALED", { id: a.toastId, description: `${a.denial.reason} NEXT: ${a.denial.next}`, duration: 9000 });
+      if (!a.recheck) tracyCue({ kind: "sealed", title: s.title, reason: "no-pass" });
+    } else if (a.kind === "enter") {
+      enterShadowRoom({ slug: s.slug, title: s.title });
+    }
+  };
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  // Dev-only harness clock: steps the gate even when the 3D frame loop stalls (headless browsers).
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const w = window as unknown as { __bwGateTicks?: number };
+    const id = window.setInterval(() => { const hp = harnessPose(); if (hp) { w.__bwGateTicks = (w.__bwGateTicks ?? 0) + 1; stepRef.current(hp); } }, 150);
+    return () => window.clearInterval(id);
+  }, []);
   useFrame(({ clock }) => {
-    const p = pose.current;
+    const hp = harnessPose();
+    const p = hp ?? pose.current;
     const node = ref.current;
     if (!node) return;
     const dist = p ? Math.hypot(p.x - s.x, p.z - s.z) : Infinity;
     node.visible = !p || dist < WORLD_CELL * 3;
     if (veil.current) veil.current.emissiveIntensity = s.active ? 0.9 + Math.sin(clock.elapsedTime * 1.6) * 0.5 : 0.1;
-    // STEPPING THROUGH — the pass is checked on this device only.
-    const reach = unit * 2.6;
-    if (dist > reach * 2.2) { armed.current = true; denied.current = false; }
-    if (!armed.current || dist > reach) return;
-    armed.current = false;
-    if (!s.active) {
-      toast.error("GATEWAY SEALED", { description: `${s.title} IS CLOSED.` });
-      tracyCue({ kind: "sealed", title: s.title, reason: "closed" });
-      return;
-    }
-    const recheck = denied.current;
-    const denial = getPass(s.slug) ? null : keycardDenial(relicStore.get(), s.slug);
-    if (denial) {
-      if (!recheck) void relicStore.refresh();
-      denied.current = true;
-      toast("GATEWAY SEALED", { id: `gate-${s.slug}`, description: `${denial.reason} NEXT: ${denial.next}`, duration: 9000 });
-      if (!recheck) tracyCue({ kind: "sealed", title: s.title, reason: "no-pass" });
-      return;
-    }
-    denied.current = false;
-    enterShadowRoom({ slug: s.slug, title: s.title });
+    if (!hp) step(p);
   });
 
   const h = unit * 6;
@@ -125,5 +137,6 @@ export const ShadowArchways = memo(function ShadowArchways({ unit, pose }: { uni
       return [{ block: g.territoryBlock, slug: g.slug, title: g.title, active: g.isActive, x, z, y: groundY(x, z), yaw: Math.PI / 4 }];
     });
   }, [data]);
+  useEffect(() => { if (import.meta.env.DEV) (window as unknown as { __bwGates?: Spot[] }).__bwGates = spots; }, [spots]);
   return <group>{spots.map((s) => <Arch key={s.slug} s={s} unit={unit} pose={pose} />)}</group>;
 });

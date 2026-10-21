@@ -14,7 +14,7 @@ export function SealedRelicsPanel({ compact = false }: { compact?: boolean }) {
         <ul className="mt-1 space-y-1">
           {relics.map((r) => (
             <li key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-[11px]" title={r.item?.blurb}>
-              <span className="text-foreground">
+              <span className="text-signal">
                 <span className="mr-1 text-primary">{r.item?.icon ?? "⚷"}</span>
                 {r.kind.type === "keycard" ? `KEYCARD · ${r.kind.slug}` : r.item?.name ?? r.label}
               </span>
