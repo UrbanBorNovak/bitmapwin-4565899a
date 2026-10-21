@@ -753,13 +753,11 @@ describe("crashes during restore rollback and journal recovery, with another tab
     done();
   });
   it("a transfer saved after the restore wrote its notes is never rolled back by recovery", async () => {
-    reset(); crashedRestore(JSON.stringify(bundle));
-    mem.delete(JK); const r = await go(); // other tab ran before seeing the journal…
-    crashedRestore(JSON.stringify(bundle)); // …then the crashed journal is (re)found
-    mem.set(HK, JSON.stringify(sealStore.held())); // newer notes from that tab are on disk
-    // journal's "next" no longer matches what's on disk → recovery keeps the newer notes
+    reset(); const prevHeld = mem.get(HK);
+    const r = await go(); // other tab filed a transfer and saved newer notes
     const newer = mem.get(HK); const pend = mem.get(PK);
-    mem.set(JK, JSON.stringify({ ...JSON.parse(mem.get(JK)!), next: { [HK]: JSON.stringify(bundle) } }));
+    // a crashed restore's journal is found, whose own write was later overwritten by that tab
+    mem.set(JK, JSON.stringify({ prev: { [HK]: prevHeld, [RK]: null, [SK]: null }, next: { [HK]: JSON.stringify(bundle), [RK]: "{}", [SK]: "[]" } }));
     loadHeld();
     expect(mem.get(HK)).toBe(newer);
     expect(mem.get(PK)).toBe(pend);
