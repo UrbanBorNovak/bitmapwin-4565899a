@@ -65,6 +65,7 @@ const LOOK: Record<string, Look> = {
   joker: { body: "#4a1a6a", head: "#e8e2d0", accent: "#3ee07a" },
   "mr-gold": { body: "#6a5010", head: "#c8a040", accent: "#ffd23f" },
   "john-wick": { body: "#0b0b0f", head: "#3a2a20", accent: "#888888" },
+  "invest-geek": { body: "#2a3a5a", head: "#e6c3a0", accent: "#39ff88" },
   ladybird: { body: "#c8102e", head: "#f0cfae", accent: "#141414" }, // red shell, black spots
 };
 

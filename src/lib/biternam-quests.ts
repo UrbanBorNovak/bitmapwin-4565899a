@@ -103,8 +103,10 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "a", speaker: "MUSEUM CURATOR", mood: "smug", text: "Welcome. Every exhibit here is a block you can check yourself. Rumours stay outside.", choices: [
         { label: "Ask about the 2015 dust storm", next: "b" },
         { label: "Ask about the Halving gate", next: "c" },
+        { label: "Ask about the Night of Two Signatures", next: "d" },
       ] },
       { id: "b", speaker: "MUSEUM CURATOR", mood: "alarm", text: "Block 367,853. Over twelve thousand transactions sweeping dust. The record still stands. Some of it blew out to the Arena.", next: null },
+      { id: "d", speaker: "ASTRAL", mood: "smug", text: "The Night of Two Signatures? Invest Geek sent me row 1138. A third address paid that fee. The mask and the cook were both framed. Exhibit opens when they shake hands.", next: null },
       { id: "c", speaker: "MUSEUM CURATOR", mood: "idle", text: "Block 210,000, the first halving. The droid's clock stopped there. Show it the chain, not your opinions.", next: null },
     ] },
   },
@@ -521,12 +523,13 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   joker: "cdb42f9158c04f2a4f2af8ce00b400fc16d47f8db4c2337af9a7201393da097ci0", // The Joker
   "mr-gold": "b15f657c1c8a354cb94b4d429c94e1b4e18612ec66d9441bb22106dcd29d0a3bi0", // Mr Gold
   "john-wick": "2b8fb38ad194a8cff192534bfba594ed679f8c35bdf418c6f68f3d20c55acb95i0", // Jhon Wick
+  "invest-geek": "c863581a282dd169c08947b2a611e913659e2ec0d1023ce6bdabb3f6185411e7i0", // Invest Geek
   "space-monnkey": "0d12b9eb94bb4ad7c0a06803c1d9e1fe59a945f718bb3e296f554d0271f12f27i0", // Monkey King Pin Army
 };
 
 /** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
 export const BITERNAM_CREW = [
-  { id: "wierdamoto", name: "WIERDAMOTO", role: "Masked rebel leader", line: "Theatrical keeper of self-custody. Every sat belongs to its holder." },
+  { id: "wierdamoto", name: "WIERDAMOTO", role: "Masked rebel leader", line: "Theatrical keeper of self-custody. Co-wrote the first recipe with Bitoshi, then they fell out on the Night of Two Signatures." },
   { id: "dev9", name: "DEV9", role: "The veteran · Marauder", line: "Left the café booth to Dabber and moved into a Batcave under the bedrock. Twelve CRTs, one MARAUDER LOG." },
   { id: "bop", name: "BOP", role: "God-tier programmer · the Boptimization standard", line: "Writes code the compiler learns from. If it isn't boptimized, it isn't finished." },
   { id: "nine", name: "9", role: "Culture leader", line: "Gathers the Bitmappers and gives the park its soul." },
@@ -535,7 +538,7 @@ export const BITERNAM_CREW = [
   { id: "bitlodo", name: "BITLODO", role: "Cinema maestro", line: "Directs every raid like a movie. Frame by frame, forever." },
   { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
   { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
-  { id: "bitoshi", name: "BITOSHI", role: "The cook who broke bad", line: "Cooks pure block matter in an RV past the western rig. Stay out of his mempool." },
+  { id: "bitoshi", name: "BITOSHI", role: "The cook who broke bad", line: "Cooks pure block matter in an RV past the western rig. Still blames the mask for a 1-of-2 multisig gone wrong." },
   { id: "jahbooble", name: "JAHBOOBLE", role: "Bitmapper · keeper of the gate", line: "Greets every newcomer like family. Bless up, hold your keys." },
   { id: "mr-shiddy", name: "MR SHIDDY", role: "Bitmapper & engineer", line: "Fixes what Blockamoto called unfixable. Everything is load-bearing." },
   { id: "space-monnkey", name: "SPACE MONNKEY", role: "Insane graphic designer", line: "Sees palettes in block hashes. Paints at escape velocity." },
@@ -557,6 +560,8 @@ export const BITERNAM_CREW = [
   { id: "joker", name: "THE JOKER", role: "Villain · mempool clown", line: "Spams dust for the fee chart. Paid by IMAN in unconfirmed sats." },
   { id: "mr-gold", name: "MR. GOLD", role: "Guest · old-money convert", line: "Kept gold in a vault for forty years. Now checks his BITMAP every block." },
   { id: "john-wick", name: "JOHN WICK", role: "Guest · key keeper", line: "Quiet professional. Back for self-custody." },
+  { id: "curator", name: "ASTRAL", role: "Bitmapper · Bit Museum curator", line: "Only hangs chain-proven history. Is quietly assembling the Night of Two Signatures exhibit." },
+  { id: "invest-geek", name: "INVEST GEEK", role: "Bitmapper · spreadsheet oracle", line: "Tracks every fee since genesis. Found the third address behind the Wierdamoto–Bitoshi feud." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */
 export const CREW_MISSION_ROLE: Record<string, string> = {
