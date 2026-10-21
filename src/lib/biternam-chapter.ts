@@ -1,3 +1,4 @@
+import { cameraPlan, pickCoStars, pickExplorer, pickExtras, type CameraPreset } from "@/lib/biternam-cast";
 import { rng, type Music, type ToonEpisode, type ToonSet } from "@/lib/toon-script";
 
 /** Community Chronicles: a free, deterministic Biternam chapter built only from a block's own facts.
@@ -60,16 +61,17 @@ export function autoSet(f: BlockFacts): ChapterSet { return AUTO_SET[chapterThem
 
 /** What actually exists on this BITMAP. A Guardian is cast only when one was really awakened for the block.
  * guardianUnknown = the lookup failed or is still running: no Guardian is drawn and none is claimed absent. */
-export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet; guardianUnknown?: boolean };
-const EXPLORER = { model: "runner", skin: "hoodie" } as const;
+export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet; guardianUnknown?: boolean; seed?: number; camera?: CameraPreset };
 
 export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast: ChapterCast = { guardian: null, hasBuild: false }): ToonEpisode {
-  const theme = chapterTheme(f), t = THEME[theme], h = f.height;
+  const theme = chapterTheme(f), t = THEME[theme], h = f.height, seed = cast.seed ?? 0;
   const set = cast.set ?? autoSet(f);
-  const txLine = factsLine(f);
+  const cam = cameraPlan(cast.camera ?? "auto", h, seed);
+  const [a, b] = pickCoStars(h, seed);
+  const extras = pickExtras(h, seed);
   const hero = cast.guardian
     ? { height: h, name: `${h}.bitmap · ${cast.guardian.species}` }
-    : { height: h, name: `Explorer of ${h}.bitmap`, avatar: { ...EXPLORER } };
+    : { height: h, ...pickExplorer(h, seed) };
   const reply = cast.guardian ? "Then we read them all."
     : cast.guardianUnknown ? "The Guardian records are out of reach. I'll read them myself."
     : "No Guardian wakes here yet. I'll read them myself.";
@@ -78,15 +80,22 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
     title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
     scenes: [
       // Scene 1 is the real land: its inscribed build appears only if one is verified on chain.
-      { block: h, duration: 7, shot: "crane", sfx: landSfx,
+      { block: h, duration: 7, shot: cam.shots[0], sfx: landSfx,
         cast: [{ ...hero, x: 0, z: 3, pose: "walk", to: { x: 0, z: 0 }, moveStart: 0, moveEnd: 3 }],
-        lines: [{ at: 1, dur: 5, speaker: 0, text: quote, style: "thought", cam: "establish" }] },
-      { block: h, set, duration: 7, shot: "orbit", transition: "iris",
-        cast: [{ ...hero, x: -2, z: 0, pose: "talk" }, { height: h, name: "Cindy-9", x: 2, z: 0, pose: "wave", avatar: { model: "bot", skin: "cyber" } }],
-        lines: [{ at: 0.5, dur: 3, speaker: 1, text: txLine, style: "speech", cam: "two" }, { at: 3.8, dur: 3, speaker: 0, text: reply, style: "speech", cam: "close" }] },
-      { block: h, set, duration: 6, shot: "dolly", transition: "fade",
-        cast: [{ ...hero, x: 0, z: 0, pose: "dance", emote: "happy" }],
-        lines: [{ at: 1, dur: 4, speaker: 0, text: `Block ${h.toLocaleString("en-US")}. My chapter. On the record.`, style: "shout", cam: "close" }] },
+        lines: [{ at: 1, dur: 5, speaker: 0, text: quote, style: "thought", cam: cam.cams[0] }] },
+      { block: h, set, duration: 9, shot: cam.shots[1], transition: cam.transitions[0], extras,
+        cast: [{ ...hero, x: -3, z: 0, pose: "talk" }, { height: h, name: a.name, x: 3, z: 0, pose: "wave", avatar: a.avatar }],
+        lines: [
+          { at: 0.5, dur: 3, speaker: 1, text: factsLine(f), style: "speech", cam: cam.cams[1] },
+          { at: 3.6, dur: 2.5, speaker: 1, text: a.quip, style: "speech", cam: cam.cams[2] },
+          { at: 6.2, dur: 2.6, speaker: 0, text: reply, style: "speech", cam: cam.cams[3] },
+        ] },
+      { block: h, set, duration: 7, shot: cam.shots[2], transition: cam.transitions[1], extras,
+        cast: [{ ...hero, x: 0, z: 0, pose: "dance", emote: "happy" }, { height: h, name: b.name, x: 5, z: 2, pose: "jump", avatar: b.avatar }],
+        lines: [
+          { at: 0.8, dur: 3, speaker: 0, text: `Block ${h.toLocaleString("en-US")}. My chapter. On the record.`, style: "shout", cam: "close" },
+          { at: 4, dur: 2.6, speaker: 1, text: b.cheer, style: "shout", cam: cam.cams[2] },
+        ] },
     ],
   } as ToonEpisode;
 }

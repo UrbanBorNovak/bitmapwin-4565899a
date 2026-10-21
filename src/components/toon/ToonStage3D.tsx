@@ -94,6 +94,7 @@ import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { ModelGear, ToonAvatarBody } from "@/components/toon/ToonAvatarBody";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
+import { Patron } from "@/components/biternam/CafeLife";
 import { AVATAR_SKINS, isPixelSkin } from "@/lib/toon-avatars";
 import { DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
 import { sceneAt, actorPositionAt, activeCut, type ToonActor, type ToonEpisode, type ToonLine, type ToonScene, type Shot } from "@/lib/toon-script";
@@ -353,6 +354,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
             <mesh position={[0, -0.5, 0]}><boxGeometry args={[60, 1, 50]} /><meshStandardMaterial color="#e6d3a3" roughness={0.95} /></mesh></group>
         : <Land key={scene.block} block={scene.block} />}
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}-${a.avatar ? a.avatar.model + a.avatar.skin : "g"}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
+      {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={[(i - 1.5) * 2.2, -1.5 - (i % 2)]} seed={i * 3.7 + 1.3} bounds={{ x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={() => false} home={[0, -1]} /></group>)}
       <ToonVFXLayer cues={scene.fx} lib={lib} scene={index} timeRef={progressRef} />
       <Director key={index} scene={scene} local={local} lib={lib} />
     </SafeCanvas>
