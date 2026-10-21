@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as btc from "@scure/btc-signer";
-import { planRelicMint, revealPaysPlan } from "./relic-mint-guard";
+import { planRelicMint, revealPaysPlan, dustLimit } from "./relic-mint-guard";
 import { MASTER_PARENT_ID } from "./collection-parent";
 import { DONATION_ADDRESS } from "./donations";
 
@@ -23,7 +23,7 @@ describe("relic mint payout guard", () => {
     const r = planRelicMint(base);
     expect(r.ok && r.payouts.map((p) => p.sats)).toEqual([1050, 1050]);
   });
-  it("plain tier pays 546 + 546 (dust floor)", () => {
+  it("standard relic pays exactly 546 + 546 = 1092", () => {
     const r = planRelicMint({ ...base, height: 800001 });
     expect(r.ok && r.total).toBe(1092);
   });
@@ -45,5 +45,28 @@ describe("relic mint payout guard", () => {
     expect(revealPaysPlan(mockTx([[HOLDER, 1050], [DONATION_ADDRESS, 1050]]), r.payouts)).toEqual({ ok: true });
     expect(revealPaysPlan(mockTx([[HOLDER, 1050], [DONATION_ADDRESS, 1000]]), r.payouts).ok).toBe(false);
     expect(revealPaysPlan(mockTx([[DONATION_ADDRESS, 2100]]), r.payouts).ok).toBe(false);
+  });
+});
+
+describe("script-specific dust limits", () => {
+  const TR = "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297";
+  const WSH = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3";
+  const PKH = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
+  const SH = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
+  it("maps each script type to its Bitcoin Core dust limit", () => {
+    expect(dustLimit(PKH)).toBe(546); expect(dustLimit(SH)).toBe(540);
+    expect(dustLimit(HOLDER)).toBe(294); expect(dustLimit(WSH)).toBe(330); expect(dustLimit(TR)).toBe(330);
+    expect(dustLimit("garbage")).toBeNull();
+  });
+  it("standard 546-sat shares clear dust for every script type", () => {
+    for (const a of [PKH, SH, WSH, TR]) {
+      const r = planRelicMint({ ...base, height: 800001, holderAddress: a, parents: [{ inscriptionId: BM, address: a }, { inscriptionId: MASTER_PARENT_ID }] });
+      expect(r.ok && r.total).toBe(1092);
+    }
+  });
+  it("mock transaction paying both shares passes; underpaying holder fails", () => {
+    const r = planRelicMint({ ...base, height: 800001 }); if (!r.ok) throw new Error();
+    expect(revealPaysPlan(mockTx([[HOLDER, 546], [DONATION_ADDRESS, 546]]), r.payouts)).toEqual({ ok: true });
+    expect(revealPaysPlan(mockTx([[HOLDER, 545], [DONATION_ADDRESS, 546]]), r.payouts).ok).toBe(false);
   });
 });
