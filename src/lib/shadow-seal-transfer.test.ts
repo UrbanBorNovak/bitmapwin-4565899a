@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { BroadcastUnknown, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -143,7 +143,7 @@ describe("unresolved transfers survive reloads and only resolve on both chain fa
 
   const make = async () => {
     const r = await prepareTransfer({ bundle, allHeld: bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: mockWallet });
-    const p: PendingTransfer = { txid: r.txid, rawHex: r.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, sent: r.sent, at: "t", unknown: true };
+    const p: PendingTransfer = { txid: r.txid, rawHex: r.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, address, network: "mainnet", sent: r.sent, at: "t", unknown: true };
     return { r, p };
   };
 
@@ -188,5 +188,78 @@ describe("unresolved transfers survive reloads and only resolve on both chain fa
     pendingStore.put(p); pendingStore.put({ ...p, txid: "9".repeat(64) });
     pendingStore.drop(p.txid);
     expect(pendingStore.all().map((x) => x.txid)).toEqual(["9".repeat(64)]);
+  });
+});
+
+describe("two tabs, one anchor coin", () => {
+  // Fake Web Locks shared by two "tabs" (same origin storage + lock manager), like a real browser.
+  const held = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (held.has(name)) return cb(null);
+    held.add(name);
+    try { return await cb({ name }); } finally { held.delete(name); }
+  } };
+  const tab = (signer: (p: string) => Promise<string>) => withAnchorLock(coin, async () => {
+    const r = await prepareTransfer({ bundle, allHeld: bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: signer });
+    pendingStore.put({ txid: r.txid, rawHex: r.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, address, network: "mainnet", sent: r.sent, at: "t" });
+    return r;
+  }, locks);
+
+  it("while tab A's wallet popup is open, tab B is refused", async () => {
+    localStorage.removeItem("bitmapwin:sealed-pending");
+    let release!: () => void;
+    const slow = (p: string) => new Promise<string>((res) => { release = () => res(mockWallet(p)); });
+    const a = tab(slow);
+    await new Promise((r) => setTimeout(r, 0));
+    await expect(tab(mockWallet)).rejects.toThrow(/ANOTHER TAB IS SIGNING/);
+    release();
+    const ra = await a;
+    expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([ra.txid]);
+  });
+  it("after tab A finishes, tab B is refused by the stored unfinished transfer", async () => {
+    await expect(tab(mockWallet)).rejects.toThrow(/ALREADY HAS AN UNFINISHED TRANSFER/);
+    expect(pendingStore.onAnchor(coin)).toHaveLength(1);
+  });
+  it("a refused tab never reaches the wallet and changes no notes", async () => {
+    const before = JSON.stringify(bundle);
+    const spy = vi.fn(mockWallet);
+    await expect(tab(spy)).rejects.toThrow();
+    expect(spy).not.toHaveBeenCalled();
+    expect(JSON.stringify(bundle)).toBe(before);
+  });
+  it("tab A cancelling in the wallet frees the coin for tab B", async () => {
+    localStorage.removeItem("bitmapwin:sealed-pending");
+    await expect(tab(async () => { throw new Error("rejected"); })).rejects.toThrow(/SIGNING CANCELLED/);
+    expect(pendingStore.onAnchor(coin)).toHaveLength(0);
+    await expect(tab(mockWallet)).resolves.toBeTruthy();
+  });
+  it("without a lock manager it refuses rather than risk a race", async () => {
+    await expect(withAnchorLock(coin, async () => 1, undefined)).rejects.toThrow(/CAN'T PREVENT TWO TABS/);
+  });
+});
+
+describe("recovery is scoped to wallet and network", () => {
+  const other = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq";
+  const test = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
+  it("detects the network from the address", () => {
+    expect(networkOf(address)).toBe("mainnet");
+    expect(networkOf(test)).toBe("testnet");
+    expect(networkOf("bcrt1qxyz")).toBe("regtest");
+  });
+  it("switching wallet hides the other wallet's unfinished transfer but still guards its coin", async () => {
+    localStorage.removeItem("bitmapwin:sealed-pending");
+    const p: PendingTransfer = { txid: "7".repeat(64), rawHex: "00", anchor: { txid: coin.txid, vout: coin.vout }, address, network: "mainnet", sent: [{ label: "Pass", code: "x" }], at: "t" };
+    pendingStore.put(p);
+    expect(pendingStore.forWallet(address).map((x) => x.txid)).toEqual([p.txid]);
+    expect(pendingStore.forWallet(other)).toHaveLength(0);
+    expect(pendingStore.forWallet(test)).toHaveLength(0);
+    expect(pendingStore.onAnchor(coin)).toHaveLength(1);
+    // switching back restores it with its given note intact
+    expect(pendingStore.forWallet(address)[0]!.sent.map((s) => s.label)).toEqual(["Pass"]);
+  });
+  it("a record signed on another network is never shown to this wallet", () => {
+    localStorage.removeItem("bitmapwin:sealed-pending");
+    pendingStore.put({ txid: "8".repeat(64), rawHex: "00", anchor: { txid: "1".repeat(64), vout: 0 }, address, network: "testnet", sent: [], at: "t" });
+    expect(pendingStore.forWallet(address)).toHaveLength(0);
   });
 });
