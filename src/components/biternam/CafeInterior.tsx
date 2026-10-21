@@ -4,6 +4,9 @@ import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { CafeHotspot } from "@/lib/cafe-verbs";
+import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
+import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+const still = { current: false };
 
 const WALL = "#2f2622", WOOD = "#7a5233", DARK = "#4d321f", TRIM = "#f7931a", NEON = "#28e0ff";
 type HP = { onHit: (h: CafeHotspot) => void; onHover: (h: CafeHotspot | null) => void };
@@ -101,7 +104,10 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         {/* dev9 booth */}
         <mesh position={[-2.8, 0.4, 1.2]}><boxGeometry args={[1, 0.8, 2.2]} /><meshStandardMaterial color="#6b1f1f" /></mesh>
         <mesh position={[-1.8, 0.75, 1.2]}><boxGeometry args={[0.9, 0.08, 1.2]} /><meshStandardMaterial color={WOOD} /></mesh>
-        <Hot id="dev9" {...hp} position={[-2.7, 0.2, 1.2]} rotation={[0, Math.PI / 2, 0]}><Person body="#1a1a22" skin="#d9b08c" shades hot={hover === "dev9"} /></Hot>
+        <Hot id="dev9" {...hp} position={[-2.7, 0.2, 1.2]} rotation={[0, Math.PI / 2, 0]}>
+          <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hover === "dev9" ? 1 : 0.4} /></mesh>
+          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR.dev9!} pose="talk" movingRef={still} fallback={<Person body="#1a1a22" skin="#d9b08c" shades hot={hover === "dev9"} />} />
+        </Hot>
         <Hot id="jukebox" {...hp} position={[-3.4, 0, -2.8]} rotation={[0, 0.6, 0]}><Jukebox playing={distracted} hot={hover === "jukebox"} /></Hot>
         <Hot id="hatch" {...hp} position={[1.4, 0.02, 1.4]}>
           <mesh position-y={falling ? -0.4 : 0.02} rotation-x={falling ? 0.9 : 0}><boxGeometry args={[1.2, 0.06, 1.2]} /><meshStandardMaterial color="#3b2a1a" emissive={TRIM} emissiveIntensity={hover === "hatch" ? 0.4 : 0.08} /></mesh>
