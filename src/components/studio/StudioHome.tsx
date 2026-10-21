@@ -84,6 +84,18 @@ export function StudioHome() {
           { title: "STORE KIT", icon: <Package className="h-4 w-4" />, note: "Launch your own BITMAP shop.", link: <Link to="/store-kit" className={cta}>OPEN</Link> },
         ]}
       />
+
+      <Section
+        index="04"
+        title="PARCELS, MEDIA & DEPLOY"
+        lead="Map real parcels, script cartoons and put finished experiences on your land."
+        tools={[
+          { title: "PARCEL STUDIO", icon: <Layers className="h-4 w-4" />, note: "Map and inscribe the real parcels of a BITMAP.", link: <Link to="/parcel" className={cta}>OPEN</Link> },
+          { title: "TOON STUDIO", icon: <Clapperboard className="h-4 w-4" />, note: "Script cartoon episodes.", link: <Link to="/toon" className={cta}>OPEN</Link> },
+          { title: "DEPLOY", icon: <Package className="h-4 w-4" />, note: "Put an experience on your land.", link: <Link to="/extend" className={cta}>OPEN</Link> },
+          { title: "ALL TOOLS", icon: <Boxes className="h-4 w-4" />, note: "Every free and on-chain tool in one place.", link: <Link to="/tools" className={cta}>BROWSE</Link> },
+        ]}
+      />
     </div>
   );
 }
