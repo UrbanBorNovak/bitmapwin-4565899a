@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthSession } from "@/lib/auth";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { episodeLength, sceneAt } from "@/lib/toon-script";
+import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { styleFilter } from "@/lib/toon-style";
 import { CHAPTER_SETS, QUOTE_MAX, TITLE_MAX, autoSet, chapterEpisode, chapterTheme, defaultQuote, defaultTitle, type ChapterSet } from "@/lib/biternam-chapter";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +77,16 @@ function ChaptersPage() {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [playing, total]);
+  const [muted, setMuted] = useState(false);
+  const sound = useRef<{ ep: unknown; buf: Promise<AudioBuffer | null> } | null>(null);
+  useEffect(() => {
+    if (!playing || muted) return;
+    if (sound.current?.ep !== episode) sound.current = { ep: episode, buf: renderSoundtrack(episode).catch(() => null) };
+    let stop: (() => void) | null = null, live = true;
+    const startedAt = performance.now(), base = t0.current;
+    void sound.current.buf.then((b) => { if (live && b) stop = playSoundtrack(b, base + (performance.now() - startedAt) / 1000); });
+    return () => { live = false; stop?.(); };
+  }, [playing, muted, episode]);
   const at = sceneAt(episode, time);
   const scene = episode.scenes[at.index];
   const line = scene?.lines.find((l) => at.local >= l.at && at.local < l.at + l.dur);
@@ -124,7 +135,8 @@ function ChaptersPage() {
               </button>
             )}
           </div>
-          <div className="mt-2 font-mono text-[11px] text-muted-foreground">{episode.title} · {Math.round(total)}s · rendered live in your browser</div>
+          <button onClick={() => setMuted((m) => !m)} aria-pressed={!muted} className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10">{muted ? "[ SOUND OFF ]" : "[ SOUND ON ]"}</button>
+          <div className="mt-2 inline font-mono text-[11px] text-muted-foreground">{episode.title} · {Math.round(total)}s · rendered live in your browser</div>
         </div>
 
         <div className="space-y-4 rounded-lg border border-border bg-card p-4 font-mono text-xs">
