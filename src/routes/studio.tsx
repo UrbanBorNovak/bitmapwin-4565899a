@@ -75,6 +75,7 @@ function StudioPage() {
   if (!session) {
     return (
       <div className="mx-auto max-w-[900px] px-4 py-20 md:px-8">
+        <ExperienceFlow current="edit" />
         <div className="label text-bitcoin">BEDROCK · STUDIO</div>
         <h1 className="display mt-3 text-3xl md:text-5xl">EXTENDER STUDIO</h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">

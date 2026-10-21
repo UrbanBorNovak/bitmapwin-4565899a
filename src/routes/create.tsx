@@ -254,6 +254,7 @@ function CreatePage() {
   if (!session) {
     return (
       <div className="mx-auto max-w-[900px] px-4 py-20 md:px-8">
+        <ExperienceFlow current="describe" />
         <div className="label text-bitcoin">BEDROCK · CREATE WITH AI</div>
         <h1 className="display mt-3 text-3xl md:text-5xl">CREATE WITH AI</h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
