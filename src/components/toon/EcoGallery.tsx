@@ -34,7 +34,7 @@ function Frame({ id, position, rotation, size, trim }: { id: string; position: [
 
 type Box = { p: [number, number, number]; s: [number, number, number] };
 /** Back-wall slots (x, y) clear of every prop, away from the cast in the middle. */
-const CANDIDATES: [number, number][] = [[-40, 30], [40, 30], [-26, 30], [26, 30], [-40, 15], [40, 15], [-26, 15], [26, 15]];
+const CANDIDATES: [number, number][] = [[-40, 30], [40, 30], [-26, 30], [26, 30], [-40, 15], [40, 15], [-26, 15], [26, 15], [-40, 34], [40, 34], [-26, 34], [26, 34]];
 export function gallerySlots(props: Box[], size = 8, count = 4): [number, number][] {
   const h = size / 2 + 1;
   const free = CANDIDATES.filter(([x, y]) => !props.some((b) =>
