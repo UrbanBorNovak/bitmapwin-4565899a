@@ -35,7 +35,8 @@ export function collectionAddress(): string {
  * The BITMAPWIN master collection root, inscribed and transferred to the
  * platform collection address. An env override stays available for testing.
  */
-const MASTER_PARENT_DEFAULT = "9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0";
+import { MASTER_PARENT_ID } from "@/lib/collection-parent";
+const MASTER_PARENT_DEFAULT = MASTER_PARENT_ID;
 
 export function masterParentInscriptionId(): string | null {
   const raw = (process.env["MASTER_PARENT_INSCRIPTION_ID"] ?? "").trim().toLowerCase();

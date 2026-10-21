@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { RELIC_KINDS, RELIC_LABEL, TIER_LABEL, relicMasterHtml, relicMetadata, verifyRelic, withinTip, type RelicKind } from "@/lib/marauder-relics";
 import { useChainTip } from "@/lib/use-chain-tip";
+import { CollectionParentBadge } from "@/components/CollectionParentBadge";
 
 const TITLE = "Marauder Relics — dev9's BITMAP Collection";
 const DESC = "Lean on-chain voxel relics: one master viewer, each relic a child of its BITMAP, derived only from the block height.";
@@ -63,8 +64,9 @@ function Relics() {
               <p className="text-muted-foreground">RELIC DATA (TAG 5) · {json.length} BYTES</p>
               <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px]">{json}</pre>
             </div>
-            <p className="text-muted-foreground">PARENT: {height}.bitmap · VIEWER: master (not yet inscribed)</p>
+            <p className="text-muted-foreground">PLANNED PARENTS: collection + {height}.bitmap · VIEWER: master (not yet inscribed)</p>
           </>}
+          <CollectionParentBadge highlight="MARAUDER RELICS" />
         </div>
       </div>
     </main>
