@@ -275,7 +275,7 @@ export function VaultScene({ onHit, onHover, hover, st, hazard }: SceneProps<Vau
           <group position={[0.45, 0, 0.2]}><Shade body="#16061f" eye="#b026ff" /></group>
           <mesh rotation-x={-Math.PI / 2} position-y={0.02}><circleGeometry args={[0.9, 16]} /><meshBasicMaterial color="#ff1a1a" transparent opacity={hover === "villains" ? 0.35 : 0.1} /></mesh>
         </Hot>
-        <Hot id="ladder" {...hp} position={[3.7, 0, 2.6]}>
+        <Hot id="ladder" {...hp} position={[-3.5, 0, 2.8]}>
           {[-0.25, 0.25].map((x) => <mesh key={x} position={[x, 1.8, 0]}><boxGeometry args={[0.06, 3.6, 0.06]} /><meshStandardMaterial color="#7a4a22" metalness={0.4} emissive={TRIM} emissiveIntensity={hover === "ladder" ? 0.6 : 0} /></mesh>)}
           {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.4, 0]}><boxGeometry args={[0.5, 0.04, 0.04]} /><meshStandardMaterial color="#7a4a22" /></mesh>)}
         </Hot>
