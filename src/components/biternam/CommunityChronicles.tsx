@@ -9,7 +9,7 @@ export function CommunityChronicles() {
     <section className="mt-12 border-t border-border pt-10">
       <div className="font-mono text-[11px] tracking-[0.3em] text-bitcoin">COMMUNITY CHRONICLES</div>
       <p className="mt-2 text-sm text-muted-foreground">Chapters written by BITMAP holders, built from their own blocks.</p>
-      <Link to="/biternam/chapters" className="mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ WRITE YOUR CHAPTER · FREE ]</Link>
+      <Link to="/biternam/chapters" search={{ block: undefined }} className="mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ WRITE YOUR CHAPTER · FREE ]</Link>
       {(q.data ?? []).map((c) => (
         <section key={c.height} className="mt-8">
           <div className="font-mono text-[11px] tracking-[0.2em] text-signal" data-no-translate>CH.{c.height}</div>

@@ -60,8 +60,9 @@ function ChaptersPage() {
     return () => cancelAnimationFrame(raf);
   }, [playing, total]);
   const at = sceneAt(episode, time);
-  const line = at ? at.scene.lines.find((l) => at.local >= l.at && at.local < l.at + l.dur) : undefined;
-  const speaker = line && at ? at.scene.cast[line.speaker]?.name : undefined;
+  const scene = episode.scenes[at.index];
+  const line = scene?.lines.find((l) => at.local >= l.at && at.local < l.at + l.dur);
+  const speaker = line ? scene?.cast[line.speaker]?.name : undefined;
 
   const beyondTip = tip > 0 && height > tip;
   const choose = () => {
