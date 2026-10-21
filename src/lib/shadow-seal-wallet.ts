@@ -251,8 +251,74 @@ export async function withAnchorLock<T>(anchor: { txid: string; vout: number }, 
     if (!lock) return;
     ran = true;
     if (pendingStore.onAnchor(anchor).length) throw new Error("THIS COIN ALREADY HAS AN UNFINISHED TRANSFER — RESOLVE IT FIRST (MAYBE IN ANOTHER TAB)");
+    if (intentStore.onAnchor(anchor).length) throw new Error("A SIGNING ON THIS COIN WAS INTERRUPTED — CHECK IT ON BITCOIN FIRST");
     out = await fn();
   });
   if (!ran) throw new Error("ANOTHER TAB IS SIGNING A TRANSFER FOR THIS COIN — FINISH OR CLOSE IT FIRST");
   return out as T;
+}
+
+/* ── signing intents: written BEFORE the wallet opens, so a crash/reload mid-popup is never forgotten ── */
+export type SigningIntent = { anchor: { txid: string; vout: number }; address: string; network: BtcNetwork; at: string };
+const IK = "bitmapwin:sealed-intent";
+export const intentStore = {
+  all: () => read<SigningIntent[]>(IK, []),
+  onAnchor: (a: { txid: string; vout: number }) => read<SigningIntent[]>(IK, []).filter((i) => sealKey(i.anchor) === sealKey(a)),
+  forWallet: (address: string) => read<SigningIntent[]>(IK, []).filter((i) => i.address === address && i.network === networkOf(address)),
+  put: (i: SigningIntent) => write(IK, [...read<SigningIntent[]>(IK, []).filter((x) => sealKey(x.anchor) !== sealKey(i.anchor)), i]),
+  drop: (a: { txid: string; vout: number }) => write(IK, read<SigningIntent[]>(IK, []).filter((x) => sealKey(x.anchor) !== sealKey(a))),
+};
+
+/**
+ * The whole sign step under the anchor lock:
+ *   intent stored → wallet signs → notes, undo and pending stored in one synchronous step → intent dropped.
+ * The pending record is always filed under the wallet/network that STARTED signing, even if the
+ * user switched wallet or network while the popup was open (the result is then flagged).
+ */
+export async function runLockedTransfer(o: {
+  bundle: HeldSealed[]; give: Record<string, string>; coin: Coin; address: string; tapInternalKeyHex?: string | undefined;
+  feeRate: number; sign: (psbtB64: string) => Promise<string>;
+  currentWallet: () => string | null; locks?: LockLike; now?: () => string;
+}) {
+  const network = networkOf(o.address);
+  if (!network) throw new Error("UNKNOWN BITCOIN NETWORK FOR THIS WALLET");
+  const now = o.now ?? (() => new Date().toISOString());
+  const anchor = { txid: o.coin.txid, vout: o.coin.vout };
+  return withAnchorLock(anchor, async () => {
+    intentStore.put({ anchor, address: o.address, network, at: now() });
+    let r: Awaited<ReturnType<typeof prepareTransfer>>;
+    try {
+      r = await prepareTransfer({ ...o, allHeld: sealStore.held() });
+    } catch (e) { intentStore.drop(anchor); throw e; }
+    // From here on everything is synchronous: one tick, so no other tab can interleave.
+    const heldNow = sealStore.held();
+    const ck = sealKey(anchor);
+    if (heldNow.some((h) => sealKey(h.mine) === ck && !o.bundle.some((b) => noteKey(b.c.note.genesis) === noteKey(h.c.note.genesis)))) {
+      intentStore.drop(anchor);
+      throw new Error("NOTES ON THIS COIN CHANGED WHILE SIGNING — SIGNATURE DISCARDED, NOTHING SENT");
+    }
+    sealStore.setUndo({ ...sealStore.undo(), [r.txid]: o.bundle });
+    pendingStore.put({ txid: r.txid, rawHex: r.rawHex, anchor, address: o.address, network, sent: r.sent, at: now() });
+    sealStore.setSent([...sealStore.sent(), ...r.sent.map((x) => ({ ...x, at: now() }))]);
+    sealStore.setHeld([...heldNow.filter((h) => sealKey(h.mine) !== ck), ...r.kept]);
+    intentStore.drop(anchor);
+    const cur = o.currentWallet();
+    return { ...r, walletChanged: cur !== o.address || networkOf(cur ?? "") !== network };
+  }, o.locks);
+}
+
+/** An interrupted signing (crash/reload mid-popup) can be cleared only when no tab holds the lock and the anchor is provably unspent. */
+export async function clearInterrupted(anchor: { txid: string; vout: number }, outspend: (o: { txid: string; vout: number }) => Promise<{ spent: boolean; txid?: string }>, locks?: LockLike): Promise<"CLEARED" | "SPENT" | "UNRESOLVED" | "BUSY"> {
+  const lm = locks ?? (typeof navigator !== "undefined" ? (navigator as unknown as { locks?: LockLike }).locks : undefined);
+  if (!lm) return "UNRESOLVED";
+  let res: "CLEARED" | "SPENT" | "UNRESOLVED" | "BUSY" = "BUSY";
+  await lm.request(`bitmapwin:seal-anchor:${sealKey(anchor)}`, { mode: "exclusive", ifAvailable: true }, async (lock) => {
+    if (!lock) return;
+    let os: { spent: boolean } | null = null;
+    try { os = await outspend(anchor); } catch { /* unavailable */ }
+    if (!os) { res = "UNRESOLVED"; return; }
+    if (os.spent) { res = "SPENT"; return; }
+    intentStore.drop(anchor); res = "CLEARED";
+  });
+  return res;
 }
