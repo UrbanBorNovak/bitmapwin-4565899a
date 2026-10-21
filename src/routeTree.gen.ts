@@ -96,6 +96,7 @@ import { Route as BiternamLabRouteImport } from './routes/biternam_.lab'
 import { Route as BiternamLairRouteImport } from './routes/biternam_.lair'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
+import { Route as BiternamPixelsRouteImport } from './routes/biternam_.pixels'
 import { Route as BiternamReceiptRouteImport } from './routes/biternam_.receipt'
 import { Route as BiternamSafehouseRouteImport } from './routes/biternam_.safehouse'
 import { Route as BiternamStudioRouteImport } from './routes/biternam_.studio'
@@ -596,6 +597,11 @@ const BiternamOutpostRoute = BiternamOutpostRouteImport.update({
   path: '/biternam/outpost',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamPixelsRoute = BiternamPixelsRouteImport.update({
+  id: '/biternam_/pixels',
+  path: '/biternam/pixels',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamReceiptRoute = BiternamReceiptRouteImport.update({
   id: '/biternam_/receipt',
   path: '/biternam/receipt',
@@ -1003,6 +1009,7 @@ export interface FileRoutesByFullPath {
   '/biternam/lair': typeof BiternamLairRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
+  '/biternam/pixels': typeof BiternamPixelsRoute
   '/biternam/receipt': typeof BiternamReceiptRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
   '/biternam/studio': typeof BiternamStudioRoute
@@ -1151,6 +1158,7 @@ export interface FileRoutesByTo {
   '/biternam/lair': typeof BiternamLairRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
+  '/biternam/pixels': typeof BiternamPixelsRoute
   '/biternam/receipt': typeof BiternamReceiptRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
   '/biternam/studio': typeof BiternamStudioRoute
@@ -1304,6 +1312,7 @@ export interface FileRoutesById {
   '/biternam_/lair': typeof BiternamLairRoute
   '/biternam_/museum': typeof BiternamMuseumRoute
   '/biternam_/outpost': typeof BiternamOutpostRoute
+  '/biternam_/pixels': typeof BiternamPixelsRoute
   '/biternam_/receipt': typeof BiternamReceiptRoute
   '/biternam_/safehouse': typeof BiternamSafehouseRoute
   '/biternam_/studio': typeof BiternamStudioRoute
@@ -1458,6 +1467,7 @@ export interface FileRouteTypes {
     | '/biternam/lair'
     | '/biternam/museum'
     | '/biternam/outpost'
+    | '/biternam/pixels'
     | '/biternam/receipt'
     | '/biternam/safehouse'
     | '/biternam/studio'
@@ -1606,6 +1616,7 @@ export interface FileRouteTypes {
     | '/biternam/lair'
     | '/biternam/museum'
     | '/biternam/outpost'
+    | '/biternam/pixels'
     | '/biternam/receipt'
     | '/biternam/safehouse'
     | '/biternam/studio'
@@ -1758,6 +1769,7 @@ export interface FileRouteTypes {
     | '/biternam_/lair'
     | '/biternam_/museum'
     | '/biternam_/outpost'
+    | '/biternam_/pixels'
     | '/biternam_/receipt'
     | '/biternam_/safehouse'
     | '/biternam_/studio'
@@ -1911,6 +1923,7 @@ export interface RootRouteChildren {
   BiternamLairRoute: typeof BiternamLairRoute
   BiternamMuseumRoute: typeof BiternamMuseumRoute
   BiternamOutpostRoute: typeof BiternamOutpostRoute
+  BiternamPixelsRoute: typeof BiternamPixelsRoute
   BiternamReceiptRoute: typeof BiternamReceiptRoute
   BiternamSafehouseRoute: typeof BiternamSafehouseRoute
   BiternamStudioRoute: typeof BiternamStudioRoute
@@ -2544,6 +2557,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/outpost'
       fullPath: '/biternam/outpost'
       preLoaderRoute: typeof BiternamOutpostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/pixels': {
+      id: '/biternam_/pixels'
+      path: '/biternam/pixels'
+      fullPath: '/biternam/pixels'
+      preLoaderRoute: typeof BiternamPixelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/receipt': {
@@ -3216,6 +3236,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiternamLairRoute: BiternamLairRoute,
   BiternamMuseumRoute: BiternamMuseumRoute,
   BiternamOutpostRoute: BiternamOutpostRoute,
+  BiternamPixelsRoute: BiternamPixelsRoute,
   BiternamReceiptRoute: BiternamReceiptRoute,
   BiternamSafehouseRoute: BiternamSafehouseRoute,
   BiternamStudioRoute: BiternamStudioRoute,
