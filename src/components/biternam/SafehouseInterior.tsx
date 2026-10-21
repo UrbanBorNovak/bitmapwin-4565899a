@@ -118,7 +118,7 @@ export function SafehouseInterior({ onHit, onHover, hover, hasTorch, revealed, o
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42 }} style={{ imageRendering: "pixelated" }}
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
         <FixedCam />
         <color attach="background" args={["#0c0909"]} />
