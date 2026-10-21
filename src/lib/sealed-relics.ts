@@ -39,6 +39,43 @@ export function keycardOpens(relics: HeldRelic[], slug: string): boolean {
   return relics.some((r) => r.kind.type === "keycard" && r.kind.slug === slug && unlocks(r.state));
 }
 
+export type KeycardDenial = { reason: string; next: string };
+
+/** Why no keycard on this device opens `slug`, with what to do about it. Null when one opens it. */
+export function keycardDenial(relics: HeldRelic[], slug: string): KeycardDenial | null {
+  if (keycardOpens(relics, slug)) return null;
+  const cards = relics.filter((r) => r.kind.type === "keycard");
+  const mine = cards.filter((r) => r.kind.type === "keycard" && r.kind.slug === slug);
+  if (!mine.length) {
+    if (!cards.length) return { reason: "NO PASS OR SEALED KEYCARD FOR THIS GATE ON THIS DEVICE.", next: "Get a pass from the gate's host, or ask a holder to send you its sealed keycard." };
+    const others = cards.map((r) => (r.kind.type === "keycard" ? r.kind.slug : "")).join(", ");
+    return { reason: `WRONG GATE — YOUR KEYCARD OPENS ${others.toUpperCase()}, NOT ${slug.toUpperCase()}.`, next: "Walk to the archway your keycard names, or get a keycard for this gate." };
+  }
+  // Best state among this gate's keycards decides the message.
+  const rank = ["PENDING", "UNAVAILABLE", "CONFLICT", "MOVED", "NOT_YOURS", "LOST", "INVALID"];
+  const best = [...mine].sort((a, b) => rank.indexOf(a.state?.state ?? "UNAVAILABLE") - rank.indexOf(b.state?.state ?? "UNAVAILABLE"))[0]!;
+  const s = best.state;
+  if (!s) return { reason: "KEYCARD NOT CHECKED ON BITCOIN YET.", next: "Wait a moment and step through again." };
+  switch (s.state) {
+    case "PENDING":
+      return { reason: `KEYCARD PENDING · ${s.confirmations}/${FINAL_CONFIRMATIONS} CONFIRMATIONS.`, next: `Wait about ${(FINAL_CONFIRMATIONS - s.confirmations) * 10} minutes for Bitcoin to confirm, then step through again.` };
+    case "UNAVAILABLE":
+      return { reason: "COULD NOT REACH BITCOIN TO CHECK YOUR KEYCARD.", next: "Check your connection and press RECHECK in the quest log, then try again." };
+    case "CONFLICT":
+      return { reason: "KEYCARD IN CONFLICT — ITS COIN WAS SPENT IN A DIFFERENT TRANSFER.", next: "The other transfer wins. Ask the sender which handoff Bitcoin confirmed, or get a new keycard." };
+    case "LOST":
+      return { reason: "KEYCARD LOST — ITS COIN WAS SPENT WITHOUT A SEAL RECORD.", next: "It can't be recovered. Get a new pass or keycard from the gate's host." };
+    case "MOVED":
+      return { reason: "KEYCARD ALREADY SENT ON — ITS COIN HAS BEEN SPENT FROM THIS DEVICE.", next: "Whoever you sent it to holds it now. Ask them to send it back if you need entry." };
+    case "NOT_YOURS":
+      return { reason: "THIS KEYCARD WAS SENT TO SOMEONE ELSE'S RECEIVE CODE.", next: "Ask the sender to send it to a receive code made on this device." };
+    case "INVALID":
+      return { reason: "KEYCARD RECORD DOESN'T MATCH BITCOIN.", next: "Don't rely on it. Ask the sender for the keycard again." };
+    default:
+      return { reason: "KEYCARD DOES NOT OPEN THIS GATE.", next: "Open the vault to check its status." };
+  }
+}
+
 export function relicsFrom(held: HeldSealed[], states: Record<string, SealState>): HeldRelic[] {
   const out: HeldRelic[] = [];
   for (const h of held) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keycardKind, keycardOpens, parseRelicKind, relicKind, relicsFrom, unlocks } from "./sealed-relics";
+import { keycardDenial, keycardKind, keycardOpens, parseRelicKind, relicKind, relicsFrom, unlocks } from "./sealed-relics";
 import type { HeldSealed } from "./shadow-seal-wallet";
 
 const held = (kind: string, genesis: string): HeldSealed => ({
@@ -31,5 +31,16 @@ describe("sealed relics", () => {
     expect(unlocks({ state: "LOST", reason: "", spentBy: "" })).toBe(false);
     expect(unlocks({ state: "UNAVAILABLE", reason: "" })).toBe(false);
     expect(unlocks(null)).toBe(false);
+  });
+
+  it("explains each refusal with a next step", () => {
+    const one = (state: Parameters<typeof unlocks>[0]) => relicsFrom([held(keycardKind("gate-a"), "g")], state ? { g: state } : {});
+    expect(keycardDenial(one({ state: "SEALED", confirmations: 6 }), "gate-a")).toBeNull();
+    expect(keycardDenial(one({ state: "PENDING", confirmations: 2, reason: "" }), "gate-a")!.reason).toContain("2/6");
+    expect(keycardDenial(one({ state: "CONFLICT", reason: "", spentBy: "x" }), "gate-a")!.reason).toContain("CONFLICT");
+    expect(keycardDenial(one({ state: "LOST", reason: "", spentBy: "x" }), "gate-a")!.reason).toContain("LOST");
+    expect(keycardDenial(one({ state: "SEALED", confirmations: 6 }), "gate-b")!.reason).toContain("WRONG GATE");
+    expect(keycardDenial([], "gate-a")!.reason).toContain("NO PASS");
+    for (const d of [keycardDenial(one({ state: "LOST", reason: "", spentBy: "x" }), "gate-a"), keycardDenial([], "gate-a")]) expect(d!.next.length).toBeGreaterThan(0);
   });
 });
