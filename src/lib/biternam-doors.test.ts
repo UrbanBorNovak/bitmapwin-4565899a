@@ -8,6 +8,7 @@ describe("oasis interior doors", () => {
     it(`${id} door is reachable and outside every building`, () => {
       const d = doorSpot(id)!;
       expect(doorInReach(d.x, d.z)).toBe(id);
+      expect(d.z).toBeGreaterThan(0); // on walkable ground
       for (const lm of LANDMARKS) for (const s of landmarkSolids(lm)) expect(Math.hypot(s.x - d.x, s.z - d.z)).toBeGreaterThan(s.radius);
     });
   }

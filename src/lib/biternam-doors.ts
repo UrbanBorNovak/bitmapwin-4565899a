@@ -21,8 +21,14 @@ export function doorSpot(id: string) {
   const c = landmarkSpot(lm);
   const r = (lm.radius + 0.35) * WORLD_CELL;
   const a = lm.yaw + Math.PI / 4;
-  return { x: c.x + Math.cos(a) * r, z: c.z + Math.sin(a) * r, cx: c.x, cz: c.z };
+  let x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
+  // Buildings past the world's north edge get their doorway on the nearest walkable ground.
+  if (z < MIN_Z) { x = c.x; z = Math.max(MIN_Z, c.z + r); }
+  return { x, z, cx: c.x, cz: c.z };
 }
+
+/** Northern edge of walkable ground (row 0), in world units. */
+const MIN_Z = WORLD_CELL * 0.6;
 
 /** Doorway reach, in BITMAPS. */
 export const DOOR_REACH = 1;
