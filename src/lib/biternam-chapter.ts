@@ -1,5 +1,5 @@
 import { cameraPlan, pickCoStars, pickExplorer, pickExtras, type CameraPreset } from "@/lib/biternam-cast";
-import { rng, type Music, type ToonEpisode, type ToonSet } from "@/lib/toon-script";
+import { rng, type BiternamRoom, type Music, type ToonEpisode, type ToonSet } from "@/lib/toon-script";
 
 /** Community Chronicles: a free, deterministic Biternam chapter built only from a block's own facts.
  * Same (height, txCount, title, quote) → same episode on every device; nothing is rendered server-side. */
@@ -52,12 +52,22 @@ export function factsLine(f: BlockFacts): string {
 }
 
 /** Biternam voxel rooms a chapter can be staged in. */
-export type ChapterSet = "cafe" | "batcave" | "chinatown" | "vault";
+export type ChapterSet = "cafe" | "batcave" | "chinatown" | "vault" | `b-${BiternamRoom}`;
 export const CHAPTER_SETS: { v: ChapterSet; label: string }[] = [
   { v: "cafe", label: "Bit-Café" }, { v: "batcave", label: "dev9's Batcave" }, { v: "chinatown", label: "Skyscraper District" }, { v: "vault", label: "Biternam Vault" },
+  { v: "b-museum", label: "Bit Museum" }, { v: "b-arcade", label: "Mempool Arcade" }, { v: "b-lab", label: "BOP's Lab" }, { v: "b-studio", label: "Bitmap News Studio" },
+  { v: "b-outpost", label: "Bitoshi's Outpost" }, { v: "b-safehouse", label: "Wierdamoto's Safehouse" }, { v: "b-island", label: "Urban's Island Hotel" },
+  { v: "b-void", label: "Mempool Void" }, { v: "b-lair", label: "The Lair" }, { v: "b-basement", label: "The Basement" }, { v: "b-archive", label: "The Archive" },
+  { v: "b-canon", label: "Canon Crypt" }, { v: "b-holders", label: "Holders Lounge" }, { v: "b-receipt", label: "Receipt Office" },
+  { v: "b-fortress", label: "The Fortress" }, { v: "b-handshake", label: "Handshake Station" },
 ];
 const AUTO_SET: Record<ChapterTheme, ChapterSet> = { genesis: "vault", halving: "vault", patoshi: "batcave", crowded: "chinatown", quiet: "batcave", plain: "cafe" };
-export function autoSet(f: BlockFacts): ChapterSet { return AUTO_SET[chapterTheme(f)]; }
+const AUTO_POOL: Record<ChapterTheme, ChapterSet[]> = {
+  genesis: ["vault", "b-museum", "b-canon"], halving: ["vault", "b-fortress", "b-holders"], patoshi: ["batcave", "b-archive", "b-basement", "b-lab"],
+  crowded: ["chinatown", "b-arcade", "b-studio", "b-receipt", "b-handshake"], quiet: ["batcave", "b-void", "b-outpost", "b-lair"], plain: ["cafe", "b-island", "b-safehouse", "b-museum", "b-studio"],
+};
+/** Rooms rotate by block height so every Biternam build appears across blocks. */
+export function autoSet(f: BlockFacts): ChapterSet { const pool = AUTO_POOL[chapterTheme(f)]; return pool[Math.abs(f.height ?? 0) % pool.length] ?? AUTO_SET[chapterTheme(f)]; }
 
 /** What actually exists on this BITMAP. A Guardian is cast only when one was really awakened for the block.
  * guardianUnknown = the lookup failed or is still running: no Guardian is drawn and none is claimed absent. */
