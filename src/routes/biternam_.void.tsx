@@ -7,6 +7,10 @@ import { VOID_HOTSPOT_NAMES, resolveVoidVerb, type VoidHotspot } from "@/lib/voi
 import { playSfx, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { useFitHeight } from "@/hooks/use-fit-height";
 import type { TracyScript } from "@/lib/tracy-com";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { VOID_STEPS, voidStateFromCount } from "@/lib/void-progress";
+import { recordVoidStepFn, voidStatusFn } from "@/lib/void-progress.functions";
 
 export const Route = createFileRoute("/biternam_/void")({
   ssr: false,
@@ -44,6 +48,25 @@ function VoidPage() {
   const [say, setSay] = useState("You land on a rusty catwalk. Choose a verb, then click something in the Void.");
 
   useEffect(() => { try { setSt({ ...FRESH, ...JSON.parse(localStorage.getItem(KEY) || "{}") }); } catch { /* fresh */ } setLoaded(true); }, []);
+  const status = useServerFn(voidStatusFn);
+  const record = useServerFn(recordVoidStepFn);
+  const [signedIn, setSignedIn] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const resync = async () => { const r = await status(); if (r.ok) setSt(voidStateFromCount(r.count)); };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { if (data.session) { setSignedIn(true); void resync(); } });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Signed in: the server must accept the step before the room changes. */
+  const save = async (i: number, apply: () => void) => {
+    if (!signedIn) { apply(); return true; }
+    try {
+      const r = await record({ data: { index: i, key: VOID_STEPS[i]! } });
+      if (r.ok) { apply(); setNote(null); return true; }
+      setNote(r.status === "locked" ? "FINISH THE VOID HEIST FIRST" : r.status === "too_fast" ? "TOO FAST — TRY AGAIN" : r.status === "out_of_order" ? "OUT OF ORDER — RESYNCING" : "COULD NOT SAVE");
+      if (r.status === "out_of_order") void resync();
+    } catch { setNote("COULD NOT SAVE"); }
+    playSfx("deny"); return false;
+  };
   useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify(st)); }, [loaded, st]);
   useEffect(() => {
     const go = () => { if (localStorage.getItem("bitmapwin:sound-muted") !== "1") startCafeMusic("void"); };
@@ -58,8 +81,8 @@ function VoidPage() {
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
     if (r.effect === "exit") navigate({ to: "/biternam/cafe" });
-    if (r.effect === "pickup-block") setSt((s) => ({ ...s, hasBlock: true }));
-    if (r.effect === "confirm") { setSt((s) => ({ ...s, hasBlock: false, confirmed: true })); quake(1400); }
+    if (r.effect === "pickup-block") void save(1, () => setSt((s) => ({ ...s, hasBlock: true })));
+    if (r.effect === "confirm") void save(2, () => { setSt((s) => ({ ...s, hasBlock: false, confirmed: true })); quake(1400); });
     if (r.effect === "fall") quake(600);
     setItem(null);
   };
@@ -75,6 +98,8 @@ function VoidPage() {
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · BELOW THE TRAPDOOR</div>
           <div className="font-display text-2xl text-foreground">THE MEMPOOL VOID</div>
           {st.confirmed ? <div className="mt-1 text-[11px] text-primary">★ QUARANTINE LIFTED · ALL BLOCKS CONFIRMED</div> : null}
+          <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
+          {note ? <div className="mt-1 text-[11px] text-primary">{note}</div> : null}
         </div>
         {st.confirmed && shaking ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-primary/20">
@@ -84,7 +109,7 @@ function VoidPage() {
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
         {call ? (
           <div className="absolute right-4 top-16 z-50">
-            <TracyCom key={call} script={GHOST} voice={90} onEnd={() => { setSt((s) => ({ ...s, heard: true })); setCall(0); }} />
+            <TracyCom key={call} script={GHOST} voice={90} onEnd={() => { setCall(0); if (!st.heard) void save(0, () => setSt((s) => ({ ...s, heard: true }))); }} />
           </div>
         ) : null}
       </div>
