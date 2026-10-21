@@ -32,13 +32,15 @@ export function playSfx(s: Sfx) {
 /** Smoky lounge loop: slow Rhodes-ish chords, warm sub bass, vinyl hiss. Faster and brighter while the jukebox plays. */
 let music: { stop: () => void; setHot: (on: boolean) => void } | null = null;
 export function isCafeMusicOn() { return music !== null; }
-export type RoomMood = "cafe" | "museum" | "outpost";
+export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse";
 const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: OscillatorType; lp: number; lead: OscillatorType; hiss: number }> = {
   cafe: { chords: [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2], [164.8, 207.7, 246.9, 329.6]], beat: 0.6, wave: "triangle", lp: 1100, lead: "square", hiss: 0.08 },
   // Hushed gallery: suspended chords, long reverb tails, glassy chimes.
   museum: { chords: [[196, 293.7, 392, 440], [174.6, 261.6, 349.2, 392], [220, 329.6, 440, 493.9], [164.8, 246.9, 329.6, 370]], beat: 0.85, wave: "sine", lp: 1800, lead: "triangle", hiss: 0.03 },
   // Desert cook: low drone minor, gritty saw, dusty hiss.
   outpost: { chords: [[110, 164.8, 220, 261.6], [103.8, 155.6, 207.7, 246.9], [98, 146.8, 196, 233.1], [110, 164.8, 220, 277.2]], beat: 0.7, wave: "sawtooth", lp: 700, lead: "triangle", hiss: 0.12 },
+  // Rainy hideout: slow minor noir, soft square bells, heavy rain-like hiss.
+  safehouse: { chords: [[146.8, 174.6, 220, 261.6], [130.8, 155.6, 196, 233.1], [116.5, 146.8, 174.6, 220], [110, 138.6, 164.8, 207.7]], beat: 0.9, wave: "triangle", lp: 900, lead: "square", hiss: 0.16 },
 };
 export function startCafeMusic(mood: RoomMood = "cafe") {
   const M = MOODS[mood];
