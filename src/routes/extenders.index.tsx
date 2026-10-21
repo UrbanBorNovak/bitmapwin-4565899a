@@ -70,7 +70,7 @@ function ExtenderCatalogue() {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <DataBadge kind="live" note="PUBLISHED REGISTRY" />
         <Link to="/extend" className="btn-term">[ EXTEND MY LAND ]</Link>
-        <Link to="/studio" className="btn-term-ghost">[ OPEN EXTENDER STUDIO ]</Link>
+        <Link to="/studio" search={{ tool: "extenders" }} className="btn-term-ghost">[ OPEN EXTENDER STUDIO ]</Link>
         <Link to="/sdk" className="btn-term-ghost">[ READ THE SDK ]</Link>
       </div>
 
@@ -146,7 +146,7 @@ function ExtenderCatalogue() {
                 The registry is live and empty — nothing here is seeded or faked. The first published package appears the
                 moment a builder ships one from the studio.
               </p>
-              <Link to="/studio" className="btn-term mt-5 inline-flex">[ PUBLISH THE FIRST EXTENDER ]</Link>
+              <Link to="/studio" search={{ tool: "extenders" }} className="btn-term mt-5 inline-flex">[ PUBLISH THE FIRST EXTENDER ]</Link>
             </div>
           ) : (
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

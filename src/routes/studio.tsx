@@ -25,16 +25,20 @@ import { BlueprintEditor } from "@/components/studio/BlueprintEditor";
 import { PublishToAtlas } from "@/components/studio/PublishToAtlas";
 import { ShadowGateIssuer } from "@/components/studio/ShadowGateIssuer";
 import { EMPTY_BLUEPRINT, blueprintFromManifest, codeFromBlueprint, type Blueprint } from "@/lib/blueprint";
+import { StudioHome } from "@/components/studio/StudioHome";
 
 export const Route = createFileRoute("/studio")({
-  validateSearch: (search: Record<string, unknown>): { selected?: string } => {
+  validateSearch: (search: Record<string, unknown>): { selected?: string; tool?: "extenders" } => {
     const selected = search["selected"];
-    return typeof selected === "string" && selected.length > 0 ? { selected } : {};
+    const out: { selected?: string; tool?: "extenders" } = {};
+    if (typeof selected === "string" && selected.length > 0) out.selected = selected;
+    if (search["tool"] === "extenders") out.tool = "extenders";
+    return out;
   },
   head: () => {
-    const title = "Extender Studio — Describe It, Test It, Ship It";
+    const title = "BITMAPWIN Studio — Build, Script and Ship on Bitcoin Land";
     const description =
-      "Build extenders for Bitcoin land in plain English: an AI writes the world code, you test it on a tile in the same sandbox the world uses, then publish and deploy.";
+      "The creator home for Bitcoin-native worlds: Land Forge builds, Extender experiences, reusable BWVX pieces and collections, all proven on Bitcoin.";
     return {
       meta: [
         { title },
@@ -46,8 +50,14 @@ export const Route = createFileRoute("/studio")({
       ],
     };
   },
-  component: StudioPage,
+  component: StudioRoute,
 });
+
+function StudioRoute() {
+  const { selected, tool } = Route.useSearch();
+  if (!selected && tool !== "extenders") return <StudioHome />;
+  return <StudioPage />;
+}
 
 function StudioPage() {
   const { selected: searchSelected } = Route.useSearch();
@@ -55,6 +65,7 @@ function StudioPage() {
   const userId = session?.user?.id ?? null;
   const mine = useQuery(myExtendersQuery(userId));
   const [selected, setSelected] = useState<string | null>(searchSelected ?? null);
+
 
   if (loading) {
     return <p className="mx-auto max-w-[1300px] px-4 py-20 font-mono text-sm text-muted-foreground md:px-8">&gt; CHECKING SESSION…</p>;
