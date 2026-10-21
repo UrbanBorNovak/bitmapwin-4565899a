@@ -58,8 +58,9 @@ export const CHAPTER_SETS: { v: ChapterSet; label: string }[] = [
 const AUTO_SET: Record<ChapterTheme, ChapterSet> = { genesis: "vault", halving: "vault", patoshi: "batcave", crowded: "chinatown", quiet: "batcave", plain: "cafe" };
 export function autoSet(f: BlockFacts): ChapterSet { return AUTO_SET[chapterTheme(f)]; }
 
-/** What actually exists on this BITMAP. A Guardian is cast only when one was really awakened for the block. */
-export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet };
+/** What actually exists on this BITMAP. A Guardian is cast only when one was really awakened for the block.
+ * guardianUnknown = the lookup failed or is still running: no Guardian is drawn and none is claimed absent. */
+export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet; guardianUnknown?: boolean };
 const EXPLORER = { model: "runner", skin: "hoodie" } as const;
 
 export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast: ChapterCast = { guardian: null, hasBuild: false }): ToonEpisode {
@@ -69,7 +70,9 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   const hero = cast.guardian
     ? { height: h, name: `${h}.bitmap · ${cast.guardian.species}` }
     : { height: h, name: `Explorer of ${h}.bitmap`, avatar: { ...EXPLORER } };
-  const reply = cast.guardian ? "Then we read them all." : "No Guardian wakes here yet. I'll read them myself.";
+  const reply = cast.guardian ? "Then we read them all."
+    : cast.guardianUnknown ? "The Guardian records are out of reach. I'll read them myself."
+    : "No Guardian wakes here yet. I'll read them myself.";
   const landSfx = cast.hasBuild ? "BUILT!" : theme === "halving" ? "HODL!" : "WHOOSH!";
   return {
     title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
