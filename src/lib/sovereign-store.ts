@@ -46,7 +46,7 @@ function pull(){return new Promise(done=>{const ev=new Map();let left=C.relays.l
   ws.onerror=()=>{if(!ok){ok=true;clearTimeout(t);fin()}};}
  if(!left)done([])})}
 const tag=(e,k)=>(e.tags.find(x=>x[0]===k)||[])[1];
-let oci=null;function canon(h){if(h>C.ociLast)return Promise.resolve(null);oci=oci||import(ORD+'/content/'+C.oci+(ORD?'?origin='+ORD:''));return oci.then(m=>m.getBitmapInscriptionId(h)).catch(()=>null)}
+function canon(h){return BM.oci(h)}
 async function check(e){const h=Number(tag(e,'height')),id=String(tag(e,'inscription')||''),ut=String(tag(e,'utxo')||''),price=Number(tag(e,'price')),b=tag(e,'psbt');
  if(!(h>=0)||!/^[0-9a-f]{64}i\d+$/.test(id)||!/^[0-9a-f]{64}:\d+$/.test(ut)||!b)return null;
  const p=pp(b);if(p.tx.ins.length!==1||p.tx.outs.length!==1||op(p.tx.ins[0])!==ut||p.tx.outs[0].val!==price||!signed(p.ins[0]))return null;
