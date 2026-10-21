@@ -52,13 +52,13 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
   stepRef.current = step;
   // Dev-only harness clock: steps the gate even when the 3D frame loop stalls (headless browsers).
   useEffect(() => {
-    if (!harnessAllowed()) return;
+    if (!import.meta.env.DEV || !harnessAllowed()) return;
     const w = window as unknown as { __bwGateTicks?: number };
     const id = window.setInterval(() => { const hp = harnessPose(); if (hp) { w.__bwGateTicks = (w.__bwGateTicks ?? 0) + 1; stepRef.current(hp); } }, 150);
     return () => window.clearInterval(id);
   }, []);
   useFrame(({ clock }) => {
-    const hp = harnessPose();
+    const hp = import.meta.env.DEV ? harnessPose() : null;
     const p = hp ?? pose.current;
     const node = ref.current;
     if (!node) return;
@@ -136,6 +136,6 @@ export const ShadowArchways = memo(function ShadowArchways({ unit, pose }: { uni
       return [{ block: g.territoryBlock, slug: g.slug, title: g.title, active: g.isActive, x, z, y: groundY(x, z), yaw: Math.PI / 4 }];
     });
   }, [data]);
-  useEffect(() => { if (harnessAllowed()) (window as unknown as { __bwGates?: Spot[] }).__bwGates = spots; }, [spots]);
+  useEffect(() => { if (import.meta.env.DEV && harnessAllowed()) (window as unknown as { __bwGates?: Spot[] }).__bwGates = spots; }, [spots]);
   return <group>{spots.map((s) => <Arch key={s.slug} s={s} unit={unit} pose={pose} />)}</group>;
 });
