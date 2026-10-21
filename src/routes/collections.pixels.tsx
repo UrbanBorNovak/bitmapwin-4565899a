@@ -8,7 +8,7 @@ const DESC = "4,320 BITMAP Pixels avatars across 174 series, shown as live 3D av
 const ITEMS = PIXELS.map((p) => ({ id: p.id, label: p.name, sub: p.artist }));
 
 export const Route = createFileRoute("/collections/pixels")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s.q === "string" ? s.q : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : undefined }),
   head: () => ({ meta: [
     { title: TITLE }, { name: "description", content: DESC },
     { property: "og:title", content: TITLE }, { property: "og:description", content: DESC },
