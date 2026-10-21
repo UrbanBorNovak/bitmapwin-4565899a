@@ -37,7 +37,7 @@ export const ROOMS: Record<string, RoomSpec> = {
     { p: [0, 5, -12], s: [40, 10, 10], c: "#2a2e3a", m: 0.5 }, { p: [0, 10.4, -12], s: [41, 0.6, 11], c: T, m: 0.7 },
     ...row(9, (i) => ({ p: [(i % 3) * 12 - 12, 18 + Math.floor(i / 3) * 7, -28.6], s: [10, 6, 0.4], c: "#000", e: i % 2 ? N : T, anim: "pulse" })),
     { p: [30, 34, -28.6], s: [14, 4, 0.4], c: R, e: R, anim: "pulse" }] },
-  void: { bg: "#020206", floor: "#2a2a30", alt: "#1a1a20", wall: "#020206", amb: "#6a7aff", key: "#5aff8a", accent: T, open: true, props: [
+  void: { bg: "#020206", floor: "#020206", alt: "#1a1a20", wall: "#020206", amb: "#6a7aff", key: "#5aff8a", accent: T, open: true, props: [
     ...row(10, (i) => ({ p: [0, -0.5, 30 - i * 8], s: [12, 1, 7.6], c: i % 2 ? "#2a2a30" : "#5a3a28", m: 0.6 })),
     ...row(12, (i) => ({ p: [(i % 2 ? 1 : -1) * (20 + (i * 7) % 20), 5 + (i * 13) % 30, -10 - i * 6], s: [6, 6, 6], c: "#111", e: i % 3 ? "#5aff8a" : T, anim: "bob" }))] },
   island: { bg: "#3a1a30", floor: "#e6d3a3", alt: "#d8c290", wall: "#ff8a5a", amb: "#ffd0a0", key: "#ff9050", accent: N, open: true, props: [
