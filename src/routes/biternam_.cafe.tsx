@@ -74,7 +74,7 @@ function CafePage() {
     if (r.text) setSay(r.text);
     playSfx(r.effect === "talk" ? "talk" : r.effect === "pickup-coin" ? "pickup" : r.effect === "distract" ? "dance" : r.effect === "trapdoor" ? "fall" : r.effect === "exit" ? "door" : r.effect ? "verb" : "deny");
     if (r.effect === "talk") { const p = questStore.get(); setMission({ m: missionStepFor("dev9", p), held: heldItems(p) }); setCall(Date.now()); }
-    if (r.effect === "exit") navigate({ to: "/map" });
+    if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "pickup-coin") setHeld((p) => [...p, "coin"]);
     if (r.effect === "distract") { setDistracted(true); setHeld((p) => p.filter((x) => x !== "coin")); }
     if (r.effect === "trapdoor") { setFalling(true); setTimeout(() => { setFalling(false); setSay("You land in the doorway, dusty but unconfirmed. Cindy: 'Told you. Never trust a VIP hatch.'"); }, 1800); }

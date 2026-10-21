@@ -61,7 +61,7 @@ function LabPage() {
     playSfx(r.effect === "talk" ? "talk" : r.effect === "deploy" ? "dance" : r.effect === "exit" ? "door" : r.effect === "steam" ? "fall" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
-    if (r.effect === "exit") navigate({ to: "/map" });
+    if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "edit") { setSt((s) => ({ ...s, seen: true })); setRemoved([]); setEditing(true); }
     if (r.effect === "deploy") { setSt((s) => ({ ...s, deployed: true })); setCall(Date.now()); }
     if (r.effect === "steam") { setSteam(true); setTimeout(() => setSteam(false), 1800); }

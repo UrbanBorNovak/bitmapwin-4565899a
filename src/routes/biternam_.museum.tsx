@@ -53,7 +53,7 @@ function MuseumPage() {
     playSfx(r.effect === "talk" ? "talk" : r.effect?.startsWith("pickup") ? "pickup" : r.effect === "exit" ? "door" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
-    if (r.effect === "exit") navigate({ to: "/map" });
+    if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "pickup-lens") setHeld((p) => [...p, "lens"]);
     if (r.effect === "solve") setSolved(true);
     setItem(null);

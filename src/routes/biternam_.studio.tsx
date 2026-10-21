@@ -60,7 +60,7 @@ function StudioPage() {
     playSfx(r.effect === "talk" ? "talk" : r.effect === "air" ? "dance" : r.effect === "exit" ? "door" : r.effect === "blind" ? "fall" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
-    if (r.effect === "exit") navigate({ to: "/map" });
+    if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "edit") { setSt((s) => ({ ...s, wireRead: true })); setEditing(true); }
     if (r.effect === "air") { setSt((s) => ({ ...s, onAir: true })); setCall(Date.now()); }
     if (r.effect === "blind") { setBlind(true); setTimeout(() => setBlind(false), 1800); }
