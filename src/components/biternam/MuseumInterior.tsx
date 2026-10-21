@@ -18,7 +18,7 @@ const VISITORS = [
   { skin: "c7f3e81bcb2802c0694bcec90570955ef276f7a75a3955a47a3965a2faf617d7i0", start: [-0.6, 0.4] as const },
 ];
 const V_BOUNDS = { x0: -1.0, x1: 3.3, z0: -0.6, z1: 3.3 };
-const vBlocked = (x: number, z: number) => Math.hypot(x - 1.4, z + 0.4) < 0.8 || Math.hypot(x - 1.6, z - 2.2) < 0.5 || Math.hypot(x - 2.8, z + 2.7) < 1;
+const vBlocked = (x: number, z: number) => Math.hypot(x - 1.4, z + 0.4) < 0.8 || Math.hypot(x - 1.6, z - 2.2) < 0.5 || Math.hypot(x - 2.8, z + 2.7) < 1 || (x > 2.4 && z > 0.2 && z < 2.6);
 
 function Stanchions({ x, z }: { x: number; z: number }) {
   const posts: [number, number][] = [[-0.8, 0.8], [0.8, 0.8]];
@@ -115,13 +115,38 @@ const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
   },
 });
 
+/** Night of Two Signatures: long vitrine with five evidence objects; draped until CH.12 is solved. */
+function SignaturesCase({ open, hot, plaque }: { open: boolean; hot: boolean; plaque: number }) {
+  const lit = (i: number) => (open && plaque === i ? 1.4 : open ? 0.45 : 0);
+  return (
+    <group position={[3.2, 0, 1.4]}>
+      <mesh position-y={0.45} castShadow><boxGeometry args={[0.9, 0.9, 2.4]} /><meshStandardMaterial color="#2a2230" /></mesh>
+      <mesh position-y={0.92}><boxGeometry args={[1, 0.04, 2.5]} /><meshStandardMaterial color={TRIM} emissive={TRIM} emissiveIntensity={hot ? 0.6 : 0.15} /></mesh>
+      {open ? (
+        <>
+          {/* I shared key · II trace sheet · III blueprint · IV bait key · V orange proof block */}
+          <mesh position={[0, 1.02, -0.95]} rotation-z={0.3}><boxGeometry args={[0.08, 0.06, 0.3]} /><meshStandardMaterial color="#c9a14a" emissive="#c9a14a" emissiveIntensity={lit(0)} /></mesh>
+          <mesh position={[0, 0.96, -0.5]} rotation-x={-Math.PI / 2}><planeGeometry args={[0.35, 0.3]} /><meshStandardMaterial color="#e9e2d0" emissive="#e9e2d0" emissiveIntensity={lit(1) * 0.5} /></mesh>
+          <mesh position={[0, 0.96, 0]} rotation-x={-Math.PI / 2}><planeGeometry args={[0.4, 0.32]} /><meshStandardMaterial color="#2b5aa8" emissive="#4a8ad8" emissiveIntensity={lit(2)} /></mesh>
+          <mesh position={[0, 1.02, 0.5]} rotation-z={-0.3}><boxGeometry args={[0.08, 0.06, 0.3]} /><meshStandardMaterial color="#9aa0a8" emissive="#ff4040" emissiveIntensity={lit(3)} /></mesh>
+          <mesh position={[0, 1.08, 0.95]}><boxGeometry args={[0.2, 0.2, 0.2]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={lit(4) + 0.3} /></mesh>
+          <mesh position-y={1.3}><boxGeometry args={[0.85, 0.7, 2.3]} /><meshStandardMaterial color={GLASS} transparent opacity={0.1} /></mesh>
+        </>
+      ) : (
+        <mesh position-y={1.3}><boxGeometry args={[0.95, 0.75, 2.45]} /><meshStandardMaterial color="#5a1f24" emissive="#5a1f24" emissiveIntensity={hot ? 0.4 : 0.1} /></mesh>
+      )}
+      <pointLight position={[0, 2.2, 0]} intensity={open ? 6 : 1.5} color="#ffb060" distance={3} />
+    </group>
+  );
+}
+
 function FixedCam() {
   useFrame(({ camera }) => camera.lookAt(-0.6, -0.6, 1.4));
   return null;
 }
 
-export function MuseumInterior({ onHit, onHover, hover, hasLens, solved }: {
-  onHit: (h: Hotspot) => void; onHover: (h: Hotspot | null) => void; hover: Hotspot | null; hasLens: boolean; solved: boolean;
+export function MuseumInterior({ onHit, onHover, hover, hasLens, solved, exhibitOpen = false, plaque = -1 }: {
+  onHit: (h: Hotspot) => void; onHover: (h: Hotspot | null) => void; hover: Hotspot | null; hasLens: boolean; solved: boolean; exhibitOpen?: boolean; plaque?: number;
 }) {
   const hp = { onHit, onHover };
   return (
@@ -148,6 +173,7 @@ export function MuseumInterior({ onHit, onHover, hover, hasLens, solved }: {
         <Hot id="genesis" {...hp}><Exhibit x={-2} z={-1.5} h={0.5} color="#f7931a" glow={hover === "genesis" ? 0.9 : 0.35} /></Hot>
         <Hot id="pizza" {...hp}><Exhibit x={0.3} z={-2.2} h={0.9} color="#e9e2d0" glow={hover === "pizza" ? 0.9 : 0.35} /></Hot>
         <Hot id="glass" {...hp}><Exhibit x={-2.6} z={1.4} h={0.7} color={solved ? TRIM : GLASS} glow={solved ? 1.2 : hover === "glass" ? 0.9 : 0.35} /></Hot>
+        <Hot id="signatures" {...hp}><SignaturesCase open={exhibitOpen} hot={hover === "signatures"} plaque={plaque} /></Hot>
         {!hasLens ? <Hot id="lens" {...hp} position={[1.6, 0, 2.2]}><Lens /></Hot> : null}
         <Hot id="curator" {...hp} position={[1.4, 0, -0.4]} rotation={[0, -0.5, 0]}>
           <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hover === "curator" ? 1 : 0.45} /></mesh>
