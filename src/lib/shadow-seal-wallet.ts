@@ -396,3 +396,49 @@ export function loadHeld(): HeldSealed[] {
   if (fixed !== h) { try { sealStore.setHeld(fixed); } catch { /* still correct in memory */ } }
   return fixed;
 }
+
+/* ── guarded backup restore ── */
+export type RestoreResult = { restored: string[]; skippedSpent: string[]; skippedInFlight: string[] };
+/** Writes a backup-owned record; may replace a DAMAGED notes/recv/sent record (never pending or intent records). */
+const healWrite = (k: string, v: unknown) => {
+  try { read(k, null); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; try { localStorage.removeItem(k); } catch { throw new VaultStorageError("BROWSER STORAGE IS UNAVAILABLE — NOTHING CHANGED"); } }
+  write(k, v);
+};
+/**
+ * Restores a backup without ever erasing an unfinished signing or signed transfer, resurrecting
+ * notes whose coin is spent, or freeing a coin for a competing transfer. Fails closed.
+ */
+export async function restoreBackup(backup: unknown, o: { outspend: (x: { txid: string; vout: number }) => Promise<{ spent: boolean; txid?: string }> }): Promise<RestoreResult> {
+  const b = backup as { held?: unknown; recv?: unknown; sent?: unknown };
+  if (!b || typeof b !== "object" || !VALID[K.held]!(b.held ?? []) || !VALID[K.recv]!(b.recv ?? {}) || !VALID[K.sent]!(b.sent ?? []))
+    throw new Error("THIS IS NOT A VALID SEALED-NOTES BACKUP — NOTHING CHANGED");
+  // Recovery records are read fail-closed: a damaged one stops the restore entirely.
+  const pending = pendingStore.all(), intents = intentStore.all();
+  const blocked = new Set([...pending.map((p) => sealKey(p.anchor)), ...intents.map((i) => sealKey(i.anchor))]);
+  let current: HeldSealed[] = [];
+  try { current = sealStore.held(); } catch (e) { if ((e as Error).message.includes("UNAVAILABLE")) throw e; }
+  const have = new Set(current.map((h) => noteKey(h.c.note.genesis)));
+  const res: RestoreResult = { restored: [], skippedSpent: [], skippedInFlight: [] };
+  const add: HeldSealed[] = [];
+  for (const h of (b.held ?? []) as HeldSealed[]) {
+    const nk = noteKey(h.c.note.genesis);
+    if (have.has(nk) || add.some((x) => noteKey(x.c.note.genesis) === nk)) continue;
+    if (blocked.has(sealKey(h.mine))) { res.skippedInFlight.push(h.c.note.label); continue; }
+    let os: { spent: boolean } | null = null;
+    try { os = await o.outspend(h.mine); } catch { /* unavailable */ }
+    if (!os) throw new Error("COULDN'T CHECK A NOTE'S COIN ON BITCOIN — NOTHING RESTORED, TRY AGAIN");
+    if (os.spent) { res.skippedSpent.push(h.c.note.label); continue; }
+    add.push(h); res.restored.push(h.c.note.label);
+  }
+  // Re-check recovery records right before writing (another tab may have started signing meanwhile).
+  const p2 = pendingStore.all(), i2 = intentStore.all();
+  const finalAdd = add.filter((h) => ![...p2.map((p) => p.anchor), ...i2.map((i) => i.anchor)].some((a) => sealKey(a) === sealKey(h.mine)));
+  healWrite(K.held, repairedHeld([...current, ...finalAdd], p2));
+  let recv: Record<string, Reveal> = {}, sent: { label: string; code: string; at: string }[] = [];
+  try { recv = sealStore.recv(); } catch { /* healed below */ }
+  try { sent = sealStore.sent(); } catch { /* healed below */ }
+  healWrite(K.recv, { ...(b.recv as Record<string, Reveal> ?? {}), ...recv });
+  const codes = new Set(sent.map((s) => s.code));
+  healWrite(K.sent, [...sent, ...((b.sent ?? []) as typeof sent).filter((s) => !codes.has(s.code))]);
+  return res;
+}
