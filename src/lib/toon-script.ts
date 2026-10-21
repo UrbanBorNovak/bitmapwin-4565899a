@@ -30,7 +30,7 @@ export type Transition = "cut" | "fade" | "wipe" | "iris";
 export const TRANSITION_SECONDS = 0.45;
 export type ToonSet = "beach" | "studio" | "rift" | "oasis" | "cafe" | "batcave" | "chinatown" | "vault";
 export const TOON_SETS: ToonSet[] = ["beach", "studio", "rift", "oasis", "cafe", "batcave", "chinatown", "vault"];
-export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; /** Voxel film set instead of the BITMAP land. */ set?: ToonSet; /** Effect cues (toon-vfx, open bitmapwin.vfx/1 format). */ fx?: VfxCue[]; }
+export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; /** Voxel film set instead of the BITMAP land. */ set?: ToonSet; /** Effect cues (toon-vfx, open bitmapwin.vfx/1 format). */ fx?: VfxCue[]; /** Background BITMAP Pixel inscription ids that wander the set on a fly brain (live, not timeline-bound). */ extras?: string[]; }
 
 /** The dialogue line whose camera framing is active at scene-local time (latest started line with a non-auto cam). */
 export function activeCut(s: ToonScene, local: number): ToonLine | null {
