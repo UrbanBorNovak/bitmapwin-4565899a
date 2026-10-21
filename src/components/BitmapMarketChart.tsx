@@ -1,4 +1,33 @@
-import { useMemo, useState, type PointerEvent } from "react";
+import { useMemo, useRef, useState, type PointerEvent } from "react";
+
+/** Largest-Triangle-Three-Buckets downsampling: keeps peaks and dips with few points. */
+export function lttb<T extends { x: number; y: number }>(data: T[], threshold: number): T[] {
+  if (threshold >= data.length || threshold < 3) return data;
+  const out: T[] = [data[0]!];
+  const every = (data.length - 2) / (threshold - 2);
+  let a = 0;
+  for (let i = 0; i < threshold - 2; i++) {
+    const s = Math.floor((i + 1) * every) + 1;
+    const e = Math.min(Math.floor((i + 2) * every) + 1, data.length);
+    let ax = 0, ay = 0;
+    for (let j = s; j < e; j++) { ax += data[j]!.x; ay += data[j]!.y; }
+    const n = Math.max(1, e - s);
+    ax /= n; ay /= n;
+    const rs = Math.floor(i * every) + 1;
+    const re = Math.floor((i + 1) * every) + 1;
+    const pa = data[a]!;
+    let maxArea = -1, pick = rs;
+    for (let j = rs; j < re; j++) {
+      const p = data[j]!;
+      const area = Math.abs((pa.x - ax) * (p.y - pa.y) - (pa.x - p.x) * (ay - pa.y));
+      if (area > maxArea) { maxArea = area; pick = j; }
+    }
+    out.push(data[pick]!);
+    a = pick;
+  }
+  out.push(data[data.length - 1]!);
+  return out;
+}
 import { useQuery } from "@tanstack/react-query";
 import { paidSalesQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
@@ -76,9 +105,12 @@ export function BitmapMarketChart() {
     if (points.length === 0) return null;
     const minTime = points[0]?.t ?? 0;
     const maxTime = points[points.length - 1]?.t ?? minTime;
-    const values = points.map((point) => point.sats);
-    const minPrice = Math.min(...values);
-    const maxPrice = Math.max(...values);
+    let minPrice = Infinity;
+    let maxPrice = -Infinity;
+    for (const p of points) {
+      if (p.sats < minPrice) minPrice = p.sats;
+      if (p.sats > maxPrice) maxPrice = p.sats;
+    }
     const timeSpan = Math.max(1, maxTime - minTime);
     const priceSpan = Math.max(1, maxPrice - minPrice);
     const coords = points.map((point, index) => ({
@@ -90,30 +122,34 @@ export function BitmapMarketChart() {
       y: pad.top + (1 - (point.sats - minPrice) / priceSpan) * (height - pad.top - pad.bottom),
       key: `${point.txid}-${index}`,
     }));
-    return {
-      coords,
-      line: smoothPath(coords),
-      minTime,
-      maxTime,
-    };
+    const drawn = lttb(coords, 400);
+    const line = drawn.map((c, i) => `${i ? "L" : "M"}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join("");
+    const area = `${line}L${(drawn.at(-1)?.x ?? 0).toFixed(1)},${height - pad.bottom}L${(drawn[0]?.x ?? 0).toFixed(1)},${height - pad.bottom}Z`;
+    return { coords, line, area, minTime, maxTime };
   }, [points]);
 
   const hoverPoint = hoverIndex === null ? null : geometry?.coords[hoverIndex] ?? null;
+  const frame = useRef<number | null>(null);
 
   const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
     if (!geometry || geometry.coords.length === 0) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const pointerX = ((event.clientX - bounds.left) / bounds.width) * width;
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
-    geometry.coords.forEach((point, index) => {
-      const distance = Math.abs(point.x - pointerX);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
+    if (frame.current !== null) cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      frame.current = null;
+      const c = geometry.coords;
+      let lo = 0;
+      let hi = c.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if ((c[mid]?.x ?? 0) < pointerX) lo = mid + 1;
+        else hi = mid;
       }
+      const prev = Math.max(0, lo - 1);
+      const best = Math.abs((c[prev]?.x ?? 0) - pointerX) <= Math.abs((c[lo]?.x ?? 0) - pointerX) ? prev : lo;
+      setHoverIndex((cur) => (cur === best ? cur : best));
     });
-    setHoverIndex(closestIndex);
   };
 
   return (
@@ -193,41 +229,20 @@ export function BitmapMarketChart() {
                 />
               ))}
               <path
-                d={`${geometry.line} L${geometry.coords[geometry.coords.length - 1]?.x ?? width - pad.right},${height - pad.bottom} L${geometry.coords[0]?.x ?? pad.left},${height - pad.bottom} Z`}
+                d={geometry.area}
                 fill="url(#bitmap-area-gradient)"
-                className="pointer-events-none transition-opacity duration-300"
-                opacity={hoverPoint ? 0.9 : 0.55}
+                className="pointer-events-none"
+                opacity={0.7}
               />
               <path
                 d={geometry.line}
                 fill="none"
-                className="bitmap-market-line__trail pointer-events-none"
-                stroke="var(--color-primary)"
-                strokeOpacity={hoverPoint ? 0.22 : 0.12}
-                strokeWidth={9}
-                filter="url(#bitmap-line-glow)"
-                vectorEffect="non-scaling-stroke"
-              />
-              <path
-                d={geometry.line}
-                fill="none"
-                className="bitmap-market-line__stroke pointer-events-none"
+                className="pointer-events-none"
                 stroke="url(#bitmap-line-gradient)"
-                strokeWidth={3}
+                strokeWidth={2}
+                strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke"
               />
-              {geometry.coords.map((point) => (
-                <circle
-                  key={point.key}
-                  cx={point.x}
-                  cy={point.y}
-                  r={hoverPoint?.key === point.key ? 6 : 2.5}
-                  className="fill-primary transition-all duration-200"
-                  opacity={hoverPoint && hoverPoint.key !== point.key ? 0.22 : 1}
-                >
-                  <title>{`${point.height}.BITMAP · ${formatSats(point.sats)} · ${new Date(point.t).toISOString().slice(0, 10)}`}</title>
-                </circle>
-              ))}
               {hoverPoint && (
                 <g className="pointer-events-none">
                   <line
