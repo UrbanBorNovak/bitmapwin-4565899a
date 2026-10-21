@@ -37,7 +37,14 @@ function RelicTxPreview({ height, tip, metadataBytes }: { height: number; tip: n
   const [busy, setBusy] = useState(false);
   const run = async () => {
     setBusy(true); setRes(null);
-    try { setRes(await fn({ data: { height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes } })); }
+    try {
+      // Dev-only test hook: mocked chain facts run through the real preview builder, no network.
+      const mock = import.meta.env.DEV ? (window as unknown as { __relicChainMock?: Record<string, unknown> }).__relicChainMock : undefined;
+      if (mock) {
+        const { buildRelicPreview } = await import("@/lib/relic-mint-preview");
+        setRes(buildRelicPreview({ ...(mock as never), height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes, treasuryAddress: DONATION_ADDRESS }) as never);
+      } else setRes(await fn({ data: { height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes } }));
+    }
     catch (e) { setRes({ ok: false, message: (e as Error).message.slice(0, 160) }); }
     finally { setBusy(false); }
   };
