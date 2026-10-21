@@ -96,6 +96,7 @@ import { Route as BiternamLabRouteImport } from './routes/biternam_.lab'
 import { Route as BiternamLairRouteImport } from './routes/biternam_.lair'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
+import { Route as BiternamReceiptRouteImport } from './routes/biternam_.receipt'
 import { Route as BiternamSafehouseRouteImport } from './routes/biternam_.safehouse'
 import { Route as BiternamStudioRouteImport } from './routes/biternam_.studio'
 import { Route as BiternamVaultRouteImport } from './routes/biternam_.vault'
@@ -595,6 +596,11 @@ const BiternamOutpostRoute = BiternamOutpostRouteImport.update({
   path: '/biternam/outpost',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamReceiptRoute = BiternamReceiptRouteImport.update({
+  id: '/biternam_/receipt',
+  path: '/biternam/receipt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamSafehouseRoute = BiternamSafehouseRouteImport.update({
   id: '/biternam_/safehouse',
   path: '/biternam/safehouse',
@@ -997,6 +1003,7 @@ export interface FileRoutesByFullPath {
   '/biternam/lair': typeof BiternamLairRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
+  '/biternam/receipt': typeof BiternamReceiptRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
   '/biternam/studio': typeof BiternamStudioRoute
   '/biternam/vault': typeof BiternamVaultRoute
@@ -1144,6 +1151,7 @@ export interface FileRoutesByTo {
   '/biternam/lair': typeof BiternamLairRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
+  '/biternam/receipt': typeof BiternamReceiptRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
   '/biternam/studio': typeof BiternamStudioRoute
   '/biternam/vault': typeof BiternamVaultRoute
@@ -1296,6 +1304,7 @@ export interface FileRoutesById {
   '/biternam_/lair': typeof BiternamLairRoute
   '/biternam_/museum': typeof BiternamMuseumRoute
   '/biternam_/outpost': typeof BiternamOutpostRoute
+  '/biternam_/receipt': typeof BiternamReceiptRoute
   '/biternam_/safehouse': typeof BiternamSafehouseRoute
   '/biternam_/studio': typeof BiternamStudioRoute
   '/biternam_/vault': typeof BiternamVaultRoute
@@ -1449,6 +1458,7 @@ export interface FileRouteTypes {
     | '/biternam/lair'
     | '/biternam/museum'
     | '/biternam/outpost'
+    | '/biternam/receipt'
     | '/biternam/safehouse'
     | '/biternam/studio'
     | '/biternam/vault'
@@ -1596,6 +1606,7 @@ export interface FileRouteTypes {
     | '/biternam/lair'
     | '/biternam/museum'
     | '/biternam/outpost'
+    | '/biternam/receipt'
     | '/biternam/safehouse'
     | '/biternam/studio'
     | '/biternam/vault'
@@ -1747,6 +1758,7 @@ export interface FileRouteTypes {
     | '/biternam_/lair'
     | '/biternam_/museum'
     | '/biternam_/outpost'
+    | '/biternam_/receipt'
     | '/biternam_/safehouse'
     | '/biternam_/studio'
     | '/biternam_/vault'
@@ -1899,6 +1911,7 @@ export interface RootRouteChildren {
   BiternamLairRoute: typeof BiternamLairRoute
   BiternamMuseumRoute: typeof BiternamMuseumRoute
   BiternamOutpostRoute: typeof BiternamOutpostRoute
+  BiternamReceiptRoute: typeof BiternamReceiptRoute
   BiternamSafehouseRoute: typeof BiternamSafehouseRoute
   BiternamStudioRoute: typeof BiternamStudioRoute
   BiternamVaultRoute: typeof BiternamVaultRoute
@@ -2531,6 +2544,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/outpost'
       fullPath: '/biternam/outpost'
       preLoaderRoute: typeof BiternamOutpostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/receipt': {
+      id: '/biternam_/receipt'
+      path: '/biternam/receipt'
+      fullPath: '/biternam/receipt'
+      preLoaderRoute: typeof BiternamReceiptRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/safehouse': {
@@ -3196,6 +3216,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiternamLairRoute: BiternamLairRoute,
   BiternamMuseumRoute: BiternamMuseumRoute,
   BiternamOutpostRoute: BiternamOutpostRoute,
+  BiternamReceiptRoute: BiternamReceiptRoute,
   BiternamSafehouseRoute: BiternamSafehouseRoute,
   BiternamStudioRoute: BiternamStudioRoute,
   BiternamVaultRoute: BiternamVaultRoute,

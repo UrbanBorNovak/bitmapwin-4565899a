@@ -88,4 +88,16 @@ export const ROOM_CUTSCENES: Partial<Record<HideoutRoom, Partial<Record<CutTrigg
       { focus: [50, 42], zoom: 2, ms: 2400, light: "warm", speaker: "GHOST OF 1138", line: "My sat, on the honest chain. Now I can rest." },
     ] },
   },
+  receipt: {
+    gain: { id: "receipt-gain", frames: [
+      { focus: [55, 50], zoom: 1.8, ms: 2200, light: "spot", sfx: "pickup", speaker: "MR. GOLD", face: "mr-gold", line: "Congratulations, Marshal. You saved the record you could see." },
+      { focus: [38, 50], zoom: 1.8, ms: 1800, speaker: "WIERDAMOTO", face: "wierdamoto", line: "Gold. That archive was closed." },
+      { focus: [55, 50], zoom: 1.9, ms: 1800, light: "dim", speaker: "MR. GOLD", face: "mr-gold", line: "No. It was deferred." },
+    ] },
+    solve: { id: "receipt-solve", frames: [
+      { focus: [50, 46], zoom: 1.7, ms: 1600, light: "flash", sfx: "dance", line: "The terminal reads the slip. UNPAID: ONE MEMORY. BENEFICIARY: THE DARKSIDE." },
+      { focus: [55, 50], zoom: 1.9, ms: 2000, speaker: "MR. GOLD", face: "mr-gold", line: "I did not come for your key, Marshal. I came for your accounting." },
+      { focus: [38, 50], zoom: 1.9, ms: 2400, light: "dim", speaker: "WIERDAMOTO", face: "wierdamoto", line: "I told you the truth about 1138. I did not tell you whose name was on the first receipt." },
+    ] },
+  },
 };
