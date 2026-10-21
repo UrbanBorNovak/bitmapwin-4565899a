@@ -7,9 +7,9 @@ export const Route = createFileRoute("/collections")({
 
 function CollectionsLayout() {
   return (
-    <div>
+    <div className="overflow-x-clip">
       <div className="border-b border-border">
-        <div className="mx-auto flex max-w-[1600px] items-baseline justify-between gap-4 px-4 py-4 md:px-8">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-baseline justify-between gap-4 px-4 py-4 md:px-8">
           <Link to="/collections" className="label hover:text-foreground">
             COLLECTIONS /
           </Link>
