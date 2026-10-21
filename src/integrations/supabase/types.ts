@@ -1643,6 +1643,66 @@ export type Database = {
         }
         Relationships: []
       }
+      collection_trace_state: {
+        Row: {
+          collection: string
+          inscription_id: string
+          last_traced_at: string
+          verified: boolean
+        }
+        Insert: {
+          collection: string
+          inscription_id: string
+          last_traced_at?: string
+          verified?: boolean
+        }
+        Update: {
+          collection?: string
+          inscription_id?: string
+          last_traced_at?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      collection_trades: {
+        Row: {
+          block_height: number | null
+          block_time: string | null
+          buyer_address: string | null
+          collection: string
+          created_at: string
+          inscription_id: string
+          price_sats: number
+          seller_address: string | null
+          source: string
+          txid: string
+        }
+        Insert: {
+          block_height?: number | null
+          block_time?: string | null
+          buyer_address?: string | null
+          collection: string
+          created_at?: string
+          inscription_id: string
+          price_sats: number
+          seller_address?: string | null
+          source?: string
+          txid: string
+        }
+        Update: {
+          block_height?: number | null
+          block_time?: string | null
+          buyer_address?: string | null
+          collection?: string
+          created_at?: string
+          inscription_id?: string
+          price_sats?: number
+          seller_address?: string | null
+          source?: string
+          txid?: string
+        }
+        Relationships: []
+      }
       community_kits: {
         Row: {
           bags: Json

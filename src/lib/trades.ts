@@ -32,6 +32,8 @@ export type TradeTrace = {
   /** Number of confirmed transfers found. */
   transfers: number;
   trades: ChainTrade[];
+  /** `txid:vout` where the trace stopped (current location if fully followed). */
+  finalOutput?: string;
 };
 
 export const SATS_PER_BTC = 100_000_000;
