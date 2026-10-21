@@ -15,7 +15,7 @@ export function CollectionSalesChart({ sales, pending, unavailable }: { sales: C
     <div className="mt-6 border border-border bg-card/60 p-3 backdrop-blur">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="label text-muted-foreground">PRICE HISTORY · CONFIRMED ON-CHAIN SALES</span>
-        <span className="label text-foreground" data-no-translate>{pts.length} SALES · {formatSats(volume)} VOLUME{pts.length ? ` · LAST ${formatSats(pts.at(-1)!.priceSats)}` : ""}</span>
+        <span className="label text-foreground" data-no-translate>{pts.length} SALES{volume ? ` · ${formatSats(volume)} VOLUME` : ""}{pts.length ? ` · LAST ${formatSats(pts.at(-1)!.priceSats)}` : ""}</span>
       </div>
       {pending ? <p className="label mt-3 text-muted-foreground">VERIFYING SALES ON CHAIN…</p>
         : unavailable ? <p className="label mt-3 text-destructive">SALE VERIFICATION UNAVAILABLE — TRY AGAIN LATER</p>
