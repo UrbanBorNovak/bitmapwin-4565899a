@@ -1,3 +1,4 @@
+import { ExperienceFlow } from "@/components/studio/ExperienceFlow";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -266,6 +267,7 @@ function CreatePage() {
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-10 md:px-8 md:py-14">
+      <ExperienceFlow current="describe" />
       <MvpFlowRail active="deploy" {...(searchHeight === undefined ? {} : { height: searchHeight })} />
       <div className="mx-auto mt-4 grid max-w-[1600px] gap-px border border-border px-0 md:grid-cols-2">
         <Link
