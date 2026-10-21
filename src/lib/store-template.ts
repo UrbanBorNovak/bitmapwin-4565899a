@@ -127,9 +127,13 @@ fetch(C.url).then(r=>r.json()).then(d=>{
  s.innerHTML='<span class="k"><b>'+L.length+'</b> FOR SALE</span>'+(fl!=null?'<span class="k f">FLOOR <b>'+sat(fl)+'</b> · '+btc(fl)+'</span>':'')+'<span class="k">● LIVE</span>';
  if(!L.length){g.innerHTML='<div class="e"><b>NO ACTIVE LISTINGS RIGHT NOW</b>Nothing matches this shop yet — check back soon, or browse the <a target="_blank" rel="noreferrer" href="'+C.base+'/marketplace">full marketplace</a>.</div>';return;}
  const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){io.unobserve(e.target);const c=e.target,h=Number(c.dataset.h),id=c.dataset.id;
-  BM.draw(c.querySelector('.v'),h);const b=c.querySelector('.o');
-  BM.oci(h).then(x=>{if(!x){b.textContent='LIVEOCI · UNAVAILABLE';return}b.href='https://ordinals.com/inscription/'+x;b.target='_blank';b.rel='noreferrer';
-   if(x===id){b.className='o ok';b.textContent='✓ LIVEOCI CANONICAL'}else{b.className='o bad';b.textContent='✗ NOT FIRST-IS-FIRST'}})}},{rootMargin:'200px'});
+  BM.draw(c.querySelector('.v'),h);const b=c.querySelector('.o');proof(b,h,id)}},{rootMargin:'200px'});
+ function proof(b,h,id){b.className='o';b.removeAttribute('href');b.onclick=null;b.textContent='LIVEOCI · CHECKING…';
+  BM.check(h,p=>{b.textContent='LIVEOCI · SCANNING BLOCK '+p.next.toLocaleString('en-US')+'…'}).then(r=>{
+   if(r.state==='found'){const x=r.id;b.href='https://ordinals.com/inscription/'+x;b.target='_blank';b.rel='noreferrer';
+    if(x===id){b.className='o ok';b.textContent='✓ LIVEOCI CANONICAL'}else{b.className='o bad';b.textContent='✗ NOT FIRST-IS-FIRST'}return}
+   b.href='#';b.textContent=r.state==='none'?'LIVEOCI · NO CLAIM YET · RECHECK':'LIVEOCI · UNAVAILABLE · RETRY';
+   b.onclick=ev=>{ev.preventDefault();proof(b,h,id)}})}
  for(const o of L){const el=document.createElement('div');el.className='c'+(o.on_hold?' hold':'');
   const h=Number(o.bitmap_height),id=String(o.inscription_id).replace(/[^a-z0-9i]/gi,'');el.dataset.h=h;el.dataset.id=id;
   el.innerHTML='<div class="v"><div>'+h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+sat(o.price_sats)+'</div><div class="q">'+btc(o.price_sats)+'</div><a class="o">LIVEOCI · CHECKING…</a></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
