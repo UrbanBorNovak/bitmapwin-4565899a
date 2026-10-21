@@ -1,6 +1,7 @@
 // Tiny Store template: builds a single self-contained HTML storefront that reads
 // the public BitmapWin Market API live. Zero custody: buying hands off to the
 // BITMAP page where the visitor signs with their own wallet. Never signs anything.
+import { MOSAIC_CSS, MOSAIC_JS, mosaicConfig } from "@/lib/store-mosaic";
 
 export type StoreConfig = {
   name: string;
@@ -109,10 +110,13 @@ main{max-width:1100px;margin:auto;padding:8px 24px 48px;display:grid;gap:16px;gr
 .hold{opacity:.5}.hold a{background:transparent;color:var(--mut);border:1px solid var(--ln)}
 .e{grid-column:1/-1;border:1px dashed var(--ln);border-radius:12px;padding:40px 20px;text-align:center;color:var(--mut);font:12px/1.7 ui-monospace,monospace;letter-spacing:.06em}.e b{display:block;color:var(--fg);font-size:14px;margin-bottom:6px}.e a{color:var(--a)}
 footer{text-align:center;color:var(--mut);font:11px ui-monospace,monospace;padding:24px}footer a{color:var(--a)}
+.c .b a.o{display:inline-block;margin:8px 0 0;padding:3px 7px;background:transparent;color:var(--mut);font-size:10px;text-align:left}
+${MOSAIC_CSS}
 </style></head><body>
 <header><h1>${esc(c.name)}</h1><p class="t">${esc(c.tagline)}</p><div id="s"><span class="k">LOADING LIVE LISTINGS…</span></div></header>
 <main id="g"></main>
-<footer>Zero custody · you sign in your own wallet · data from <a href="${esc(base)}/api" target="_blank" rel="noreferrer">BitmapWin public API</a></footer>
+<footer>Zero custody · you sign in your own wallet · data from <a href="${esc(base)}/api" target="_blank" rel="noreferrer">BitmapWin public API</a> · canonical BITMAPs checked with bop's on-chain LiveOCI</footer>
+<script>const MZ=${mosaicConfig(base)};${MOSAIC_JS}</script>
 <script>
 const C=${cfg};
 const g=document.getElementById('g'),s=document.getElementById('s');
@@ -122,10 +126,14 @@ fetch(C.url).then(r=>r.json()).then(d=>{
  const open=L.filter(o=>!o.on_hold),fl=open.length?Math.min(...open.map(o=>o.price_sats)):null;
  s.innerHTML='<span class="k"><b>'+L.length+'</b> FOR SALE</span>'+(fl!=null?'<span class="k f">FLOOR <b>'+sat(fl)+'</b> · '+btc(fl)+'</span>':'')+'<span class="k">● LIVE</span>';
  if(!L.length){g.innerHTML='<div class="e"><b>NO ACTIVE LISTINGS RIGHT NOW</b>Nothing matches this shop yet — check back soon, or browse the <a target="_blank" rel="noreferrer" href="'+C.base+'/marketplace">full marketplace</a>.</div>';return;}
+ const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){io.unobserve(e.target);const c=e.target,h=Number(c.dataset.h),id=c.dataset.id;
+  BM.draw(c.querySelector('.v'),h);const b=c.querySelector('.o');
+  BM.oci(h).then(x=>{if(!x){b.textContent='LIVEOCI · UNAVAILABLE';return}b.href='https://ordinals.com/inscription/'+x;b.target='_blank';b.rel='noreferrer';
+   if(x===id){b.className='o ok';b.textContent='✓ LIVEOCI CANONICAL'}else{b.className='o bad';b.textContent='✗ NOT FIRST-IS-FIRST'}})}},{rootMargin:'200px'});
  for(const o of L){const el=document.createElement('div');el.className='c'+(o.on_hold?' hold':'');
-  const h=Number(o.bitmap_height),id=String(o.inscription_id).replace(/[^a-z0-9i]/gi,'');
-  el.innerHTML='<div class="v"><div>'+h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+sat(o.price_sats)+'</div><div class="q">'+btc(o.price_sats)+'</div></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
-  g.appendChild(el);}
+  const h=Number(o.bitmap_height),id=String(o.inscription_id).replace(/[^a-z0-9i]/gi,'');el.dataset.h=h;el.dataset.id=id;
+  el.innerHTML='<div class="v"><div>'+h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+sat(o.price_sats)+'</div><div class="q">'+btc(o.price_sats)+'</div><a class="o">LIVEOCI · CHECKING…</a></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
+  g.appendChild(el);io.observe(el);}
 }).catch(()=>{s.innerHTML='<span class="k">COULD NOT LOAD LISTINGS — TRY AGAIN SOON</span>';});
 </script></body></html>`;
 }

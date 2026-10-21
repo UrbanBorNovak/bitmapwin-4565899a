@@ -6,6 +6,7 @@
 // and broadcasts. The page never holds keys and never signs for anyone.
 import { DEFAULT_STORE, type StoreConfig } from "@/lib/store-template";
 import { LISTING_KIND, LISTING_TAG, NOSTR_RELAYS } from "@/lib/nostr-listing";
+import { MOSAIC_CSS, MOSAIC_JS, mosaicConfig } from "@/lib/store-mosaic";
 
 /** On-chain LiveOCI sat cache module (exports getBitmapInscriptionId). */
 export const OCI_MODULE_ID = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0";
@@ -45,7 +46,7 @@ function pull(){return new Promise(done=>{const ev=new Map();let left=C.relays.l
   ws.onerror=()=>{if(!ok){ok=true;clearTimeout(t);fin()}};}
  if(!left)done([])})}
 const tag=(e,k)=>(e.tags.find(x=>x[0]===k)||[])[1];
-let oci=null;function canon(h){if(h>C.ociLast)return Promise.resolve(null);oci=oci||import(ORD+'/content/'+C.oci+(ORD?'?origin='+ORD:''));return oci.then(m=>m.getBitmapInscriptionId(h)).catch(()=>null)}
+function canon(h){return BM.oci(h)}
 async function check(e){const h=Number(tag(e,'height')),id=String(tag(e,'inscription')||''),ut=String(tag(e,'utxo')||''),price=Number(tag(e,'price')),b=tag(e,'psbt');
  if(!(h>=0)||!/^[0-9a-f]{64}i\d+$/.test(id)||!/^[0-9a-f]{64}:\d+$/.test(ut)||!b)return null;
  const p=pp(b);if(p.tx.ins.length!==1||p.tx.outs.length!==1||op(p.tx.ins[0])!==ut||p.tx.outs[0].val!==price||!signed(p.ins[0]))return null;
@@ -65,8 +66,8 @@ async function load(){if(boxed()){say('ORDINALS.COM SANDBOX');g.innerHTML='<div 
  const fl=V.length?Math.min(...V.map(o=>o.price)):null;
  s.innerHTML='<span class="k"><b>'+V.length+'</b> FOR SALE</span>'+(fl!=null?'<span class="k f">FLOOR <b>'+sat(fl)+'</b> · '+btc(fl)+'</span>':'')+'<span class="k">● NOSTR + CHAIN VERIFIED · '+(E.length-V.length)+' DROPPED</span>';
  g.innerHTML='';if(!V.length){g.innerHTML='<div class="e"><b>NO VERIFIED LISTINGS RIGHT NOW</b>Only listings whose signed offer still matches Bitcoin appear here.</div>';return}
- for(const o of V){const el=document.createElement('div');el.className='c';el.innerHTML='<div class="v"><div>'+o.h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+o.h+'.bitmap</div><div class="p">'+sat(o.price)+'</div><div class="q">'+btc(o.price)+'</div></div><a href="#">BUY</a>';
-  el.querySelector('a').onclick=ev=>{ev.preventDefault();buy(o)};g.appendChild(el)}}
+ for(const o of V){const el=document.createElement('div');el.className='c';el.innerHTML='<div class="v"><div>'+o.h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+o.h+'.bitmap</div><div class="p">'+sat(o.price)+'</div><div class="q">'+btc(o.price)+'</div><span class="o ok">✓ LIVEOCI CANONICAL</span></div><a href="#">BUY</a>';
+  el.querySelector('a').onclick=ev=>{ev.preventDefault();buy(o)};g.appendChild(el);BM.draw(el.querySelector('.v'),o.h)}}
 /* ---------- in-page checkout (UniSat) ---------- */
 const note=t=>{w.textContent=t;w.style.display='block'};
 async function clean(a){const U=(await J(MP+'/address/'+a+'/utxo')).sort((x,y)=>x.value-y.value).slice(0,24),out=[];
@@ -123,9 +124,10 @@ main{max-width:1100px;margin:auto;padding:8px 24px 48px;display:grid;gap:16px;gr
 .c a{display:block;margin:0 12px 12px;padding:9px;text-align:center;border-radius:8px;background:var(--a);color:#000;font:700 12px ui-monospace,monospace;text-decoration:none;letter-spacing:.1em}
 .e{grid-column:1/-1;border:1px dashed var(--ln);border-radius:12px;padding:40px 20px;text-align:center;color:var(--mut);font:12px/1.7 ui-monospace,monospace}.e b{display:block;color:var(--fg);font-size:14px;margin-bottom:6px}
 footer{text-align:center;color:var(--mut);font:11px/1.7 ui-monospace,monospace;padding:24px}
+${MOSAIC_CSS}
 </style></head><body>
 <header><h1>${esc(c.name)}</h1><p class="t">${esc(c.tagline)}</p><div id="s"><span class="k">LOADING…</span></div></header>
 <div id="w"></div><main id="g"></main>
-<footer>Sovereign shop · listings from open Nostr relays · every offer re-checked on Bitcoin · you sign in your own wallet · no middleman fee</footer>
-<script>const C=${cfg};</script><script type="module">${SCRIPT}</script></body></html>`;
+<footer>Sovereign shop · listings from open Nostr relays · every offer re-checked on Bitcoin with bop's LiveOCI · you sign in your own wallet · no middleman fee</footer>
+<script>const MZ=${mosaicConfig(DEFAULT_STORE.apiBase)};${MOSAIC_JS}</script><script>const C=${cfg};</script><script type="module">${SCRIPT}</script></body></html>`;
 }
