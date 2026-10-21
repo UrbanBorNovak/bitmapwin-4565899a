@@ -214,45 +214,43 @@ export function SiteHeader() {
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className={`nav-menu absolute left-0 top-full border border-border bg-background ${group.id === "play" ? "w-80" : "min-w-64"}`}>
+                <div className={`nav-menu absolute left-0 top-full border border-border bg-background ${group.sections.length > 2 ? "w-[52rem]" : "w-80"}`}>
                   <div className="border-b border-border bg-surface px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="label text-bitcoin">{group.label}</div>
-                      {group.id === "play" ? <span className="label text-[0.5rem]">OASIS ONLINE</span> : null}
-                    </div>
+                    <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
                   </div>
-                  <div className={group.id === "play" ? "space-y-1 p-2" : ""}>
-                    {group.items.map((item, index) => {
-                      const active = itemIsActive(item.to);
-                      const divider = group.id === "play" && (index === 2 || index === 5);
+                  <div className={group.sections.length > 2 ? "grid grid-cols-4 divide-x divide-border" : "divide-y divide-border"}>
+                    {group.sections.map((section) => {
+                      const compact = group.sections.length > 2;
                       return (
-                        <div key={item.to} className={divider ? "border-t border-border pt-1" : undefined}>
-                          <Link
-                            to={item.to}
-                            activeOptions={{ exact: true }}
-                            onClick={() => setOpenGroup(null)}
-                            aria-current={active ? "page" : undefined}
-                            className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <ItemIcon to={item.to} active={active} />
-                              <div className="min-w-0">
-                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
-                              </div>
-                            </div>
-                          </Link>
+                        <div key={section.title} className="p-2">
+                          <div className="label px-2 pb-1 pt-1 text-[0.55rem] text-signal">{section.title}</div>
+                          {section.items.map((item) => {
+                            const active = itemIsActive(item.to);
+                            return (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                activeOptions={{ exact: true }}
+                                onClick={() => setOpenGroup(null)}
+                                aria-current={active ? "page" : undefined}
+                                title={item.note}
+                                className={`nav-menu-item group block border px-2 ${compact ? "py-1.5" : "py-2"} ${active ? "border-border bg-surface" : "border-transparent hover:border-border hover:bg-surface"}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {compact ? null : <ItemIcon to={item.to} active={active} />}
+                                  <div className="min-w-0">
+                                    <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
+                                    {item.note && !compact && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
                         </div>
                       );
                     })}
                   </div>
-                  {group.id === "play" ? (
-                    <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                      <span className="label">9 COMMANDS</span>
-                      <span className="label text-bitcoin">READY</span>
-                    </div>
-                  ) : null}
                 </div>
               )}
             </div>
