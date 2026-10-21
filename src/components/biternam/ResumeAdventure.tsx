@@ -4,12 +4,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { heistStatusFn } from "@/lib/void-heist.functions";
 import { voidStatusFn } from "@/lib/void-progress.functions";
+import { hideoutStatusFn } from "@/lib/hideout-progress.functions";
 import { resumeTarget, type ResumeTarget } from "@/lib/biternam-resume";
 
 /** Resume button driven only by account-saved progress; hidden when signed out. */
 export function ResumeAdventure() {
   const heist = useServerFn(heistStatusFn);
   const voidS = useServerFn(voidStatusFn);
+  const hideout = useServerFn(hideoutStatusFn);
   const [target, setTarget] = useState<ResumeTarget | null>(null);
   const [state, setState] = useState<"loading" | "out" | "ready" | "error">("loading");
 
@@ -19,15 +21,15 @@ export function ResumeAdventure() {
       if (!live) return;
       if (!data.session) { setState("out"); return; }
       try {
-        const [h, v] = await Promise.all([heist(), voidS()]);
+        const [h, v, b, i] = await Promise.all([heist(), voidS(), hideout({ data: { room: "batcave" } }), hideout({ data: { room: "island" } })]);
         if (!live) return;
-        if (!h.ok || !v.ok) { setState("error"); return; }
-        setTarget(resumeTarget(h.stage, v.count));
+        if (!h.ok || !v.ok || !b.ok || !i.ok) { setState("error"); return; }
+        setTarget(resumeTarget(h.stage, v.count, b.count, i.count));
         setState("ready");
       } catch { if (live) setState("error"); }
     });
     return () => { live = false; };
-  }, [heist, voidS]);
+  }, [heist, voidS, hideout]);
 
   if (state === "loading") return null;
   if (state === "out") return <p className="mt-6 font-mono text-xs text-muted-foreground">Sign in to resume your adventure on any device.</p>;
