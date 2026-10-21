@@ -3,6 +3,31 @@ import { useMemo, useState } from "react";
 import { RELIC_KINDS, RELIC_LABEL, TIER_LABEL, relicMasterHtml, relicMetadata, relicTribute, verifyRelic, withinTip, type RelicKind } from "@/lib/marauder-relics";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { CollectionParentBadge } from "@/components/CollectionParentBadge";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { relicHolderFn } from "@/lib/relic-mint.functions";
+import { DONATION_ADDRESS } from "@/lib/donations";
+import { planRelicMint } from "@/lib/relic-mint-guard";
+
+function RelicPayoutReview({ height, tip }: { height: number; tip: number }) {
+  const fn = useServerFn(relicHolderFn);
+  const q = useQuery({ queryKey: ["relic-holder", height], queryFn: () => fn({ data: { height } }), staleTime: 60_000 });
+  const t = relicTribute(height);
+  const holder = q.data?.holderAddress ?? null;
+  // Parents are resolved at signing time; here we preview only the payout half of the guard.
+  const plan = planRelicMint({ height, tip, holderAddress: holder, treasuryAddress: DONATION_ADDRESS,
+    parents: [], bitmapParentId: null, masterInscriptionId: null });
+  const payoutOk = plan.ok || !plan.missing.some((m) => m === "HOLDER" || m === "TREASURY" || m === "TIP");
+  return (
+    <div className="space-y-1 rounded border border-border p-2">
+      <p className="text-muted-foreground">TRIBUTE: {t.total} SATS · {t.holder} TO BITMAP HOLDER · {t.treasury} TO TREASURY (+ MINER FEE)</p>
+      <p className={holder ? "text-accent" : "text-destructive"}>
+        HOLDER: {q.isLoading ? "CHECKING CHAIN…" : holder ? `${holder.slice(0, 10)}…${holder.slice(-6)} (VERIFIED LIVE)` : `NOT VERIFIED${q.data?.note ? ` — ${q.data.note}` : ""}`}
+      </p>
+      <p className={payoutOk ? "text-muted-foreground" : "text-destructive"}>{payoutOk ? "SIGNING ALSO REQUIRES BOTH PARENTS AT MINT TIME" : "SIGNING BLOCKED UNTIL HOLDER IS VERIFIED"}</p>
+    </div>
+  );
+}
 
 const TITLE = "Marauder Relics — dev9's BITMAP Collection";
 const DESC = "Lean on-chain voxel relics: one master viewer, each relic a child of its BITMAP, derived only from the block height.";
@@ -60,9 +85,7 @@ function Relics() {
           {meta && <>
             <p className="text-accent">{check?.ok ? "✓ MATCHES THE BLOCK" : "✗ DOES NOT MATCH"} · {meta.v.split(";").length} VOXELS · 1 DRAW</p>
             <p className="text-primary">TIER: {TIER_LABEL[meta.r]}</p>
-            {(() => { const t = relicTribute(height); return (
-              <p className="text-muted-foreground">PLANNED TRIBUTE: {t.total} SATS · {t.holder} TO BITMAP HOLDER · {t.treasury} TO TREASURY (+ MINER FEE)</p>
-            ); })()}
+            <RelicPayoutReview height={height} tip={tip} />
             <div>
               <p className="text-muted-foreground">RELIC DATA (TAG 5) · {json.length} BYTES</p>
               <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px]">{json}</pre>
