@@ -11,12 +11,12 @@ const ok = (v: unknown) => () => new Response(JSON.stringify(v), { status: 200 }
 
 describe("chapter block facts", () => {
   it("uses the explorer for blocks past the records", async () => {
-    const f = await resolveChapterFacts(900000, none, mock({ "/block-height/900000": ok(H), [`/v1/block/${H}`]: ok({ id: H, height: 900000, tx_count: 4321, timestamp: 1750000000, extras: { avgFeeRate: 3 } }) }));
+    const f = await resolveChapterFacts(900000, none, mock({ "/block-height/900000": () => new Response(H, { status: 200 }), [`/v1/block/${H}`]: ok({ id: H, height: 900000, tx_count: 4321, timestamp: 1750000000, extras: { avgFeeRate: 3 } }) }));
     expect(f).toMatchObject({ txCount: 4321, avgFeeRate: 3, source: "explorer", note: null });
     expect(f.minedAt).toBe(new Date(1750000000 * 1000).toISOString());
   });
   it("rejects a block whose height does not match", async () => {
-    const f = await resolveChapterFacts(900000, none, mock({ "/block-height/900000": ok(H), [`/v1/block/${H}`]: ok({ id: H, height: 1, tx_count: 9 }) }));
+    const f = await resolveChapterFacts(900000, none, mock({ "/block-height/900000": () => new Response(H, { status: 200 }), [`/v1/block/${H}`]: ok({ id: H, height: 1, tx_count: 9 }) }));
     expect(f).toMatchObject({ txCount: null, source: "unavailable", note: "EXPLORER RETURNED A DIFFERENT BLOCK" });
   });
   it("reports unreachable explorers without inventing data", async () => {

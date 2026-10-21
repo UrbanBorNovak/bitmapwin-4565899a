@@ -12,12 +12,15 @@ export type ChapterFacts = {
 type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
 export const EXPLORERS = ["https://mempool.space/api", "https://mempool.emzy.de/api"];
 
+/** /block-height answers with a bare hash in plain text, so read text and parse JSON only when it is JSON. */
 async function json<T>(f: Fetch, path: string): Promise<T | null> {
   for (const base of EXPLORERS) {
     try {
-      const r = await f(`${base}${path}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(8000) });
+      const r = await f(`${base}${path}`, { signal: AbortSignal.timeout(8000) });
       if (r.status === 404) return null;
-      if (r.ok) return (await r.json()) as T;
+      if (!r.ok) continue;
+      const body = (await r.text()).trim();
+      try { return JSON.parse(body) as T; } catch { return body as T; }
     } catch { /* next mirror */ }
   }
   throw new Error("EXPLORER_UNAVAILABLE");
