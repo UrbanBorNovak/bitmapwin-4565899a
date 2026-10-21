@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { BroadcastUnknown, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -261,5 +261,88 @@ describe("recovery is scoped to wallet and network", () => {
     localStorage.removeItem("bitmapwin:sealed-pending");
     pendingStore.put({ txid: "8".repeat(64), rawHex: "00", anchor: { txid: "1".repeat(64), vout: 0 }, address, network: "testnet", sent: [], at: "t" });
     expect(pendingStore.forWallet(address)).toHaveLength(0);
+  });
+});
+
+describe("crashes, reloads and late signatures while the wallet window is open", () => {
+  // Web Locks are released by the browser when a tab dies; model that with a "crash" that frees the name.
+  const held = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (held.has(name)) return cb(null);
+    held.add(name);
+    try { return await cb({ name }); } finally { held.delete(name); }
+  } };
+  const reset = () => { for (const key of ["bitmapwin:sealed-pending", "bitmapwin:sealed-intent", "bitmapwin:sealed-undo", "bitmapwin:sealed-sent"]) localStorage.removeItem(key); sealStore.setHeld(bundle); held.clear(); };
+  const labels = () => sealStore.held().map((h) => h.c.note.label).sort();
+  const go = (sign: (p: string) => Promise<string>, currentWallet = () => address as string | null) =>
+    runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign, currentWallet, locks });
+
+  it("reload mid-popup: the intent survives, notes are untouched, and new transfers are blocked", async () => {
+    reset();
+    void go(() => new Promise<string>(() => {})); // popup never returns — tab is about to die
+    await new Promise((r) => setTimeout(r, 0));
+    held.clear(); // tab crashed: browser frees its lock
+    expect(intentStore.onAnchor(coin)).toHaveLength(1);
+    expect(intentStore.forWallet(address)).toHaveLength(1);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/INTERRUPTED/);
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it("an interrupted signing is cleared only when the anchor is provably unspent", async () => {
+    expect(await clearInterrupted(coin, async () => { throw new Error("down"); }, locks)).toBe("UNRESOLVED");
+    expect(await clearInterrupted(coin, async () => ({ spent: true, txid: "e".repeat(64) }), locks)).toBe("SPENT");
+    expect(intentStore.onAnchor(coin)).toHaveLength(1);
+    expect(await clearInterrupted(coin, async () => ({ spent: false }), locks)).toBe("CLEARED");
+    expect(intentStore.onAnchor(coin)).toHaveLength(0);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    await expect(go(mockWallet)).resolves.toBeTruthy();
+  });
+  it("can't clear an intent while a live tab is still signing", async () => {
+    reset();
+    let release!: () => void;
+    const p = go((ps) => new Promise((res) => { release = () => res(mockWallet(ps)); }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await clearInterrupted(coin, async () => ({ spent: false }), locks)).toBe("BUSY");
+    release(); await p;
+  });
+  it("crash right after the signature lands: notes, pending and undo are all already saved", async () => {
+    reset();
+    const r = await go(mockWallet);
+    held.clear(); // crash
+    expect(intentStore.onAnchor(coin)).toHaveLength(0);
+    expect(pendingStore.forWallet(address).map((x) => x.txid)).toEqual([r.txid]);
+    expect(sealStore.held().map((h) => h.c.note.label)).toEqual(["Key", "Map"]);
+    expect(pendingStore.forWallet(address)[0]!.sent.map((x) => x.label)).toEqual(["Pass"]);
+    expect(sealStore.undo()[r.txid]!.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+    await expect(go(mockWallet)).rejects.toThrow(/UNFINISHED TRANSFER/);
+  });
+  it("signature arriving after a wallet switch is filed under the wallet that started it", async () => {
+    reset();
+    const r = await go(mockWallet, () => "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq");
+    expect(r.walletChanged).toBe(true);
+    expect(pendingStore.forWallet(address).map((x) => x.txid)).toEqual([r.txid]);
+    expect(pendingStore.forWallet("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")).toHaveLength(0);
+    await expect(go(mockWallet)).rejects.toThrow(/UNFINISHED/);
+  });
+  it("signature arriving after a network switch (or disconnect) is flagged the same way", async () => {
+    reset();
+    expect((await go(mockWallet, () => "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx")).walletChanged).toBe(true);
+    reset();
+    expect((await go(mockWallet, () => null)).walletChanged).toBe(true);
+    expect(pendingStore.onAnchor(coin)).toHaveLength(1);
+  });
+  it("if another tab added a note to the coin while signing, the signature is discarded and nothing is lost", async () => {
+    reset();
+    let release!: () => void;
+    const p = go((ps) => new Promise((res) => { release = () => res(mockWallet(ps)); }));
+    await new Promise((r) => setTimeout(r, 0));
+    const extra: HeldSealed = { c: { note: mintSealed("Late", "item", A, "2026-10-21T00:00:09Z"), steps: [], reveals: [] }, mine: A };
+    sealStore.setHeld([...sealStore.held(), extra]);
+    release();
+    await expect(p).rejects.toThrow(/CHANGED WHILE SIGNING/);
+    expect(labels()).toEqual(["Key", "Late", "Map", "Pass"]);
+    expect(pendingStore.onAnchor(coin)).toHaveLength(0);
+    expect(intentStore.onAnchor(coin)).toHaveLength(0);
   });
 });
