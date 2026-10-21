@@ -5,6 +5,7 @@ import { TracyCom } from "@/components/game/TracyCom";
 import { useServerFn } from "@tanstack/react-start";
 import { heldItems, missionScript, missionStepFor, npcById, questStore, stepKey } from "@/lib/biternam-quests";
 import { recordQuestStepFn } from "@/lib/biternam-npc.functions";
+import { playSfx } from "@/lib/retro-sfx";
 import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/cafe-verbs";
 
@@ -63,6 +64,7 @@ function CafePage() {
     if (falling) return;
     const r = resolveCafeVerb(v, h, { held, distracted, item: it });
     if (r.text) setSay(r.text);
+    playSfx(r.effect === "talk" ? "talk" : r.effect === "pickup-coin" ? "pickup" : r.effect === "distract" ? "dance" : r.effect === "trapdoor" ? "fall" : r.effect === "exit" ? "door" : r.effect ? "verb" : "deny");
     if (r.effect === "talk") { const p = questStore.get(); setMission({ m: missionStepFor("dev9", p), held: heldItems(p) }); setCall(Date.now()); }
     if (r.effect === "exit") navigate({ to: "/map" });
     if (r.effect === "pickup-coin") setHeld((p) => [...p, "coin"]);
@@ -84,7 +86,7 @@ function CafePage() {
   return (
     <main className="relative flex h-[calc(100vh-4rem)] min-h-[560px] flex-col bg-background">
       <div className="relative flex-1">
-        <CafeInterior onHit={hit} onHover={setHover} hover={hover} hasCoin={held.includes("coin") || distracted} distracted={distracted} falling={falling} />
+        <CafeInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasCoin={held.includes("coin") || distracted} distracted={distracted} falling={falling} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · CHAPTER 2</div>
           <div className="font-display text-2xl text-foreground">BIT-CAFÉ · DEV9'S BOOTH</div>
@@ -110,7 +112,7 @@ function CafePage() {
         <div className="mb-2 min-h-[1.25rem] text-center text-[13px] text-foreground">{say}</div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {VERBS.map((v) => (
-            <button key={v.id} onClick={() => { setVerb(v.id); setItem(null); }}
+            <button key={v.id} onClick={() => { playSfx("verb"); setVerb(v.id); setItem(null); }}
               className={`rounded border px-3 py-1.5 text-[12px] tracking-widest ${verb === v.id && !item ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:border-signal hover:text-foreground"}`}>
               [ {v.label} ]
             </button>
