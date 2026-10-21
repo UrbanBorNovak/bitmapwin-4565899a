@@ -5,7 +5,7 @@ import { TracyCom } from "@/components/game/TracyCom";
 import { useServerFn } from "@tanstack/react-start";
 import { heldItems, missionScript, missionStepFor, npcById, questStore, stepKey } from "@/lib/biternam-quests";
 import { recordQuestStepFn } from "@/lib/biternam-npc.functions";
-import { playSfx } from "@/lib/retro-sfx";
+import { playSfx, setCafeMusicHot, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/cafe-verbs";
 
