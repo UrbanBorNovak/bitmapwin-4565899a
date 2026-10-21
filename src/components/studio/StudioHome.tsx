@@ -9,10 +9,6 @@ type Tool = {
   link: ReactNode;
 };
 
-function card(to: string, children: ReactNode, search?: Record<string, string>) {
-  return { to, children, search };
-}
-void card;
 
 function Section({ index, title, lead, tools }: { index: string; title: string; lead: string; tools: Tool[] }) {
   return (
