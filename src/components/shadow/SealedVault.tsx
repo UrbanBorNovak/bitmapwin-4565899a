@@ -3,6 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
+import { keycardKind, relicKind, relicStore, sealableItems } from "@/lib/sealed-relics";
+import { questStore, useQuestState } from "@/lib/biternam-quests";
+import { forgetPass, getPass } from "@/lib/shadow-vault";
 import {
   BroadcastUnknown, loadHeld, restoreBackup, runLockedTransfer, intentStore, clearInterrupted, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
@@ -37,6 +40,10 @@ export function SealedVault() {
   const [coins, setCoins] = useState<Coin[] | null>(null);
   const [coinPick, setCoinPick] = useState("");
   const [labelIn, setLabelIn] = useState("");
+  const [mintType, setMintType] = useState("memo");
+  const [gateSlug, setGateSlug] = useState("");
+  const { progress: questProgress } = useQuestState();
+  const wristItems = useMemo(() => sealableItems(questProgress), [questProgress]);
   const [recvCode, setRecvCode] = useState("");
   const [paste, setPaste] = useState("");
   const [give, setGive] = useState<Record<string, string>>({});
@@ -137,12 +144,27 @@ export function SealedVault() {
   async function run(f: () => Promise<void>) { if (damaged) { setMsg(`✗ ${damaged}`); return; } setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
   const mint = () => run(async () => {
-    if (!labelIn.trim()) throw new Error("NAME THE NOTE");
+    let kind = "memo", name = labelIn.trim();
+    if (mintType.startsWith("relic:")) {
+      const it = sealableItems(questStore.get()).find((i) => relicKind(i.id) === mintType);
+      if (!it) throw new Error("THAT ITEM IS NOT ON YOUR WRIST");
+      if (held.some((h) => h.c.note.kind === mintType)) throw new Error("YOU ALREADY HOLD THIS RELIC");
+      kind = mintType; name = name || it.name;
+    } else if (mintType === "keycard") {
+      const slug = gateSlug.trim().toLowerCase();
+      if (!getPass(slug)) throw new Error("NO SHADOW PASS FOR THAT GATE ON THIS DEVICE");
+      kind = keycardKind(slug); name = name || `KEYCARD · ${slug}`;
+    }
+    if (!name) throw new Error("NAME THE NOTE");
     const c = await pickCoin();
     const existing = groups[sealKey(c)];
     const mine = existing?.[0]?.mine ?? { txid: c.txid, vout: c.vout, salt: salt() };
-    const next = [...held, { c: { note: mintSealed(labelIn.trim().slice(0, 60), "memo", mine), steps: [], reveals: [] }, mine }];
-    store(next); setLabelIn(""); setMsg("SEALED NOTE CREATED ON THAT COIN"); void check(next);
+    const next = [...held, { c: { note: mintSealed(name.slice(0, 60), kind, mine), steps: [], reveals: [] }, mine }];
+    store(next);
+    // The device pass becomes the sealed keycard, so it can't be held twice.
+    if (kind.startsWith("keycard:")) forgetPass(kind.slice(8));
+    setLabelIn(""); setMsg(kind === "memo" ? "SEALED NOTE CREATED ON THAT COIN" : "SEALED RELIC CREATED · UNLOCKS AFTER 6 CONFIRMATIONS OF ITS COIN");
+    void check(next); void relicStore.refresh(true);
   });
   const makeRecv = () => run(async () => {
     const c = await pickCoin();
@@ -273,8 +295,14 @@ export function SealedVault() {
                 <option value="">{coins === null ? "READING COINS…" : coins.length ? "PICK A PLAIN COIN" : "NO COINS FOUND"}</option>
                 {coins?.map((c) => <option key={sealKey(c)} value={sealKey(c)}>{c.value.toLocaleString()} sats · {short(c.txid)}:{c.vout}{c.confirmed ? "" : " · unconfirmed"}{groups[sealKey(c)] ? ` · holds ${groups[sealKey(c)]!.length}` : ""}</option>)}
               </select>
+              <select value={mintType} onChange={(e) => setMintType(e.target.value)} className="mt-2 w-full rounded border border-border bg-background px-2 py-1.5 text-[12px]" aria-label="What to seal">
+                <option value="memo">PLAIN NOTE</option>
+                {wristItems.map((i) => <option key={i.id} value={relicKind(i.id)}>BITERNAM RELIC · {i.name}</option>)}
+                <option value="keycard">SHADOW GATE KEYCARD (from a pass on this device)</option>
+              </select>
+              {mintType === "keycard" ? <input value={gateSlug} onChange={(e) => setGateSlug(e.target.value)} placeholder="Gate name, e.g. night-market" className="mt-2 w-full rounded border border-border bg-background px-2 py-1 text-[12px]" /> : null}
               <div className="mt-2 flex gap-2">
-                <input value={labelIn} onChange={(e) => setLabelIn(e.target.value)} placeholder="Name of new sealed note" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[12px]" />
+                <input value={labelIn} onChange={(e) => setLabelIn(e.target.value)} placeholder={mintType === "memo" ? "Name of new sealed note" : "Optional name"} className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[12px]" />
                 <button disabled={busy} onClick={mint} className="rounded border border-primary px-3 py-1 text-[11px] text-primary">[ SEAL ON COIN ]</button>
               </div>
               <button disabled={busy} onClick={makeRecv} className="mt-2 text-[11px] text-signal">[ MAKE A RECEIVE CODE ON THIS COIN ]</button>
