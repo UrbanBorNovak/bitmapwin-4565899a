@@ -284,6 +284,7 @@ export async function withAnchorLock<T>(anchor: { txid: string; vout: number }, 
   await lm.request(`bitmapwin:seal-anchor:${sealKey(anchor)}`, { mode: "exclusive", ifAvailable: true }, async (lock) => {
     if (!lock) return;
     ran = true;
+    recoverInterruptedRestore(); // a half-finished restore must be settled (or fail closed) before any signing
     if (pendingStore.onAnchor(anchor).length) throw new Error("THIS COIN ALREADY HAS AN UNFINISHED TRANSFER — RESOLVE IT FIRST (MAYBE IN ANOTHER TAB)");
     if (intentStore.onAnchor(anchor).length) throw new Error("A SIGNING ON THIS COIN WAS INTERRUPTED — CHECK IT ON BITCOIN FIRST");
     out = await fn();
@@ -411,11 +412,19 @@ const rawPut = (k: string, v: string | null) => { if (v == null) localStorage.re
 export function recoverInterruptedRestore(): boolean {
   const j = rawGet(JK);
   if (j == null) return false;
-  let prev: Record<string, string | null>;
-  try { prev = JSON.parse(j).prev; if (!prev || typeof prev !== "object") throw 0; }
+  let prev: Record<string, string | null>, next: Record<string, string> | undefined;
+  try { const o = JSON.parse(j); prev = o.prev; next = o.next; if (!prev || typeof prev !== "object") throw 0; }
   catch { throw new VaultStorageError(`DAMAGED VAULT RECORD (${JK}) — RESTORE A BACKUP; NOTHING WAS CHANGED`); }
-  try { for (const k of RESTORE_KEYS) rawPut(k, prev[k] ?? null); localStorage.removeItem(JK); }
-  catch { throw new VaultStorageError("AN INTERRUPTED RESTORE COULDN'T BE UNDONE YET — NOTHING ELSE CHANGED, TRY AGAIN"); }
+  // Undo only what the restore itself wrote: a record that now holds anything other than the
+  // restore's own value was saved later (another tab signed/saved) and is newer — keep it.
+  try {
+    for (const k of RESTORE_KEYS) {
+      const cur = rawGet(k);
+      if (next && cur === next[k] && cur !== prev[k]) rawPut(k, prev[k] ?? null);
+    }
+    localStorage.removeItem(JK);
+    if (localStorage.getItem(JK) != null) throw 0;
+  } catch { throw new VaultStorageError("AN INTERRUPTED RESTORE COULDN'T BE UNDONE YET — VAULT PAUSED, NOTHING ELSE CHANGED, TRY AGAIN"); }
   return true;
 }
 /** Holds the restore lock and every listed anchor lock at once (ifAvailable); busy anchors are reported, not waited on. */
@@ -484,7 +493,7 @@ export async function restoreBackup(backup: unknown, o: {
         };
         const prev: Record<string, string | null> = {};
         for (const k of RESTORE_KEYS) prev[k] = rawGet(k);
-        try { rawPut(JK, JSON.stringify({ prev })); } catch { throw new VaultStorageError("COULD NOT SAVE THE RESTORE SAFETY RECORD — NOTHING RESTORED"); }
+        try { rawPut(JK, JSON.stringify({ prev, next })); } catch { throw new VaultStorageError("COULD NOT SAVE THE RESTORE SAFETY RECORD — NOTHING RESTORED"); }
         try { for (const k of RESTORE_KEYS) rawPut(k, next[k]!); }
         catch {
           try { recoverInterruptedRestore(); } catch { /* journal stays; undone on next load */ }
