@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  BroadcastUnknown, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
+  BroadcastUnknown, networkOf, withAnchorLock, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -95,8 +95,9 @@ export function SealedVault() {
   const [unknown, setUnknown] = useState(false);
   // Restore any signed-but-unresolved transfer after a reload or wallet reconnect.
   useEffect(() => {
-    const p = pendingStore.all().at(-1);
-    if (p) { setSigned({ txid: p.txid, rawHex: p.rawHex, sent: p.sent }); setUnknown(!!p.unknown); }
+    const p = address ? pendingStore.forWallet(address).at(-1) : undefined;
+    if (!p) { setSigned(null); setUnknown(false); setSentTx(null); return; }
+    { setSigned({ txid: p.txid, rawHex: p.rawHex, sent: p.sent }); setUnknown(!!p.unknown); }
   }, [address]);
   const broadcast = () => run(async () => {
     if (!signed) return;
@@ -151,25 +152,30 @@ export function SealedVault() {
 
   const prepare = (k: string) => run(async () => {
     if (!wallet) throw new Error("CONNECT YOUR WALLET FIRST");
-    if (pendingStore.all().length) throw new Error("RESOLVE YOUR UNFINISHED TRANSFER FIRST — PRESS CHECK ON BITCOIN");
+    if (pendingStore.forWallet(address).length) throw new Error("RESOLVE YOUR UNFINISHED TRANSFER FIRST — PRESS CHECK ON BITCOIN");
     const bundle = groups[k]!;
     const coin = coinOf(k);
     if (!coin) throw new Error("THIS SEAL COIN IS NOT IN YOUR WALLET ANY MORE");
     await assertPlainCoin(coin);
     const pick = Object.fromEntries(bundle.map((h) => noteKey(h.c.note.genesis)).filter((n) => give[n]?.trim()).map((n) => [n, give[n]!.trim()]));
-    const { kept, sent, ...out } = await prepareTransfer({
-      bundle, allHeld: held, give: pick, coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), feeRate,
-      sign: (p) => signPsbtBase64(wallet.provider, p),
+    const network = networkOf(address);
+    if (!network) throw new Error("UNKNOWN BITCOIN NETWORK FOR THIS WALLET");
+    const { kept, sent, ...out } = await withAnchorLock(coin, async () => {
+      const r = await prepareTransfer({
+        bundle, allHeld: sealStore.held(), give: pick, coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), feeRate,
+        sign: (p) => signPsbtBase64(wallet.provider, p),
+      });
+      // Persist inside the lock so another tab or a reload always sees it; every given/kept note is kept.
+      sealStore.setUndo({ ...sealStore.undo(), [r.txid]: bundle });
+      pendingStore.put({ txid: r.txid, rawHex: r.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, address, network, sent: r.sent, at: new Date().toISOString() });
+      return r;
     });
-    // Persist first so a reload / wallet reconnect can never lose the given or kept notes.
-    sealStore.setUndo({ ...sealStore.undo(), [out.txid]: bundle });
-    pendingStore.put({ txid: out.txid, rawHex: out.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, sent, at: new Date().toISOString() });
     sealStore.setSent([...sealStore.sent(), ...sent.map((s) => ({ ...s, at: new Date().toISOString() }))]);
     const next = [...held.filter((h) => sealKey(h.mine) !== k), ...kept];
     store(next); setReview(null); setGive({}); setSentTx(null); setUnknown(false); setSigned({ txid: out.txid, rawHex: out.rawHex, sent }); void check(next);
   });
   const resolve = (txid: string) => {
-    const p = pendingStore.all().find((x) => x.txid === txid);
+    const p = pendingStore.forWallet(address).find((x) => x.txid === txid);
     if (!p) return Promise.resolve<Resolution>("UNRESOLVED");
     return resolvePending(p, { txSeen: (t) => txSeenOnChain(t), outspend: (o) => mempoolChain().outspend(o) });
   };

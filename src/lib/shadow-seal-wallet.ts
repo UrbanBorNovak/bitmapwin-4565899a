@@ -194,13 +194,22 @@ export async function broadcastTx(rawHex: string, txid: string, fetchImpl: typeo
 }
 
 /* ── unresolved signed transfers (survive reloads + wallet reconnects) ── */
+export type BtcNetwork = "mainnet" | "testnet" | "regtest";
+export const networkOf = (address: string): BtcNetwork | null =>
+  /^bc1|^[13]/.test(address) ? "mainnet" : /^bcrt1/.test(address) ? "regtest" : /^tb1|^[mn2]/.test(address) ? "testnet" : null;
 export type PendingTransfer = {
   txid: string; rawHex: string; anchor: { txid: string; vout: number };
+  /** wallet address + network the transfer was signed for — recovery only shows it to that wallet */
+  address: string; network: BtcNetwork;
   sent: { label: string; code: string }[]; at: string; unknown?: boolean;
 };
 const PK = "bitmapwin:sealed-pending";
 export const pendingStore = {
   all: () => read<PendingTransfer[]>(PK, []),
+  /** Only the transfers signed by this wallet on this network. */
+  forWallet: (address: string) => read<PendingTransfer[]>(PK, []).filter((p) => p.address === address && p.network === networkOf(address)),
+  /** Any unresolved transfer on this coin, whichever wallet or tab made it. */
+  onAnchor: (a: { txid: string; vout: number }) => read<PendingTransfer[]>(PK, []).filter((p) => sealKey(p.anchor) === sealKey(a)),
   put: (p: PendingTransfer) => write(PK, [...read<PendingTransfer[]>(PK, []).filter((x) => x.txid !== p.txid), p]),
   drop: (txid: string) => write(PK, read<PendingTransfer[]>(PK, []).filter((x) => x.txid !== txid)),
 };
@@ -224,4 +233,26 @@ export async function resolvePending(p: PendingTransfer, deps: {
   if (seen === "seen" && os.spent && os.txid === p.txid) return "SENT";
   if (seen === "absent" && !os.spent) return "SAFE_TO_CANCEL";
   return "UNRESOLVED"; // e.g. seen but anchor unspent, or absent but anchor spent by us
+}
+
+/* ── one signer per anchor coin across tabs ── */
+type LockLike = { request: (name: string, opts: { mode: "exclusive"; ifAvailable: true }, cb: (lock: unknown) => Promise<unknown>) => Promise<unknown> };
+
+/**
+ * Runs `fn` (plan → sign → persist) holding an exclusive cross-tab lock on the anchor coin.
+ * Refuses when another tab holds the lock, or when any unresolved transfer for that coin is
+ * already stored (re-read inside the lock, so a tab that just finished is always seen).
+ */
+export async function withAnchorLock<T>(anchor: { txid: string; vout: number }, fn: () => Promise<T>, locks?: LockLike): Promise<T> {
+  const lm = locks ?? (typeof navigator !== "undefined" ? (navigator as unknown as { locks?: LockLike }).locks : undefined);
+  if (!lm) throw new Error("THIS BROWSER CAN'T PREVENT TWO TABS SIGNING AT ONCE — USE AN UP-TO-DATE BROWSER");
+  let ran = false, out: T | undefined;
+  await lm.request(`bitmapwin:seal-anchor:${sealKey(anchor)}`, { mode: "exclusive", ifAvailable: true }, async (lock) => {
+    if (!lock) return;
+    ran = true;
+    if (pendingStore.onAnchor(anchor).length) throw new Error("THIS COIN ALREADY HAS AN UNFINISHED TRANSFER — RESOLVE IT FIRST (MAYBE IN ANOTHER TAB)");
+    out = await fn();
+  });
+  if (!ran) throw new Error("ANOTHER TAB IS SIGNING A TRANSFER FOR THIS COIN — FINISH OR CLOSE IT FIRST");
+  return out as T;
 }
