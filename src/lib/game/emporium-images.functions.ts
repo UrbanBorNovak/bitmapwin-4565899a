@@ -6,7 +6,7 @@ import { getPuppetsFn } from "./puppets.functions";
  * (e.g. parcels) are dropped. Children from one reveal share a content type, so
  * one HEAD per reveal txid classifies the batch.
  */
-let cache: { ids: string[]; at: number } | null = null;
+let cache: { items: Array<[string, number]>; at: number } | null = null;
 const typeByTx = new Map<string, boolean>();
 
 async function isImage(id: string): Promise<boolean> {
@@ -18,7 +18,7 @@ async function isImage(id: string): Promise<boolean> {
 }
 
 export const getEmporiumImagesFn = createServerFn({ method: "GET" }).handler(async () => {
-  if (cache && Date.now() - cache.at < 6 * 3600_000) return { ids: cache.ids };
+  if (cache && Date.now() - cache.at < 6 * 3600_000) return { items: cache.items };
   const { ids } = await getPuppetsFn();
   const firstByTx = new Map<string, string>();
   for (const id of ids) { const tx = id.split("i")[0]; if (!firstByTx.has(tx)) firstByTx.set(tx, id); }
@@ -26,7 +26,7 @@ export const getEmporiumImagesFn = createServerFn({ method: "GET" }).handler(asy
   for (let i = 0; i < todo.length; i += 16) {
     await Promise.all(todo.slice(i, i + 16).map(async ([tx, id]) => typeByTx.set(tx, await isImage(id))));
   }
-  const images = ids.filter((id) => typeByTx.get(id.split("i")[0]) !== false);
-  cache = { ids: images, at: Date.now() };
-  return { ids: images };
+  const items = ids.map((id, n) => [id, n] as [string, number]).filter(([id]) => typeByTx.get(id.split("i")[0]) !== false);
+  if (items.length) cache = { items, at: Date.now() };
+  return { items };
 });
