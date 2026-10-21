@@ -37,7 +37,7 @@ function ChaptersPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const facts = useQuery({ queryKey: ["block-facts", height], queryFn: () => blockFactsFn({ data: { height } }) });
+  const facts = useQuery({ queryKey: ["block-facts", height], queryFn: () => blockFactsFn({ data: { height } }), retry: 1 });
   const chapters = useQuery({ queryKey: ["biternam-chapters"], queryFn: () => listChaptersFn(), staleTime: 30_000 });
   const f = { height, txCount: facts.data?.txCount ?? null };
   const existing = chapters.data?.find((c) => c.height === height);
@@ -121,7 +121,10 @@ function ChaptersPage() {
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
             <span className="text-muted-foreground">BITMAP</span><span data-no-translate>{height}.bitmap</span>
             <span className="text-muted-foreground">THEME</span><span className="text-signal">{chapterTheme(f).toUpperCase()}</span>
-            <span className="text-muted-foreground">TRANSACTIONS</span><span>{facts.isPending ? "…" : f.txCount == null ? "NOT RECORDED" : f.txCount.toLocaleString("en-US")}</span>
+            <span className="text-muted-foreground">TRANSACTIONS</span><span>{facts.isPending ? "…" : f.txCount == null ? "UNAVAILABLE" : f.txCount.toLocaleString("en-US")}</span>
+            <span className="text-muted-foreground">AVG FEE</span><span>{facts.isPending ? "…" : f.avgFeeRate == null ? "UNAVAILABLE" : `${f.avgFeeRate} sat/vB`}</span>
+            <span className="text-muted-foreground">MINED</span><span>{facts.isPending ? "…" : f.minedAt == null ? "UNAVAILABLE" : new Date(f.minedAt).toISOString().slice(0, 16).replace("T", " ") + " UTC"}</span>
+            <span className="text-muted-foreground">SOURCE</span><span className={facts.data?.note ? "text-destructive" : ""}>{facts.isError ? "LOOKUP FAILED" : facts.data ? `${facts.data.source.toUpperCase()}${facts.data.note ? ` · ${facts.data.note}` : ""}` : "…"}</span>
           </div>
           {beyondTip && <div className="text-destructive">UNMINED · BEYOND CHAIN TIP ({tip.toLocaleString("en-US")})</div>}
           <div>
