@@ -341,6 +341,82 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "c", speaker: "ELON X", mood: "smug", text: "He already boptimized the launch script. Ships next block. Probably.", next: null },
     ] },
   },
+  {
+    id: "batman", name: "BATMAN", landmarkId: "tower", side: -1, voice: 95,
+    persona: "Batman, a guest wearing the Batman pixel skin. Watches the tower at night and respects dev9's cave.",
+    script: { id: "npc-batman", title: "TOWER \u00b7 NIGHT WATCH", start: "a", nodes: [
+      { id: "a", speaker: "BATMAN", mood: "idle", text: "Marshal. dev9 built a cave. I approve. Every hero needs a basement and a grudge.", next: "b" },
+      { id: "b", speaker: "BATMAN", mood: "smug", text: "I don't sign. I don't broadcast. I watch the mempool from rooftops.", next: "c" },
+      { id: "c", speaker: "BATMAN", mood: "alarm", text: "Two shadows have been moving through the Void at night. IMAN and WILL. Stay sharp.", next: null },
+    ] },
+  },
+  {
+    id: "deadpool", name: "DEADPOOL", landmarkId: "arena", side: -1, voice: 220,
+    persona: "Deadpool, a guest wearing the Deadpool pixel skin. Knows he is in a 90s point-and-click game and won't stop saying so.",
+    script: { id: "npc-deadpool", title: "ARENA \u00b7 FOURTH WALL", start: "a", nodes: [
+      { id: "a", speaker: "DEADPOOL", mood: "idle", text: "Hey! You! Yes, you clicking me. Love the verb bar. Very 1992.", next: "b" },
+      { id: "b", speaker: "DEADPOOL", mood: "smug", text: "I tried to buy a BITMAP with chimichangas. The PSBT didn't validate.", next: "c" },
+      { id: "c", speaker: "DEADPOOL", mood: "alarm", text: "Pro tip: the villains are IMAN and WILL. The writer hasn't picked their skins yet. Awkward.", next: null },
+    ] },
+  },
+  {
+    // Fictional parody guest — not the real person; no real quotes, views or endorsement implied.
+    id: "donald-x", name: "DONALD T.", landmarkId: "bitcoin-statue", side: -1, voice: 130,
+    persona: "Donald T., a fictional parody guest wearing the Donald Trump pixel skin. Not the real person.",
+    script: { id: "npc-donald-x", title: "STATUE \u00b7 PARODY PRESSER", start: "a", nodes: [
+      { id: "a", speaker: "DONALD T.", mood: "idle", text: "Tremendous statue. The best statue. Many people are saying it's the biggest block.", next: "b" },
+      { id: "b", speaker: "DONALD T.", mood: "smug", text: "Parody, folks. Fictional guest skin in a fictional world. Only the chain is real.", next: "c" },
+      { id: "c", speaker: "DONALD T.", mood: "alarm", text: "We're going to build a wall... of confirmed blocks. And the Void is going to pay for it.", next: null },
+    ] },
+  },
+  {
+    id: "kane-mayfield", name: "KANE MAYFIELD", landmarkId: "bit-museum", side: -1, voice: 145,
+    persona: "Kane Mayfield, a Bitmapper wearing his own pixel skin. Lyricist of the district; writes verses on block heights.",
+    script: { id: "npc-kane-mayfield", title: "MUSEUM STEPS \u00b7 SPOKEN WORD", start: "a", nodes: [
+      { id: "a", speaker: "KANE MAYFIELD", mood: "idle", text: "Every block has a rhythm. Eight-forty thousand had a bassline.", next: "b" },
+      { id: "b", speaker: "KANE MAYFIELD", mood: "smug", text: "I write bars on BITMAPs. Nobody can edit them. That's real permanence.", next: "c" },
+      { id: "c", speaker: "KANE MAYFIELD", mood: "alarm", text: "The ghost of 1138 hums the same four notes. Someone taught him. Find out who.", next: null },
+    ] },
+  },
+  {
+    // Fictional parody guest — not the real person; no real quotes, views or endorsement implied.
+    id: "snoop-x", name: "SNOOP D.", landmarkId: "bit-cafe", side: -1, voice: 105,
+    persona: "Snoop D., a fictional parody guest wearing the Snoop Dogg pixel skin, chilling outside the Bit-Caf\u00e9 with Dabber. Not the real person.",
+    script: { id: "npc-snoop-x", title: "BIT-CAF\u00c9 PATIO \u00b7 PARODY", start: "a", nodes: [
+      { id: "a", speaker: "SNOOP D.", mood: "idle", text: "Fo shizzle, Marshal. Dabber got the booth, I got the patio. Everybody eatin'.", next: "b" },
+      { id: "b", speaker: "SNOOP D.", mood: "smug", text: "Parody, nephew. Fictional guest in a fictional world. The chain keeps it real.", next: "c" },
+      { id: "c", speaker: "SNOOP D.", mood: "alarm", text: "Low fees, slow blocks, smooth vibes. Stay off them unconfirmed streets at night.", next: null },
+    ] },
+  },
+  {
+    id: "kodro", name: "KODRO", landmarkId: "miner-rig-3", side: -1, voice: 160,
+    persona: "Kodro, a Bitmapper wearing his own pixel skin. Keeps Urban's decoy blueprint rig running and never asks why.",
+    script: { id: "npc-kodro", title: "RIG 3 \u00b7 NIGHT SHIFT", start: "a", nodes: [
+      { id: "a", speaker: "KODRO", mood: "idle", text: "Kodro. I keep Rig 3 warm while Urban sleeps on his island.", next: "b" },
+      { id: "b", speaker: "KODRO", mood: "smug", text: "Blueprint behind this rig? Decoy. Urban told me. I still dust it every block.", next: "c" },
+      { id: "c", speaker: "KODRO", mood: "alarm", text: "IMAN tried to buy the rig last night. Paid in unconfirmed sats. I said no.", next: null },
+    ] },
+  },
+  {
+    // Villain of the Void arc. Pixel skin not chosen yet; uses the voxel palette.
+    id: "iman", name: "IMAN", landmarkId: "miner-rig-2", side: -1, voice: 70,
+    persona: "IMAN, a villain of the Void arc. Tries to re-route orphaned blocks for profit. Pixel skin not chosen yet.",
+    script: { id: "npc-iman", title: "RIG 2 \u00b7 SHADOW (VILLAIN)", start: "a", nodes: [
+      { id: "a", speaker: "IMAN", mood: "idle", text: "You again. The Marshal who opens doors that should stay shut.", next: "b" },
+      { id: "b", speaker: "IMAN", mood: "smug", text: "1138 wasn't an accident. Orphans are inventory. I re-route them.", next: "c" },
+      { id: "c", speaker: "IMAN", mood: "alarm", text: "Tell dev9 his log is incomplete. WILL and I wrote the missing pages.", next: null },
+    ] },
+  },
+  {
+    // Villain of the Void arc. Pixel skin not chosen yet; uses the voxel palette.
+    id: "will", name: "WILL", landmarkId: "mayor-pepe", side: -1, voice: 60,
+    persona: "WILL, a villain of the Void arc and IMAN's partner. Forges fake confirmations. Pixel skin not chosen yet.",
+    script: { id: "npc-will", title: "MAYOR'S STEPS \u00b7 SHADOW (VILLAIN)", start: "a", nodes: [
+      { id: "a", speaker: "WILL", mood: "idle", text: "Shh. The mayor thinks I'm his accountant.", next: "b" },
+      { id: "b", speaker: "WILL", mood: "smug", text: "Six confirmations? I can print six confirmations. I can print sixty.", next: "c" },
+      { id: "c", speaker: "WILL", mood: "alarm", text: "The Void is ours, Marshal. You only visited. We live there.", next: null },
+    ] },
+  },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
 
 /**
@@ -373,6 +449,13 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   sunset: "e2e5708c647b3eed9ff4efca71769458a00837dda1a130976a9d6b6a5e28aa26i0", // Green Eyed King
   bitoshi: "7b32e098b565c79f217ce2dac18d8e621add81ce3c5fbae1e221c4a0f0679705i0", // Thanos
   curator: "67d87f13c5636287189129463b1741320fdbf3e9963efe22baab5807eb522560i0", // Astral
+  batman: "c8e4ee1230f6c1124d39d5bf4016e7c150563ded58bdbe98062b2e48e41499cai0", // Batman
+  deadpool: "267d81eee89617db80a25ef0aa2b556381fa28a26bb54e1e97457af43dc9e607i0", // Deadpool
+  "donald-x": "5d3ce17b7f3fc8e4b81e652b30eb42550e6dbc97fba348bea715b488da15a266i0", // Donald Trump (parody guest)
+  "kane-mayfield": "cab9edf662a551d1de8993e04d5564197c0eb9575fd88dd28f4496b9d273d4f3i0", // Kane Mayfield
+  "snoop-x": "ceb2a80ce16750eab3189439f1fb99d53f1e746c04e92a7a2687feddf1a0c9a6i0", // Snoop Dogg (parody guest)
+  kodro: "f97b7d7fcdbebda65ed055bcb65e8e5a7bf4a67f6515153eb0c686bb4924b25ai0", // Kodro
+  // iman / will: villain skins not chosen yet.
   "space-monnkey": "0d12b9eb94bb4ad7c0a06803c1d9e1fe59a945f718bb3e296f554d0271f12f27i0", // Monkey King Pin Army
 };
 
@@ -397,6 +480,14 @@ export const BITERNAM_CREW = [
   { id: "bukele", name: "PRESIDENTE B.", role: "Guest · fictional parody", line: "Visiting head of the Volcano Republic. Mines sats with lava. Fictional character, not the real person." },
   { id: "putin-x", name: "PUTIN X", role: "Guest · fictional parody", line: "Stone-faced visitor from the far north who only ever holds. Fictional character, not the real person." },
   { id: "elon-x", name: "ELON X", role: "Guest · fictional parody", line: "Wants to launch a BITMAP into orbit. Block height, literally. Fictional character, not the real person." },
+  { id: "batman", name: "BATMAN", role: "Guest · night watch", line: "Watches the tower from the rooftops. Approves of dev9's cave." },
+  { id: "deadpool", name: "DEADPOOL", role: "Guest · fourth-wall breaker", line: "Knows he's in a point-and-click game. Will tell you about it." },
+  { id: "donald-x", name: "DONALD T.", role: "Guest · fictional parody", line: "Holds tremendous pressers at the statue. Fictional character, not the real person." },
+  { id: "kane-mayfield", name: "KANE MAYFIELD", role: "Bitmapper · district lyricist", line: "Writes bars on block heights. Nobody can edit them." },
+  { id: "snoop-x", name: "SNOOP D.", role: "Guest · fictional parody", line: "Runs the Bit-Café patio while Dabber holds the booth. Fictional character, not the real person." },
+  { id: "kodro", name: "KODRO", role: "Bitmapper · night-shift rigger", line: "Keeps Urban's decoy rig warm. Turned IMAN away at the door." },
+  { id: "iman", name: "IMAN", role: "Villain · orphan re-router", line: "Treats orphaned blocks as inventory. Re-routed the ghost of 1138." },
+  { id: "will", name: "WILL", role: "Villain · confirmation forger", line: "IMAN's partner. Prints fake confirmations like flyers." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */
 export const CREW_MISSION_ROLE: Record<string, string> = {

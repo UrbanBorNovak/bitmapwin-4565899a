@@ -53,6 +53,14 @@ const LOOK: Record<string, Look> = {
   dudeamoto: { body: "#8a6a4a", head: "#e6c3a0", accent: "#f7931a" },
   "putin-x": { body: "#1c1f26", head: "#e2c2a4", accent: "#d52b1e" },
   "elon-x": { body: "#14161a", head: "#e8c6a2", accent: "#ffffff" },
+  batman: { body: "#1a1a22", head: "#1a1a22", accent: "#ffd23f" },
+  deadpool: { body: "#a3121a", head: "#a3121a", accent: "#111111" },
+  "donald-x": { body: "#1b2a4a", head: "#f0b27a", accent: "#c41e1e" },
+  "kane-mayfield": { body: "#2b2b2b", head: "#7a4a2a", accent: "#f7931a" },
+  "snoop-x": { body: "#3a6b3a", head: "#6b4226", accent: "#ffd23f" },
+  kodro: { body: "#33404d", head: "#d9b08c", accent: "#28e0ff" },
+  iman: { body: "#0b0b0f", head: "#3a0a0a", accent: "#ff1a1a" },
+  will: { body: "#16061f", head: "#2a0a3a", accent: "#b026ff" },
   ladybird: { body: "#c8102e", head: "#f0cfae", accent: "#141414" }, // red shell, black spots
 };
 
