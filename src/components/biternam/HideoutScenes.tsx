@@ -567,5 +567,5 @@ export function HoldersScene({ onHit, onHover, hover, st, hazard }: SceneProps<H
 function VillainRig({ id, body, eye }: { id: "iman" | "will"; body: string; eye: string }) {
   const skin = CREW_PIXEL_AVATAR[id];
   if (!skin) return <Shade body={body} eye={eye} />;
-  return <ToonPixelRig inscriptionId={skin} pose="talk" movingRef={still} fallback={<Shade body={body} eye={eye} />} />;
+  return <group scale={1.5}><ToonPixelRig inscriptionId={skin} pose="talk" movingRef={still} fallback={<Shade body={body} eye={eye} />} /></group>;
 }
