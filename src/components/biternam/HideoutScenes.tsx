@@ -206,11 +206,33 @@ function Shade({ body, eye }: { body: string; eye: string }) {
 }
 function VaultGhost({ calm }: { calm: boolean }) {
   const g = useRef<Group>(null);
-  useFrame(({ clock }) => { if (g.current) { g.current.position.y = 0.15 + Math.sin(clock.elapsedTime * 1.4) * 0.08; g.current.visible = calm || Math.sin(clock.elapsedTime * 13) > -0.85; } });
+  const arms = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (g.current) { g.current.position.y = 0.25 + Math.sin(t * 1.4) * 0.1; g.current.visible = calm || Math.sin(t * 13) > -0.9; }
+    if (arms.current) arms.current.rotation.z = Math.sin(t * 2) * 0.15;
+  });
+  const glow = calm ? "#ffe6b0" : "#9fe6ff";
+  const em = calm ? TRIM : NEON;
+  const mat = (o: number, i = 0.9) => <meshStandardMaterial color={glow} transparent opacity={o} emissive={em} emissiveIntensity={i} depthWrite={false} />;
   return (
     <group ref={g}>
-      <mesh position-y={0.9}><boxGeometry args={[0.5, 1.4, 0.3]} /><meshStandardMaterial color="#9fe6ff" transparent opacity={0.35} emissive={NEON} emissiveIntensity={calm ? 1.4 : 0.7} wireframe={!calm} /></mesh>
-      <mesh position-y={1.8}><boxGeometry args={[0.4, 0.4, 0.4]} /><meshStandardMaterial color="#9fe6ff" transparent opacity={0.4} emissive={NEON} emissiveIntensity={1} /></mesh>
+      {/* Tapering spectral tail */}
+      {[0, 1, 2, 3].map((k) => <mesh key={k} position-y={0.15 + k * 0.22}><boxGeometry args={[0.18 + k * 0.1, 0.22, 0.14 + k * 0.06]} />{mat(0.3 + k * 0.08)}</mesh>)}
+      {/* Torso + shoulders */}
+      <mesh position-y={1.2}><boxGeometry args={[0.62, 0.5, 0.36]} />{mat(0.6, 1)}</mesh>
+      <group ref={arms} position-y={1.3}>
+        {[-1, 1].map((sd) => <mesh key={sd} position={[sd * 0.42, -0.12, 0.05]} rotation-z={sd * 0.35}><boxGeometry args={[0.16, 0.55, 0.16]} />{mat(0.5)}</mesh>)}
+      </group>
+      {/* Head with hollow glowing eyes and mouth */}
+      <mesh position-y={1.72}><boxGeometry args={[0.48, 0.46, 0.44]} />{mat(0.7, 1.1)}</mesh>
+      {[-0.11, 0.11].map((x) => <mesh key={x} position={[x, 1.76, 0.23]}><boxGeometry args={[0.1, 0.12, 0.02]} /><meshBasicMaterial color={calm ? "#3a1a00" : "#00131a"} /></mesh>)}
+      <mesh position={[0, 1.6, 0.23]}><boxGeometry args={[calm ? 0.2 : 0.12, calm ? 0.04 : 0.1, 0.02]} /><meshBasicMaterial color={calm ? "#3a1a00" : "#00131a"} /></mesh>
+      {/* Halo of block-height digits "1138" */}
+      {[0, 1, 2, 3].map((k) => <mesh key={`d${k}`} position={[-0.27 + k * 0.18, 2.14, 0]}><boxGeometry args={[0.12, 0.16, 0.03]} /><meshBasicMaterial color={em} /></mesh>)}
+      {/* Receipt chains on the wrists (gone once freed) */}
+      {!calm ? [-1, 1].map((sd) => <mesh key={`c${sd}`} position={[sd * 0.5, 0.95, 0.06]}><torusGeometry args={[0.1, 0.03, 4, 8]} /><meshStandardMaterial color="#e8e2d0" emissive="#e8e2d0" emissiveIntensity={0.3} /></mesh>) : null}
+      <pointLight position-y={1.4} intensity={calm ? 4 : 2.5} distance={3} color={em} />
     </group>
   );
 }
