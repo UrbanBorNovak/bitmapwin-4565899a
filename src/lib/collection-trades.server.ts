@@ -2,10 +2,9 @@ import { salePriceOf } from "@/lib/sale-structure";
 
 /**
  * On-chain sales for BITMAP collections (any marketplace). Each inscription's
- * sat is followed from its reveal through confirmed transactions; the trace
- * only counts if it ends exactly at the inscription's current output on
- * ordinals.com, so a wrong starting output can never invent sales.
- * Prices come from salePriceOf (seller net payout from buyer funds).
+ * sat is walked back from its current satpoint to its reveal through confirmed
+ * transactions; a walk that doesn't reach the reveal counts nothing.
+ * Prices come from salePriceOf (seller net payout funded by the buyer).
  */
 const RECHECK_HOURS = 48;
 const BATCH = 6;
@@ -37,7 +36,7 @@ type Hop = { txid: string; seller: string | null; buyer: string | null; priceSat
  * to its reveal using FIFO sat ordering; every hop is an exact transfer.
  * Returns null if the walk doesn't land on the reveal tx within MAX_HOPS.
  */
-async function traceVerified(id: string): Promise<Hop[] | null> {
+export async function traceVerified(id: string): Promise<Hop[] | null> {
   const m = /^([0-9a-f]{64})i(\d+)$/.exec(id);
   if (!m) return null;
   const ins = await getJson<{ satpoint?: string }>(`https://ordinals.com/r/inscription/${id}`);
