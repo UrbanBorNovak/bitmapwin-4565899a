@@ -902,3 +902,82 @@ describe("randomized cross-tab interleavings with crashes and storage failures a
     globalThis.localStorage = real;
   }, 60_000);
 });
+
+describe("deterministic failure injection at every storage write", () => {
+  const mem = new Map<string, string>();
+  let n = 0, failAt = -1, mode: "fail" | "crash" = "fail", down = false;
+  const log: string[] = [];
+  const hit = (loc: string) => { n++; log.push(loc); if (down || n === failAt) { if (mode === "crash") down = true; throw new DOMException("injected", "QuotaExceededError"); } };
+  const store = {
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => { hit(`set ${k.replace("bitmapwin:sealed-", "")}`); mem.set(k, v); },
+    removeItem: (k: string) => { hit(`remove ${k.replace("bitmapwin:sealed-", "")}`); mem.delete(k); },
+  } as unknown as Storage;
+  const real = globalThis.localStorage;
+  const lk = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (lk.has(name)) return cb(null); lk.add(name); try { return await cb({}); } finally { lk.delete(name); } } };
+  const PK = "bitmapwin:sealed-pending", HK = "bitmapwin:sealed-notes", SK = "bitmapwin:sealed-sent", JK = "bitmapwin:sealed-restore-journal";
+  const old = { held: bundle, recv: {}, sent: [{ label: "Old", code: "SEAL-old", at: "t" }] };
+  const sign = () => runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: mockWallet, currentWallet: () => address, locks });
+  const restore = () => restoreBackup(old, { outspend: async () => ({ spent: false }), locks, address });
+  /** A restore whose last save fails, so its own rollback runs (and can itself be hit). */
+  const failingRestore = async () => { const at = n; const prevFail = failAt; failAt = failAt > at ? failAt : at + 4; try { await restore(); } finally { failAt = prevFail; } };
+  const scenarios: Record<string, () => Promise<void>[]> = {
+    "sign, then restore old backup": () => [sign().then(() => {}), restore().then(() => {})],
+    "restore, then sign": () => [restore().then(() => {}), sign().then(() => {})],
+    "crashed restore journal, then sign (recovery first)": () => {
+      mem.set(JK, JSON.stringify({ prev: { [HK]: mem.get(HK)!, "bitmapwin:sealed-recv": null, [SK]: null }, next: { [HK]: "[]", "bitmapwin:sealed-recv": "{}", [SK]: "[]" } }));
+      mem.set(HK, "[]");
+      return [sign().then(() => {}), Promise.resolve(loadHeld()).then(() => {})];
+    },
+    "restore whose save fails → rollback, then sign": () => [failingRestore().catch(() => {}), sign().then(() => {})],
+    "sign, then reload with a stale journal": () => [sign().then(() => {
+      mem.set(JK, JSON.stringify({ prev: { [HK]: JSON.stringify(bundle), "bitmapwin:sealed-recv": null, [SK]: null }, next: { [HK]: JSON.stringify(bundle), "bitmapwin:sealed-recv": "{}", [SK]: "[]" } }));
+      loadHeld();
+    })],
+  };
+  const setup = () => { mem.clear(); lk.clear(); n = 0; failAt = -1; down = false; log.length = 0; globalThis.localStorage = store; sealStore.setHeld(bundle); n = 0; log.length = 0; };
+  const run = async (name: string) => { for (const p of scenarios[name]!()) { try { await p; } catch { /* injected */ } } };
+
+  const coverage: Record<string, number> = {};
+  for (const name of Object.keys(scenarios)) {
+    it(`${name}: every write, failed and crashed`, async () => {
+      setup(); await run(name); const total = n; const locs = [...log];
+      expect(total).toBeGreaterThan(3);
+      for (const m of ["fail", "crash"] as const) for (let i = 1; i <= total + 2; i++) {
+        setup(); mode = m; failAt = i;
+        if (i <= locs.length) coverage[`${locs[i - 1]} · ${m}`] = (coverage[`${locs[i - 1]} · ${m}`] ?? 0) + 1;
+        await run(name);
+        // reload with storage healthy
+        down = false; failAt = -1;
+        const view = loadHeld();
+        expect(mem.has(JK)).toBe(false);
+        const pend = pendingStore.onAnchor(coin);
+        expect(pend.length).toBeLessThanOrEqual(1);
+        const keys = view.map((h) => noteKey(h.c.note.genesis));
+        expect(new Set(keys).size).toBe(keys.length);
+        if (pend.length) {
+          const p = pend[0]!;
+          expect(p.before!.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+          expect(view.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map"]);
+          expect(view.every((h) => h.mine.txid === p.txid)).toBe(true); // newer state wins
+          const raw = mem.get(PK);
+          const spy = vi.fn(mockWallet);
+          await expect(runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: spy, currentWallet: () => address, locks })).rejects.toThrow();
+          expect(spy).not.toHaveBeenCalled(); // stays locked
+          expect(mem.get(PK)).toBe(raw);
+        } else {
+          expect(view.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+          expect(view.every((h) => h.mine.txid === coin.txid)).toBe(true);
+        }
+      }
+      globalThis.localStorage = real;
+    });
+  }
+  it("coverage report: every write location was injected", () => {
+    const locs = new Set(Object.keys(coverage).map((x) => x.split(" · ")[0]));
+    for (const must of ["set intent", "set pending", "set notes", "set undo", "set sent", "set recv", "set restore-journal", "remove restore-journal"]) expect(locs).toContain(must);
+    console.log("INJECTION COVERAGE\n" + Object.entries(coverage).sort().map(([k, v]) => `  ${k.padEnd(34)} ${v}`).join("\n"));
+  });
+});
