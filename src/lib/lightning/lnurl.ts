@@ -25,6 +25,7 @@ export async function fetchInvoice(address: string, sats: number, comment: strin
   if (!url) throw new Error("NOT A LIGHTNING ADDRESS");
   const p = (await (await fetch(url)).json()) as PayParams;
   if (p.status === "ERROR" || p.tag !== "payRequest") throw new Error(p.reason || "RECEIVER WALLET REFUSED");
+  if (!(p.maxSendable > 0)) throw new Error("THE RECEIVER'S WALLET CAN'T TAKE PAYMENTS RIGHT NOW");
   const msat = tipMsat(sats, p);
   if (!msat) throw new Error(`AMOUNT MUST BE ${Math.ceil(p.minSendable / 1000)}–${Math.floor(p.maxSendable / 1000)} SATS`);
   const cb = new URL(p.callback);
