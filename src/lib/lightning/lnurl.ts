@@ -51,9 +51,10 @@ export const saveNwc = (s: string) => (s ? localStorage.setItem(NWC_KEY, s.trim(
 
 /** Pays through the visitor's own Nostr Wallet Connect string; it never leaves this device except as the encrypted request. */
 export async function payWithNwc(conn: string, pr: string): Promise<string> {
-  const { parseConnectionString, makeNwcRequestEvent } = await import("nostr-tools/nip47");
+  const { nip47, nip04 } = await import("nostr-tools");
+  const { parseConnectionString, makeNwcRequestEvent } = nip47;
+  const decrypt = nip04.decrypt;
   const { SimplePool } = await import("nostr-tools/pool");
-  const { decrypt } = await import("nostr-tools/nip04");
   const { hexToBytes } = await import("@noble/hashes/utils.js");
   const c = parseConnectionString(conn);
   const ev = await makeNwcRequestEvent(c.pubkey, hexToBytes(c.secret), pr);
