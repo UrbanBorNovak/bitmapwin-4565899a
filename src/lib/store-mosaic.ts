@@ -44,19 +44,34 @@ function draw(el,h){var cv=document.createElement('canvas');cv.width=cv.height=5
    x.fillRect(q.x*s+g/2,q.y*s+g/2,q.r*s-g,q.r*s-g)}
   x.globalAlpha=1;el.innerHTML='';el.appendChild(cv);el.classList.add('m');
   var t=document.createElement('span');t.className='tx';t.textContent=cls.length.toLocaleString('en-US')+' TX';el.appendChild(t)}).catch(function(){})}
-var O=/ordinals\.com$/.test(location.hostname)?'':'https://ordinals.com',mods={},found={};
+var O=/ordinals\.com$/.test(location.hostname)?'':'https://ordinals.com',mods={},jobs={};
 function mod(id){if(!mods[id])mods[id]=import(O+'/content/'+id+(O?'?origin='+O:''));return mods[id]}
+/* Resumable progress per height: {id} once found, else {next} = first unscanned block.
+   Only a found id is proof; an unfinished scan is never a verdict. */
+function rd(h){try{return JSON.parse(localStorage.getItem('bmoci:'+h)||'null')}catch(e){return null}}
+function wr(h,v){try{localStorage.setItem('bmoci:'+h,JSON.stringify(v))}catch(e){}}
+/* One block download at a time across the page, so cards and scrolling stay smooth. */
+var lane=Promise.resolve();function serial(f){var p=lane.then(f,f);lane=p.then(function(){},function(){});return p}
 /* Above the cache: LiveOCI's own rule, run here because its block parser import
    carries no ?origin and 404s outside ordinals.com. First inscription whose body is
-   exactly "<h>.bitmap", complete, no content encoding, no delegate; block h onward. */
-function live(h){if(h in found)return Promise.resolve(found[h]);return mod(MZ.parser).then(function(P){
- var want=P.toHex(new TextEncoder().encode(h+'.bitmap'));
- function step(n){if(n>h+MZ.span)return null;return P.fetchBlock(n,{classify:false,locate:false}).then(function(b){
-  var L=P.listInscriptions(b);for(var i=0;i<L.length;i++){var x=L[i];if(x.bodyHex===want&&x.complete===true&&!x.contentEncoding&&!x.delegate)return found[h]=x.id}
-  return step(n+1)},function(e){if(String(e&&e.message).indexOf('404')>=0)return null;throw e})}
- return step(h)})}
-function oci(h){return (h<=MZ.cacheLast?mod(MZ.cache).then(function(m){return m.getBitmapInscriptionId(h)}):live(h)).catch(function(){return null})}
-window.BM={draw:draw,oci:oci};
+   exactly "<h>.bitmap", complete, no content encoding, no delegate; block h onward.
+   Scans MZ.span blocks per chunk, saves progress, yields, then resumes until found or tip. */
+function live(h,cb){var st=rd(h)||{next:h};if(st.id)return Promise.resolve({state:'found',id:st.id});
+ return mod(MZ.parser).then(function(P){var want=P.toHex(new TextEncoder().encode(h+'.bitmap'));
+  function chunk(){var end=st.next+MZ.span;
+   function one(n){if(n>=end){wr(h,st);cb&&cb({state:'scanning',next:n});return new Promise(function(r){setTimeout(r,250)}).then(chunk)}
+    return serial(function(){return P.fetchBlock(n,{classify:false,locate:false})}).then(function(b){
+     var L=P.listInscriptions(b);for(var i=0;i<L.length;i++){var x=L[i];if(x.bodyHex===want&&x.complete===true&&!x.contentEncoding&&!x.delegate){wr(h,{id:x.id});return{state:'found',id:x.id}}}
+     st.next=n+1;return one(n+1)},function(e){wr(h,st);if(String(e&&e.message).indexOf('404')>=0)return{state:'none',next:n};return{state:'fail',next:n}})}
+   return one(st.next)}
+  return chunk()})}
+/* check(h,cb) → {state:'found',id} | {state:'none'} (no claim up to the tip yet) | {state:'fail'} (lookup broke; retry resumes). */
+function check(h,cb){var k=String(h);if(jobs[k])return jobs[k];
+ var p=(h<=MZ.cacheLast?mod(MZ.cache).then(function(m){return m.getBitmapInscriptionId(h)}).then(function(id){return id?{state:'found',id:id}:{state:'none'}}):live(h,cb))
+  .catch(function(){return{state:'fail'}}).then(function(r){if(r.state!=='found')delete jobs[k];return r});
+ return jobs[k]=p}
+function oci(h){return check(h).then(function(r){return r.state==='found'?r.id:null})}
+window.BM={draw:draw,oci:oci,check:check};
 })();
 `;
 
