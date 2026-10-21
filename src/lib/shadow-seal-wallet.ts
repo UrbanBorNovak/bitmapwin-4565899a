@@ -124,8 +124,8 @@ export const sealKey = (r: { txid: string; vout: number }) => `${r.txid}:${r.vou
 /* ── 1-click transfer pipeline (pure, injectable so it can be tested with a mock wallet) ── */
 
 /** Smallest confirmed coin that can pay the fee and keep change, skipping coins that fail the plain-coin check. */
-export async function pickPlainCoin(coins: Coin[], feeRate: number, isPlain: (c: Coin) => Promise<void> = assertPlainCoin): Promise<Coin> {
-  const cands = coins.filter((c) => c.confirmed && c.value >= sealFee(feeRate) + DUST + 1000).sort((a, b) => a.value - b.value);
+export async function pickPlainCoin(coins: Coin[], feeRate: number, isPlain: (c: Coin) => Promise<void> = assertPlainCoin, sealCoins: Set<string> = new Set()): Promise<Coin> {
+  const cands = coins.filter((c) => !sealCoins.has(sealKey(c)) && c.confirmed && c.value >= sealFee(feeRate) + DUST + 1000).sort((a, b) => a.value - b.value);
   for (const c of cands) {
     try { await isPlain(c); return c; } catch { /* not plain or not checkable — try next */ }
   }
@@ -136,7 +136,16 @@ export async function pickPlainCoin(coins: Coin[], feeRate: number, isPlain: (c:
 export async function prepareTransfer(o: {
   bundle: HeldSealed[]; give: Record<string, string>; coin: Coin; address: string; tapInternalKeyHex?: string | undefined;
   feeRate: number; sign: (psbtB64: string) => Promise<string>;
+  /** Every note this device holds — used to prove the bundle is complete for the coin being spent. */
+  allHeld: HeldSealed[];
 }) {
+  const ck = sealKey(o.coin);
+  if (!o.bundle.length) throw new Error("NO NOTES ON THIS COIN");
+  if (o.bundle.some((h) => sealKey(h.mine) !== ck)) throw new Error("WRONG COIN — ONLY THE COIN ANCHORING THESE NOTES CAN BE SPENT");
+  const inBundle = new Set(o.bundle.map((h) => noteKey(h.c.note.genesis)));
+  if (o.allHeld.some((h) => sealKey(h.mine) === ck && !inBundle.has(noteKey(h.c.note.genesis))))
+    throw new Error("EVERY NOTE ON THIS COIN MUST BE GIVEN OR KEPT — SOME WOULD BE LOST");
+  if (Object.keys(o.give).some((n) => !inBundle.has(n))) throw new Error("A GIVEN NOTE IS NOT ON THIS COIN");
   if (!Object.keys(o.give).length) throw new Error("CHOOSE AT LEAST ONE NOTE TO GIVE");
   const { assignments, commitment } = planBundle(o.bundle, o.give);
   const { psbt, fee, keepValue } = buildSealSpendPsbt({ coin: o.coin, address: o.address, tapInternalKeyHex: o.tapInternalKeyHex, commitment, feeRate: o.feeRate });

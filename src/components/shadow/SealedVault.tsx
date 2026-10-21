@@ -70,7 +70,7 @@ export function SealedVault() {
   async function pickCoin(): Promise<Coin> {
     const chosen = coins?.find((x) => sealKey(x) === coinPick);
     if (chosen) { await assertPlainCoin(chosen); return chosen; }
-    const c = await pickPlainCoin(coins ?? [], feeRate);
+    const c = await pickPlainCoin(coins ?? [], feeRate, assertPlainCoin, new Set(Object.keys(groups)));
     setCoinPick(sealKey(c));
     return c;
   }
@@ -135,7 +135,7 @@ export function SealedVault() {
     await assertPlainCoin(coin);
     const pick = Object.fromEntries(bundle.map((h) => noteKey(h.c.note.genesis)).filter((n) => give[n]?.trim()).map((n) => [n, give[n]!.trim()]));
     const { kept, sent, ...out } = await prepareTransfer({
-      bundle, give: pick, coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), feeRate,
+      bundle, allHeld: held, give: pick, coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), feeRate,
       sign: (p) => signPsbtBase64(wallet.provider, p),
     });
     sealStore.setUndo({ ...sealStore.undo(), [out.txid]: bundle });

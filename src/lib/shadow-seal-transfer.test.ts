@@ -43,7 +43,7 @@ describe("coin selection", () => {
 
 describe("give-or-keep review + mock wallet signing", () => {
   it("gives the ticked note, keeps the other two on output 0, and the signed tx carries the seal record", async () => {
-    const r = await prepareTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: mockWallet });
+    const r = await prepareTransfer({ bundle, give: { [k(1)]: bob }, coin, allHeld: bundle, address, feeRate: 4, sign: mockWallet });
     expect(r.sent.map((s) => s.label)).toEqual(["Pass"]);
     expect(r.kept.map((h) => h.c.note.label)).toEqual(["Key", "Map"]);
     expect(r.kept.every((h) => h.mine.txid === r.txid && h.mine.vout === 0)).toBe(true);
@@ -54,7 +54,7 @@ describe("give-or-keep review + mock wallet signing", () => {
   });
   it("cancelling in the wallet changes nothing", async () => {
     const before = JSON.stringify(bundle);
-    await expect(prepareTransfer({ bundle, give: { [k(0)]: bob }, coin, address, feeRate: 4, sign: async () => { throw new Error("User rejected"); } }))
+    await expect(prepareTransfer({ bundle, give: { [k(0)]: bob }, coin, allHeld: bundle, address, feeRate: 4, sign: async () => { throw new Error("User rejected"); } }))
       .rejects.toThrow(/SIGNING CANCELLED/);
     expect(JSON.stringify(bundle)).toBe(before);
   });
@@ -65,11 +65,11 @@ describe("give-or-keep review + mock wallet signing", () => {
       bad.addInput(t.getInput(0)); bad.addOutput(t.getOutput(0)); bad.addOutput({ script: hex.decode("6a00"), amount: 0n });
       bad.sign(priv); return base64.encode(bad.toPSBT());
     };
-    await expect(prepareTransfer({ bundle, give: { [k(0)]: bob }, coin, address, feeRate: 4, sign: tamper })).rejects.toThrow(/LOST ITS SEAL RECORD/);
+    await expect(prepareTransfer({ bundle, give: { [k(0)]: bob }, coin, allHeld: bundle, address, feeRate: 4, sign: tamper })).rejects.toThrow(/LOST ITS SEAL RECORD/);
   });
   it("refuses when no note is given or a code is bad", async () => {
-    await expect(prepareTransfer({ bundle, give: {}, coin, address, feeRate: 4, sign: mockWallet })).rejects.toThrow(/AT LEAST ONE/);
-    await expect(prepareTransfer({ bundle, give: { [k(0)]: "SEAL-RECV-v1.zz" }, coin, address, feeRate: 4, sign: mockWallet })).rejects.toThrow();
+    await expect(prepareTransfer({ bundle, give: {}, coin, allHeld: bundle, address, feeRate: 4, sign: mockWallet })).rejects.toThrow(/AT LEAST ONE/);
+    await expect(prepareTransfer({ bundle, give: { [k(0)]: "SEAL-RECV-v1.zz" }, coin, allHeld: bundle, address, feeRate: 4, sign: mockWallet })).rejects.toThrow();
   });
 });
 
@@ -90,5 +90,24 @@ describe("broadcast failures (mocked network, nothing sent)", () => {
   it("refuses an unexpected reply", async () => {
     const f = async () => new Response("<html>oops</html>", { status: 200 });
     await expect(broadcastTx("00", f as unknown as typeof fetch)).rejects.toThrow(/UNEXPECTED/);
+  });
+});
+
+describe("only the anchoring coin, with the whole bundle", () => {
+  const other: Coin = { txid: "e".repeat(64), vout: 0, value: 50_000, confirmed: true };
+  it("auto-pick never chooses a coin that already anchors notes", async () => {
+    const seal = new Set([`${other.txid}:0`]);
+    const small: Coin = { txid: "f".repeat(64), vout: 0, value: 9_000, confirmed: true };
+    expect((await pickPlainCoin([other, small], 3, async () => {}, seal)).txid).toBe(small.txid);
+    await expect(pickPlainCoin([other], 3, async () => {}, seal)).rejects.toThrow(/NO PLAIN COIN/);
+  });
+  it("refuses to spend an unrelated coin for these notes", async () => {
+    await expect(prepareTransfer({ bundle, allHeld: bundle, give: { [k(0)]: bob }, coin: other, address, feeRate: 4, sign: mockWallet })).rejects.toThrow(/WRONG COIN/);
+  });
+  it("refuses a partial bundle that would lose notes on the coin", async () => {
+    await expect(prepareTransfer({ bundle: bundle.slice(0, 2), allHeld: bundle, give: { [k(0)]: bob }, coin, address, feeRate: 4, sign: mockWallet })).rejects.toThrow(/WOULD BE LOST/);
+  });
+  it("refuses giving a note that is not on this coin", async () => {
+    await expect(prepareTransfer({ bundle, allHeld: bundle, give: { ["x".repeat(64)]: bob }, coin, address, feeRate: 4, sign: mockWallet })).rejects.toThrow(/NOT ON THIS COIN/);
   });
 });
