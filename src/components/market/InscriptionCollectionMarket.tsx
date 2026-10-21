@@ -45,7 +45,7 @@ export function InscriptionCollectionMarket({
           </div>
         ))}
       </div>
-      <CollectionSalesChart sales={sales.data?.sales ?? []} pending={ids.length > 0 && sales.isPending} unavailable={sales.isError || !!sales.data?.unavailable} traced={sales.data?.traced} total={sales.data?.total} />
+      <CollectionSalesChart sales={sales.data?.sales ?? []} pending={ids.length > 0 && sales.isPending} unavailable={sales.isError || !!sales.data?.unavailable} traced={sales.data?.traced} checked={sales.data?.checked} total={sales.data?.total} />
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button type="button" className={filter === "all" ? "btn-term" : "btn-term-ghost"} onClick={() => { setFilter("all"); setPage(0); }}>ALL</button>
         <button type="button" className={filter === "listed" ? "btn-term" : "btn-term-ghost"} onClick={() => { setFilter("listed"); setPage(0); }}>FOR SALE</button>

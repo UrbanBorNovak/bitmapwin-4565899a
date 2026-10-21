@@ -71,6 +71,39 @@ export async function traceVerified(id: string): Promise<Hop[] | null> {
   return null;
 }
 
+/** Never-traced queue entries carry this timestamp. */
+export const QUEUED_AT = "1970-01-01T00:00:00.000Z";
+
+async function traceAndStore(picked: Array<{ id: string; collection: string }>) {
+  if (!picked.length) return 0;
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const ids = picked.map((p) => p.id);
+  const { data: ours } = await db.from("offers").select("buyer_txid").in("inscription_id", ids).not("buyer_txid", "is", null);
+  const ourTx = new Set((ours ?? []).map((o) => o.buyer_txid));
+  // ≤6 at once: the runtime caps concurrent outbound fetches at 6.
+  const results = await Promise.all(picked.map(async (p) => ({ ...p, t: await traceVerified(p.id).catch(() => null) })));
+  const rows = results.flatMap(({ id, collection, t }) => (t ?? []).filter((x) => x.priceSats >= MIN_SALE_SATS).map((x) => ({
+    txid: x.txid, collection, inscription_id: id, seller_address: x.seller, buyer_address: x.buyer,
+    price_sats: x.priceSats, block_height: x.blockHeight, block_time: x.blockTime,
+    source: ourTx.has(x.txid) ? "BITMAPWIN" : "OTHER MARKETPLACE",
+  })));
+  if (rows.length) await db.from("collection_trades").upsert(rows, { onConflict: "txid" });
+  await db.from("collection_trace_state").upsert(
+    results.map(({ id, collection, t }) => ({ inscription_id: id, collection, last_traced_at: new Date().toISOString(), verified: !!t })),
+    { onConflict: "inscription_id" },
+  );
+  return rows.length;
+}
+
+/** Add every collection item to the backfill queue (existing rows untouched). */
+export async function enqueueCollection(collection: string, ids: string[]) {
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  for (let i = 0; i < ids.length; i += 1000) {
+    const chunk = ids.slice(i, i + 1000).map((id) => ({ inscription_id: id, collection, last_traced_at: QUEUED_AT, verified: false }));
+    await db.from("collection_trace_state").upsert(chunk, { onConflict: "inscription_id", ignoreDuplicates: true });
+  }
+}
+
 /** Trace a few untraced/stale items (listed ones first). Throttled by the caller's visit rate. */
 export async function crawlCollection(collection: string, ids: string[], priority: string[] = []) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
@@ -79,35 +112,53 @@ export async function crawlCollection(collection: string, ids: string[], priorit
     .eq("collection", collection).gte("last_traced_at", cutoff).limit(10000);
   const skip = new Set((fresh ?? []).map((r) => r.inscription_id));
   const pool = [...new Set([...priority, ...ids])].filter((i) => !skip.has(i));
-  // Random slice keeps concurrent visitors from tracing the same items.
   const head = pool.slice(0, priority.length);
   const rest = pool.slice(priority.length).sort(() => Math.random() - 0.5);
-  const picked = [...head, ...rest].slice(0, BATCH);
-  if (!picked.length) return;
-  const { data: ours } = await db.from("offers").select("buyer_txid").in("inscription_id", picked).not("buyer_txid", "is", null);
-  const ourTx = new Set((ours ?? []).map((o) => o.buyer_txid));
-  const results = await Promise.all(picked.map(async (id) => ({ id, t: await traceVerified(id).catch(() => null) })));
-  const rows = results.flatMap(({ id, t }) => (t ?? []).filter((x) => x.priceSats >= MIN_SALE_SATS).map((x) => ({
-    txid: x.txid, collection, inscription_id: id, seller_address: x.seller, buyer_address: x.buyer,
-    price_sats: x.priceSats, block_height: x.blockHeight, block_time: x.blockTime,
-    source: ourTx.has(x.txid) ? "BITMAPWIN" : "OTHER MARKETPLACE",
-  })));
-  if (rows.length) await db.from("collection_trades").upsert(rows, { onConflict: "txid" });
-  await db.from("collection_trace_state").upsert(
-    results.map(({ id, t }) => ({ inscription_id: id, collection, last_traced_at: new Date().toISOString(), verified: !!t })),
-    { onConflict: "inscription_id" },
-  );
+  await traceAndStore([...head, ...rest].slice(0, BATCH).map((id) => ({ id, collection })));
 }
 
-export async function collectionTrades(collection: string): Promise<{ sales: CollectionTradeRow[]; traced: number; unavailable: boolean }> {
+const BACKFILL_MIN_GAP_MS = 45_000;
+const BACKFILL_BUDGET_MS = 20_000;
+const BACKFILL_PAUSE_MS = 1_500;
+
+/**
+ * One resumable backfill run: takes the oldest due queue entries (never-traced
+ * first) in batches of 6 until the time budget ends. A global lock spaces runs
+ * ≥45s apart so ordinals.com / mempool.space are never hammered; progress lives
+ * in collection_trace_state, so any run picks up where the last stopped.
+ */
+export async function runBackfill() {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const [{ data, error }, { count }] = await Promise.all([
+  await db.from("collection_backfill_lock").upsert({ id: "main", last_run_at: QUEUED_AT }, { onConflict: "id", ignoreDuplicates: true });
+  const { data: lock } = await db.from("collection_backfill_lock").update({ last_run_at: new Date().toISOString() })
+    .eq("id", "main").lt("last_run_at", new Date(Date.now() - BACKFILL_MIN_GAP_MS).toISOString()).select("id");
+  if (!lock?.length) return { skipped: "rate-limited", traced: 0, sales: 0 };
+  const start = Date.now();
+  const cutoff = new Date(Date.now() - RECHECK_HOURS * 3600_000).toISOString();
+  let traced = 0, sales = 0;
+  while (Date.now() - start < BACKFILL_BUDGET_MS) {
+    const { data: due } = await db.from("collection_trace_state").select("inscription_id, collection")
+      .lt("last_traced_at", cutoff).order("last_traced_at", { ascending: true }).limit(BATCH);
+    if (!due?.length) break;
+    sales += await traceAndStore(due.map((r) => ({ id: r.inscription_id, collection: r.collection })));
+    traced += due.length;
+    await new Promise((r) => setTimeout(r, BACKFILL_PAUSE_MS));
+  }
+  return { traced, sales };
+}
+
+export async function collectionTrades(collection: string): Promise<{ sales: CollectionTradeRow[]; traced: number; checked: number; queued: number; unavailable: boolean }> {
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const base = () => db.from("collection_trace_state").select("*", { count: "exact", head: true }).eq("collection", collection);
+  const [{ data, error }, { count }, { count: checked }, { count: queued }] = await Promise.all([
     db.from("collection_trades").select("*").eq("collection", collection).order("block_height", { ascending: false }).limit(2000),
-    db.from("collection_trace_state").select("*", { count: "exact", head: true }).eq("collection", collection).eq("verified", true),
+    base().eq("verified", true),
+    base().gt("last_traced_at", QUEUED_AT),
+    base(),
   ]);
-  if (error) return { sales: [], traced: 0, unavailable: true };
+  if (error) return { sales: [], traced: 0, checked: 0, queued: 0, unavailable: true };
   return {
-    traced: count ?? 0, unavailable: false,
+    traced: count ?? 0, checked: checked ?? 0, queued: queued ?? 0, unavailable: false,
     sales: (data ?? []).map((r) => ({
       txid: r.txid, inscriptionId: r.inscription_id, sellerAddress: r.seller_address, buyerAddress: r.buyer_address,
       priceSats: Number(r.price_sats), blockHeight: r.block_height == null ? null : Number(r.block_height), blockTime: r.block_time, source: r.source,

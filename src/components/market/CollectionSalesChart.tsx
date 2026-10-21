@@ -4,7 +4,7 @@ import type { CollectionSale } from "@/lib/collection-sales";
 type Sale = CollectionSale & { source?: string };
 
 /** Price per confirmed on-chain sale, in block order. */
-export function CollectionSalesChart({ sales, pending, unavailable, traced, total }: { sales: Sale[]; pending: boolean; unavailable: boolean; traced?: number | undefined; total?: number | undefined }) {
+export function CollectionSalesChart({ sales, pending, unavailable, traced, checked, total }: { sales: Sale[]; pending: boolean; unavailable: boolean; traced?: number | undefined; checked?: number | undefined; total?: number | undefined }) {
   const pts = sales.filter((s) => s.priceSats > 0 && s.blockHeight).sort((a, b) => (a.blockHeight! - b.blockHeight!));
   const W = 600, H = 160, P = 8;
   const max = Math.max(1, ...pts.map((s) => s.priceSats));
@@ -32,7 +32,16 @@ export function CollectionSalesChart({ sales, pending, unavailable, traced, tota
             ))}
           </svg>
         )}
-      {total ? <p className="label mt-2 text-muted-foreground" data-no-translate>{(traced ?? 0).toLocaleString("en-US")}/{total.toLocaleString("en-US")} ITEMS TRACED ON CHAIN · ALL MARKETPLACES · COVERAGE GROWS AS PEOPLE BROWSE</p> : null}
+      {total ? (() => {
+        const done = Math.min(checked ?? traced ?? 0, total);
+        const pct = Math.round((done / total) * 100);
+        return (
+          <div className="mt-2" data-no-translate>
+            <div className="h-1 w-full bg-muted"><div className="h-1 bg-signal transition-all" style={{ width: `${pct}%` }} /></div>
+            <p className="label mt-1 text-muted-foreground">BACKFILL {pct}% · {done.toLocaleString("en-US")}/{total.toLocaleString("en-US")} CHECKED · {(traced ?? 0).toLocaleString("en-US")} FULLY TRACED · ALL MARKETPLACES{done < total ? " · RUNNING IN BACKGROUND" : " · COMPLETE"}</p>
+          </div>
+        );
+      })() : null}
       {pts.length > 0 && (
         <div className="mt-3 max-h-64 overflow-auto border-t border-border">
           <table className="w-full font-mono text-xs">
