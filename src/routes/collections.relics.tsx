@@ -127,6 +127,7 @@ function Relics() {
             <p className="text-accent">{check?.ok ? "✓ MATCHES THE BLOCK" : "✗ DOES NOT MATCH"} · {meta.v.split(";").length} VOXELS · 1 DRAW</p>
             <p className="text-primary">TIER: {TIER_LABEL[meta.r]}</p>
             <RelicPayoutReview height={height} tip={tip} />
+            <RelicTxPreview height={height} tip={tip} metadataBytes={json.length} />
             <div>
               <p className="text-muted-foreground">RELIC DATA (TAG 5) · {json.length} BYTES</p>
               <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px]">{json}</pre>
