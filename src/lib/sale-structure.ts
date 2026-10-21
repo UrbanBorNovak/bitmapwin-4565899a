@@ -12,11 +12,18 @@ export type SaleTx = {
   vout: Array<{ value: number; scriptpubkey_address?: string | null }>;
 };
 
+/** Marketplace swaps keep inscriptions on postage-sized UTXOs. */
+export const MAX_POSTAGE_SATS = 100_000;
+
 export function salePriceOf(tx: SaleTx, inscriptionVin: number, inscriptionVout: number, seller: string | null): number {
   if (!seller) return 0;
   // Change exclusion: a 1-input tx has no buyer funding, so no payout is a price.
   if (tx.vin.length < 2) return 0;
   if (tx.vin[inscriptionVin]?.prevout?.scriptpubkey_address !== seller) return 0;
+  // Spent-as-money: an inscription sitting on a large UTXO (or landing in one)
+  // was moved with ordinary funds; its change back to the sender is not a price.
+  if ((tx.vin[inscriptionVin]?.prevout?.value ?? 0) > MAX_POSTAGE_SATS) return 0;
+  if ((tx.vout[inscriptionVout]?.value ?? 0) > MAX_POSTAGE_SATS) return 0;
   const buyer = tx.vout[inscriptionVout]?.scriptpubkey_address ?? null;
   if (!buyer || buyer === seller) return 0;
 

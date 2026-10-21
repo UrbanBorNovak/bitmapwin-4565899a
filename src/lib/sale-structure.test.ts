@@ -34,4 +34,8 @@ describe("salePriceOf", () => {
     const tx = { vin: [io(S, 10_011), io(X, 2694)], vout: [out(S, 10_011), out(S, 546)] };
     expect(salePriceOf(tx, 0, 0, S)).toBe(0);
   });
+  it("inscription spent inside a 9 BTC UTXO is not a sale (pixel 39034a4e, tx 123b85c9)", () => {
+    const tx = { vin: [io(S, 937_932_487), io(X, 885_597_879)], vout: [out(B, 1_194_151_439), out(S, 619_489_601)] };
+    expect(salePriceOf(tx, 0, 0, S)).toBe(0);
+  });
 });
