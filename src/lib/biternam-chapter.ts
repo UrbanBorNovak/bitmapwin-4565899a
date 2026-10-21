@@ -50,20 +50,38 @@ export function factsLine(f: BlockFacts): string {
   return parts.length ? `${parts.join(" ")} Every one is a clue.` : "The ledger for this block is still being read.";
 }
 
-export function chapterEpisode(f: BlockFacts, title: string, quote: string): ToonEpisode {
+/** Biternam voxel rooms a chapter can be staged in. */
+export type ChapterSet = "cafe" | "batcave" | "chinatown" | "vault";
+export const CHAPTER_SETS: { v: ChapterSet; label: string }[] = [
+  { v: "cafe", label: "Bit-Café" }, { v: "batcave", label: "dev9's Batcave" }, { v: "chinatown", label: "Skyscraper District" }, { v: "vault", label: "Biternam Vault" },
+];
+const AUTO_SET: Record<ChapterTheme, ChapterSet> = { genesis: "vault", halving: "vault", patoshi: "batcave", crowded: "chinatown", quiet: "batcave", plain: "cafe" };
+export function autoSet(f: BlockFacts): ChapterSet { return AUTO_SET[chapterTheme(f)]; }
+
+/** What actually exists on this BITMAP. A Guardian is cast only when one was really awakened for the block. */
+export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet };
+const EXPLORER = { model: "runner", skin: "hoodie" } as const;
+
+export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast: ChapterCast = { guardian: null, hasBuild: false }): ToonEpisode {
   const theme = chapterTheme(f), t = THEME[theme], h = f.height;
+  const set = cast.set ?? autoSet(f);
   const txLine = factsLine(f);
-  const hero = { height: h, name: `${h}.bitmap` };
+  const hero = cast.guardian
+    ? { height: h, name: `${h}.bitmap · ${cast.guardian.species}` }
+    : { height: h, name: `Explorer of ${h}.bitmap`, avatar: { ...EXPLORER } };
+  const reply = cast.guardian ? "Then we read them all." : "No Guardian wakes here yet. I'll read them myself.";
+  const landSfx = cast.hasBuild ? "BUILT!" : theme === "halving" ? "HODL!" : "WHOOSH!";
   return {
     title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
     scenes: [
-      { block: h, duration: 7, shot: "crane", sfx: theme === "halving" ? "HODL!" : "WHOOSH!",
+      // Scene 1 is the real land: its inscribed build appears only if one is verified on chain.
+      { block: h, duration: 7, shot: "crane", sfx: landSfx,
         cast: [{ ...hero, x: 0, z: 3, pose: "walk", to: { x: 0, z: 0 }, moveStart: 0, moveEnd: 3 }],
         lines: [{ at: 1, dur: 5, speaker: 0, text: quote, style: "thought", cam: "establish" }] },
-      { block: h, set: t.set, duration: 7, shot: "orbit", transition: "iris",
+      { block: h, set, duration: 7, shot: "orbit", transition: "iris",
         cast: [{ ...hero, x: -2, z: 0, pose: "talk" }, { height: h, name: "Cindy-9", x: 2, z: 0, pose: "wave", avatar: { model: "bot", skin: "cyber" } }],
-        lines: [{ at: 0.5, dur: 3, speaker: 1, text: txLine, style: "speech", cam: "two" }, { at: 3.8, dur: 3, speaker: 0, text: "Then we read them all.", style: "speech", cam: "close" }] },
-      { block: h, duration: 6, shot: "dolly", transition: "fade",
+        lines: [{ at: 0.5, dur: 3, speaker: 1, text: txLine, style: "speech", cam: "two" }, { at: 3.8, dur: 3, speaker: 0, text: reply, style: "speech", cam: "close" }] },
+      { block: h, set, duration: 6, shot: "dolly", transition: "fade",
         cast: [{ ...hero, x: 0, z: 0, pose: "dance", emote: "happy" }],
         lines: [{ at: 1, dur: 4, speaker: 0, text: `Block ${h.toLocaleString("en-US")}. My chapter. On the record.`, style: "shout", cam: "close" }] },
     ],

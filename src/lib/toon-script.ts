@@ -28,8 +28,8 @@ export interface ToonLine { at: number; dur: number; speaker: number; text: stri
 export type LineCam = "auto" | "close" | "two" | "ots" | "establish";
 export type Transition = "cut" | "fade" | "wipe" | "iris";
 export const TRANSITION_SECONDS = 0.45;
-export type ToonSet = "beach" | "studio" | "rift" | "oasis";
-export const TOON_SETS: ToonSet[] = ["beach", "studio", "rift", "oasis"];
+export type ToonSet = "beach" | "studio" | "rift" | "oasis" | "cafe" | "batcave" | "chinatown" | "vault";
+export const TOON_SETS: ToonSet[] = ["beach", "studio", "rift", "oasis", "cafe", "batcave", "chinatown", "vault"];
 export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; /** Voxel film set instead of the BITMAP land. */ set?: ToonSet; /** Effect cues (toon-vfx, open bitmapwin.vfx/1 format). */ fx?: VfxCue[]; }
 
 /** The dialogue line whose camera framing is active at scene-local time (latest started line with a non-auto cam). */
