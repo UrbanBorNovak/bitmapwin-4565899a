@@ -115,8 +115,12 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "a", speaker: "WIERDAMOTO", mood: "smug", text: "Ah. You found the mask before the mask found you. Yes, I have the Genesis Keycard.", choices: [
         { label: "\"Give it back to the droid.\"", next: "b" },
         { label: "\"Who are The Bitmappers?\"", next: "c" },
+        { label: "\"What's between you and Bitoshi?\"", next: "d" },
       ] },
       { id: "c", speaker: "WIERDAMOTO", mood: "idle", text: "Holders who keep their own keys and build on their own blocks. Blockamoto hates us for it.", next: "b" },
+      { id: "d", speaker: "WIERDAMOTO", mood: "alarm", text: "The cook? We wrote the first BITMAP scripts together, back when blocks were cheap. Then he started selling purity by the gram.", next: "d2" },
+      { id: "d2", speaker: "WIERDAMOTO", mood: "smug", text: "He says I wear a mask because I have something to hide. I say he wears a hazmat suit for the same reason. The chain will judge us both.", next: "d3" },
+      { id: "d3", speaker: "WIERDAMOTO", mood: "idle", text: "Ask him about the Night of Two Signatures. Watch him drop the spatula.", next: "b" },
       { id: "b", speaker: "WIERDAMOTO", mood: "smug", text: "Take it. A gate that opens for everyone is a gate worth keeping. Remember who handed you the key.", next: null },
     ] },
   },
@@ -247,9 +251,13 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "a", speaker: "BITOSHI", mood: "alarm", text: "STAY OUT OF MY MEMPOOL. You smell like a custodial wallet.", choices: [
         { label: "\"What are you cooking?\"", next: "b" },
         { label: "\"dev9 sent me.\"", next: "c" },
+        { label: "\"Tell me about the Night of Two Signatures.\"", next: "d" },
       ] },
       { id: "b", speaker: "BITOSHI", mood: "smug", text: "Ninety-nine point one percent pure. Zero dust. Batch-efficient. Tourists get Turdinals. I make Tordinals.", next: null },
       { id: "c", speaker: "BITOSHI", mood: "idle", text: "dev9. Unreasonable man. Respect him. Doesn't mean I trust you.", next: null },
+      { id: "d", speaker: "BITOSHI", mood: "alarm", text: "...The mask told you. Of course he did. Two of us signed the first recipe. Only one of us kept a copy of the key.", next: "d2" },
+      { id: "d2", speaker: "BITOSHI", mood: "smug", text: "He calls himself a vigilante. I call him the man who left me a 1-of-2 multisig and a note saying 'trust the process'.", next: "d3" },
+      { id: "d3", speaker: "BITOSHI", mood: "idle", text: "Invest Geek has the spreadsheet. Ask him who actually paid the fee that night. Then tell the mask I'm still cooking.", next: null },
     ] },
   },
   {
@@ -453,6 +461,20 @@ export const QUEST_NPCS: QuestNpc[] = ([
       { id: "a", speaker: "JOHN WICK", mood: "idle", text: "They took a seed phrase. And they hurt a Guardian.", next: "b" },
       { id: "b", speaker: "JOHN WICK", mood: "smug", text: "People keep asking if I'm back. Yeah. I'm back. Self-custody.", next: "c" },
       { id: "c", speaker: "JOHN WICK", mood: "alarm", text: "LIMITLESS is hunting for keys. Tell your friends: never type them into anything.", next: null },
+    ] },
+  },
+  {
+    id: "invest-geek", name: "INVEST GEEK", landmarkId: "miner-rig-1", side: -1, voice: 200,
+    persona: "Invest Geek, a Bitmapper who tracks every fee, floor and holder in a spreadsheet older than most wallets. Nerdy, precise, loves a chart.",
+    script: { id: "npc-invest-geek", title: "RIG 1 \u00b7 THE SPREADSHEET", start: "a", nodes: [
+      { id: "a", speaker: "INVEST GEEK", mood: "smug", text: "Column F: floor. Column G: holders. Column H: people who sold early and cried. Don't be column H.", choices: [
+        { label: "\"Who paid the fee on the Night of Two Signatures?\"", next: "b" },
+        { label: "\"Any tips?\"", next: "c" },
+      ] },
+      { id: "b", speaker: "INVEST GEEK", mood: "alarm", text: "Row 1138. Both of them did. Wierdamoto paid the input, Bitoshi paid the change. The fee came from neither.", next: "b2" },
+      { id: "b2", speaker: "INVEST GEEK", mood: "glitch", text: "Third address. Fresh. Same pattern as IMAN's re-routes. Someone made the mask and the cook blame each other. Classic.", next: "b3" },
+      { id: "b3", speaker: "INVEST GEEK", mood: "idle", text: "Tell Astral at the museum. If it's on chain, she'll hang it on the wall. Then maybe those two stop sulking.", next: null },
+      { id: "c", speaker: "INVEST GEEK", mood: "idle", text: "Check the chain, not the chat. A chart is only a rumour with axes.", next: null },
     ] },
   },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
