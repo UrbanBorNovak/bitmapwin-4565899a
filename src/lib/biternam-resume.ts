@@ -4,8 +4,8 @@ import { HIDEOUT_STEPS } from "@/lib/hideout-progress";
 
 export type ResumeTarget = { to: string; label: string; done: boolean };
 
-/** Next unfinished puzzle from server-saved counts, in story order: Heist, Void, Batcave, Island Hotel, 1138 Vault. */
-export function resumeTarget(heistStage: number, voidCount: number, batcaveCount = 0, islandCount = 0, vaultCount = 0): ResumeTarget {
+/** Next unfinished puzzle from server-saved counts, in story order: Heist, Void, Batcave, Island Hotel, 1138 Vault, Re-Org Lair. */
+export function resumeTarget(heistStage: number, voidCount: number, batcaveCount = 0, islandCount = 0, vaultCount = 0, lairCount = 0): ResumeTarget {
   if (heistStage < HEIST_STEPS.length) {
     const s = HEIST_STEPS[Math.max(0, heistStage)]!;
     return { to: `/biternam/${s.room}`, label: `CH.4 · ${heistStage + 1}/${HEIST_STEPS.length} · ${s.hint}`, done: false };
@@ -22,5 +22,8 @@ export function resumeTarget(heistStage: number, voidCount: number, batcaveCount
   if (vaultCount < HIDEOUT_STEPS.vault.length) {
     return { to: "/biternam/vault", label: `CH.5 · BENEATH 1138 · ${vaultCount + 1}/${HIDEOUT_STEPS.vault.length}`, done: false };
   }
-  return { to: "/biternam/vault", label: "ALL PUZZLES SOLVED · REVISIT THE 1138 VAULT", done: true };
+  if (lairCount < HIDEOUT_STEPS.lair.length) {
+    return { to: "/biternam/lair", label: `CH.6 · THE RE-ORG LAIR · ${lairCount + 1}/${HIDEOUT_STEPS.lair.length}`, done: false };
+  }
+  return { to: "/biternam/lair", label: "ALL PUZZLES SOLVED · REVISIT THE RE-ORG LAIR", done: true };
 }

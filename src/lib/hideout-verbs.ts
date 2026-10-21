@@ -106,3 +106,42 @@ export function resolveVaultVerb(verb: Verb, h: VaultHotspot, s: HideoutState): 
       return o("A rusted ladder back up to the Void catwalk.");
   }
 }
+
+// ---------- CH.6 The Re-Org Lair: retarget the rogue rig with Urban's blueprint, then pull the breaker. ----------
+export type LairHotspot = "iman" | "will" | "console" | "breaker" | "rack" | "ghost" | "hatch";
+export const LAIR_NAMES: Record<LairHotspot, string> = {
+  iman: "IMAN", will: "WILL", console: "ROGUE CONSOLE", breaker: "SIPHON BREAKER", rack: "OVERCLOCKED ASICS", ghost: "GHOST OF 1138", hatch: "ESCAPE HATCH",
+};
+export function resolveLairVerb(verb: Verb, h: LairHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "iman":
+      if (verb === "talk") return o("", "talk");
+      if (verb === "look") return o(s.solved ? "IMAN stares at a dead screen. 'Orphans were inventory,' he mutters. 'Now they're just history.'" : "IMAN, red-eyed, guarding the console. Hands hovering over a key marked FAKE TIP.");
+      return o("IMAN slaps your hand away. 'Touch the rig and you touch the Void, Marshal.'");
+    case "will":
+      if (verb === "talk") return o(s.solved ? "WILL, covered in ash: 'Sixty confirmations. Gone. Do you know how much ink that was?'" : "WILL: 'Six confirmations? I can print sixty. Want one? Free. Fake, but free.'");
+      if (verb === "look") return o("WILL, violet-eyed, feeding forged receipts into the siphon like coal into a furnace.");
+      return o("WILL hands you a receipt that says CONFIRMED. It dissolves. 'Oops. Wrong batch.'");
+    case "console":
+      if (s.solved) return o("The console reads: TARGET = REAL L1 TIP. CHAIN HONEST. SIPHON OFFLINE.");
+      if (s.got) return o("The console already mines against the real tip. The BREAKER HANDLE is in your hand.");
+      if (act) return o("You press Urban's real blueprint on the screen. The fake hash target melts. A drawer pops: the BREAKER HANDLE.", "gain");
+      return o("The rogue console. Hardcoded target: 1138-FAKE. It's mining a heavier lie.");
+    case "breaker":
+      if (s.solved) return o("The breaker is down. The siphon is cold. Block 1138 is free.");
+      if (act && s.got) return o("You slot the handle. The ghost of 1138 grips it with you. You both PULL. The siphon screams, the fake chain burns.", "solve");
+      if (act) return o("A big breaker with no handle. Someone took it. Something on the console looks wired to it.");
+      return o("SIPHON BREAKER · DO NOT PULL · signed I. & W.");
+    case "rack":
+      if (verb === "pickup" || act) return o("You touch the overclocked rack. It's 400 degrees of stolen hash. ZAP!", "hazard");
+      return o("ASICs glowing cherry-red, running far past safe limits. Stolen hash, all of it.");
+    case "ghost":
+      if (verb === "look") return o(s.solved ? "The ghost of 1138 is solid for the first time. Confirmed." : "The ghost of 1138 hovers by the breaker, waiting for someone with a handle.");
+      if (verb === "talk") return o(s.solved ? "GHOST: 'Four notes, in the right order. Thank you, Marshal.'" : "GHOST: 'Bring me the handle. I'll pull with you. I've waited 1138 blocks.'");
+      return o("Your hand passes through. He nods at the breaker.");
+    case "hatch":
+      if (act) return o("", "exit");
+      return o("An escape hatch up to the Oasis rigs.");
+  }
+}
