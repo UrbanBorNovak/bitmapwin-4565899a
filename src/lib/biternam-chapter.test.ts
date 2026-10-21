@@ -57,3 +57,16 @@ describe("random cast and cameras", () => {
     expect(chapterEpisode(f, "A", "B", { guardian: { species: "X" }, hasBuild: false, seed: 5 }).scenes[0]!.cast[0]!.avatar).toBeUndefined();
   });
 });
+import { defaultQuote, defaultTitle } from "./biternam-chapter";
+describe("suggested title and quote", () => {
+  it("never invent block numbers: the only digits are the block height", () => {
+    for (const h of [0, 9, 210000, 715093, 840000]) for (let s = 0; s < 12; s++) {
+      const f = { height: h, txCount: 2248, avgFeeRate: 5 };
+      const text = `${defaultTitle(f, { seed: s })} ${defaultQuote(f, { seed: s })}`;
+      expect(text.replaceAll(String(h), "").match(/\d/)).toBeNull();
+    }
+  });
+  it("fit the title and quote length limits", () => {
+    for (let s = 0; s < 20; s++) { const f = { height: 715093, txCount: 2248 }; expect(defaultTitle(f, { seed: s }).length).toBeLessThanOrEqual(60); expect(defaultQuote(f, { seed: s }).length).toBeLessThanOrEqual(140); }
+  });
+});
