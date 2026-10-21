@@ -8,8 +8,8 @@ import { createClient } from "@supabase/supabase-js";
 import { recordVoidStep } from "./void-progress.server";
 import { VOID_QUEST_ID, VOID_STEPS } from "./void-progress";
 
-const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env["SUPABASE_URL"];
+const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
 const live = !!url && !!key;
 const db = live ? createClient(url!, key!, { auth: { persistSession: false } }) : (null as never);
 const ghost = crypto.randomUUID();
@@ -28,7 +28,7 @@ const claims = async () => {
 describe.skipIf(!live)("void steps on the server (throwaway user)", () => {
   it("refuses any Void step before the Heist is finished and saves nothing", async () => {
     for (let i = 0; i < VOID_STEPS.length; i++) {
-      expect(await recordVoidStep(db, ghost, { index: i, key: VOID_STEPS[i] })).toEqual({ ok: false, status: "locked" });
+      expect(await recordVoidStep(db, ghost, { index: i, key: VOID_STEPS[i]! })).toEqual({ ok: false, status: "locked" });
     }
     expect(await rows(VOID_QUEST_ID)).toBe(0);
   });
