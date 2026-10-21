@@ -7,6 +7,47 @@ import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { Hotspot } from "@/lib/museum-verbs";
+import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
+import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+import { CafeSmoke, Patron } from "@/components/biternam/CafeLife";
+const still = { current: false };
+/** Unused BITMAP Pixels worn by wandering gallery visitors. */
+const VISITORS = [
+  { skin: "1f45c29c82f5bda48ac02d8d907ac05ca125c7c6593758a3831f0381559a1997i0", start: [0.2, 2.8] as const },
+  { skin: "f315fe7659bd4573f57320a6bf8bea793e56bf094f6ee68ddc051ff155a347c3i0", start: [2.8, 1.2] as const },
+  { skin: "c7f3e81bcb2802c0694bcec90570955ef276f7a75a3955a47a3965a2faf617d7i0", start: [-0.6, 0.4] as const },
+];
+const V_BOUNDS = { x0: -1.0, x1: 3.3, z0: -0.6, z1: 3.3 };
+const vBlocked = (x: number, z: number) => Math.hypot(x - 1.4, z + 0.4) < 0.8 || Math.hypot(x - 1.6, z - 2.2) < 0.5 || Math.hypot(x - 2.8, z + 2.7) < 1;
+
+function Stanchions({ x, z }: { x: number; z: number }) {
+  const posts: [number, number][] = [[-0.8, 0.8], [0.8, 0.8]];
+  return (
+    <group position={[x, 0, z]}>
+      {posts.map(([dx, dz]) => (
+        <group key={dx} position={[dx, 0, dz]}>
+          <mesh position-y={0.45}><cylinderGeometry args={[0.04, 0.04, 0.9, 6]} /><meshStandardMaterial color="#c9a14a" metalness={0.8} roughness={0.3} /></mesh>
+          <mesh position-y={0.02}><cylinderGeometry args={[0.14, 0.14, 0.04, 8]} /><meshStandardMaterial color="#c9a14a" metalness={0.8} roughness={0.3} /></mesh>
+          <mesh position-y={0.92}><sphereGeometry args={[0.06, 6, 6]} /><meshStandardMaterial color="#e8c46a" metalness={0.8} /></mesh>
+        </group>
+      ))}
+      <mesh position={[0, 0.78, 0.8]}><boxGeometry args={[1.6, 0.05, 0.05]} /><meshStandardMaterial color="#7a1f2a" /></mesh>
+    </group>
+  );
+}
+
+function Bench({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh position-y={0.42} castShadow><boxGeometry args={[1.6, 0.1, 0.5]} /><meshStandardMaterial color="#5a3a24" /></mesh>
+      {[-0.65, 0.65].map((x) => <mesh key={x} position={[x, 0.2, 0]}><boxGeometry args={[0.08, 0.4, 0.4]} /><meshStandardMaterial color="#2a2230" /></mesh>)}
+    </group>
+  );
+}
+
+function Beam({ x, z }: { x: number; z: number }) {
+  return <mesh position={[x, 2, z]}><cylinderGeometry args={[0.3, 0.8, 4, 10, 1, true]} /><meshBasicMaterial color="#ffd9a0" transparent opacity={0.06} depthWrite={false} /></mesh>;
+}
 
 const WALL = "#3a2e3f", FLOOR = "#6b4a32", TRIM = "#f7931a", GLASS = "#28e0ff";
 
@@ -108,7 +149,23 @@ export function MuseumInterior({ onHit, onHover, hover, hasLens, solved }: {
         <Hot id="pizza" {...hp}><Exhibit x={0.3} z={-2.2} h={0.9} color="#e9e2d0" glow={hover === "pizza" ? 0.9 : 0.35} /></Hot>
         <Hot id="glass" {...hp}><Exhibit x={-2.6} z={1.4} h={0.7} color={solved ? TRIM : GLASS} glow={solved ? 1.2 : hover === "glass" ? 0.9 : 0.35} /></Hot>
         {!hasLens ? <Hot id="lens" {...hp} position={[1.6, 0, 2.2]}><Lens /></Hot> : null}
-        <Hot id="curator" {...hp} position={[1.4, 0, -0.4]} rotation={[0, -0.5, 0]}><Curator hot={hover === "curator"} /></Hot>
+        <Hot id="curator" {...hp} position={[1.4, 0, -0.4]} rotation={[0, -0.5, 0]}>
+          <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hover === "curator" ? 1 : 0.45} /></mesh>
+          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["curator"]!} pose="talk" movingRef={still} fallback={<Curator hot={hover === "curator"} />} />
+        </Hot>
+        {/* Gallery dressing: velvet ropes, benches, plinth labels, light beams, dust */}
+        <Stanchions x={-2} z={-1.5} />
+        <Stanchions x={0.3} z={-2.2} />
+        <Bench position={[2.8, 0, -2.9]} />
+        <mesh position={[3.9, 1.6, -1.5]}><boxGeometry args={[0.04, 1.2, 1.6]} /><meshStandardMaterial color="#c9a14a" emissive={TRIM} emissiveIntensity={0.15} /></mesh>
+        <mesh position={[3.88, 1.6, -1.5]}><boxGeometry args={[0.02, 1, 1.4]} /><meshStandardMaterial color="#1f2a3a" /></mesh>
+        {[-2.6, 0, 2.6].map((x) => <mesh key={x} position={[x, 3.4, -3.8]}><boxGeometry args={[0.5, 0.08, 0.2]} /><meshStandardMaterial color="#222" emissive="#ffd9a0" emissiveIntensity={0.8} /></mesh>)}
+        <Beam x={-2} z={-1.5} /><Beam x={0.3} z={-2.2} /><Beam x={-2.6} z={1.4} />
+        <mesh position={[-3.2, 0.6, -3.2]}><cylinderGeometry args={[0.3, 0.25, 1.2, 8]} /><meshStandardMaterial color="#e9e2d0" /></mesh>
+        <mesh position={[-3.2, 1.35, -3.2]}><sphereGeometry args={[0.3, 8, 6]} /><meshStandardMaterial color="#d8d0bc" /></mesh>
+        <mesh rotation-x={-Math.PI / 2} position={[0.5, 0.01, 1]}><planeGeometry args={[2.2, 5]} /><meshStandardMaterial color="#5a1f24" /></mesh>
+        <CafeSmoke count={70} color="#ffd9a0" opacity={0.05} mist={["#8a7aa8", "#ffb070"]} />
+        {VISITORS.map((v, i) => <Patron key={v.skin} skin={v.skin} start={v.start} seed={i * 5.17 + 3.3} bounds={V_BOUNDS} isBlocked={vBlocked} home={[1, 1.5]} />)}
         <Hot id="door" {...hp} position={[-4.2, 0, 3.98]}>
           <mesh position-y={1.3}><boxGeometry args={[1.5, 2.6, 0.1]} /><meshStandardMaterial color="#1b1418" emissive={GLASS} emissiveIntensity={hover === "door" ? 0.5 : 0.15} /></mesh>
           <mesh position-y={2.7}><boxGeometry args={[1.8, 0.15, 0.15]} /><meshStandardMaterial color={TRIM} /></mesh>
