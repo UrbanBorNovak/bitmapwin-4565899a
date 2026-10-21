@@ -122,6 +122,8 @@ function CafePage() {
           </div>
         ) : null}
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
+        <button onClick={() => { playSfx("verb"); setTipOpen(true); }} className="absolute right-24 top-4 rounded border border-primary/60 bg-background/70 px-3 py-1 font-mono text-[11px] text-primary hover:border-primary">[ ⚡ TIP JAR ]</button>
+        <ZapDialog open={tipOpen} onOpenChange={setTipOpen} to="THE BIT-CAFÉ" address={CAFE_TIP_ADDRESS} comment="Tip from the Bit-Café · BITMAPWIN" onPaid={(s) => setSay(`dev9: "${s} sats? The house thanks you, Blockrunner."`)} />
         {call ? (
           <div className="absolute right-4 top-16 z-50">
             <TracyCom key={call} voice={dev9.voice}
