@@ -1,0 +1,43 @@
+import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { heistStatusFn } from "@/lib/void-heist.functions";
+import { voidStatusFn } from "@/lib/void-progress.functions";
+import { resumeTarget, type ResumeTarget } from "@/lib/biternam-resume";
+
+/** Resume button driven only by account-saved progress; hidden when signed out. */
+export function ResumeAdventure() {
+  const heist = useServerFn(heistStatusFn);
+  const voidS = useServerFn(voidStatusFn);
+  const [target, setTarget] = useState<ResumeTarget | null>(null);
+  const [state, setState] = useState<"loading" | "out" | "ready" | "error">("loading");
+
+  useEffect(() => {
+    let live = true;
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!live) return;
+      if (!data.session) { setState("out"); return; }
+      try {
+        const [h, v] = await Promise.all([heist(), voidS()]);
+        if (!live) return;
+        if (!h.ok || !v.ok) { setState("error"); return; }
+        setTarget(resumeTarget(h.stage, v.count));
+        setState("ready");
+      } catch { if (live) setState("error"); }
+    });
+    return () => { live = false; };
+  }, [heist, voidS]);
+
+  if (state === "loading") return null;
+  if (state === "out") return <p className="mt-6 font-mono text-xs text-muted-foreground">Sign in to resume your adventure on any device.</p>;
+  if (state === "error" || !target) return <p className="mt-6 font-mono text-xs text-muted-foreground">Could not load your saved progress.</p>;
+  return (
+    <div className="mt-6">
+      <Link to={target.to} data-testid="resume-adventure" className="inline-block rounded border border-bitcoin bg-bitcoin/10 px-4 py-2 font-mono text-sm text-bitcoin hover:bg-bitcoin hover:text-background">
+        [ ▶ RESUME ADVENTURE ]
+      </Link>
+      <div className="mt-2 font-mono text-[11px] tracking-[0.15em] text-signal">{target.label}</div>
+    </div>
+  );
+}
