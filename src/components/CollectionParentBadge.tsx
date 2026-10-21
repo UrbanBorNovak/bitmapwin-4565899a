@@ -42,7 +42,7 @@ export function CollectionParentBadge({ highlight }: { highlight?: string }) {
       <ul className="mt-2 space-y-1">
         {LINES.map((l) => (
           <li key={l.what} className={highlight === l.what ? "text-foreground" : "text-muted-foreground"}>
-            <span className={l.status === "PROVEN" ? "text-accent" : "text-primary"}>[{l.status}]</span> {l.what} — {l.what === "VOXEL BUILDS" ? buildNote : l.note}
+            {(() => { const st = l.what !== "VOXEL BUILDS" ? l.status : !builds.data ? "CHECKING" : builds.data.total > 0 && builds.data.members === builds.data.total && builds.data.lineage === builds.data.total ? "PROVEN" : builds.data.members || builds.data.lineage ? "PARTLY PROVEN" : "NOT PROVEN"; return <span className={st === "PROVEN" ? "text-accent" : "text-primary"}>[{st}]</span>; })()} {l.what} — {l.what === "VOXEL BUILDS" ? buildNote : l.note}
           </li>
         ))}
       </ul>
