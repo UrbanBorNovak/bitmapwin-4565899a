@@ -843,7 +843,7 @@ export function ReceiptScene({ onHit, onHover, hover, st, hazard }: SceneProps<R
         {[1.2, 2, 2.8].map((y) => (
           <group key={y}>
             <mesh position={[-1.5, y, -3.75]}><boxGeometry args={[4, 0.06, 0.4]} /><meshStandardMaterial color="#5a3a1c" /></mesh>
-            {Array.from({ length: 10 }, (_, i) => <mesh key={i} position={[-3.2 + i * 0.36, y + 0.2, -3.7]}><boxGeometry args={[0.24, 0.36, 0.3]} /><meshStandardMaterial color={["#5a1a12", "#1a3a2a", "#2a2010", "#3a2a5a"][(i + y * 10) % 4]} /></mesh>)}
+            {Array.from({ length: 10 }, (_, i) => <mesh key={i} position={[-3.2 + i * 0.36, y + 0.2, -3.7]}><boxGeometry args={[0.24, 0.36, 0.3]} /><meshStandardMaterial color={["#5a1a12", "#1a3a2a", "#2a2010", "#3a2a5a"][(i + Math.round(y * 10)) % 4]!} /></mesh>)}
           </group>
         ))}
         <Hot id="counter" {...hp} position={[1, 0, 0.6]}>
