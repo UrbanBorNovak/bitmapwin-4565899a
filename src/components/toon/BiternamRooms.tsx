@@ -97,7 +97,7 @@ function Room({ s, timeRef, name }: { s: RoomSpec; timeRef: MutableRefObject<num
         <mesh position={[0, 20, -30]}><boxGeometry args={[100, 40, 2]} /><meshStandardMaterial color={s.wall} /></mesh>
         <mesh position={[-50, 20, 0]}><boxGeometry args={[2, 40, 70]} /><meshStandardMaterial color={s.wall} /></mesh>
         <mesh position={[50, 20, 0]}><boxGeometry args={[2, 40, 70]} /><meshStandardMaterial color={s.wall} /></mesh>
-        <EcoGallery seed={name} trim={s.accent} />
+        <EcoGallery seed={name} trim={s.accent} props={s.props} />
       </>}
       {s.open && s.floor !== s.wall && <mesh position={[0, -0.6, 0]}><boxGeometry args={[100, 1, 70]} /><meshStandardMaterial color={s.floor} /></mesh>}
       <group ref={g}>
