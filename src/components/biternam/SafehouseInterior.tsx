@@ -42,7 +42,7 @@ function Ring({ hot }: { hot: boolean }) {
 function BrickWall({ position, rotation, w, h }: { position: [number, number, number]; rotation?: [number, number, number]; w: number; h: number }) {
   const rows = Math.round(h / 0.3), cols = Math.round(w / 0.6);
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation ?? [0, 0, 0]}>
       <mesh position={[0, h / 2, -0.06]}><boxGeometry args={[w, h, 0.1]} /><meshStandardMaterial color={MORTAR} /></mesh>
       {Array.from({ length: rows * cols }, (_, i) => {
         const r = Math.floor(i / cols), c = i % cols, off = r % 2 ? 0.3 : 0;
