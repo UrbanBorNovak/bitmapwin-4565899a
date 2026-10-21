@@ -335,7 +335,7 @@ export function resolveCanonVerb(verb: Verb, h: CanonHotspot, s: HideoutState): 
   const act = verb === "use" || verb === "open";
   switch (h) {
     case "wierdamoto":
-      if (verb === "talk") return o(s.solved ? "WIERDAMOTO: 'Plan worked. Nobody had to trust me. That was the plan.'" : "WIERDAMOTO: 'Trace, bait, sat. Three moves. You're holding the last one, or you will be. Check the skiff.'");
+      if (verb === "talk") return o(s.solved ? "WIERDAMOTO: 'Empty key, watched door. He signed it himself. I never had to say a word.'" : "WIERDAMOTO: 'Iman signed for the bait key. That signature's in the mempool now. The sat finishes it. Skiff.'");
       if (verb === "look") return o("The mask, standing at the bow of his skiff. Calm for once.");
       return o("'Hands off the cape.'");
     case "skiff":
@@ -343,23 +343,23 @@ export function resolveCanonVerb(verb: Verb, h: CanonHotspot, s: HideoutState): 
       if (verb === "pickup" || act) return o("You lift SAT 1138 from the skiff. The one you freed from the Key Fortress. Warm, like it remembers being mined.", "gain");
       return o("Wierdamoto's skiff. Something orange glows under a tarp.");
     case "bitoshi":
-      if (verb === "talk") return o(s.solved ? "BITOSHI: 'Dinner's on me. Real sats only.'" : "BITOSHI: 'They printed confirmations. We bring work. Feed the node.'");
+      if (verb === "talk") return o(s.solved ? "BITOSHI: 'Six years of soup, and he goes down to my bait. Delicious.'" : "BITOSHI: 'The bait was mine, the trap was his. You do the easy part. Feed the node.'");
       if (verb === "look") return o("Bitoshi, spatula in one hand, Invest Geek's trace folded in his pocket.");
       return o("He swats you with the spatula. Friendly. Mostly.");
     case "node":
       if (s.solved) return o("The honest node hums. Block 1138 sits at the root of the longest chain.");
-      if (act && s.got) return o("You set SAT 1138 into the honest node. It checks the trace, the blueprint, the real map. Everything verifies. The chain grows.", "solve");
+      if (act && s.got) return o("You set SAT 1138 into the honest node. Invest Geek's trace, Urban's blueprint, Iman's signature on the bait key: all of it checks out. The chain grows.", "solve");
       if (act) return o("The node blinks: 'NO WORK, NO WEIGHT.' It needs something real.");
       return o("A plain, honest Bitcoin node. It doesn't care who you are. It only checks.");
     case "rig":
       if (verb === "pickup" || act) return o("You yank a cable on the re-org rig. ZZZAP! Fake blocks spray everywhere. Iman glares.", "hazard");
       return o(s.solved ? "The rig is still printing. Nobody is listening to it." : "Iman and Will's re-org rig, pumping out a red fork of counterfeit blocks.");
     case "iman":
-      if (verb === "talk") return o(s.solved ? "IMAN: 'I paid one fee in 1138. It was the most expensive fee in history.'" : "IMAN: 'Our chain has more confirmations. I printed them myself.'");
+      if (verb === "talk") return o(s.solved ? "IMAN: 'One fee in 1138. One signature tonight. I should have stayed a fresh address.'" : "IMAN: 'I don't need the sat. I need everyone to believe the fork. Will, keep printing.'");
       if (verb === "look") return o(s.solved ? "IMAN, staring at an orphaned fork." : "IMAN, the third address. Finally in person.");
       return o("'Don't touch the merchandise.'");
     case "will":
-      if (verb === "talk") return o(s.solved ? "WILL: 'So… do confirmations count if I made them?' Nobody answers." : "WILL: 'Every receipt says we own it. Every single one.'");
+      if (verb === "talk") return o(s.solved ? "WILL: 'Okay but hypothetically, if I print a receipt that says we WON...' Nobody answers." : "WILL: 'Every receipt says we own it! Look, they're even stamped. I stamped them!'");
       if (verb === "look") return o("WILL, a stack of fake receipts under each arm.");
       return o("He drops a receipt. It says OWNED. It isn't.");
     case "ghost":
