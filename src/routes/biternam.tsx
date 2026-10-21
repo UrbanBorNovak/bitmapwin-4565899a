@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { TracyCom } from "@/components/game/TracyCom";
+import { ResumeAdventure } from "@/components/biternam/ResumeAdventure";
 import { PixelFace } from "@/components/game/PixelFace";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
 import { BITERNAM_PART_1 } from "@/lib/biternam-story";
@@ -29,6 +30,7 @@ function BiternamPage() {
         <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · PILOT</div>
         <h1 className="mt-2 font-display text-4xl">Sector 09 briefing</h1>
         <p className="mt-3 text-muted-foreground">Cindy-9 calls in on your wrist. Press SPACE or click to advance, 1–3 to choose.</p>
+        <ResumeAdventure />
         {ended && (
           <div className="mt-6 flex gap-3">
             <button type="button" className="rounded border border-primary px-3 py-2 text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => { setEnded(false); setRun((r) => r + 1); }}>
