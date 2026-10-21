@@ -79,3 +79,12 @@ describe.skipIf(!live)("forgery parlour story lock (throwaway user)", () => {
     expect(await hideoutStepCount(db, u, "holders")).toBe(0);
   });
 });
+
+describe.skipIf(!live)("handshake story lock (throwaway user)", () => {
+  const u = crypto.randomUUID();
+  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
+  it("refuses handshake steps before the forgery parlour is solved and saves nothing", async () => {
+    expect(await recordHideoutStep(db, u, { room: "handshake", index: 0, key: HIDEOUT_STEPS.handshake[0] })).toEqual({ ok: false, status: "locked" });
+    expect(await hideoutStepCount(db, u, "handshake")).toBe(0);
+  });
+});

@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
@@ -590,4 +590,73 @@ function VillainRig({ id, body, eye }: { id: "iman" | "will"; body: string; eye:
   const skin = CREW_PIXEL_AVATAR[id];
   if (!skin) return <Shade body={body} eye={eye} />;
   return <group scale={1.5}><ToonPixelRig inscriptionId={skin} pose="talk" movingRef={still} fallback={<Shade body={body} eye={eye} />} /></group>;
+}
+
+/** Any crew member in their pixel skin, with a plain block figure as fallback. */
+function CrewRig({ id, color }: { id: string; color: string }) {
+  const fb = <mesh position-y={0.7}><boxGeometry args={[0.4, 1.4, 0.3]} /><meshStandardMaterial color={color} /></mesh>;
+  const skin = CREW_PIXEL_AVATAR[id];
+  return skin ? <group scale={1.5}><ToonPixelRig inscriptionId={skin} pose="talk" movingRef={still} fallback={fb} /></group> : fb;
+}
+
+// ======================= CH.10 · THE HANDSHAKE =======================
+export function HandshakeScene({ onHit, onHover, hover, st, hazard }: SceneProps<HandshakeHotspot>) {
+  const hp = { onHit, onHover };
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[0, 0.8, 0]} />
+        <color attach="background" args={["#0c0806"]} />
+        <fog attach="fog" args={["#0c0806", 12, 25]} />
+        <ambientLight intensity={0.8} color="#f0dcc0" />
+        <pointLight position={[0, 3, 0.4]} intensity={st.solved ? 34 : 16} color={st.solved ? TRIM : "#ffd8a0"} castShadow />
+        <pointLight position={[-2.6, 2, -2]} intensity={10} color={GREEN} />
+        {Array.from({ length: 64 }, (_, i) => (
+          <mesh key={i} position={[(i % 8) - 3.5, -0.05, Math.floor(i / 8) - 3.5]} receiveShadow>
+            <boxGeometry args={[0.97, 0.1, 0.97]} /><meshStandardMaterial color={(i + Math.floor(i / 8)) % 2 ? "#4a3220" : "#3a2616"} roughness={0.9} />
+          </mesh>
+        ))}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#2a1c14" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#24180f" roughness={1} /></mesh>
+        {/* Wanted posters of the third address */}
+        {[-1, 0, 1].map((x) => <mesh key={x} position={[x * 0.9 + 1.4, 2.6, -3.84]}><boxGeometry args={[0.6, 0.8, 0.02]} /><meshStandardMaterial color="#d8c8a0" emissive={st.solved ? TRIM : "#000"} emissiveIntensity={0.25} /></mesh>)}
+        {/* Invest Geek's desk + monitors */}
+        <Hot id="geek" {...hp} position={[-2.6, 0, -2.2]} rotation={[0, 0.6, 0]}>
+          <Ring on={hover === "geek"} color={GREEN} />
+          <CrewRig id="invest-geek" color="#2a3a5a" />
+          <mesh position={[0.2, 0.45, -0.7]}><boxGeometry args={[1.6, 0.9, 0.6]} /><meshStandardMaterial color="#3a2a1a" /></mesh>
+          {[-0.5, 0, 0.5].map((x) => <mesh key={x} position={[x + 0.2, 1.2, -0.8]}><boxGeometry args={[0.44, 0.34, 0.1]} /><meshStandardMaterial color="#0a120c" emissive={x === 0 ? TRIM : GREEN} emissiveIntensity={0.9} /></mesh>)}
+        </Hot>
+        <Hot id="printer" {...hp} position={[-3.2, 0, 0.6]}>
+          <mesh position-y={0.35}><boxGeometry args={[0.7, 0.7, 0.6]} /><meshStandardMaterial color="#c8c0b0" emissive={hover === "printer" ? TRIM : "#000"} emissiveIntensity={0.35} /></mesh>
+          {!st.got && !st.solved ? <mesh position={[0, 0.8, 0]} rotation-x={-0.4}><boxGeometry args={[0.5, 0.02, 0.6]} /><meshStandardMaterial color="#f4f0e4" emissive={TRIM} emissiveIntensity={0.3} /></mesh> : null}
+        </Hot>
+        <Hot id="table" {...hp} position={[0.6, 0, 0.4]}>
+          <mesh position-y={0.7}><cylinderGeometry args={[0.8, 0.8, 0.08, 16]} /><meshStandardMaterial color="#5a3a20" emissive={hover === "table" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          <mesh position-y={0.35}><cylinderGeometry args={[0.1, 0.18, 0.7, 8]} /><meshStandardMaterial color="#2a1a10" /></mesh>
+          {st.solved ? <mesh position={[0, 0.76, 0]}><boxGeometry args={[0.45, 0.01, 0.6]} /><meshStandardMaterial color="#f4f0e4" /></mesh> : null}
+        </Hot>
+        <Hot id="wierdamoto" {...hp} position={[-0.7, 0, 0.6]} rotation={[0, st.solved ? 1.4 : 0.4, 0]}>
+          <Ring on={hover === "wierdamoto"} color="#c41e1e" />
+          <CrewRig id="wierdamoto" color="#111114" />
+        </Hot>
+        <Hot id="bitoshi" {...hp} position={[1.9, 0, 0.6]} rotation={[0, st.solved ? -1.4 : -0.4, 0]}>
+          <Ring on={hover === "bitoshi"} color="#3a7aff" />
+          <CrewRig id="bitoshi" color="#e8d040" />
+        </Hot>
+        <Hot id="flask" {...hp} position={[2.8, 0, -1.6]}>
+          <mesh position-y={0.5}><boxGeometry args={[0.5, 1, 0.5]} /><meshStandardMaterial color="#2a2018" /></mesh>
+          <mesh position-y={1.2}><sphereGeometry args={[0.22, 10, 8]} /><meshStandardMaterial color="#3a8aff" emissive="#3a8aff" emissiveIntensity={hazard ? 2 : 0.8} transparent opacity={0.8} /></mesh>
+        </Hot>
+        <Hot id="ghost" {...hp} position={[-1.4, 0, -1.2]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm={st.solved} />
+        </Hot>
+        <Hot id="door" {...hp} position={[3.6, 0, 2.4]} rotation={[0, -Math.PI / 2, 0]}>
+          <mesh position-y={1.2}><boxGeometry args={[1.1, 2.4, 0.12]} /><meshStandardMaterial color="#3a2414" emissive={hover === "door" ? TRIM : "#000"} emissiveIntensity={0.4} /></mesh>
+        </Hot>
+        <CafeSmoke count={30} color={hazard ? "#80b0ff" : "#f0e0c8"} opacity={hazard ? 0.12 : 0.03} mist={["#120c08", st.solved ? TRIM : "#5a3a20"]} />
+      </SafeCanvas>
+    </div>
+  );
 }
