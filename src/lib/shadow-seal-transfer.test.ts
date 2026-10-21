@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { BroadcastUnknown, VaultStorageError, loadHeld, repairedHeld, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, VaultStorageError, loadHeld, restoreBackup, repairedHeld, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -516,5 +516,95 @@ describe("browser storage failures and damaged recovery records", () => {
     const once = repairedHeld(bundle, [p]);
     expect(once.map((h) => h.c.note.label)).toEqual(["Key", "Pass"]);
     expect(repairedHeld(once, [p])).toBe(once); // idempotent
+  });
+});
+
+describe("restoring backups with damaged or outdated recovery records", () => {
+  const mem = new Map<string, string>();
+  const store = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) } as unknown as Storage;
+  const real = globalThis.localStorage;
+  const lk = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (lk.has(name)) return cb(null); lk.add(name); try { return await cb({}); } finally { lk.delete(name); } } };
+  const PK = "bitmapwin:sealed-pending", IK = "bitmapwin:sealed-intent", HK = "bitmapwin:sealed-notes";
+  const unspent = async () => ({ spent: false });
+  const old = { held: bundle, recv: {}, sent: [] }; // backup taken before any transfer
+  const reset = () => { mem.clear(); globalThis.localStorage = store; sealStore.setHeld(bundle); };
+  const go = (sign: (p: string) => Promise<string> = mockWallet) =>
+    runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign, currentWallet: () => address, locks });
+  const labels = () => sealStore.held().map((h) => h.c.note.label).sort();
+
+  it("an outdated backup can't erase a signed transfer or bring the given note back", async () => {
+    reset();
+    const r = await go();
+    const pBefore = mem.get(PK);
+    const res = await restoreBackup(old, { outspend: unspent });
+    expect(mem.get(PK)).toBe(pBefore);
+    expect(res.restored).toEqual([]);
+    expect(labels()).toEqual(["Key", "Map"]);
+    expect(sealStore.held().every((h) => h.mine.txid === r.txid)).toBe(true);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/UNFINISHED TRANSFER/);
+    expect(spy).not.toHaveBeenCalled();
+    globalThis.localStorage = real;
+  });
+  it("restoring while a signing is in progress never clears it, and the coin stays blocked", async () => {
+    reset();
+    let release!: () => void;
+    const a = go((p) => new Promise((res) => { release = () => res(mockWallet(p)); }));
+    await new Promise((r) => setTimeout(r, 0));
+    sealStore.setHeld([]); // pretend notes list was lost
+    const res = await restoreBackup(old, { outspend: unspent });
+    expect(res.skippedInFlight.sort()).toEqual(["Key", "Map", "Pass"]);
+    expect(intentStore.onAnchor(coin)).toHaveLength(1);
+    release(); await a;
+    expect(pendingStore.onAnchor(coin)).toHaveLength(1);
+    globalThis.localStorage = real;
+  });
+  it("an interrupted signing survives a restore and still blocks new transfers", async () => {
+    reset();
+    intentStore.put({ anchor: { txid: coin.txid, vout: coin.vout }, address, network: "mainnet", at: "t", attempt: "x" });
+    await restoreBackup(old, { outspend: unspent });
+    expect(intentStore.onAnchor(coin)).toHaveLength(1);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/INTERRUPTED/);
+    expect(spy).not.toHaveBeenCalled();
+    globalThis.localStorage = real;
+  });
+  it("notes whose coin is spent on Bitcoin are not resurrected", async () => {
+    reset(); sealStore.setHeld([]);
+    const res = await restoreBackup(old, { outspend: async () => ({ spent: true, txid: "f".repeat(64) }) });
+    expect(res.skippedSpent.sort()).toEqual(["Key", "Map", "Pass"]);
+    expect(sealStore.held()).toEqual([]);
+    globalThis.localStorage = real;
+  });
+  it("if the coin can't be checked, nothing is restored", async () => {
+    reset(); sealStore.setHeld([]);
+    await expect(restoreBackup(old, { outspend: async () => { throw new Error("down"); } })).rejects.toThrow(/NOTHING RESTORED/);
+    expect(sealStore.held()).toEqual([]);
+    globalThis.localStorage = real;
+  });
+  it("a damaged transfer or signing record stops the restore and is never overwritten", async () => {
+    for (const key of [PK, IK]) {
+      reset(); mem.set(key, "{bad");
+      await expect(restoreBackup(old, { outspend: unspent })).rejects.toThrow(/DAMAGED/);
+      expect(mem.get(key)).toBe("{bad");
+    }
+    globalThis.localStorage = real;
+  });
+  it("a damaged notes list is healed from the backup, with every note once", async () => {
+    reset(); mem.set(HK, JSON.stringify([{ junk: true }]));
+    const res = await restoreBackup(old, { outspend: unspent });
+    expect(res.restored.sort()).toEqual(["Key", "Map", "Pass"]);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    await restoreBackup(old, { outspend: unspent }); // twice: no duplicates
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    globalThis.localStorage = real;
+  });
+  it("a malformed backup file changes nothing", async () => {
+    reset(); const before = new Map(mem);
+    await expect(restoreBackup({ held: [{ junk: 1 }] }, { outspend: unspent })).rejects.toThrow(/NOT A VALID/);
+    expect(mem).toEqual(before);
+    globalThis.localStorage = real;
   });
 });
