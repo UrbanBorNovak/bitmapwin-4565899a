@@ -27,7 +27,7 @@ export type RelicPreview = {
  * the relic to the minter, then holder + treasury tribute. Funding input is
  * added by the wallet later; the fee is estimated here and shown.
  */
-export function buildRelicPreview(i: RelicPlanInput & { parents: ParentSpend[]; minterAddress: string; feeRate: number; metadataBytes: number; viewerOk: boolean }):
+export function buildRelicPreview(i: Omit<RelicPlanInput, "parents"> & { parents: ParentSpend[]; minterAddress: string; feeRate: number; metadataBytes: number; viewerOk: boolean }):
   RelicPreview | { ok: false; message: string } {
   const plan = planRelicMint(i);
   if (!plan.ok) return { ok: false, message: plan.message };
