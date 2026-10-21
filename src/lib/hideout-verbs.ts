@@ -270,18 +270,18 @@ export function resolveHandshakeVerb(verb: Verb, h: HandshakeHotspot, s: Hideout
       if (act) return o("Nobody sits down for an opinion. Bring them proof.");
       return o("A small round table. Wierdamoto on one side, Bitoshi on the other, and a lot of glaring in between.");
     case "wierdamoto":
-      if (verb === "talk") return o(s.solved ? "WIERDAMOTO: 'Framed. Both of us. By someone who knew we'd never check together.'" : "WIERDAMOTO: 'I'm not sitting until he admits he kept the key.'");
+      if (verb === "talk") return o(s.solved ? "WIERDAMOTO: 'He paid one fee and bought six years of us hating each other. Cheap. Now he pays retail.'" : "WIERDAMOTO: 'I'm not sitting until he admits he kept the key.'");
       if (verb === "look") return o("The mask, arms crossed, cape pooled on the chair.");
       return o("'Nobody takes custody of me.'");
     case "bitoshi":
-      if (verb === "talk") return o(s.solved ? "BITOSHI: 'Fine. Ninety-nine point one percent friends.'" : "BITOSHI: 'I'm not sitting until he admits he left me a 1-of-2.'");
+      if (verb === "talk") return o(s.solved ? "BITOSHI: 'The bait key's on the stove. Smells like a whale wallet. Tastes like nothing.'" : "BITOSHI: 'I'm not sitting until he admits he left me a 1-of-2.'");
       if (verb === "look") return o("Bitoshi, hazmat hood down for once, gripping a spatula like a gavel.");
       return o("He raises the spatula. You reconsider.");
     case "flask":
       if (verb === "pickup" || act) return o("You shake Bitoshi's flask. FIZZ! Blue foam everywhere. Both of them yell at you. In unison. Progress?", "hazard");
       return o("Blue matter, bubbling. Bitoshi never goes anywhere without it.");
     case "ghost":
-      if (verb === "talk") return o(s.solved ? "GHOST: 'The third address is IMAN's. Now three of us know it.'" : "GHOST: 'Row 1138 is about me too. Print it.'");
+      if (verb === "talk") return o(s.solved ? "GHOST: 'Iman is going to open that wallet and find a mirror. I want a front-row seat.'" : "GHOST: 'Row 1138 is about me too. Print it.'");
       return o(s.solved ? "The ghost of 1138 is glowing warm orange." : "The ghost of 1138 hovers by the printer.");
     case "door":
       if (act) return o("", "exit");
