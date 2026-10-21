@@ -2,7 +2,7 @@
  * SHADOW ARCHWAYS — an obsidian gate stands on every BITMAP that hosts a
  * Shadow Gate event. Only nearby archways are drawn. No holder data is read.
  */
-import { memo, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
@@ -23,6 +23,10 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
   const ref = useRef<THREE.Group>(null);
   const veil = useRef<THREE.MeshStandardMaterial>(null);
   const armed = useRef(true);
+  /** this gate refused a keycard while the visitor stood in it */
+  const denied = useRef(false);
+  // A RECHECK (or any fresh Bitcoin check) re-tests this gate in place, no walking away needed.
+  useEffect(() => relicStore.subscribe(() => { if (denied.current) armed.current = true; }), []);
   useFrame(({ clock }) => {
     const p = pose.current;
     const node = ref.current;
@@ -32,7 +36,7 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
     if (veil.current) veil.current.emissiveIntensity = s.active ? 0.9 + Math.sin(clock.elapsedTime * 1.6) * 0.5 : 0.1;
     // STEPPING THROUGH — the pass is checked on this device only.
     const reach = unit * 2.6;
-    if (dist > reach * 2.2) armed.current = true;
+    if (dist > reach * 2.2) { armed.current = true; denied.current = false; }
     if (!armed.current || dist > reach) return;
     armed.current = false;
     if (!s.active) {
@@ -40,13 +44,16 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
       tracyCue({ kind: "sealed", title: s.title, reason: "closed" });
       return;
     }
+    const recheck = denied.current;
     const denial = getPass(s.slug) ? null : keycardDenial(relicStore.get(), s.slug);
     if (denial) {
-      void relicStore.refresh();
-      toast("GATEWAY SEALED", { description: `${denial.reason} NEXT: ${denial.next}`, duration: 9000 });
-      tracyCue({ kind: "sealed", title: s.title, reason: "no-pass" });
+      if (!recheck) void relicStore.refresh();
+      denied.current = true;
+      toast("GATEWAY SEALED", { id: `gate-${s.slug}`, description: `${denial.reason} NEXT: ${denial.next}`, duration: 9000 });
+      if (!recheck) tracyCue({ kind: "sealed", title: s.title, reason: "no-pass" });
       return;
     }
+    denied.current = false;
     enterShadowRoom({ slug: s.slug, title: s.title });
   });
 
