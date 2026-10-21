@@ -38,9 +38,9 @@ P.place=function(size){var sq=null;
 function draw(el,h){var cv=document.createElement('canvas');cv.width=cv.height=512;cv.setAttribute('aria-label',h+'.bitmap');
  return fetch(MZ.base+'/api/public/blocks/'+h).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()}).then(function(b){
   var u=new Uint8Array(b),cls=[];for(var i=0;i<u.length;i++)cls.push(Math.max(1,Math.min(8,u[i]||1)));if(!cls.length)throw 0;
-  var L=new M(cls),W=L.w,s=512/W,x=cv.getContext('2d'),ac=getComputedStyle(document.documentElement).getPropertyValue('--a').trim()||'#f7931a';
+  var L=new M(cls),W=L.w,s=512/W,x=cv.getContext('2d'),ac='#f7931a';
   x.fillStyle='#050607';x.fillRect(0,0,512,512);
-  for(var k=0;k<L.slots.length;k++){var q=L.slots[k],g=s>=3?Math.max(.5,s*.08):0;x.fillStyle=k===0?'#fff1a8':ac;x.globalAlpha=k===0?1:.55+.45*Math.min(1,q.r/5);
+  for(var k=0;k<L.slots.length;k++){var q=L.slots[k],g=s>=3?Math.max(.5,s*.08):0;x.fillStyle=ac;x.globalAlpha=1;
    x.fillRect(q.x*s+g/2,q.y*s+g/2,q.r*s-g,q.r*s-g)}
   x.globalAlpha=1;el.innerHTML='';el.appendChild(cv);el.classList.add('m');
   var t=document.createElement('span');t.className='tx';t.textContent=cls.length.toLocaleString('en-US')+' TX';el.appendChild(t)}).catch(function(){})}
