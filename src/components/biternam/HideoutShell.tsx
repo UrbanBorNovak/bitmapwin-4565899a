@@ -30,6 +30,9 @@ export function HideoutShell<H extends string>(props: {
   const [call, setCall] = useState(0);
   const [say, setSay] = useState(props.intro);
   const cut = useCutscene();
+  /** Finale call waits for the cutscene so the wrist-com never covers it. */
+  const [callAfterCut, setCallAfterCut] = useState(false);
+  useEffect(() => { if (callAfterCut && !cut.active) { setCallAfterCut(false); setCall(Date.now()); } }, [callAfterCut, cut.active]);
   useEffect(() => { try { setSt((s) => ({ ...s, ...JSON.parse(localStorage.getItem(props.storageKey) || "{}") })); } catch { /* fresh */ } setLoaded(true); }, [props.storageKey]);
   useEffect(() => { if (loaded) localStorage.setItem(props.storageKey, JSON.stringify(st)); }, [loaded, st, props.storageKey]);
   useEffect(() => {
@@ -66,7 +69,7 @@ export function HideoutShell<H extends string>(props: {
     if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "gain" || r.effect === "solve") cut.play(ROOM_CUTSCENES[props.room]?.[r.effect]);
     if (r.effect === "gain") setSt((s) => ({ ...s, got: true }));
-    if (r.effect === "solve") { setSt({ got: false, solved: true }); setCall(Date.now()); }
+    if (r.effect === "solve") { setSt({ got: false, solved: true }); if (ROOM_CUTSCENES[props.room]?.solve) setCallAfterCut(true); else setCall(Date.now()); }
     if (r.effect === "hazard") { setHazard(true); setTimeout(() => setHazard(false), 1600); }
   };
   const [mainRef, fitH] = useFitHeight<HTMLElement>();
