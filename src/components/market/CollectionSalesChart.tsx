@@ -4,7 +4,7 @@ import type { CollectionSale } from "@/lib/collection-sales";
 type Sale = CollectionSale & { source?: string };
 
 /** Price per confirmed on-chain sale, in block order. */
-export function CollectionSalesChart({ sales, pending, unavailable, traced, total }: { sales: Sale[]; pending: boolean; unavailable: boolean; traced?: number; total?: number }) {
+export function CollectionSalesChart({ sales, pending, unavailable, traced, total }: { sales: Sale[]; pending: boolean; unavailable: boolean; traced?: number | undefined; total?: number | undefined }) {
   const pts = sales.filter((s) => s.priceSats > 0 && s.blockHeight).sort((a, b) => (a.blockHeight! - b.blockHeight!));
   const W = 600, H = 160, P = 8;
   const max = Math.max(1, ...pts.map((s) => s.priceSats));
