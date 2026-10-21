@@ -12,6 +12,7 @@ import { getAllShadowGatesFn } from "@/lib/shadow-assets.functions";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { toast } from "sonner";
 import { getPass } from "@/lib/shadow-vault";
+import { keycardOpens, relicStore } from "@/lib/sealed-relics";
 import { enterShadowRoom } from "@/lib/shadow-room";
 import { tracyCue } from "@/lib/tracy-com";
 
@@ -39,8 +40,9 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
       tracyCue({ kind: "sealed", title: s.title, reason: "closed" });
       return;
     }
-    if (!getPass(s.slug)) {
-      toast("GATEWAY SEALED", { description: `NO SHADOW PASS ON THIS DEVICE FOR ${s.title}.` });
+    if (!getPass(s.slug) && !keycardOpens(relicStore.get(), s.slug)) {
+      void relicStore.refresh();
+      toast("GATEWAY SEALED", { description: `NO SHADOW PASS OR SEALED KEYCARD (6 CONFIRMATIONS) FOR ${s.title}.` });
       tracyCue({ kind: "sealed", title: s.title, reason: "no-pass" });
       return;
     }
