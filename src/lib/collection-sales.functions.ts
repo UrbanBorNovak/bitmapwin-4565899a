@@ -22,8 +22,8 @@ export const getCollectionSalesFn = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const { verifiedSalesFor } = await import("@/lib/verified-sales.server");
-    const { crawlCollection, collectionTrades } = await import("@/lib/collection-trades.server");
-    try { await crawlCollection(data.pool, data.ids, data.listed); } catch (e) { console.error("[collection-crawl]", e); }
+    const { crawlCollection, collectionTrades, enqueueCollection } = await import("@/lib/collection-trades.server");
+    try { await enqueueCollection(data.pool, data.ids); await crawlCollection(data.pool, data.ids, data.listed); } catch (e) { console.error("[collection-crawl]", e); }
     const [ours, chain] = await Promise.all([verifiedSalesFor(data.ids), collectionTrades(data.pool)]);
     const idSet = new Set(data.ids);
     const byTx = new Map(chain.sales.filter((s) => idSet.has(s.inscriptionId)).map((s) => [s.txid, s]));
@@ -31,7 +31,8 @@ export const getCollectionSalesFn = createServerFn({ method: "POST" })
     return {
       sales: [...byTx.values()].sort((a, b) => (b.blockHeight ?? 0) - (a.blockHeight ?? 0)),
       traced: chain.traced,
-      total: data.ids.length,
+      checked: chain.checked,
+      total: Math.max(data.ids.length, chain.queued),
       unavailable: ours.unavailable && chain.unavailable,
     };
   });
