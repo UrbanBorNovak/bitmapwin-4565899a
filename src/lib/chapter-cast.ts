@@ -5,12 +5,12 @@ export type Lookup<T> = { state: "checking" } | { state: "found"; value: T } | {
 export type DirectoryRead<R> = () => PromiseLike<{ data: R | null; error: unknown }>;
 
 /** Turn a directory read into a Lookup: error → unavailable, no row → absent. */
-export async function lookup<R, T>(read: DirectoryRead<R>, pick: (row: R) => T | null): Promise<Lookup<T>> {
+export async function lookup<R, T>(read: DirectoryRead<R>, pick: (row: NonNullable<R>) => T | null): Promise<Lookup<T>> {
   try {
     const { data, error } = await read();
     if (error) return { state: "unavailable" };
     if (data == null) return { state: "absent" };
-    const v = pick(data);
+    const v = pick(data as NonNullable<R>);
     return v == null ? { state: "unavailable" } : { state: "found", value: v };
   } catch { return { state: "unavailable" }; }
 }
