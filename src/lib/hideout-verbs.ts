@@ -145,3 +145,37 @@ export function resolveLairVerb(verb: Verb, h: LairHotspot, s: HideoutState): Hi
       return o("An escape hatch up to the Oasis rigs.");
   }
 }
+
+// ---------- CH.7 The Void Basement: steal WILL's printed map, hold it to the Bedrock Monument to expose the counterfeit mint. ----------
+export type BasementHotspot = "map" | "monument" | "mint" | "dust" | "ghost" | "ladder";
+export const BASEMENT_NAMES: Record<BasementHotspot, string> = {
+  map: "WILL'S PRINTED MAP", monument: "BEDROCK MONUMENT", mint: "COUNTERFEIT MINT", dust: "DUST POOL", ghost: "GHOST OF 1138", ladder: "LADDER UP",
+};
+export function resolveBasementVerb(verb: Verb, h: BasementHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "map":
+      if (s.got || s.solved) return o("The map is in your hand. Every tile is a copy of a real BITMAP, a few pixels off.");
+      if (verb === "pickup" || act) return o("You roll up WILL'S PRINTED MAP. Title: THE OASIS (IMPROVED). Every district, duplicated.", "gain");
+      return o("A huge map pinned to a drafting table. It shows the Oasis... twice.");
+    case "monument":
+      if (s.solved) return o("The monument glows steady. Only one bedrock. Only one map. The real one.");
+      if (act && s.got) return o("You hold the printed map against the Bedrock Monument. The real grid shines through. Every fake tile lights up red. The mint behind you starts to crack.", "solve");
+      if (act) return o("The monument hums. Carved on it: ONE BLOCK · ONE BITMAP · COMPARE ANYTHING TO ME.");
+      return o("A slab of bedrock carved with the true block grid. It was here before the basement was dug.");
+    case "mint":
+      if (s.solved) return o("The counterfeit mint is cold and cracked. A last copy of 1138.bitmap curls up and burns.");
+      if (verb === "look") return o("A press stamping fake BITMAP plates: 1138.bitmap, 1138.bitmap, 1138.bitmap... all slightly wrong.");
+      return o("The press slams an inch from your fingers. Copies shouldn't be touched. Compare them.");
+    case "dust":
+      if (verb === "pickup" || act) return o("You reach into the pool. It's dust from blocks that were never mined. WHOOSH! You're covered.", "hazard");
+      return o("A pool of grey dust. It moves like water and smells like old mempool.");
+    case "ghost":
+      if (verb === "talk") return o("", "talk");
+      if (verb === "look") return o(s.solved ? "The ghost of 1138 stands taller. No copies of him left." : "The ghost of 1138 stares at the mint printing copies of himself.");
+      return o("Cold. He points at the drafting table.");
+    case "ladder":
+      if (act) return o("", "exit");
+      return o("A ladder back up through the Void to the Oasis.");
+  }
+}

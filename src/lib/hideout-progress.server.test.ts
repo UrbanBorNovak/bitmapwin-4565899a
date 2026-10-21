@@ -52,3 +52,12 @@ describe.skipIf(!live)("re-org lair story lock (throwaway user)", () => {
     expect(await hideoutStepCount(db, u, "lair")).toBe(0);
   });
 });
+
+describe.skipIf(!live)("void basement story lock (throwaway user)", () => {
+  const u = crypto.randomUUID();
+  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
+  it("refuses basement steps before the re-org lair is solved and saves nothing", async () => {
+    expect(await recordHideoutStep(db, u, { room: "basement", index: 0, key: HIDEOUT_STEPS.basement[0] })).toEqual({ ok: false, status: "locked" });
+    expect(await hideoutStepCount(db, u, "basement")).toBe(0);
+  });
+});

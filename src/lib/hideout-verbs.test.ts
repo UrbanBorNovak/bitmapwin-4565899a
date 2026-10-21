@@ -32,3 +32,12 @@ describe("lair", () => {
     expect(resolveLairVerb("use", "breaker", { got: true, solved: false }).effect).toBe("solve");
   });
 });
+
+import { resolveBasementVerb } from "./hideout-verbs";
+describe("basement", () => {
+  it("monument needs Will's map first", () => {
+    expect(resolveBasementVerb("use", "monument", { got: false, solved: false }).effect).toBeNull();
+    expect(resolveBasementVerb("pickup", "map", { got: false, solved: false }).effect).toBe("gain");
+    expect(resolveBasementVerb("use", "monument", { got: true, solved: false }).effect).toBe("solve");
+  });
+});

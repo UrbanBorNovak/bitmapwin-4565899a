@@ -54,6 +54,7 @@ function BiternamPage() {
         <Link to="/biternam/island" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ URBAN'S ISLAND HOTEL ]</Link>
         <Link to="/biternam/vault" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ CH.5 · BENEATH 1138 ]</Link>
         <Link to="/biternam/lair" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ CH.6 · THE RE-ORG LAIR ]</Link>
+        <Link to="/biternam/basement" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ CH.7 · THE VOID BASEMENT ]</Link>
         <Link to="/biternam/void" className="ml-2 mt-3 inline-block rounded border border-signal px-3 py-1.5 font-mono text-xs text-signal hover:bg-signal hover:text-background">[ THE MEMPOOL VOID ]</Link>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BITERNAM_CREW.map((c) => (
