@@ -31,7 +31,7 @@ const FRESH: Save = { feeWon: false, hashWon: false, prize: false };
 const keeperScript = (s: Save): TracyScript => ({
   id: "npc-rgb-bot", title: "MEMPOOL ARCADE · PRIZE DESK", start: "a", nodes: [
     { id: "a", speaker: "RGB BOT", mood: "smug", text: s.prize ? "Golden Satoshi holder! Your initials are on every screen now, player one." : `Welcome to the Mempool Arcade. Two high scores win the Golden Satoshi. You have ${Number(s.feeWon) + Number(s.hashWon)}.`, next: "b" },
-    { id: "b", speaker: "RGB BOT", mood: "neutral", text: "Tip: miners pick the juiciest fees first. And never, ever open the claw machine.", next: null },
+    { id: "b", speaker: "RGB BOT", mood: "idle", text: "Tip: miners pick the juiciest fees first. And never, ever open the claw machine.", next: null },
   ],
 });
 
