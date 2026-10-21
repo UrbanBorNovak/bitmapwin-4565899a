@@ -1,4 +1,5 @@
-import { Component, Suspense, useEffect, useMemo, type MutableRefObject, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useMemo, useState, type MutableRefObject, type ReactNode } from "react";
+import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -114,7 +115,17 @@ class RigBoundary extends Component<{ fallback: ReactNode; children: (attempt: n
   override render() { return this.state.failed ? this.props.fallback : this.props.children(this.state.attempt); }
 }
 
-export function ToonPixelRig({ inscriptionId, tint, pose, movingRef, timeRef, fallback }: { inscriptionId: string; tint?: string | undefined; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number> | undefined; fallback: ReactNode }) {
+export function ToonPixelRig({ inscriptionId: rawId, tint, pose, movingRef, timeRef, fallback }: { inscriptionId: string; tint?: string | undefined; pose: string; movingRef: MutableRefObject<boolean>; timeRef?: MutableRefObject<number> | undefined; fallback: ReactNode }) {
+  // Gallery pixels are often BRC-420 HTML: follow it to the PNG it declares before painting the rig.
+  const [res, setRes] = useState<{ raw: string; tex: string | null } | null>(null);
+  useEffect(() => {
+    let live = true;
+    resolvePixelTexture(rawId).then((tex) => { if (live) setRes({ raw: rawId, tex }); });
+    return () => { live = false; };
+  }, [rawId]);
+  if (!res || res.raw !== rawId) return <>{fallback}</>;
+  if (!res.tex) return <>{fallback}</>;
+  const inscriptionId = res.tex;
   return (
     <RigBoundary
       fallback={fallback}
