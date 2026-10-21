@@ -6,7 +6,11 @@ import { useEffect, useState } from "react";
 import { MuseumInterior } from "@/components/biternam/MuseumInterior";
 import { TracyCom } from "@/components/game/TracyCom";
 import { npcById, questStore } from "@/lib/biternam-quests";
-import { HOTSPOT_NAMES, VERBS, resolveVerb, type Hotspot, type Verb } from "@/lib/museum-verbs";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { hideoutStatusFn } from "@/lib/hideout-progress.functions";
+import { HIDEOUT_STEPS } from "@/lib/hideout-progress";
+import { HOTSPOT_NAMES, SIGNATURE_PLAQUES, VERBS, resolveVerb, type Hotspot, type Verb } from "@/lib/museum-verbs";
 
 export const Route = createFileRoute("/biternam_/museum")({
   ssr: false,
@@ -35,6 +39,19 @@ function MuseumPage() {
   const [held, setHeld] = useState<string[]>([]);
   const [solved, setSolved] = useState(false);
   const [say, setSay] = useState("Choose a verb, then click something in the room.");
+  const hideout = useServerFn(hideoutStatusFn);
+  const [exhibitOpen, setExhibitOpen] = useState(false);
+  const [plaque, setPlaque] = useState(-1);
+
+  // The exhibit opens only when CH.12 is solved on the signed-in account. No BIT.
+  useEffect(() => {
+    let live = true;
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      try { const r = await hideout({ data: { room: "canon" } }); if (live && r.ok && r.count >= HIDEOUT_STEPS.canon.length) setExhibitOpen(true); } catch { /* stays draped */ }
+    });
+    return () => { live = false; };
+  }, [hideout]);
 
   useEffect(() => {
     try { const s = JSON.parse(localStorage.getItem(KEY) || "{}"); setHeld(s.held ?? []); setSolved(!!s.solved); } catch { /* fresh */ }
@@ -49,13 +66,14 @@ function MuseumPage() {
   }, []);
 
   const hit = (h: Hotspot) => {
-    const r = resolveVerb(verb, h, { held, solved, item });
+    const r = resolveVerb(verb, h, { held, solved, item, exhibitOpen });
     playSfx(r.effect === "talk" ? "talk" : r.effect?.startsWith("pickup") ? "pickup" : r.effect === "exit" ? "door" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
     if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "pickup-lens") setHeld((p) => [...p, "lens"]);
     if (r.effect === "solve") setSolved(true);
+    if (r.effect === "exhibit") { const n = (plaque + 1) % SIGNATURE_PLAQUES.length; setPlaque(n); setSay(SIGNATURE_PLAQUES[n]!); }
     setItem(null);
   };
 
@@ -66,11 +84,12 @@ function MuseumPage() {
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
         <HeistPanel room="museum" ready={true} />
-        <MuseumInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasLens={held.includes("lens")} solved={solved} />
+        <MuseumInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasLens={held.includes("lens")} solved={solved} exhibitOpen={exhibitOpen} plaque={plaque} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · CHAPTER 1</div>
           <div className="font-display text-2xl text-foreground">BIT MUSEUM · ARCHIVE HALL</div>
           {solved ? <div className="mt-1 text-[11px] text-primary">★ INSCRIPTION GLASS DECIPHERED</div> : null}
+          {exhibitOpen ? <div className="mt-1 text-[11px] text-signal">◆ NOW SHOWING · THE NIGHT OF TWO SIGNATURES{plaque >= 0 ? ` · ${Math.min(plaque + 1, 5)}/5` : ""}</div> : null}
         </div>
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
         {call ? (
