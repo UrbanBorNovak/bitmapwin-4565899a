@@ -773,7 +773,7 @@ export function CanonScene({ onHit, onHover, hover, st, hazard }: SceneProps<Can
           <mesh position-y={0.2}><boxGeometry args={[1.2, 0.3, 0.6]} /><meshStandardMaterial color="#2a1a10" emissive={hover === "skiff" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
           {!st.got && !st.solved ? <mesh position={[0, 0.5, 0]} rotation-x={Math.PI / 2}><cylinderGeometry args={[0.2, 0.2, 0.05, 16]} /><meshStandardMaterial color={TRIM} emissive={TRIM} emissiveIntensity={1.6} metalness={0.6} /></mesh> : null}
         </Hot>
-        <Hot id="bitoshi" {...hp} position={[-1.2, 0, 2.4]} rotation={[0, 0.3, 0]}>
+        <Hot id="bitoshi" {...hp} position={[-0.4, 0, 2.9]} rotation={[0, 0.3, 0]}>
           <Ring on={hover === "bitoshi"} color="#3a7aff" />
           <CrewRig id="bitoshi" color="#e8d040" />
         </Hot>
