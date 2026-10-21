@@ -8,6 +8,8 @@ export const PIXELS: PixelItem[] = (raw as [number, string, string, string][]).m
 /** Series each starred Biternam character's skin comes from (matched by series name). */
 export const STARRED_SERIES: Record<string, string> = {
   wierdamoto: "V for Vendetta",
+  dev9: "MM-9",
+  bop: "DG - 9",
   dabber: "Ninja Dabber",
   "mr-shiddy": "MrShiddy3D",
   kodro: "DJ Kodro - 9 by Urbannoki",
