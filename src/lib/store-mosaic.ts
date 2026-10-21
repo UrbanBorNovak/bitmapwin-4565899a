@@ -8,7 +8,7 @@ export const OCI_CACHE_MODULE_ID = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d83
 export const LIVE_OCI_MODULE_ID = "0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0";
 /** bop's on-chain block parser that LiveOCI itself imports. */
 export const BLOCK_PARSER_MODULE_ID = "bbbb2172ebca174579884df1ad7487196c39e860b3aacdf4e052a33bf5ec31fai0";
-/** Blocks searched past the height before a claim counts as not found (browser budget). */
+/** Blocks scanned per resumable chunk; progress is saved after each chunk. */
 export const LIVE_SPAN = 12;
 
 /** Expects globals: MZ = { base, cache, live, parser, span, cacheLast }. Defines window.BM.{draw,oci}. */
