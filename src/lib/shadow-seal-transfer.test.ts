@@ -837,6 +837,9 @@ describe("randomized cross-tab interleavings with crashes and storage failures a
 
   it("200 random runs keep every invariant", async () => {
     globalThis.localStorage = store;
+    let withTransfer = 0, without = 0, faults = 0;
+    const realSet = store.setItem.bind(store);
+    store.setItem = (k: string, v: string) => { try { realSet(k, v); } catch (e) { faults++; throw e; } };
     for (let seed = 1; seed <= 200; seed++) {
       rnd = mulberry(seed); mem.clear(); lk.clear(); crashed = false; failP = 0;
       sealStore.setHeld(bundle);
@@ -889,8 +892,13 @@ describe("randomized cross-tab interleavings with crashes and storage failures a
         expect(spy).not.toHaveBeenCalled();
       }
       expect(walletCalls.every((c) => !c.afterPending)).toBe(true);
+      if (firstPending != null) withTransfer++; else without++;
       expect(mem.get(IK) === undefined || Array.isArray(JSON.parse(mem.get(IK)!))).toBe(true);
     }
+    expect(withTransfer).toBeGreaterThan(20);
+    expect(without).toBeGreaterThan(5);
+    expect(faults).toBeGreaterThan(50);
+    console.log({ withTransfer, without, faults });
     globalThis.localStorage = real;
   }, 60_000);
 });
