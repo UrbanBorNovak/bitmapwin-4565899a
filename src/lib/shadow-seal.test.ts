@@ -6,7 +6,7 @@ import {
 
 const T = (c: string) => c.repeat(64);
 /** Pretend Bitcoin: who spent which output, and each tx's outputs + block. */
-function fakeChain(tip: number, spends: Record<string, string>, txs: Record<string, { h?: number; scripts: string[] }>, down = false): ChainView {
+function fakeChain(tip: number, spends: Record<string, string>, txs: Record<string, { h?: number | undefined; scripts: string[] }>, down = false): ChainView {
   const st = (x?: { h?: number }): TxStatus => (x?.h ? { confirmed: true, block_height: x.h } : { confirmed: false });
   return {
     tip: async () => { if (down) throw new Error("UNREACHABLE"); return tip; },

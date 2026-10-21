@@ -28,7 +28,7 @@ export type HeldSealed = { c: Consignment; mine: Reveal };
 export const sealFee = (feeRate: number) => Math.ceil(Math.max(1, feeRate) * SEAL_SPEND_VBYTES);
 
 export function buildSealSpendPsbt(o: {
-  coin: Coin; address: string; tapInternalKeyHex?: string; commitment: string; feeRate: number;
+  coin: Coin; address: string; tapInternalKeyHex?: string | undefined; commitment: string; feeRate: number;
 }): { psbt: string; keepValue: number; fee: number } {
   const fee = sealFee(o.feeRate);
   const keepValue = o.coin.value - fee;
