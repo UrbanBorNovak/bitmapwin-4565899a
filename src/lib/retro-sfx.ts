@@ -32,7 +32,16 @@ export function playSfx(s: Sfx) {
 /** Smoky lounge loop: slow Rhodes-ish chords, warm sub bass, vinyl hiss. Faster and brighter while the jukebox plays. */
 let music: { stop: () => void; setHot: (on: boolean) => void } | null = null;
 export function isCafeMusicOn() { return music !== null; }
-export function startCafeMusic() {
+export type RoomMood = "cafe" | "museum" | "outpost";
+const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: OscillatorType; lp: number; lead: OscillatorType; hiss: number }> = {
+  cafe: { chords: [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2], [164.8, 207.7, 246.9, 329.6]], beat: 0.6, wave: "triangle", lp: 1100, lead: "square", hiss: 0.08 },
+  // Hushed gallery: suspended chords, long reverb tails, glassy chimes.
+  museum: { chords: [[196, 293.7, 392, 440], [174.6, 261.6, 349.2, 392], [220, 329.6, 440, 493.9], [164.8, 246.9, 329.6, 370]], beat: 0.85, wave: "sine", lp: 1800, lead: "triangle", hiss: 0.03 },
+  // Desert cook: low drone minor, gritty saw, dusty hiss.
+  outpost: { chords: [[110, 164.8, 220, 261.6], [103.8, 155.6, 207.7, 246.9], [98, 146.8, 196, 233.1], [110, 164.8, 220, 277.2]], beat: 0.7, wave: "sawtooth", lp: 700, lead: "triangle", hiss: 0.12 },
+};
+export function startCafeMusic(mood: RoomMood = "cafe") {
+  const M = MOODS[mood];
   const c = ac(); if (!c || music) return;
   const out = c.createGain(); out.gain.value = 0.0001; out.gain.exponentialRampToValueAtTime(0.5, c.currentTime + 2);
   const delay = c.createDelay(); delay.delayTime.value = 0.38; const fb = c.createGain(); fb.gain.value = 0.35;
@@ -40,22 +49,22 @@ export function startCafeMusic() {
   // vinyl hiss
   const buf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (Math.random() < 0.0008 ? 0.6 : 0.04);
-  const hiss = c.createBufferSource(); hiss.buffer = buf; hiss.loop = true; const hg = c.createGain(); hg.gain.value = 0.08;
+  const hiss = c.createBufferSource(); hiss.buffer = buf; hiss.loop = true; const hg = c.createGain(); hg.gain.value = M.hiss;
   hiss.connect(hg).connect(out); hiss.start();
-  const chords = [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2], [164.8, 207.7, 246.9, 329.6]];
+  const chords = M.chords;
   let hot = false, bar = 0;
   const note = (f: number, t: number, dur: number, type: OscillatorType, vol: number, wet: boolean) => {
     const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
-    lp.type = "lowpass"; lp.frequency.value = hot ? 2600 : 1100;
+    lp.type = "lowpass"; lp.frequency.value = hot ? 2600 : M.lp;
     o.type = type; o.frequency.value = f;
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(lp).connect(g); g.connect(out); if (wet) g.connect(delay); o.start(t); o.stop(t + dur + 0.05);
   };
   const tick = () => {
-    const t = c.currentTime + 0.05, beat = hot ? 0.32 : 0.6, ch = chords[bar % 4]!;
-    ch.forEach((f) => note(f, t, beat * 3.6, "triangle", 0.035, true));
+    const t = c.currentTime + 0.05, beat = hot ? 0.32 : M.beat, ch = chords[bar % 4]!;
+    ch.forEach((f) => note(f, t, beat * 3.6, M.wave, M.wave === "sawtooth" ? 0.012 : 0.035, true));
     note(ch[0]! / 2, t, beat * 1.8, "sine", 0.12, false); note(ch[0]! / 2, t + beat * 2, beat * 1.6, "sine", 0.09, false);
-    for (let i = 0; i < 4; i++) if (hot || Math.random() < 0.5) note(ch[Math.floor(Math.random() * 4)]! * 2, t + i * beat + (Math.random() < 0.5 ? beat / 2 : 0), beat * 0.9, "square", 0.012, true);
+    for (let i = 0; i < 4; i++) if (hot || Math.random() < 0.5) note(ch[Math.floor(Math.random() * 4)]! * 2, t + i * beat + (Math.random() < 0.5 ? beat / 2 : 0), beat * 0.9, M.lead, 0.012, true);
     if (hot) for (let i = 0; i < 4; i++) note(60, t + i * beat, 0.15, "sine", 0.15, false);
     bar++; timer = window.setTimeout(tick, beat * 4 * 1000);
   };

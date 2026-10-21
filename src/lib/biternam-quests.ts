@@ -97,7 +97,7 @@ export const QUEST_NPCS: QuestNpc[] = ([
     ] },
   },
   {
-    id: "curator", name: "MUSEUM CURATOR", landmarkId: "bit-museum", voice: 210,
+    id: "curator", name: "ASTRAL · CURATOR", landmarkId: "bit-museum", voice: 210,
     persona: "The prim, precise curator of the Bit Museum. Only accepts chain-proven history and politely corrects myths.",
     script: { id: "npc-curator", title: "BIT MUSEUM · ARCHIVE DESK", start: "a", nodes: [
       { id: "a", speaker: "MUSEUM CURATOR", mood: "smug", text: "Welcome. Every exhibit here is a block you can check yourself. Rumours stay outside.", choices: [
@@ -372,6 +372,7 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   jahbooble: "788458663e02868ee6160eea95e61129c480764c78e72103ec453422286c2873i0", // Goose Avatar
   sunset: "e2e5708c647b3eed9ff4efca71769458a00837dda1a130976a9d6b6a5e28aa26i0", // Green Eyed King
   bitoshi: "7b32e098b565c79f217ce2dac18d8e621add81ce3c5fbae1e221c4a0f0679705i0", // Thanos
+  curator: "67d87f13c5636287189129463b1741320fdbf3e9963efe22baab5807eb522560i0", // Astral
   "space-monnkey": "0d12b9eb94bb4ad7c0a06803c1d9e1fe59a945f718bb3e296f554d0271f12f27i0", // Monkey King Pin Army
 };
 
