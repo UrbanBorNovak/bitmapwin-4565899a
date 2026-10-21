@@ -229,18 +229,25 @@ export function SiteHeader() {
           <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => (
             <div
               key={group.id}
               className="relative"
-              onMouseEnter={() => setOpenGroup(group.id)}
-              onMouseLeave={() => setOpenGroup((v) => (v === group.id ? null : v))}
+              onMouseEnter={() => {
+                cancelScheduledClose();
+                setOpenGroup(group.id);
+              }}
+              onMouseLeave={scheduleClose}
             >
               <button
                 type="button"
                 aria-expanded={openGroup === group.id}
-                onClick={() => setOpenGroup(group.id)}
+                // Hover already opens the menu; clicking the label must pin it open, never toggle it closed.
+                onClick={() => {
+                  cancelScheduledClose();
+                  setOpenGroup(group.id);
+                }}
               className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
