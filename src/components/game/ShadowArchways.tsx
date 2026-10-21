@@ -58,7 +58,7 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
     return () => window.clearInterval(id);
   }, []);
   useFrame(({ clock }) => {
-    const hp = harnessPose();
+    const hp = import.meta.env.DEV ? harnessPose() : null;
     const p = hp ?? pose.current;
     const node = ref.current;
     if (!node) return;
