@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { ARTISTS, PIXELS, STARRED_SERIES, filterPixels, starsOf } from "@/lib/bitmap-pixels-catalog";
 import { BITERNAM_CREW, CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
 import { PixelFace } from "@/components/game/PixelFace";
+import { PixelAvatar3D } from "@/components/biternam/PixelAvatar3D";
 
 export const Route = createFileRoute("/biternam_/pixels")({
   head: () => {
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/biternam_/pixels")({
   component: PixelsMarket,
 });
 
-const PAGE = 24;
+const PAGE = 12; // each card is a live 3D view; browsers cap WebGL contexts (~16)
 const nameOf = (id: string) => BITERNAM_CREW.find((c) => c.id === id)?.name ?? id.toUpperCase();
 
 function PixelsMarket() {
@@ -67,7 +68,7 @@ function PixelsMarket() {
           const stars = starsOf(p.artist);
           return (
             <article key={p.id} className="glass-panel overflow-hidden rounded border border-border">
-              <iframe title={p.name} src={`https://ordinals.com/preview/${p.id}`} loading="lazy" sandbox="allow-scripts" className="pointer-events-none aspect-square w-full bg-background" />
+              <PixelAvatar3D inscriptionId={p.id} label={p.name} />
               <div className="p-2 font-mono text-[10px]">
                 <div className="text-muted-foreground">#{p.number}</div>
                 <div className="truncate text-xs">{p.name}</div>
