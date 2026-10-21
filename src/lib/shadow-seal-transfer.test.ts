@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { BroadcastUnknown, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -134,5 +134,59 @@ describe("only the anchoring coin, with the whole bundle", () => {
   });
   it("refuses giving a note that is not on this coin", async () => {
     await expect(prepareTransfer({ bundle, allHeld: bundle, give: { ["x".repeat(64)]: bob }, coin, address, feeRate: 4, sign: mockWallet })).rejects.toThrow(/NOT ON THIS COIN/);
+  });
+});
+
+describe("unresolved transfers survive reloads and only resolve on both chain facts", () => {
+  const mem = new Map<string, string>();
+  globalThis.localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) } as unknown as Storage;
+
+  const make = async () => {
+    const r = await prepareTransfer({ bundle, allHeld: bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: mockWallet });
+    const p: PendingTransfer = { txid: r.txid, rawHex: r.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, sent: r.sent, at: "t", unknown: true };
+    return { r, p };
+  };
+
+  it("a pending transfer, with its given and kept notes, is still there after a 'reload'", async () => {
+    mem.clear();
+    const { r, p } = await make();
+    pendingStore.put(p);
+    sealStore.setHeld(r.kept); sealStore.setUndo({ [r.txid]: bundle });
+    // simulate reload: read everything back from storage only
+    const [back] = pendingStore.all();
+    expect(back!.txid).toBe(r.txid);
+    expect(back!.unknown).toBe(true);
+    expect(back!.sent.map((s) => s.label)).toEqual(["Pass"]);
+    expect(sealStore.held().map((h) => h.c.note.label)).toEqual(["Key", "Map"]);
+    expect(sealStore.undo()[r.txid]!.map((h) => h.c.note.label)).toEqual(["Key", "Pass", "Map"]);
+  });
+
+  const cases: [string, Parameters<typeof resolvePending>[1], Resolution][] = [
+    ["seen + anchor spent by it → SENT", { txSeen: async () => "seen", outspend: async () => ({ spent: true, txid: "SELF" }) }, "SENT"],
+    ["absent + anchor unspent → SAFE_TO_CANCEL", { txSeen: async () => "absent", outspend: async () => ({ spent: false }) }, "SAFE_TO_CANCEL"],
+    ["anchor spent by another tx → CONFLICT", { txSeen: async () => "absent", outspend: async () => ({ spent: true, txid: "f".repeat(64) }) }, "CONFLICT"],
+    ["txid lookup unavailable → UNRESOLVED", { txSeen: async () => "unknown", outspend: async () => ({ spent: false }) }, "UNRESOLVED"],
+    ["anchor lookup fails → UNRESOLVED", { txSeen: async () => "absent", outspend: async () => { throw new Error("down"); } }, "UNRESOLVED"],
+    ["seen but anchor unspent (contradiction) → UNRESOLVED", { txSeen: async () => "seen", outspend: async () => ({ spent: false }) }, "UNRESOLVED"],
+    ["absent but anchor spent by it (contradiction) → UNRESOLVED", { txSeen: async () => "absent", outspend: async () => ({ spent: true, txid: "SELF" }) }, "UNRESOLVED"],
+  ];
+  for (const [name, deps, want] of cases) {
+    it(name, async () => {
+      const { p } = await make();
+      const fix = { ...deps, outspend: async (o: { txid: string; vout: number }) => {
+        expect(o).toEqual(p.anchor);
+        const v = await deps.outspend(o);
+        return v.txid === "SELF" ? { ...v, txid: p.txid } : v;
+      } };
+      expect(await resolvePending(p, fix)).toBe(want);
+    });
+  }
+
+  it("dropping a resolved transfer removes only that one", async () => {
+    mem.clear();
+    const { p } = await make();
+    pendingStore.put(p); pendingStore.put({ ...p, txid: "9".repeat(64) });
+    pendingStore.drop(p.txid);
+    expect(pendingStore.all().map((x) => x.txid)).toEqual(["9".repeat(64)]);
   });
 });

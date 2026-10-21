@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  BroadcastUnknown, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
+  BroadcastUnknown, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -93,20 +93,30 @@ export function SealedVault() {
     setGive(g); setReview(quickCoin);
   });
   const [unknown, setUnknown] = useState(false);
+  // Restore any signed-but-unresolved transfer after a reload or wallet reconnect.
+  useEffect(() => {
+    const p = pendingStore.all().at(-1);
+    if (p) { setSigned({ txid: p.txid, rawHex: p.rawHex, sent: p.sent }); setUnknown(!!p.unknown); }
+  }, [address]);
   const broadcast = () => run(async () => {
     if (!signed) return;
     if (unknown) {
-      // A previous attempt had no reply: look the txid up before ever re-sending.
-      const seen = await txSeenOnChain(signed.txid);
-      if (seen === "seen") { setSentTx(signed.txid); setUnknown(false); setMsg("✓ IT DID REACH BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); return; }
-      if (seen === "unknown") throw new Error("STILL CAN'T REACH BITCOIN — OUTCOME UNKNOWN, NOTES KEPT AS THEY ARE");
+      // A previous attempt had no reply: check the exact txid AND the anchor coin before ever re-sending.
+      const r = await resolve(signed.txid);
+      if (r === "SENT") { settleSent(signed.txid); setMsg("✓ IT DID REACH BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); return; }
+      if (r === "CONFLICT") throw new Error("THE ANCHOR COIN WAS SPENT BY A DIFFERENT TRANSACTION — NOT RESENT, NOTES KEPT FOR REVIEW");
+      if (r === "UNRESOLVED") throw new Error("STILL UNRESOLVED — NOT RESENT, NOTES KEPT AS THEY ARE");
     }
     if (!window.confirm("Send this signed transaction to Bitcoin now? This can't be undone.")) return;
     try {
       const t = await broadcastTx(signed.rawHex, signed.txid);
-      setUnknown(false); setSentTx(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+      settleSent(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
     } catch (e) {
-      if (e instanceof BroadcastUnknown) setUnknown(true);
+      if (e instanceof BroadcastUnknown) {
+        setUnknown(true);
+        const p = pendingStore.all().find((x) => x.txid === signed.txid);
+        if (p) pendingStore.put({ ...p, unknown: true });
+      }
       throw e;
     }
   });
@@ -141,6 +151,7 @@ export function SealedVault() {
 
   const prepare = (k: string) => run(async () => {
     if (!wallet) throw new Error("CONNECT YOUR WALLET FIRST");
+    if (pendingStore.all().length) throw new Error("RESOLVE YOUR UNFINISHED TRANSFER FIRST — PRESS CHECK ON BITCOIN");
     const bundle = groups[k]!;
     const coin = coinOf(k);
     if (!coin) throw new Error("THIS SEAL COIN IS NOT IN YOUR WALLET ANY MORE");
@@ -150,21 +161,28 @@ export function SealedVault() {
       bundle, allHeld: held, give: pick, coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), feeRate,
       sign: (p) => signPsbtBase64(wallet.provider, p),
     });
+    // Persist first so a reload / wallet reconnect can never lose the given or kept notes.
     sealStore.setUndo({ ...sealStore.undo(), [out.txid]: bundle });
+    pendingStore.put({ txid: out.txid, rawHex: out.rawHex, anchor: { txid: coin.txid, vout: coin.vout }, sent, at: new Date().toISOString() });
     sealStore.setSent([...sealStore.sent(), ...sent.map((s) => ({ ...s, at: new Date().toISOString() }))]);
     const next = [...held.filter((h) => sealKey(h.mine) !== k), ...kept];
-    store(next); setReview(null); setGive({}); setSigned({ ...out, sent }); void check(next);
+    store(next); setReview(null); setGive({}); setSentTx(null); setUnknown(false); setSigned({ txid: out.txid, rawHex: out.rawHex, sent }); void check(next);
   });
+  const resolve = (txid: string) => {
+    const p = pendingStore.all().find((x) => x.txid === txid);
+    if (!p) return Promise.resolve<Resolution>("UNRESOLVED");
+    return resolvePending(p, { txSeen: (t) => txSeenOnChain(t), outspend: (o) => mempoolChain().outspend(o) });
+  };
+  const settleSent = (txid: string) => { pendingStore.drop(txid); setSentTx(txid); setUnknown(false); };
   const cancel = (txid: string) => run(async () => {
     const before = sealStore.undo()[txid];
     if (!before) return;
-    const seen = await txSeenOnChain(txid);
-    if (seen === "seen") { setSentTx(txid); setUnknown(false); throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED"); }
-    if (seen === "unknown") throw new Error("COULDN'T CHECK BITCOIN — NOT CANCELLED, TRY AGAIN SHORTLY");
-    const os = await mempoolChain().outspend(before[0]!.mine);
-    if (os.spent) throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED HERE");
-    setUnknown(false);
+    const r = await resolve(txid);
+    if (r === "SENT") { settleSent(txid); throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED"); }
+    if (r === "CONFLICT") throw new Error("THE ANCHOR COIN WAS SPENT BY A DIFFERENT TRANSACTION — NOT CANCELLED, NOTES KEPT FOR REVIEW");
+    if (r === "UNRESOLVED") throw new Error("COULDN'T CONFIRM IT'S SAFE — NOT CANCELLED, TRY AGAIN SHORTLY");
     const next = [...held.filter((h) => h.mine.txid !== txid), ...before];
+    pendingStore.drop(txid); setUnknown(false);
     store(next); setSigned(null); setMsg("PREPARED SPEND CANCELLED — NOTES ARE BACK ON THEIR COIN"); void check(next);
   });
 
