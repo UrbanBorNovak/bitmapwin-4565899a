@@ -486,6 +486,12 @@ function Marketplace() {
         <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
       </div>
 
+      <nav aria-label="BITMAP collections" className="mt-4 flex flex-wrap items-center gap-2 border border-border bg-card/60 p-2 backdrop-blur">
+        <span className="label px-2 text-muted-foreground">BITMAP COLLECTIONS</span>
+        {([["/collections", "LAND & CLUBS"], ["/collections/guardians", "GUARDIANS"], ["/collections/emporium", "EMPORIUM"], ["/collections/free-ross", "FREE ROSS"], ["/collections/pixels", "PIXELS"], ["/collections/jigglypuff", "JIGGLYPUFF"]] as const).map(([to, l]) => (
+          <Link key={to} to={to} className="border border-border px-2 py-1 font-mono text-[11px] hover:border-bitcoin hover:text-bitcoin">{l}</Link>
+        ))}
+      </nav>
       <div className="mt-4">
         <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>

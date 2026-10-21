@@ -109,8 +109,11 @@ import { Route as CodexBestiaryRouteImport } from './routes/codex.bestiary'
 import { Route as CodexMorphsRouteImport } from './routes/codex.morphs'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
+import { Route as CollectionsEmporiumRouteImport } from './routes/collections.emporium'
+import { Route as CollectionsFreeRossRouteImport } from './routes/collections.free-ross'
 import { Route as CollectionsGuardiansRouteImport } from './routes/collections.guardians'
 import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.jigglypuff'
+import { Route as CollectionsPixelsRouteImport } from './routes/collections.pixels'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as EmbedOasisRouteImport } from './routes/embed.oasis'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
@@ -662,6 +665,16 @@ const CollectionsClubRoute = CollectionsClubRouteImport.update({
   path: '/$club',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const CollectionsEmporiumRoute = CollectionsEmporiumRouteImport.update({
+  id: '/emporium',
+  path: '/emporium',
+  getParentRoute: () => CollectionsRoute,
+} as any)
+const CollectionsFreeRossRoute = CollectionsFreeRossRouteImport.update({
+  id: '/free-ross',
+  path: '/free-ross',
+  getParentRoute: () => CollectionsRoute,
+} as any)
 const CollectionsGuardiansRoute = CollectionsGuardiansRouteImport.update({
   id: '/guardians',
   path: '/guardians',
@@ -670,6 +683,11 @@ const CollectionsGuardiansRoute = CollectionsGuardiansRouteImport.update({
 const CollectionsJigglypuffRoute = CollectionsJigglypuffRouteImport.update({
   id: '/jigglypuff',
   path: '/jigglypuff',
+  getParentRoute: () => CollectionsRoute,
+} as any)
+const CollectionsPixelsRoute = CollectionsPixelsRouteImport.update({
+  id: '/pixels',
+  path: '/pixels',
   getParentRoute: () => CollectionsRoute,
 } as any)
 const DistrictSlugRoute = DistrictSlugRouteImport.update({
@@ -1020,8 +1038,11 @@ export interface FileRoutesByFullPath {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/emporium': typeof CollectionsEmporiumRoute
+  '/collections/free-ross': typeof CollectionsFreeRossRoute
   '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
+  '/collections/pixels': typeof CollectionsPixelsRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -1169,8 +1190,11 @@ export interface FileRoutesByTo {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/emporium': typeof CollectionsEmporiumRoute
+  '/collections/free-ross': typeof CollectionsFreeRossRoute
   '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
+  '/collections/pixels': typeof CollectionsPixelsRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -1323,8 +1347,11 @@ export interface FileRoutesById {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/emporium': typeof CollectionsEmporiumRoute
+  '/collections/free-ross': typeof CollectionsFreeRossRoute
   '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
+  '/collections/pixels': typeof CollectionsPixelsRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -1478,8 +1505,11 @@ export interface FileRouteTypes {
     | '/codex/bestiary'
     | '/codex/morphs'
     | '/collections/$club'
+    | '/collections/emporium'
+    | '/collections/free-ross'
     | '/collections/guardians'
     | '/collections/jigglypuff'
+    | '/collections/pixels'
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
@@ -1627,8 +1657,11 @@ export interface FileRouteTypes {
     | '/codex/bestiary'
     | '/codex/morphs'
     | '/collections/$club'
+    | '/collections/emporium'
+    | '/collections/free-ross'
     | '/collections/guardians'
     | '/collections/jigglypuff'
+    | '/collections/pixels'
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
@@ -1780,8 +1813,11 @@ export interface FileRouteTypes {
     | '/codex/bestiary'
     | '/codex/morphs'
     | '/collections/$club'
+    | '/collections/emporium'
+    | '/collections/free-ross'
     | '/collections/guardians'
     | '/collections/jigglypuff'
+    | '/collections/pixels'
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
@@ -2650,6 +2686,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsClubRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/collections/emporium': {
+      id: '/collections/emporium'
+      path: '/emporium'
+      fullPath: '/collections/emporium'
+      preLoaderRoute: typeof CollectionsEmporiumRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
+    '/collections/free-ross': {
+      id: '/collections/free-ross'
+      path: '/free-ross'
+      fullPath: '/collections/free-ross'
+      preLoaderRoute: typeof CollectionsFreeRossRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
     '/collections/guardians': {
       id: '/collections/guardians'
       path: '/guardians'
@@ -2662,6 +2712,13 @@ declare module '@tanstack/react-router' {
       path: '/jigglypuff'
       fullPath: '/collections/jigglypuff'
       preLoaderRoute: typeof CollectionsJigglypuffRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
+    '/collections/pixels': {
+      id: '/collections/pixels'
+      path: '/pixels'
+      fullPath: '/collections/pixels'
+      preLoaderRoute: typeof CollectionsPixelsRouteImport
       parentRoute: typeof CollectionsRoute
     }
     '/district/$slug': {
@@ -3061,16 +3118,22 @@ const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
+  CollectionsEmporiumRoute: typeof CollectionsEmporiumRoute
+  CollectionsFreeRossRoute: typeof CollectionsFreeRossRoute
   CollectionsGuardiansRoute: typeof CollectionsGuardiansRoute
   CollectionsJigglypuffRoute: typeof CollectionsJigglypuffRoute
+  CollectionsPixelsRoute: typeof CollectionsPixelsRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
   CollectionsGuardiansHeightRoute: typeof CollectionsGuardiansHeightRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsClubRoute: CollectionsClubRoute,
+  CollectionsEmporiumRoute: CollectionsEmporiumRoute,
+  CollectionsFreeRossRoute: CollectionsFreeRossRoute,
   CollectionsGuardiansRoute: CollectionsGuardiansRoute,
   CollectionsJigglypuffRoute: CollectionsJigglypuffRoute,
+  CollectionsPixelsRoute: CollectionsPixelsRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
   CollectionsGuardiansHeightRoute: CollectionsGuardiansHeightRoute,
 }

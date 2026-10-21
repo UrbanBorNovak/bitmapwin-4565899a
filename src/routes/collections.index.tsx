@@ -45,6 +45,21 @@ function CollectionsIndex() {
       </p>
 
       <div className="mt-8"><OtherthingsHierarchy /></div>
+      <h2 className="display mt-10 text-2xl">COLLECTIONS UNDER BITMAP</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {([
+          ["/collections/guardians", "BLOCK-DNA GUARDIANS", "ON-CHAIN CREATURES OF EACH BITMAP"],
+          ["/collections/emporium", "BITMAP EMPORIUM", "CHILDREN OF 717328.BITMAP"],
+          ["/collections/free-ross", "FREE ROSS", "ON-CHAIN CHILDREN POOL"],
+          ["/collections/pixels", "BITMAP PIXELS", "4,320 AVATARS · LIVE 3D"],
+          ["/collections/jigglypuff", "JIGGLYPUFF", "218 INSCRIPTIONS · MEMBER STATUS"],
+        ] as const).map(([to, name, sub]) => (
+          <Link key={to} to={to} className="border border-border bg-card/60 p-4 backdrop-blur hover:border-primary">
+            <div className="display text-lg">{name}</div>
+            <div className="label mt-1 text-muted-foreground">{sub} · TRADE →</div>
+          </Link>
+        ))}
+      </div>
       <Link
         to="/collections/jigglypuff"
         className="mt-8 flex items-baseline justify-between border border-border bg-card/60 p-4 backdrop-blur hover:border-primary"
