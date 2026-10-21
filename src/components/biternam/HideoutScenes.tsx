@@ -209,8 +209,8 @@ function VaultGhost({ calm }: { calm: boolean }) {
   const arms = useRef<Group>(null);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    if (g.current) { g.current.position.y = 0.25 + Math.sin(t * 1.4) * 0.1; g.current.visible = calm || Math.sin(t * 13) > -0.9; }
-    if (arms.current) arms.current.rotation.z = Math.sin(t * 2) * 0.15;
+    if (g.current) { g.current.position.y = 0.25 + Math.sin(t * 0.9) * 0.08; g.current.rotation.y = Math.sin(t * 0.35) * 0.08; }
+    if (arms.current) arms.current.rotation.z = Math.sin(t * 1.1) * 0.1;
   });
   const glow = calm ? "#ffe6b0" : "#9fe6ff";
   const em = calm ? TRIM : NEON;
