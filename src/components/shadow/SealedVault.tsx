@@ -45,6 +45,9 @@ export function SealedVault() {
   const [signed, setSigned] = useState<{ txid: string; rawHex: string; sent: { label: string; code: string }[] } | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"send" | "receive">("send");
+  const [frozen, setFrozen] = useState(false);
+  const [backedUp, setBackedUp] = useState(false);
   const address = wallet?.ordinalsAddress ?? "";
 
   const store = (v: HeldSealed[]) => { sealStore.setHeld(v); setHeld(v); };
@@ -244,7 +247,9 @@ export function SealedVault() {
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span>FEE RATE</span><input type="number" min={1} value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} className="w-16 rounded border border-border bg-background px-1" aria-label="Fee rate" /><span>sat/vB · fee {sealFee(feeRate).toLocaleString()} sats</span>
               </div>
-              <button disabled={busy} onClick={() => prepare(k)} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1.5 text-primary">{busy ? "WORKING…" : "[ PREPARE & SIGN IN WALLET ]"}</button>
+              <label className="mt-2 flex items-center gap-2 font-sans"><input type="checkbox" checked={frozen} onChange={(e) => setFrozen(e.target.checked)} />I understand this coin must never be spent anywhere else (freeze it in my wallet).</label>
+              <label className="mt-1 flex items-center gap-2 font-sans"><input type="checkbox" checked={backedUp} onChange={(e) => setBackedUp(e.target.checked)} />I downloaded a backup of my notes.</label>
+              <button disabled={busy || !frozen || !backedUp} onClick={() => prepare(k)} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1.5 text-primary disabled:opacity-40">{busy ? "WORKING…" : "[ PREPARE & SIGN IN WALLET ]"}</button>
             </div>
           ) : null}
         </div>
