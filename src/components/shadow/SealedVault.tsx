@@ -68,11 +68,41 @@ export function SealedVault() {
   const coinOf = (k: string) => coins?.find((c) => sealKey(c) === k);
 
   async function pickCoin(): Promise<Coin> {
-    const c = coins?.find((x) => sealKey(x) === coinPick);
-    if (!c) throw new Error("PICK ONE OF YOUR COINS FIRST");
-    await assertPlainCoin(c);
-    return c;
+    const chosen = coins?.find((x) => sealKey(x) === coinPick);
+    if (chosen) { await assertPlainCoin(chosen); return chosen; }
+    // Auto-pick: smallest confirmed coin that can pay a seal fee, skipping any with inscriptions/runes.
+    const cands = (coins ?? []).filter((c) => c.confirmed && c.value >= sealFee(feeRate) + DUST + 1000).sort((a, b) => a.value - b.value);
+    for (const c of cands) {
+      try { await assertPlainCoin(c); setCoinPick(sealKey(c)); return c; } catch { /* not plain — try next */ }
+    }
+    throw new Error("NO PLAIN COIN FOUND — ADD A SMALL PLAIN BITCOIN COIN (5,000+ SATS) TO YOUR WALLET");
   }
+  useEffect(() => {
+    fetch("https://mempool.space/api/v1/fees/recommended").then((r) => r.json()).then((f: { halfHourFee?: number }) => { if (f.halfHourFee) setFeeRate(Math.max(1, Math.ceil(f.halfHourFee))); }).catch(() => {});
+  }, []);
+  const [quickTo, setQuickTo] = useState("");
+  const [quickPick, setQuickPick] = useState<Record<string, boolean>>({});
+  const [sentTx, setSentTx] = useState<string | null>(null);
+  const quickCoin = useMemo(() => {
+    const keys = new Set(held.filter((h) => quickPick[noteKey(h.c.note.genesis)]).map((h) => sealKey(h.mine)));
+    return keys.size === 1 ? [...keys][0]! : keys.size > 1 ? "MANY" : null;
+  }, [held, quickPick]);
+  const quickSend = () => run(async () => {
+    if (!parseSealReceive(quickTo)) throw new Error("PASTE THE RECIPIENT'S SEAL-RECV CODE");
+    if (!quickCoin) throw new Error("TICK AT LEAST ONE NOTE");
+    if (quickCoin === "MANY") throw new Error("PICK NOTES FROM ONE SEAL COIN AT A TIME");
+    const g: Record<string, string> = {};
+    for (const h of groups[quickCoin]!) { const n = noteKey(h.c.note.genesis); if (quickPick[n]) g[n] = quickTo.trim(); }
+    setGive(g); setReview(quickCoin);
+  });
+  const broadcast = () => run(async () => {
+    if (!signed) return;
+    if (!window.confirm("Send this signed transaction to Bitcoin now? This can't be undone.")) return;
+    const r = await fetch("https://mempool.space/api/tx", { method: "POST", body: signed.rawHex });
+    const t = await r.text();
+    if (!r.ok) throw new Error(`BITCOIN REJECTED IT: ${t.slice(0, 120)}`);
+    setSentTx(t.trim()); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+  });
   async function run(f: () => Promise<void>) { setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
   const mint = () => run(async () => {
