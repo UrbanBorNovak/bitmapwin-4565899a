@@ -88,6 +88,9 @@ async function traceAndStore(picked: Array<{ id: string; collection: string }>) 
     source: ourTx.has(x.txid) ? "BITMAPWIN" : "OTHER MARKETPLACE",
   })));
   if (rows.length) await db.from("collection_trades").upsert(rows, { onConflict: "txid" });
+  // Hops re-traced under current rules that no longer qualify drop any stale stored row.
+  const stale = results.flatMap(({ t }) => (t ?? []).filter((x) => x.priceSats < MIN_SALE_SATS).map((x) => x.txid));
+  if (stale.length) await db.from("collection_trades").delete().in("txid", stale);
   await db.from("collection_trace_state").upsert(
     results.map(({ id, collection, t }) => ({ inscription_id: id, collection, last_traced_at: new Date().toISOString(), verified: !!t })),
     { onConflict: "inscription_id" },
