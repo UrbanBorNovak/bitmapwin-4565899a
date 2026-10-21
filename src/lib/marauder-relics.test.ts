@@ -16,7 +16,7 @@ describe("marauder relics", () => {
     expect(verifyRelic({ ...m, h: 1139 }).ok).toBe(false);
     expect(verifyRelic({ ...m, p: "OTHER" }).ok).toBe(false);
   });
-  it("has the seven relic kinds", () => { expect(RELIC_KINDS.length).toBe(7); });
+  it("has the eleven relic kinds", () => { expect(RELIC_KINDS.length).toBe(11); });
   it("refuses heights past the chain tip", () => {
     expect(withinTip(900000, 900000)).toBe(true);
     expect(withinTip(900001, 900000)).toBe(false);
