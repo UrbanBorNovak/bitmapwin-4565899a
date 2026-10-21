@@ -411,15 +411,16 @@ describe("stale signatures after an interrupted signing is cleared", () => {
     expect(pendingStore.all()).toHaveLength(0);
     expect(labels()).toEqual(["Key", "Map", "Pass"]);
   });
-  it("two attempts racing with no lock: only the newest may file", async () => {
+  it("two attempts racing with no lock: the second is refused before its wallet opens, the first files", async () => {
     reset();
-    const a = slow(), b = slow();
+    const a = slow();
     const pa = go(a.sign); await tick();
-    const pb = go(b.sign, { [k(0)]: bob }); await tick(); // b overwrote a's intent
-    a.release(); b.release();
-    await expect(pa).rejects.toThrow(/STALE/);
-    const rb = await pb;
-    expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([rb.txid]);
-    expect([...labels(), ...rb.sent.map((x) => x.label)].sort()).toEqual(["Key", "Map", "Pass"]);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy, { [k(0)]: bob })).rejects.toThrow(/INTERRUPTED/);
+    expect(spy).not.toHaveBeenCalled();
+    a.release();
+    const ra = await pa;
+    expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([ra.txid]);
+    expect([...labels(), ...ra.sent.map((x) => x.label)].sort()).toEqual(["Key", "Map", "Pass"]);
   });
 });
