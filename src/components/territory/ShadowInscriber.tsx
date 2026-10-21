@@ -280,15 +280,11 @@ export function ShadowInscriber(props: {
             `MINT STOPPED — SUMMON THE ${props.claimParentsForHeight}.BITMAP GUARDIAN FIRST. NOTHING WAS PAID.`,
           );
         }
-        if (!res.bitmapParentId) {
-          throw new Error(
-            props.parcelIndex !== undefined
-              ? `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD PARCEL #${props.parcelIndex} OF ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`
-              : `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`,
-          );
-        }
-        if (!res.masterInscriptionId) {
-          throw new Error("MINT STOPPED — THE COLLECTION PARENT IS UNAVAILABLE RIGHT NOW. NOTHING WAS PAID.");
+        // Fail closed before any payment or signature: both parents must be resolved and included.
+        const guard = checkMintParents(res);
+        if (!guard.ok) {
+          setParentNotes([...guard.missing.map((m) => (m === "BITMAP" ? `MISSING: ${props.parcelIndex !== undefined ? `PARCEL #${props.parcelIndex} OF ` : ""}${props.claimParentsForHeight}.BITMAP PARENT` : "MISSING: VERIFIED COLLECTION PARENT")), ...res.notes]);
+          throw new Error(guard.message);
         }
         parents = res.parents;
         if (props.reinscribeOnBitmap) {
