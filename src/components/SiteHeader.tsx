@@ -15,10 +15,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { startGuidedTour } from "@/components/GuidedTour";
 
 type NavItem = { to: string; label: string; note?: string };
-type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
+type NavSection = { title: string; items: NavItem[] };
+type NavGroup = { id: string; label: string; note: string; sections: NavSection[] };
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  play: Globe, trade: MapIcon, guardians: Shield, create: Hammer, discover: Compass, account: User,
+  explore: Compass, create: Hammer, account: User,
 };
 const ITEM_ICONS: Record<string, LucideIcon> = {
   "/play": Layers, "/play/extenders": Sparkles, "/oasis": Globe, "/command": Swords, "/stream": Radio,
@@ -45,89 +46,109 @@ function GroupIcon({ id }: { id: string }) {
   return <I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />;
 }
 
-// Organised by the five pillars, then developers. Each page appears once,
-// in the order a visitor would naturally use it.
+// Three menus — explore, create, account — each split into labelled sections.
+// Every page appears exactly once.
 const NAV_GROUPS: NavGroup[] = [
   {
-    id: "play",
-    label: "WORLD",
-    note: "Enter the Oasis and everything you do inside it",
-    items: [
-      { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
-      { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
-      { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
-      { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests in the Oasis" },
-      { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
-      { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
-      { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },
-      { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
-    ],
-  },
-  {
-    id: "trade",
-    label: "LAND",
-    note: "BITMAPs: buy, rent, verify and research",
-    items: [
-      { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
-      { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
-      { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
-      { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Check who holds a BITMAP on-chain" },
-      { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
-      { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
-      { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
-    ],
-  },
-  {
-    id: "guardians",
-    label: "GUARDIANS",
-    note: "Mint, command and grow your Guardians",
-    items: [
-      { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
-      { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helper agents" },
-      { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
-      { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians and inscribe their pet" },
-      { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
+    id: "explore",
+    label: "EXPLORE",
+    note: "The world, the land, the Guardians and the community",
+    sections: [
+      {
+        title: "WORLD",
+        items: [
+          { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
+          { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
+          { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
+          { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests" },
+          { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
+          { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
+        ],
+      },
+      {
+        title: "LAND & MARKET",
+        items: [
+          { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
+          { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
+          { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
+          { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Who holds a BITMAP on-chain" },
+          { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
+          { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
+          { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
+        ],
+      },
+      {
+        title: "GUARDIANS",
+        items: [
+          { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
+          { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helpers" },
+          { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
+          { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians, inscribe their pet" },
+          { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
+        ],
+      },
+      {
+        title: "COMMUNITY",
+        items: [
+          { to: "/explore", label: "TRENDING", note: "Trending BITMAPs and activity" },
+          { to: "/stream", label: "WORLD STREAM", note: "Verified history as it happens" },
+          { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
+          { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
+          { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
+          { to: "/watch", label: "TOON CINEMA", note: "Episodes and trailers" },
+          { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
+        ],
+      },
     ],
   },
   {
     id: "create",
     label: "CREATE",
     note: "Build on your BITMAP, make media, deploy experiences",
-    items: [
-      { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
-      { to: "/build", label: "START BUILDING", note: "Solo, with crew, lightweight or from your Outpost" },
-      { to: "/create", label: "CREATE WITH AI", note: "Describe it and get a working experience" },
-      { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool in one place" },
-    ],
-  },
-  {
-    id: "discover",
-    label: "DISCOVER",
-    note: "What people are building and watching",
-    items: [
-      { to: "/explore", label: "EXPLORE", note: "Trending BITMAPs and activity" },
-      { to: "/stream", label: "WORLD STREAM", note: "Verified history as it happens" },
-      { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
-      { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
-      { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
-      { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
-      { to: "/watch", label: "TOON CINEMA", note: "Watch episodes and trailers" },
-      { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
+    sections: [
+      {
+        title: "BUILD",
+        items: [
+          { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
+          { to: "/build", label: "START BUILDING", note: "Solo, with crew, lightweight or Outpost" },
+          { to: "/create", label: "CREATE WITH AI", note: "Describe it, get a working experience" },
+          { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool" },
+        ],
+      },
+      {
+        title: "PACKAGES",
+        items: [
+          { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
+          { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
+        ],
+      },
     ],
   },
   {
     id: "account",
-    label: "ME",
+    label: "ACCOUNT",
     note: "Your holdings, identity and developer resources",
-    items: [
-      { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
-      { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and build unlocks" },
-      { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT to use in the Oasis" },
-      { to: "/docs", label: "DOCS", note: "Guides, SDK and API references" },
-      { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
+    sections: [
+      {
+        title: "MINE",
+        items: [
+          { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
+          { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and unlocks" },
+          { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },
+          { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT" },
+        ],
+      },
+      {
+        title: "DEVELOPERS",
+        items: [
+          { to: "/docs", label: "DOCS", note: "Guides, SDK and API references" },
+          { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
+        ],
+      },
     ],
   },
 ];
+const groupItems = (g: NavGroup) => g.sections.flatMap((s) => s.items);
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
