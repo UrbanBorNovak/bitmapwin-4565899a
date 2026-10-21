@@ -369,6 +369,10 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   // Fictional parody guests wearing their namesake pixels.
   "putin-x": "3446711e0296cf21d531ad02ea4fc37a9f55f7085e335644742db2364bc525a7i0",
   "elon-x": "40ce5b75f4fb19bfdc114fefcf9a57859a55377801356a9b65c989ff4a62dcf6i0",
+  jahbooble: "788458663e02868ee6160eea95e61129c480764c78e72103ec453422286c2873i0", // Goose Avatar
+  sunset: "e2e5708c647b3eed9ff4efca71769458a00837dda1a130976a9d6b6a5e28aa26i0", // Green Eyed King
+  bitoshi: "7b32e098b565c79f217ce2dac18d8e621add81ce3c5fbae1e221c4a0f0679705i0", // Thanos
+  "space-monnkey": "0d12b9eb94bb4ad7c0a06803c1d9e1fe59a945f718bb3e296f554d0271f12f27i0", // Monkey King Pin Army
 };
 
 /** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
