@@ -270,13 +270,14 @@ export function SealedVault() {
           <div className="text-primary">SIGNED BY YOUR WALLET · NOT SENT. Send it yourself, then give each recipient their code.</div>
           <div className="mt-1">TRANSACTION {short(signed.txid)} · <a className="text-signal underline" href="https://mempool.space/tx/push" target="_blank" rel="noreferrer">BROADCAST AT MEMPOOL.SPACE</a></div>
           {sentTx ? <div className="mt-1 text-signal">✓ SENT · <a className="underline" href={`https://mempool.space/tx/${sentTx}`} target="_blank" rel="noreferrer">VIEW ON MEMPOOL</a></div>
-            : <button disabled={busy} onClick={broadcast} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1 text-primary">[ SEND TO BITCOIN NOW ]</button>}
+            : <button disabled={busy} onClick={broadcast} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1 text-primary">{unknown ? "[ CHECK ON BITCOIN FIRST ]" : "[ SEND TO BITCOIN NOW ]"}</button>}
           <textarea readOnly rows={2} value={signed.rawHex} onFocus={(e) => e.target.select()} className="mt-1 w-full rounded border border-border bg-background px-2 py-1" data-no-translate />
           {signed.sent.map((s) => (
             <div key={s.code} className="mt-2"><div>CODE FOR THE RECIPIENT OF "{s.label}"</div>
               <textarea readOnly rows={2} value={s.code} onFocus={(e) => e.target.select()} className="w-full rounded border border-border bg-background px-2 py-1" data-no-translate /></div>
           ))}
-          <button onClick={() => cancel(signed.txid)} className="mt-2 text-muted-foreground hover:text-foreground">[ I DIDN'T SEND IT — CANCEL ]</button>
+          {unknown ? <div className="mt-2 text-primary">OUTCOME UNKNOWN — every note stays as prepared. Press CHECK ON BITCOIN FIRST before cancelling or retrying.</div> : null}
+          {!sentTx ? <button disabled={busy} onClick={() => cancel(signed.txid)} className="mt-2 text-muted-foreground hover:text-foreground">[ I DIDN'T SEND IT — CANCEL ]</button> : null}
         </div>
       ) : null}
 
