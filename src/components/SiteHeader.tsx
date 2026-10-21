@@ -204,7 +204,7 @@ export function SiteHeader() {
               <button
                 type="button"
                 aria-expanded={openGroup === group.id}
-                onClick={() => setOpenGroup((v) => (v === group.id ? null : group.id))}
+                onClick={() => setOpenGroup(group.id)}
               className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
