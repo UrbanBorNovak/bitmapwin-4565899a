@@ -78,6 +78,7 @@ import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as ToonRouteImport } from './routes/toon'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
 import { Route as ValuationRouteImport } from './routes/valuation'
+import { Route as VaultRouteImport } from './routes/vault'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
@@ -509,6 +510,11 @@ const TradingPostRoute = TradingPostRouteImport.update({
 const ValuationRoute = ValuationRouteImport.update({
   id: '/valuation',
   path: '/valuation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VaultRoute = VaultRouteImport.update({
+  id: '/vault',
+  path: '/vault',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalletRoute = WalletRouteImport.update({
@@ -1022,6 +1028,7 @@ export interface FileRoutesByFullPath {
   '/toon': typeof ToonRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
+  '/vault': typeof VaultRoute
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
@@ -1176,6 +1183,7 @@ export interface FileRoutesByTo {
   '/toon': typeof ToonRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
+  '/vault': typeof VaultRoute
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
@@ -1335,6 +1343,7 @@ export interface FileRoutesById {
   '/toon': typeof ToonRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
+  '/vault': typeof VaultRoute
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
@@ -1495,6 +1504,7 @@ export interface FileRouteTypes {
     | '/toon'
     | '/trading-post'
     | '/valuation'
+    | '/vault'
     | '/wallet'
     | '/watch'
     | '/world-stats'
@@ -1649,6 +1659,7 @@ export interface FileRouteTypes {
     | '/toon'
     | '/trading-post'
     | '/valuation'
+    | '/vault'
     | '/wallet'
     | '/watch'
     | '/world-stats'
@@ -1807,6 +1818,7 @@ export interface FileRouteTypes {
     | '/toon'
     | '/trading-post'
     | '/valuation'
+    | '/vault'
     | '/wallet'
     | '/watch'
     | '/world-stats'
@@ -1966,6 +1978,7 @@ export interface RootRouteChildren {
   ToonRoute: typeof ToonRoute
   TradingPostRoute: typeof TradingPostRoute
   ValuationRoute: typeof ValuationRoute
+  VaultRoute: typeof VaultRoute
   WalletRoute: typeof WalletRoute
   WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
@@ -2493,6 +2506,13 @@ declare module '@tanstack/react-router' {
       path: '/valuation'
       fullPath: '/valuation'
       preLoaderRoute: typeof ValuationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vault': {
+      id: '/vault'
+      path: '/vault'
+      fullPath: '/vault'
+      preLoaderRoute: typeof VaultRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -3322,6 +3342,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToonRoute: ToonRoute,
   TradingPostRoute: TradingPostRoute,
   ValuationRoute: ValuationRoute,
+  VaultRoute: VaultRoute,
   WalletRoute: WalletRoute,
   WatchRoute: WatchRoute,
   WorldStatsRoute: WorldStatsRoute,
