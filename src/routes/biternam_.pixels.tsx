@@ -76,7 +76,7 @@ function PixelsMarket() {
                 {stars.length > 0 && <div className="truncate text-bitcoin">★ {stars.map(nameOf).join(", ")}</div>}
                 <div className="mt-1 flex gap-2">
                   <a href={`https://ordinals.com/inscription/${p.id}`} target="_blank" rel="noreferrer" className="text-signal hover:underline">ord</a>
-                  <a href={`https://magiceden.io/ordinals/item-details/${p.id}`} target="_blank" rel="noreferrer" className="text-bitcoin hover:underline">market</a>
+                  <Link to="/collections/pixels" search={{ q: p.id }} className="text-bitcoin hover:underline">market</Link>
                 </div>
               </div>
             </article>
