@@ -56,7 +56,7 @@ def build():
 async def page(p):
     b = await p.chromium.launch(headless=True)
     ctx = await b.new_context(viewport={"width": 1280, "height": 1800})
-    await ctx.route(f"https://ordinals.com/content/{PARSER}*", lambda r: r.fulfill(body=FIXTURE, content_type="text/javascript", headers={"access-control-allow-origin": "*"}))
+    await ctx.route(lambda u: PARSER in u, lambda r: r.fulfill(body=FIXTURE, content_type="text/javascript", headers={"access-control-allow-origin": "*"}))
     await ctx.route("**/__std", lambda r: r.fulfill(body=(OUT / "std.html").read_text(), content_type="text/html"))
     await ctx.route("**/__sov", lambda r: r.fulfill(body=(OUT / "sov.html").read_text(), content_type="text/html"))
     await ctx.route("**/api/public/market/listings*", lambda r: r.fulfill(body=json.dumps({"listings": LISTINGS}), content_type="application/json"))
