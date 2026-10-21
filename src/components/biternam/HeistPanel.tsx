@@ -27,7 +27,7 @@ export function HeistPanel({ room, ready = true }: { room: HeistRoom; ready?: bo
           <div className="font-mono text-2xl tracking-widest text-primary">◎ THE VOID IS OPEN ◎</div>
         </div>
       )}
-      <div className="absolute right-3 top-3 z-30 w-72 max-w-[calc(100vw-1.5rem)] border border-primary/40 bg-card/85 p-3 font-mono text-[11px] backdrop-blur" data-no-translate={false}>
+      <div data-testid="heist-panel" className="absolute right-3 top-14 z-30 w-72 max-w-[calc(100vw-1.5rem)] border border-primary/40 bg-card/85 p-3 font-mono text-[11px] backdrop-blur">
         <button className="flex w-full justify-between text-primary" onClick={() => setOpen((o) => !o)}>
           <span>CH.4 · THE VOID HEIST {stage}/{HEIST_STEPS.length}</span><span>{open ? "−" : "+"}</span>
         </button>
