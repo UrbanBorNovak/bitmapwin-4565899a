@@ -1,0 +1,81 @@
+/** Shared page shell for small verb-bar rooms: verb bar, message line, hazard flash, Tracy call, save. */
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { TracyCom } from "@/components/game/TracyCom";
+import type { TracyScript } from "@/lib/tracy-com";
+import { VERBS, type Verb } from "@/lib/museum-verbs";
+import type { HideoutOutcome, HideoutState } from "@/lib/hideout-verbs";
+import { playSfx, startCafeMusic, stopCafeMusic, type RoomMood } from "@/lib/retro-sfx";
+import { useFitHeight } from "@/hooks/use-fit-height";
+
+export function HideoutShell<H extends string>(props: {
+  storageKey: string; mood: RoomMood; kicker: string; title: string; item: string; hazardText: string;
+  names: Record<H, string>; intro: string; voice: number;
+  resolve: (v: Verb, h: H, s: HideoutState) => HideoutOutcome;
+  script: (s: HideoutState) => TracyScript;
+  scene: (p: { onHit: (h: H) => void; onHover: (h: H | null) => void; hover: H | null; st: HideoutState; hazard: boolean }) => ReactNode;
+}) {
+  const navigate = useNavigate();
+  const [verb, setVerb] = useState<Verb>("look");
+  const [hover, setHover] = useState<H | null>(null);
+  const [st, setSt] = useState<HideoutState>({ got: false, solved: false });
+  const [loaded, setLoaded] = useState(false);
+  const [hazard, setHazard] = useState(false);
+  const [call, setCall] = useState(0);
+  const [say, setSay] = useState(props.intro);
+  useEffect(() => { try { setSt((s) => ({ ...s, ...JSON.parse(localStorage.getItem(props.storageKey) || "{}") })); } catch { /* fresh */ } setLoaded(true); }, [props.storageKey]);
+  useEffect(() => { if (loaded) localStorage.setItem(props.storageKey, JSON.stringify(st)); }, [loaded, st, props.storageKey]);
+  useEffect(() => {
+    const go = () => { if (localStorage.getItem("bitmapwin:sound-muted") !== "1") startCafeMusic(props.mood); };
+    window.addEventListener("pointerdown", go, { once: true });
+    return () => { window.removeEventListener("pointerdown", go); stopCafeMusic(); };
+  }, [props.mood]);
+  const hit = (h: H) => {
+    if (hazard) return;
+    const r = props.resolve(verb, h, st);
+    playSfx(r.effect === "talk" ? "talk" : r.effect === "gain" ? "pickup" : r.effect === "solve" ? "dance" : r.effect === "exit" ? "door" : r.effect === "hazard" ? "fall" : "deny");
+    if (r.text) setSay(r.text);
+    if (r.effect === "talk") setCall(Date.now());
+    if (r.effect === "exit") navigate({ to: "/oasis" });
+    if (r.effect === "gain") setSt((s) => ({ ...s, got: true }));
+    if (r.effect === "solve") { setSt({ got: false, solved: true }); setCall(Date.now()); }
+    if (r.effect === "hazard") { setHazard(true); setTimeout(() => setHazard(false), 1600); }
+  };
+  const [mainRef, fitH] = useFitHeight<HTMLElement>();
+  const sentence = `${VERBS.find((v) => v.id === verb)!.label} ${hover ? props.names[hover] : ""}`;
+  return (
+    <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
+      <div className="relative min-h-0 flex-1">
+        {props.scene({ onHit: hit, onHover: (h) => { if (h) playSfx("hover"); setHover(h); }, hover, st, hazard })}
+        <div className="pointer-events-none absolute left-4 top-4 font-mono">
+          <div className="text-[11px] tracking-[0.3em] text-signal">{props.kicker}</div>
+          <div className="font-display text-2xl text-foreground">{props.title}</div>
+          <div className="mt-1 text-[11px] text-primary">{st.solved ? "● SOLVED" : st.got ? `◐ HOLDING ${props.item}` : "○ UNSOLVED"}</div>
+        </div>
+        {hazard ? (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70">
+            <div className="animate-bounce font-display text-5xl tracking-widest text-primary">{props.hazardText}</div>
+          </div>
+        ) : null}
+        <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
+        {call ? (
+          <div className="absolute right-4 top-16 z-50">
+            <TracyCom key={call} script={props.script(st)} voice={props.voice} onEnd={() => setCall(0)} />
+          </div>
+        ) : null}
+      </div>
+      <div className="relative z-10 shrink-0 border-t border-border bg-card/90 p-2 font-mono backdrop-blur sm:p-3" style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
+        <div className="mb-2 text-center text-[12px] tracking-widest text-signal">{sentence}</div>
+        <div className="mb-2 min-h-[1.25rem] text-center text-[13px] text-foreground">{say}</div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {VERBS.map((v) => (
+            <button key={v.id} onClick={() => { playSfx("verb"); setVerb(v.id); }}
+              className={`rounded border px-3 py-1.5 text-[12px] tracking-widest ${verb === v.id ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:border-signal hover:text-foreground"}`}>
+              [ {v.label} ]
+            </button>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -102,7 +102,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
             <mesh rotation-x={Math.PI / 2}><cylinderGeometry args={[0.14, 0.14, 0.04, 12]} /><meshStandardMaterial color={TRIM} emissive={TRIM} emissiveIntensity={hover === "coin" ? 1 : 0.5} /></mesh>
           </Hot>
         ) : null}
-        {/* dev9 booth: bench against the wall, table in front, dev9 standing at the table's open side */}
+        {/* dev9 booth: bench against the wall, table in front, Elevated Dabber (dev9 moved to his Batcave) standing at the table's open side */}
         <mesh position={[-3.45, 0.25, 1.2]}><boxGeometry args={[0.7, 0.5, 2.2]} /><meshStandardMaterial color="#6b1f1f" /></mesh>
         <mesh position={[-3.75, 0.85, 1.2]}><boxGeometry args={[0.15, 0.9, 2.2]} /><meshStandardMaterial color="#5a1818" /></mesh>
         <mesh position={[-2.5, 0.75, 1.2]}><boxGeometry args={[0.9, 0.08, 1.2]} /><meshStandardMaterial color={WOOD} /></mesh>
@@ -113,7 +113,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         <mesh position={[-2.4, 0.84, 1.55]}><cylinderGeometry args={[0.06, 0.06, 0.12, 8]} /><meshStandardMaterial color={TRIM} /></mesh>
         <Hot id="dev9" {...hp} position={[-1.65, 0, 1.2]} rotation={[0, -Math.PI / 2, 0]}>
           <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hover === "dev9" ? 1 : 0.4} /></mesh>
-          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["dev9"]!} pose="talk" movingRef={still} fallback={<Person body="#1a1a22" skin="#d9b08c" shades hot={hover === "dev9"} />} />
+          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["dabber"]!} pose="talk" movingRef={still} fallback={<Person body="#1a1a22" skin="#d9b08c" shades hot={hover === "dev9"} />} />
         </Hot>
         {/* Bar stools */}
         {[-1.2, 0, 3].map((x) => (

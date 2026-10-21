@@ -113,7 +113,7 @@ function CafePage() {
         <CafeInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasCoin={held.includes("coin") || distracted} distracted={distracted} falling={falling} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · CHAPTER 2</div>
-          <div className="font-display text-2xl text-foreground">BIT-CAFÉ · DEV9'S BOOTH</div>
+          <div className="font-display text-2xl text-foreground">BIT-CAFÉ · DABBER'S BOOTH</div>
           {distracted ? <div className="mt-1 text-[11px] text-primary">★ DROID DISTRACTED · BOOTH OPEN</div> : null}
         </div>
         {falling ? (

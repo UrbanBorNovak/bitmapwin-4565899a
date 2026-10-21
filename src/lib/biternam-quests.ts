@@ -379,11 +379,11 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
 /** THE UNREASONABLES — the crew, shown as a cast list on /biternam. */
 export const BITERNAM_CREW = [
   { id: "wierdamoto", name: "WIERDAMOTO", role: "Masked rebel leader", line: "Theatrical keeper of self-custody. Every sat belongs to its holder." },
-  { id: "dev9", name: "DEV9", role: "The veteran · Marauder", line: "Old dev, ex-military, reads raw transactions like intercepted signals." },
+  { id: "dev9", name: "DEV9", role: "The veteran · Marauder", line: "Left the café booth to Dabber and moved into a Batcave under the bedrock. Twelve CRTs, one MARAUDER LOG." },
   { id: "bop", name: "BOP", role: "God-tier programmer · the Boptimization standard", line: "Writes code the compiler learns from. If it isn't boptimized, it isn't finished." },
   { id: "nine", name: "9", role: "Culture leader", line: "Gathers the Bitmappers and gives the park its soul." },
   { id: "tornado", name: "TORNADO H. THOMPSON", role: "Gonzo anchor of Bitmap News", line: "Goes live every block. Signs off with the height." },
-  { id: "dabber", name: "ELEVATED DABBER", role: "Summit visionary", line: "Sees every BITMAP from above and blows the FUD away like smoke." },
+  { id: "dabber", name: "ELEVATED DABBER", role: "Summit visionary", line: "Holds dev9's old Bit-Café booth now. Sees every BITMAP from above and blows the FUD away like smoke." },
   { id: "bitlodo", name: "BITLODO", role: "Cinema maestro", line: "Directs every raid like a movie. Frame by frame, forever." },
   { id: "mononaut", name: "MONONAUT", role: "Mempool cartographer", line: "Remembers every record block. Tells a sale from a sweep at a glance." },
   { id: "sunset", name: "BITMAP SUNSET", role: "Atmosphere architect", line: "Paints the sky over every block and keeps the frequencies calm." },
@@ -393,7 +393,7 @@ export const BITERNAM_CREW = [
   { id: "space-monnkey", name: "SPACE MONNKEY", role: "Insane graphic designer", line: "Sees palettes in block hashes. Paints at escape velocity." },
   { id: "dudeamoto", name: "DUDEAMOTO", role: "Bitmapper legend", line: "The block abides. Somehow always knows where the best BITMAP is." },
   { id: "ladybird", name: "LADYBIRD", role: "Bitmapper · lucky-spot scout", line: "Lands only on real blocks. Seven spots, seven confirmations." },
-  { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile. Rumour says there is a blueprint behind his rig." },
+  { id: "urban", name: "URBAN", role: "Master architect", line: "Laid the bedrock tile by tile in one night, then sailed to his island hotel to sleep it off. The real blueprint is not behind his rig." },
   { id: "bukele", name: "PRESIDENTE B.", role: "Guest · fictional parody", line: "Visiting head of the Volcano Republic. Mines sats with lava. Fictional character, not the real person." },
   { id: "putin-x", name: "PUTIN X", role: "Guest · fictional parody", line: "Stone-faced visitor from the far north who only ever holds. Fictional character, not the real person." },
   { id: "elon-x", name: "ELON X", role: "Guest · fictional parody", line: "Wants to launch a BITMAP into orbit. Block height, literally. Fictional character, not the real person." },
