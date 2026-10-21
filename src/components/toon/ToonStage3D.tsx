@@ -13,7 +13,7 @@ import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
 import { BeachSet } from "@/components/toon/BeachSet";
 import { OasisWorld, StudioSet } from "@/components/toon/StudioSet";
 import { ToonVFXLayer } from "@/components/toon/ToonVFXLayer";
-import { BiternamRoomSet, ROOMS } from "@/components/toon/BiternamRooms";
+import { BiternamRoomSet, ROOMS, clampCamera, setBoundsFor, walkBlocked } from "@/components/toon/BiternamRooms";
 import { BatcaveSet, CafeSet, ChinatownSet, VaultSet } from "@/components/toon/BiternamSets";
 const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c" };
 import { loadCustomVFX, shakeAt, vfxLibrary, type ToonVFX } from "@/lib/toon-vfx";
@@ -311,6 +311,7 @@ function Director({ scene, local, lib }: { scene: ToonScene; local: number; lib:
     if (!cur.current || !scene.cutBlend || jumped) cur.current = [...target];
     else for (let i = 0; i < 6; i++) cur.current[i]! += (target[i]! - cur.current[i]!) * 0.12;
     const c = cur.current;
+    clampCamera(scene.set, c);
     const sh = shakeAt(scene.fx, lib, local);
     camera.position.set(c[0]! + sh * 0.8, c[1]! + sh * 0.5, c[2]!);
     camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
@@ -356,7 +357,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
             <mesh position={[0, -0.5, 0]}><boxGeometry args={[60, 1, 50]} /><meshStandardMaterial color="#e6d3a3" roughness={0.95} /></mesh></group>
         : <Land key={scene.block} block={scene.block} />}
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}-${a.avatar ? a.avatar.model + a.avatar.skin : "g"}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
-      {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={[(i - 1.5) * 2.2, -1.5 - (i % 2)]} seed={i * 3.7 + 1.3} bounds={{ x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={() => false} home={[0, -1]} /></group>)}
+      {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={(() => { const w = setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }; return [w.x0 + (w.x1 - w.x0) * (i + 0.5) / 4, w.z0 + (w.z1 - w.z0) * (0.3 + 0.4 * (i % 2))] as [number, number]; })()} seed={i * 3.7 + 1.3} bounds={setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={(x: number, z: number) => walkBlocked(scene.set, x, z)} home={[0, -1]} /></group>)}
       <ToonVFXLayer cues={scene.fx} lib={lib} scene={index} timeRef={progressRef} />
       <Director key={index} scene={scene} local={local} lib={lib} />
     </SafeCanvas>
