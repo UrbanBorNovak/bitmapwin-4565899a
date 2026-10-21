@@ -177,7 +177,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
           <button type="button" aria-label={muted ? "Unmute voices" : "Mute voices"} onClick={() => { voice.setMuted(!muted); setMuted(!muted); }} className="glass-panel rounded-full border border-border px-2 py-1 text-[11px] text-muted-foreground">{muted ? "VOICE OFF" : "VOICE ON"}</button>
         </div>
         {logOpen ? (
-          <div className="glass-panel mt-2 w-[min(300px,80vw)] space-y-3 rounded-[14px] border border-border p-3">
+          <div data-testid="quest-log" className="glass-panel mt-2 max-h-[min(60vh,560px)] w-[min(300px,80vw)] space-y-3 overflow-y-auto overscroll-contain rounded-[14px] border border-border p-3">
             <div>
               <div className="text-[11px] tracking-widest text-signal">WRIST INVENTORY</div>
               {held.length ? (
