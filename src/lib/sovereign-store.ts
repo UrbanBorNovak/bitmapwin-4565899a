@@ -129,5 +129,5 @@ ${MOSAIC_CSS}
 <header><h1>${esc(c.name)}</h1><p class="t">${esc(c.tagline)}</p><div id="s"><span class="k">LOADING…</span></div></header>
 <div id="w"></div><main id="g"></main>
 <footer>Sovereign shop · listings from open Nostr relays · every offer re-checked on Bitcoin with bop's LiveOCI · you sign in your own wallet · no middleman fee</footer>
-<script>const MZ=${mosaicConfig(DEFAULT_STORE.apiBase)};${MOSAIC_JS}</script><script>const C=${cfg};</script><script type="module">${SCRIPT}</script></body></html>`;
+<script>const MZ=${mosaicConfig("")};${MOSAIC_JS}</script><script>const C=${cfg};</script><script type="module">${SCRIPT}</script></body></html>`;
 }
