@@ -65,7 +65,7 @@ export function StudioHome() {
         title="EXPERIENCES"
         lead="Script what happens on a tile: games, shops, galleries and live places."
         tools={[
-          { title: "MAKE AN EXPERIENCE", icon: <Code2 className="h-4 w-4" />, note: "Describe → edit & test → publish → deploy, in one guided path.", link: <Link to="/make" className={cta}>START</Link> },
+          { title: "EXTENDERS", icon: <Code2 className="h-4 w-4" />, note: "Describe it in plain words, test it on a tile, publish and deploy.", link: <Link to="/studio" search={{ tool: "extenders" }} className={cta}>OPEN</Link> },
           { title: "DESCRIBE A PLACE", icon: <Package className="h-4 w-4" />, note: "Turn a sentence into a working place on your land.", link: <Link to="/create" className={cta}>OPEN</Link> },
           { title: "SDK", icon: <Code2 className="h-4 w-4" />, note: "Reference and playground for the world code.", link: <Link to="/sdk" className={cta}>READ</Link> },
           { title: "CLIPS", icon: <Clapperboard className="h-4 w-4" />, note: "Turn any BITMAP into a 3D video (tool by @bitlodo).", link: <Link to="/clips" className={cta}>OPEN</Link> },

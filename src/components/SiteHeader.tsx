@@ -95,7 +95,6 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Build on your BITMAP, make media, deploy experiences",
     items: [
       { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
-      { to: "/make", label: "MAKE AN EXPERIENCE", note: "Describe, test, publish, deploy" },
       { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
       { to: "/forge", label: "LAND FORGE", note: "Build voxels on your BITMAP and inscribe them" },
       { to: "/parcel", label: "PARCEL STUDIO", note: "Map and inscribe the real parcels of a BITMAP" },
