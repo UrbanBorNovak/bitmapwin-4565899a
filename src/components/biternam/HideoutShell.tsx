@@ -48,7 +48,7 @@ export function HideoutShell<H extends string>(props: {
     try {
       const r = await record({ data: { room: props.room, index: i, key: HIDEOUT_STEPS[props.room][i] } });
       if (r.ok) { setNote(null); return true; }
-      setNote(r.status === "too_fast" ? "TOO FAST — TRY AGAIN" : r.status === "out_of_order" ? "OUT OF ORDER — RESYNCING" : "COULD NOT SAVE");
+      setNote(r.status === "locked" ? "SOLVE THE PREVIOUS ROOM FIRST" : r.status === "too_fast" ? "TOO FAST — TRY AGAIN" : r.status === "out_of_order" ? "OUT OF ORDER — RESYNCING" : "COULD NOT SAVE");
       if (r.status === "out_of_order") void resync();
     } catch { setNote("COULD NOT SAVE"); }
     return false;

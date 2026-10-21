@@ -21,10 +21,10 @@ export function ResumeAdventure() {
       if (!live) return;
       if (!data.session) { setState("out"); return; }
       try {
-        const [h, v, b, i] = await Promise.all([heist(), voidS(), hideout({ data: { room: "batcave" } }), hideout({ data: { room: "island" } })]);
+        const [h, v, b, i, w] = await Promise.all([heist(), voidS(), hideout({ data: { room: "batcave" } }), hideout({ data: { room: "island" } }), hideout({ data: { room: "vault" } })]);
         if (!live) return;
-        if (!h.ok || !v.ok || !b.ok || !i.ok) { setState("error"); return; }
-        setTarget(resumeTarget(h.stage, v.count, b.count, i.count));
+        if (!h.ok || !v.ok || !b.ok || !i.ok || !w.ok) { setState("error"); return; }
+        setTarget(resumeTarget(h.stage, v.count, b.count, i.count, w.count));
         setState("ready");
       } catch { if (live) setState("error"); }
     });

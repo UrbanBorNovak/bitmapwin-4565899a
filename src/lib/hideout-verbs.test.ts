@@ -15,3 +15,11 @@ describe("island", () => {
     expect(resolveIslandVerb("use", "urban", { got: true, solved: false }).effect).toBe("solve");
   });
 });
+import { resolveVaultVerb } from "./hideout-verbs";
+describe("vault", () => {
+  it("opens only with the forged ledger", () => {
+    expect(resolveVaultVerb("use", "vault", { got: false, solved: false }).effect).toBeNull();
+    expect(resolveVaultVerb("pickup", "ledger", { got: false, solved: false }).effect).toBe("gain");
+    expect(resolveVaultVerb("use", "vault", { got: true, solved: false }).effect).toBe("solve");
+  });
+});
