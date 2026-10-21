@@ -271,8 +271,8 @@ export function VaultScene({ onHit, onHover, hover, st, hazard }: SceneProps<Vau
           <Printer blast={hazard} />
         </Hot>
         <Hot id="villains" {...hp} position={[2.8, 0, -2.6]} rotation={[0, -0.6, 0]}>
-          <group position={[-0.4, 0, 0]}><Shade body="#0b0b0f" eye="#ff1a1a" /></group>
-          <group position={[0.45, 0, 0.2]}><Shade body="#16061f" eye="#b026ff" /></group>
+          <group position={[-0.4, 0, 0]}><VillainRig id="iman" body="#0b0b0f" eye="#ff1a1a" /></group>
+          <group position={[0.45, 0, 0.2]}><VillainRig id="will" body="#16061f" eye="#b026ff" /></group>
           <mesh rotation-x={-Math.PI / 2} position-y={0.02}><circleGeometry args={[0.9, 16]} /><meshBasicMaterial color="#ff1a1a" transparent opacity={hover === "villains" ? 0.35 : 0.1} /></mesh>
         </Hot>
         <Hot id="ladder" {...hp} position={[-3.5, 0, 2.8]}>
@@ -356,11 +356,11 @@ export function LairScene({ onHit, onHover, hover, st, hazard }: SceneProps<Lair
         </Hot>
         <Hot id="iman" {...hp} position={[-0.9, 0, -0.6]} rotation={[0, 0.4, 0]}>
           <Ring on={hover === "iman"} color="#ff1a1a" />
-          <Shade body="#0b0b0f" eye="#ff1a1a" />
+          <VillainRig id="iman" body="#0b0b0f" eye="#ff1a1a" />
         </Hot>
         <Hot id="will" {...hp} position={[2.8, 0, 0.4]} rotation={[0, -0.7, 0]}>
           <Ring on={hover === "will"} color="#b026ff" />
-          <Shade body="#16061f" eye="#b026ff" />
+          <VillainRig id="will" body="#16061f" eye="#b026ff" />
           {!st.solved ? <mesh position={[-0.5, 0.35, 0.2]}><boxGeometry args={[0.5, 0.7, 0.4]} /><meshStandardMaterial color="#e8e2d0" emissive="#b026ff" emissiveIntensity={0.15} /></mesh> : null}
         </Hot>
         <Hot id="hatch" {...hp} position={[-3, 0, 2.8]}>
@@ -485,7 +485,7 @@ export function ArchiveScene({ onHit, onHover, hover, st, hazard }: SceneProps<A
         </Hot>
         <Hot id="iman" {...hp} position={[-0.6, 0, -0.4]} rotation={[0, 0.6, 0]}>
           <Ring on={hover === "iman"} color="#ff1a1a" />
-          <Shade body="#0b0b0f" eye="#ff1a1a" />
+          <VillainRig id="iman" body="#0b0b0f" eye="#ff1a1a" />
         </Hot>
         <Hot id="fan" {...hp} position={[2.8, 0, 1]} rotation={[0, -0.8, 0]}>
           <mesh position-y={0.6}><cylinderGeometry args={[0.08, 0.08, 1.2, 8]} /><meshStandardMaterial color="#555" /></mesh>
@@ -545,7 +545,7 @@ export function HoldersScene({ onHit, onHover, hover, st, hazard }: SceneProps<H
         </Hot>
         <Hot id="will" {...hp} position={[2.4, 0, 0.2]} rotation={[0, -0.7, 0]}>
           <Ring on={hover === "will"} color="#b026ff" />
-          <Shade body="#16061f" eye="#b026ff" />
+          <VillainRig id="will" body="#16061f" eye="#b026ff" />
           <mesh position={[-0.6, 0.4, 0.2]}><boxGeometry args={[0.8, 0.8, 0.5]} /><meshStandardMaterial color="#3a2416" /></mesh>
         </Hot>
         <Hot id="ghost" {...hp} position={[0.2, 0, -1.6]}>
@@ -561,4 +561,11 @@ export function HoldersScene({ onHit, onHover, hover, st, hazard }: SceneProps<H
       </SafeCanvas>
     </div>
   );
+}
+
+/** IMAN / WILL wear their pixel skins; the shadow figure stays as fallback. */
+function VillainRig({ id, body, eye }: { id: "iman" | "will"; body: string; eye: string }) {
+  const skin = CREW_PIXEL_AVATAR[id];
+  if (!skin) return <Shade body={body} eye={eye} />;
+  return <ToonPixelRig inscriptionId={skin} pose="talk" movingRef={still} fallback={<Shade body={body} eye={eye} />} />;
 }

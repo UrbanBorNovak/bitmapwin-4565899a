@@ -398,9 +398,9 @@ export const QUEST_NPCS: QuestNpc[] = ([
     ] },
   },
   {
-    // Villain of the Void arc. Pixel skin not chosen yet; uses the voxel palette.
+    // Villain of the Void arc.
     id: "iman", name: "IMAN", landmarkId: "miner-rig-2", side: -1, voice: 70,
-    persona: "IMAN, a villain of the Void arc. Tries to re-route orphaned blocks for profit. Pixel skin not chosen yet.",
+    persona: "IMAN, a villain of the Void arc. Tries to re-route orphaned blocks for profit. Wears the DeWayn NextHustle pixel skin.",
     script: { id: "npc-iman", title: "RIG 2 \u00b7 SHADOW (VILLAIN)", start: "a", nodes: [
       { id: "a", speaker: "IMAN", mood: "idle", text: "You again. The Marshal who opens doors that should stay shut.", next: "b" },
       { id: "b", speaker: "IMAN", mood: "smug", text: "1138 wasn't an accident. Orphans are inventory. I re-route them.", next: "c" },
@@ -408,13 +408,51 @@ export const QUEST_NPCS: QuestNpc[] = ([
     ] },
   },
   {
-    // Villain of the Void arc. Pixel skin not chosen yet; uses the voxel palette.
+    // Villain of the Void arc.
     id: "will", name: "WILL", landmarkId: "mayor-pepe", side: -1, voice: 60,
-    persona: "WILL, a villain of the Void arc and IMAN's partner. Forges fake confirmations. Pixel skin not chosen yet.",
+    persona: "WILL, a villain of the Void arc and IMAN's partner. Forges fake confirmations. Wears the Bitcoin Dude pixel skin.",
     script: { id: "npc-will", title: "MAYOR'S STEPS \u00b7 SHADOW (VILLAIN)", start: "a", nodes: [
       { id: "a", speaker: "WILL", mood: "idle", text: "Shh. The mayor thinks I'm his accountant.", next: "b" },
       { id: "b", speaker: "WILL", mood: "smug", text: "Six confirmations? I can print six confirmations. I can print sixty.", next: "c" },
       { id: "c", speaker: "WILL", mood: "alarm", text: "The Void is ours, Marshal. You only visited. We live there.", next: null },
+    ] },
+  },
+  {
+    // Villain: the third partner, who wants the holders' keys.
+    id: "limitless", name: "LIMITLESS", landmarkId: "torii", side: -1, voice: 85,
+    persona: "LIMITLESS, a villain wearing the Limitless pixel skin. Believes there should be no cap on anything, especially supply.",
+    script: { id: "npc-limitless", title: "TORII \u00b7 NO CAP (VILLAIN)", start: "a", nodes: [
+      { id: "a", speaker: "LIMITLESS", mood: "smug", text: "Twenty-one million? Cute. I don't do limits, Marshal.", next: "b" },
+      { id: "b", speaker: "LIMITLESS", mood: "idle", text: "IMAN copies blocks, WILL copies names. I'm here for the keys. Where do people keep them?", next: "c" },
+      { id: "c", speaker: "LIMITLESS", mood: "alarm", text: "Don't answer. The answer is always: somewhere careless.", next: null },
+    ] },
+  },
+  {
+    // Villain: chaos agent who just wants to watch the mempool burn.
+    id: "joker", name: "THE JOKER", landmarkId: "miner-rig-4", side: -1, voice: 260,
+    persona: "THE JOKER, a villain wearing The Joker pixel skin. Spams the mempool for laughs.",
+    script: { id: "npc-joker", title: "RIG 4 \u00b7 MEMPOOL CLOWN (VILLAIN)", start: "a", nodes: [
+      { id: "a", speaker: "THE JOKER", mood: "glitch", text: "Why so confirmed? Let's put a smile on that block!", next: "b" },
+      { id: "b", speaker: "THE JOKER", mood: "smug", text: "I broadcast forty thousand dust outputs. Not for money. For the fee chart.", next: "c" },
+      { id: "c", speaker: "THE JOKER", mood: "alarm", text: "IMAN pays me in unconfirmed sats. It's the funniest deal I ever took.", next: null },
+    ] },
+  },
+  {
+    id: "mr-gold", name: "MR. GOLD", landmarkId: "trading-post", voice: 110,
+    persona: "Mr. Gold, wearing the Mr Gold pixel skin. Old-money gold bug slowly converting to Bitcoin.",
+    script: { id: "npc-mr-gold", title: "TRADING POST \u00b7 OLD MONEY", start: "a", nodes: [
+      { id: "a", speaker: "MR. GOLD", mood: "idle", text: "Forty years I kept gold in a vault. Nobody could audit it but me.", next: "b" },
+      { id: "b", speaker: "MR. GOLD", mood: "smug", text: "Now I check my BITMAP from my phone, every block. The vault never let me do that.", next: "c" },
+      { id: "c", speaker: "MR. GOLD", mood: "alarm", text: "WILL offered me 'gold-backed confirmations'. I know a fake when I bite one.", next: null },
+    ] },
+  },
+  {
+    id: "john-wick", name: "JOHN WICK", landmarkId: "arena", voice: 95,
+    persona: "John Wick, a guest wearing the Jhon Wick pixel skin. Quiet professional who guards keys.",
+    script: { id: "npc-john-wick", title: "ARENA \u00b7 KEY KEEPER", start: "a", nodes: [
+      { id: "a", speaker: "JOHN WICK", mood: "idle", text: "They took a seed phrase. And they hurt a Guardian.", next: "b" },
+      { id: "b", speaker: "JOHN WICK", mood: "smug", text: "People keep asking if I'm back. Yeah. I'm back. Self-custody.", next: "c" },
+      { id: "c", speaker: "JOHN WICK", mood: "alarm", text: "LIMITLESS is hunting for keys. Tell your friends: never type them into anything.", next: null },
     ] },
   },
 ] as QuestNpc[]).filter((n) => LANDMARKS.some((l) => l.id === n.landmarkId));
@@ -455,7 +493,12 @@ export const CREW_PIXEL_AVATAR: Record<string, string> = {
   "kane-mayfield": "cab9edf662a551d1de8993e04d5564197c0eb9575fd88dd28f4496b9d273d4f3i0", // Kane Mayfield
   "snoop-x": "ceb2a80ce16750eab3189439f1fb99d53f1e746c04e92a7a2687feddf1a0c9a6i0", // Snoop Dogg (parody guest)
   kodro: "f97b7d7fcdbebda65ed055bcb65e8e5a7bf4a67f6515153eb0c686bb4924b25ai0", // Kodro
-  // iman / will: villain skins not chosen yet.
+  iman: "3918421e4441652767b1c8e646356e499fe4efe4ddd86278012f0f4cc0669785i0", // DeWayn NextHustle
+  will: "70472bc48846407bb64879971ccfd2789b9a1c60f9c13ee3b6f0559038378f44i0", // Bitcoin Dude
+  limitless: "49ea8ac408ec46c2da4a79d7855f7985dfa8f69d2eb738879b4a057c62dc48dfi0", // Limitless
+  joker: "cdb42f9158c04f2a4f2af8ce00b400fc16d47f8db4c2337af9a7201393da097ci0", // The Joker
+  "mr-gold": "b15f657c1c8a354cb94b4d429c94e1b4e18612ec66d9441bb22106dcd29d0a3bi0", // Mr Gold
+  "john-wick": "2b8fb38ad194a8cff192534bfba594ed679f8c35bdf418c6f68f3d20c55acb95i0", // Jhon Wick
   "space-monnkey": "0d12b9eb94bb4ad7c0a06803c1d9e1fe59a945f718bb3e296f554d0271f12f27i0", // Monkey King Pin Army
 };
 
@@ -488,6 +531,10 @@ export const BITERNAM_CREW = [
   { id: "kodro", name: "KODRO", role: "Bitmapper · night-shift rigger", line: "Keeps Urban's decoy rig warm. Turned IMAN away at the door." },
   { id: "iman", name: "IMAN", role: "Villain · orphan re-router", line: "Treats orphaned blocks as inventory. Re-routed the ghost of 1138." },
   { id: "will", name: "WILL", role: "Villain · confirmation forger", line: "IMAN's partner. Prints fake confirmations like flyers." },
+  { id: "limitless", name: "LIMITLESS", role: "Villain · key hunter", line: "The third partner. No cap on anything, least of all greed. Wants the holders' keys." },
+  { id: "joker", name: "THE JOKER", role: "Villain · mempool clown", line: "Spams dust for the fee chart. Paid by IMAN in unconfirmed sats." },
+  { id: "mr-gold", name: "MR. GOLD", role: "Guest · old-money convert", line: "Kept gold in a vault for forty years. Now checks his BITMAP every block." },
+  { id: "john-wick", name: "JOHN WICK", role: "Guest · key keeper", line: "Quiet professional. Back for self-custody." },
 ] as { id: string; name: string; role: string; line: string; mission?: string }[];
 /** What each hero does in CH.2 · THE GREY PROTOCOL. */
 export const CREW_MISSION_ROLE: Record<string, string> = {
