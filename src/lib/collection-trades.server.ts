@@ -1,4 +1,4 @@
-import { traceBitmapTrades } from "@/lib/trades.server";
+import { salePriceOf } from "@/lib/sale-structure";
 
 /**
  * On-chain sales for BITMAP collections (any marketplace). Each inscription's
@@ -9,30 +9,63 @@ import { traceBitmapTrades } from "@/lib/trades.server";
  */
 const RECHECK_HOURS = 48;
 const BATCH = 6;
-const MAX_HOPS = 10;
+const MAX_HOPS = 25;
 
 export type CollectionTradeRow = {
   txid: string; inscriptionId: string; sellerAddress: string | null; buyerAddress: string | null;
   priceSats: number; blockHeight: number | null; blockTime: string | null; source: string;
 };
 
-async function currentOutput(id: string): Promise<string | null> {
+type Tx = {
+  txid: string;
+  vin: Array<{ txid: string; vout: number; prevout?: { value: number; scriptpubkey_address?: string | null } | null }>;
+  vout: Array<{ value: number; scriptpubkey_address?: string | null }>;
+  status?: { confirmed?: boolean; block_height?: number; block_time?: number };
+};
+
+async function getJson<T>(url: string, headers: Record<string, string> = {}): Promise<T | null> {
   try {
-    const r = await fetch(`https://ordinals.com/r/inscription/${id}`, { headers: { "User-Agent": "bitmapwin/1.0", accept: "application/json" }, signal: AbortSignal.timeout(8000) });
-    if (!r.ok) return null;
-    return ((await r.json()) as { output?: string }).output ?? null;
+    const r = await fetch(url, { headers: { accept: "application/json", "User-Agent": "bitmapwin/1.0", ...headers }, signal: AbortSignal.timeout(10000) });
+    return r.ok ? ((await r.json()) as T) : null;
   } catch { return null; }
 }
 
-async function traceVerified(id: string) {
+type Hop = { txid: string; seller: string | null; buyer: string | null; priceSats: number; blockHeight: number | null; blockTime: string | null };
+
+/**
+ * Walks the inscription sat BACKWARDS from its current satpoint (ordinals.com)
+ * to its reveal using FIFO sat ordering; every hop is an exact transfer.
+ * Returns null if the walk doesn't land on the reveal tx within MAX_HOPS.
+ */
+async function traceVerified(id: string): Promise<Hop[] | null> {
   const m = /^([0-9a-f]{64})i(\d+)$/.exec(id);
   if (!m) return null;
-  const want = await currentOutput(id);
-  if (!want) return null;
-  const starts = [...new Set([Number(m[2]), 0])];
-  for (const v of starts) {
-    const t = await traceBitmapTrades(0, m[1]!, id, MAX_HOPS, v);
-    if (t.finalOutput === want) return t;
+  const ins = await getJson<{ satpoint?: string }>(`https://ordinals.com/r/inscription/${id}`);
+  const sp = ins?.satpoint?.split(":");
+  if (!sp || sp.length !== 3) return null;
+  let txid = sp[0]!, vout = Number(sp[1]), offset = Number(sp[2]);
+  const hops: Hop[] = [];
+  for (let n = 0; n <= MAX_HOPS; n++) {
+    if (txid === m[1]) return hops;
+    const tx = await getJson<Tx>(`https://mempool.space/api/tx/${txid}`);
+    if (!tx || !tx.status?.confirmed) return null;
+    let abs = offset;
+    for (let i = 0; i < vout; i++) abs += tx.vout[i]?.value ?? 0;
+    let vin = -1, inOff = 0, acc = 0;
+    for (let i = 0; i < tx.vin.length; i++) {
+      const v = tx.vin[i]!.prevout?.value ?? 0;
+      if (abs < acc + v) { vin = i; inOff = abs - acc; break; }
+      acc += v;
+    }
+    if (vin < 0) return null;
+    const seller = tx.vin[vin]!.prevout?.scriptpubkey_address ?? null;
+    hops.push({
+      txid: tx.txid, seller, buyer: tx.vout[vout]?.scriptpubkey_address ?? null,
+      priceSats: salePriceOf(tx, vin, vout, seller),
+      blockHeight: tx.status.block_height ?? null,
+      blockTime: tx.status.block_time ? new Date(tx.status.block_time * 1000).toISOString() : null,
+    });
+    txid = tx.vin[vin]!.txid; vout = tx.vin[vin]!.vout; offset = inOff;
   }
   return null;
 }
@@ -53,8 +86,8 @@ export async function crawlCollection(collection: string, ids: string[], priorit
   const { data: ours } = await db.from("offers").select("buyer_txid").in("inscription_id", picked).not("buyer_txid", "is", null);
   const ourTx = new Set((ours ?? []).map((o) => o.buyer_txid));
   const results = await Promise.all(picked.map(async (id) => ({ id, t: await traceVerified(id).catch(() => null) })));
-  const rows = results.flatMap(({ id, t }) => (t?.trades ?? []).filter((x) => x.priceSats > 0).map((x) => ({
-    txid: x.txid, collection, inscription_id: id, seller_address: x.sellerAddress, buyer_address: x.buyerAddress,
+  const rows = results.flatMap(({ id, t }) => (t ?? []).filter((x) => x.priceSats > 0).map((x) => ({
+    txid: x.txid, collection, inscription_id: id, seller_address: x.seller, buyer_address: x.buyer,
     price_sats: x.priceSats, block_height: x.blockHeight, block_time: x.blockTime,
     source: ourTx.has(x.txid) ? "BITMAPWIN" : "OTHER MARKETPLACE",
   })));
