@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  BroadcastUnknown, runLockedTransfer, intentStore, clearInterrupted, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
+  BroadcastUnknown, loadHeld, runLockedTransfer, intentStore, clearInterrupted, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -50,6 +50,7 @@ export function SealedVault() {
   const [backedUp, setBackedUp] = useState(false);
   const address = wallet?.ordinalsAddress ?? "";
 
+  const [damaged, setDamaged] = useState<string | null>(null);
   const store = (v: HeldSealed[]) => { sealStore.setHeld(v); setHeld(v); };
   const check = useCallback(async (list: HeldSealed[]) => {
     const chain = mempoolChain();
@@ -57,7 +58,7 @@ export function SealedVault() {
     for (const h of list) out[noteKey(h.c.note.genesis)] = await verifySealed(h.c, chain, h.mine);
     setStatus(out);
   }, []);
-  useEffect(() => { const l = sealStore.held(); setHeld(l); void check(l); }, [check]);
+  useEffect(() => { try { const l = loadHeld(); setHeld(l); void check(l); } catch (e) { setDamaged((e as Error).message); } }, [check]);
   useEffect(() => { if (address) listCoins(address).then(setCoins).catch(() => setCoins([])); }, [address]);
 
   const groups = useMemo(() => {
@@ -96,7 +97,7 @@ export function SealedVault() {
   const addrRef = useRef<string | null>(null);
   useEffect(() => { addrRef.current = address || null; }, [address]);
   const [interrupted, setInterrupted] = useState<{ txid: string; vout: number }[]>([]);
-  useEffect(() => { setInterrupted(address ? intentStore.forWallet(address).map((i) => i.anchor) : []); }, [address, held]);
+  useEffect(() => { try { setInterrupted(address ? intentStore.forWallet(address).map((i) => i.anchor) : []); } catch (e) { setDamaged((e as Error).message); } }, [address, held]);
   const checkInterrupted = (a: { txid: string; vout: number }) => run(async () => {
     const r = await clearInterrupted(a, (o) => mempoolChain().outspend(o));
     if (r === "BUSY") throw new Error("ANOTHER TAB IS STILL SIGNING FOR THIS COIN");
@@ -106,7 +107,8 @@ export function SealedVault() {
   });
   // Restore any signed-but-unresolved transfer after a reload or wallet reconnect.
   useEffect(() => {
-    const p = address ? pendingStore.forWallet(address).at(-1) : undefined;
+    let p: ReturnType<typeof pendingStore.all>[number] | undefined;
+    try { p = address ? pendingStore.forWallet(address).at(-1) : undefined; } catch (e) { setDamaged((e as Error).message); return; }
     if (!p) { setSigned(null); setUnknown(false); setSentTx(null); return; }
     { setSigned({ txid: p.txid, rawHex: p.rawHex, sent: p.sent }); setUnknown(!!p.unknown); }
   }, [address]);
@@ -132,7 +134,7 @@ export function SealedVault() {
       throw e;
     }
   });
-  async function run(f: () => Promise<void>) { setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
+  async function run(f: () => Promise<void>) { if (damaged) { setMsg(`✗ ${damaged}`); return; } setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
   const mint = () => run(async () => {
     if (!labelIn.trim()) throw new Error("NAME THE NOTE");
@@ -174,7 +176,7 @@ export function SealedVault() {
       sign: (p) => signPsbtBase64(wallet.provider, p),
       currentWallet: () => addrRef.current,
     });
-    const next = sealStore.held();
+    const next = loadHeld();
     if (r.walletChanged) { setHeld(next); setReview(null); setGive({}); setMsg("SIGNED — BUT YOU SWITCHED WALLET OR NETWORK. IT'S SAVED UNDER THE WALLET THAT STARTED IT; SWITCH BACK TO FINISH."); return; }
     const { kept: _k, sent, ...out } = r;
     setHeld(next); setReview(null); setGive({}); setSentTx(null); setUnknown(false); setSigned({ txid: out.txid, rawHex: out.rawHex, sent }); void check(next);
@@ -186,7 +188,7 @@ export function SealedVault() {
   };
   const settleSent = (txid: string) => { pendingStore.drop(txid); setSentTx(txid); setUnknown(false); };
   const cancel = (txid: string) => run(async () => {
-    const before = sealStore.undo()[txid];
+    const before = pendingStore.forWallet(address).find((x) => x.txid === txid)?.before ?? sealStore.undo()[txid];
     if (!before) return;
     const r = await resolve(txid);
     if (r === "SENT") { settleSent(txid); throw new Error("ALREADY ON BITCOIN — IT CAN'T BE CANCELLED"); }
@@ -299,6 +301,7 @@ export function SealedVault() {
           <button disabled={busy} onClick={() => checkInterrupted(a)} className="ml-2 text-signal">[ CHECK ON BITCOIN ]</button>
         </div>
       ))}
+      {damaged ? <p className="mt-3 rounded border border-destructive p-2 text-[12px] text-destructive">✗ {damaged} All vault actions are paused so nothing can be lost or double-given.</p> : null}
       {msg ? <p className="mt-3 text-[12px] text-signal">{msg}</p> : null}
       {signed ? (
         <div className="mt-3 rounded border border-primary/60 p-3 text-[11px]">
