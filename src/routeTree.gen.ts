@@ -142,6 +142,7 @@ import { Route as TraitsRanksRouteImport } from './routes/traits.ranks'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicAgentSchemaRouteImport } from './routes/api/public/agent-schema'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
+import { Route as ApiPublicCollectionBackfillRouteImport } from './routes/api/public/collection-backfill'
 import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
 import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
@@ -830,6 +831,12 @@ const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
   path: '/public/coin-rewards',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicCollectionBackfillRoute =
+  ApiPublicCollectionBackfillRouteImport.update({
+    id: '/public/collection-backfill',
+    path: '/public/collection-backfill',
+    getParentRoute: () => ApiRoute,
+  } as any)
 const ApiPublicCrawlBssRoute = ApiPublicCrawlBssRouteImport.update({
   id: '/public/crawl-bss',
   path: '/public/crawl-bss',
@@ -1073,6 +1080,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/collection-backfill': typeof ApiPublicCollectionBackfillRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -1225,6 +1233,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/collection-backfill': typeof ApiPublicCollectionBackfillRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -1382,6 +1391,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/collection-backfill': typeof ApiPublicCollectionBackfillRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -1540,6 +1550,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
     | '/api/public/coin-rewards'
+    | '/api/public/collection-backfill'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
     | '/api/public/offer'
@@ -1692,6 +1703,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
     | '/api/public/coin-rewards'
+    | '/api/public/collection-backfill'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
     | '/api/public/offer'
@@ -1848,6 +1860,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
     | '/api/public/coin-rewards'
+    | '/api/public/collection-backfill'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
     | '/api/public/offer'
@@ -2917,6 +2930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/collection-backfill': {
+      id: '/api/public/collection-backfill'
+      path: '/public/collection-backfill'
+      fullPath: '/api/public/collection-backfill'
+      preLoaderRoute: typeof ApiPublicCollectionBackfillRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/crawl-bss': {
       id: '/api/public/crawl-bss'
       path: '/public/crawl-bss'
@@ -3083,6 +3103,7 @@ const ApiPublicBlocksHeightRouteWithChildren =
 interface ApiRouteChildren {
   ApiPublicAgentSchemaRoute: typeof ApiPublicAgentSchemaRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
+  ApiPublicCollectionBackfillRoute: typeof ApiPublicCollectionBackfillRoute
   ApiPublicCrawlBssRoute: typeof ApiPublicCrawlBssRoute
   ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
@@ -3100,6 +3121,7 @@ interface ApiRouteChildren {
 const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicAgentSchemaRoute: ApiPublicAgentSchemaRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
+  ApiPublicCollectionBackfillRoute: ApiPublicCollectionBackfillRoute,
   ApiPublicCrawlBssRoute: ApiPublicCrawlBssRoute,
   ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
