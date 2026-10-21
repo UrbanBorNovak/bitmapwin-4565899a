@@ -1,5 +1,5 @@
 import { cameraPlan, pickCoStars, pickExplorer, pickExtras, type CameraPreset } from "@/lib/biternam-cast";
-import { coStarIn, coStarOut, finaleLine, heroReply, themeRiff } from "@/lib/biternam-banter";
+import { coStarIn, coStarOut, finaleLine, heroReply, loreQuote, loreTitle, themeRiff } from "@/lib/biternam-banter";
 import { rng, type BiternamRoom, type Music, type ToonEpisode, type ToonSet } from "@/lib/toon-script";
 
 /** Community Chronicles: a free, deterministic Biternam chapter built only from a block's own facts.
@@ -29,14 +29,11 @@ const THEME: Record<ChapterTheme, { set: ToonSet; music: Music; titles: string[]
   plain: { set: "oasis", music: "chill", titles: ["A Block Like Any Other", "The Quiet Ledger", "Ten Strides Across"], quotes: ["Every block remembers. That's the whole point."] },
 };
 
-export function defaultTitle(f: BlockFacts): string {
-  const t = THEME[chapterTheme(f)];
-  return t.titles[Math.floor(rng(f.height + 7)() * t.titles.length)]!;
-}
-export function defaultQuote(f: BlockFacts): string {
-  const t = THEME[chapterTheme(f)];
-  return t.quotes[Math.floor(rng(f.height + 11)() * t.quotes.length)]!;
-}
+export type SuggestCtx = { set?: ChapterSet; seed?: number; guardian?: { species: string } | null };
+const ctxFor = (f: BlockFacts, c: SuggestCtx) => ({ set: c.set ?? autoSet(f), seed: c.seed ?? 0, guardian: c.guardian ?? null, coStar: pickCoStars(f.height, c.seed ?? 0)[0].name });
+/** Suggested title: funny lore from the block's theme, the room and the first co-star. No invented block facts. */
+export function defaultTitle(f: BlockFacts, c: SuggestCtx = {}): string { return loreTitle(chapterTheme(f), f.height, ctxFor(f, c)); }
+export function defaultQuote(f: BlockFacts, c: SuggestCtx = {}): string { return loreQuote(chapterTheme(f), f.height, ctxFor(f, c)); }
 
 /** Trim and bound user text; collapse whitespace so stored text is one clean line. */
 export function cleanText(s: string, max: number): string {
