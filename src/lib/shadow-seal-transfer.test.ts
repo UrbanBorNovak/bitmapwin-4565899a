@@ -695,7 +695,10 @@ describe("restore under storage failures, reloads, tab races and wallet switches
     const tx = await go(); // other tab signs and files a transfer while restore waits
     release();
     const res = await rest;
-    expect(res.skippedInFlight.sort()).toEqual(["Key", "Map", "Pass"]);
+    expect(res.restored).toEqual([]); // nothing resurrected
+    expect(res.skippedInFlight).toEqual(["Pass"]); // the given note stays given
+    expect(sealStore.held().map((h) => h.c.note.label).sort()).toEqual(["Key", "Map"]);
+    expect(sealStore.held().every((h) => h.mine.txid === tx.txid)).toBe(true);
     expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([tx.txid]);
     const spy = vi.fn(mockWallet);
     await expect(go(spy)).rejects.toThrow(/UNFINISHED TRANSFER/);
