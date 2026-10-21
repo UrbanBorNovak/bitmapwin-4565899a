@@ -1,3 +1,4 @@
+import { HeistPanel } from "@/components/biternam/HeistPanel";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SafehouseInterior } from "@/components/biternam/SafehouseInterior";
@@ -70,6 +71,7 @@ function SafehousePage() {
   return (
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
+        <HeistPanel room="safehouse" ready={true} />
         <SafehouseInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover}
           hasTorch={st.hasTorch} revealed={st.revealed} opened={st.opened} dyed={dyed} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">

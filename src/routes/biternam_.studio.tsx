@@ -1,3 +1,4 @@
+import { HeistPanel } from "@/components/biternam/HeistPanel";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StudioInterior } from "@/components/biternam/StudioInterior";
@@ -76,6 +77,7 @@ function StudioPage() {
   return (
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
+        <HeistPanel room="studio" ready={st.onAir} />
         <StudioInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} wireRead={st.wireRead} headline={st.headline} onAir={st.onAir} blind={blind} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · STUDIO A</div>

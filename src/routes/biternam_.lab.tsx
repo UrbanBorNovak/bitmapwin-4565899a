@@ -1,3 +1,4 @@
+import { HeistPanel } from "@/components/biternam/HeistPanel";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { LabInterior } from "@/components/biternam/LabInterior";
@@ -78,6 +79,7 @@ function LabPage() {
   return (
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
+        <HeistPanel room="lab" ready={st.boptimized} />
         <LabInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} boptimized={st.boptimized} deployed={st.deployed} steam={steam} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · BASEMENT B9</div>
