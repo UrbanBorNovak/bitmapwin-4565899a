@@ -130,7 +130,7 @@ export function StudioInterior({ onHit, onHover, hover, wireRead, headline, onAi
         </group>
         <Hot id="tornado" {...hp} position={[0.55, 0, -1.2]}>
           <mesh position-y={0.02} rotation-x={-Math.PI / 2}><ringGeometry args={[0.35, 0.45, 24]} /><meshBasicMaterial color={hover === "tornado" ? TRIM : NEON} transparent opacity={0.5} /></mesh>
-          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["tornado"]!} pose="talk" movingRef={still} />
+          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["tornado"]!} pose="talk" movingRef={still} fallback={<mesh position-y={0.9}><boxGeometry args={[0.5, 1.8, 0.3]} /><meshStandardMaterial color="#1f3a6b" /></mesh>} />
         </Hot>
         <Hot id="wire" {...hp} position={[-3.2, 0, 0.4]} rotation={[0, Math.PI / 2, 0]}>
           <mesh position-y={0.4}><boxGeometry args={[1, 0.8, 0.6]} /><meshStandardMaterial color="#2d2a24" /></mesh>
