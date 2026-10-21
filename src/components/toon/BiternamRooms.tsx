@@ -83,7 +83,7 @@ function Room({ s, timeRef }: { s: RoomSpec; timeRef: MutableRefObject<number> }
   useFrame(() => { const t = timeRef.current;
     g.current?.children.forEach((c, i) => { const a = s.props[i]?.anim; if (!a) return;
       if (a === "pulse") (c as unknown as { material: { emissiveIntensity: number } }).material.emissiveIntensity = 0.8 + Math.sin(t * 3 + i) * 0.4;
-      else if (a === "bob") c.position.y = s.props[i].p[1] + Math.sin(t * 1.3 + i) * 1.2;
+      else if (a === "bob") c.position.y = (s.props[i]?.p[1] ?? 0) + Math.sin(t * 1.3 + i) * 1.2;
       else if (a === "spin") c.rotation.y = t + i;
       else c.rotation.z = Math.sin(t * 1.2 + i) * 0.1; }); });
   return (

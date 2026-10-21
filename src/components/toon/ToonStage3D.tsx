@@ -338,7 +338,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
   if (!scene) return null;
   return (
     <SafeCanvas dpr={[1, 1.5]} camera={{ fov: 40, position: [40, 30, 40] }} gl={{ antialias: true, preserveDrawingBuffer: true }}>
-      {scene.set && (BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg) ? <><color attach="background" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)].bg)]} /><fog attach="fog" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)].bg), 90, 260]} /></>
+      {scene.set && (BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg) ? <><color attach="background" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg ?? "#000")]} /><fog attach="fog" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg ?? "#000"), 90, 260]} /></>
       : scene.set === "oasis" ? <><color attach="background" args={["#8fd3f4"]} /><fog attach="fog" args={["#8fd3f4", 80, 240]} /></> : <>
         <color attach="background" args={[scene.set === "beach" ? "#8f9aa3" : scene.set ? "#8fd3f4" : "#7fc8e8"]} />
         <fog attach="fog" args={scene.set === "beach" ? ["#8f9aa3", 60, 200] : scene.set ? ["#1a1714", 120, 320] : ["#7fc8e8", 90, 220]} />
