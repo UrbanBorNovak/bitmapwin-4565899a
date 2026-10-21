@@ -37,16 +37,16 @@ function ChaptersPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const facts = useQuery({ queryKey: ["block-facts", height], queryFn: () => blockFactsFn({ data: { height } }) });
+  const facts = useQuery({ queryKey: ["chapter-block-facts", height], queryFn: () => blockFactsFn({ data: { height } }), retry: 1 });
   const chapters = useQuery({ queryKey: ["biternam-chapters"], queryFn: () => listChaptersFn(), staleTime: 30_000 });
-  const f = { height, txCount: facts.data?.txCount ?? null };
+  const f = { height, txCount: facts.data?.txCount ?? null, avgFeeRate: facts.data?.avgFeeRate ?? null, minedAt: facts.data?.minedAt ?? null };
   const existing = chapters.data?.find((c) => c.height === height);
 
   useEffect(() => { setTitle(existing?.title ?? defaultTitle(f)); setQuote(existing?.quote ?? defaultQuote(f)); setMsg(null); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, facts.data?.txCount, existing?.title]);
 
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f)), [height, f.txCount, title, quote]);
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f)), [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote]);
   const total = episodeLength(episode);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -121,7 +121,10 @@ function ChaptersPage() {
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
             <span className="text-muted-foreground">BITMAP</span><span data-no-translate>{height}.bitmap</span>
             <span className="text-muted-foreground">THEME</span><span className="text-signal">{chapterTheme(f).toUpperCase()}</span>
-            <span className="text-muted-foreground">TRANSACTIONS</span><span>{facts.isPending ? "…" : f.txCount == null ? "NOT RECORDED" : f.txCount.toLocaleString("en-US")}</span>
+            <span className="text-muted-foreground">TRANSACTIONS</span><span>{facts.isPending ? "…" : f.txCount == null ? "UNAVAILABLE" : f.txCount.toLocaleString("en-US")}</span>
+            <span className="text-muted-foreground">AVG FEE</span><span>{facts.isPending ? "…" : f.avgFeeRate == null ? "UNAVAILABLE" : `${f.avgFeeRate} sat/vB`}</span>
+            <span className="text-muted-foreground">MINED</span><span>{facts.isPending ? "…" : f.minedAt == null ? "UNAVAILABLE" : new Date(f.minedAt).toISOString().slice(0, 16).replace("T", " ") + " UTC"}</span>
+            <span className="text-muted-foreground">SOURCE</span><span className={facts.data?.note ? "text-destructive" : ""}>{facts.isError ? "LOOKUP FAILED" : facts.data ? `${(facts.data.source ?? "unavailable").toUpperCase()}${facts.data.note ? ` · ${facts.data.note}` : ""}` : "…"}</span>
           </div>
           {beyondTip && <div className="text-destructive">UNMINED · BEYOND CHAIN TIP ({tip.toLocaleString("en-US")})</div>}
           <div>

@@ -17,3 +17,10 @@ describe("biternam chapter generator", () => {
     expect(cleanText("x".repeat(200), TITLE_MAX)).toHaveLength(60);
   });
 });
+import { factsLine } from "./biternam-chapter";
+describe("facts line", () => {
+  it("only states known facts", () => {
+    expect(factsLine({ height: 1, txCount: null })).toBe("The ledger for this block is still being read.");
+    expect(factsLine({ height: 1, txCount: 5, avgFeeRate: null, minedAt: "2025-06-15T00:00:00Z" })).toBe("Mined 2025-06-15. 5 transactions. Every one is a clue.");
+  });
+});
