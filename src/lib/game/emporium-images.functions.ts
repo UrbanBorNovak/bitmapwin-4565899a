@@ -21,12 +21,12 @@ export const getEmporiumImagesFn = createServerFn({ method: "GET" }).handler(asy
   if (cache && Date.now() - cache.at < 6 * 3600_000) return { items: cache.items };
   const { ids } = await getPuppetsFn();
   const firstByTx = new Map<string, string>();
-  for (const id of ids) { const tx = id.split("i")[0]; if (!firstByTx.has(tx)) firstByTx.set(tx, id); }
+  for (const id of ids) { const tx = (id.split("i")[0] ?? id); if (!firstByTx.has(tx)) firstByTx.set(tx, id); }
   const todo = [...firstByTx.entries()].filter(([tx]) => !typeByTx.has(tx));
   for (let i = 0; i < todo.length; i += 16) {
     await Promise.all(todo.slice(i, i + 16).map(async ([tx, id]) => typeByTx.set(tx, await isImage(id))));
   }
-  const items = ids.map((id, n) => [id, n] as [string, number]).filter(([id]) => typeByTx.get(id.split("i")[0]) !== false);
+  const items = ids.map((id, n) => [id, n] as [string, number]).filter(([id]) => typeByTx.get((id.split("i")[0] ?? id)) !== false);
   if (items.length) cache = { items, at: Date.now() };
   return { items };
 });
