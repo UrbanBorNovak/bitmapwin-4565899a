@@ -40,8 +40,18 @@ function draw(el,h){var cv=document.createElement('canvas');cv.width=cv.height=5
    x.fillRect(q.x*s+g/2,q.y*s+g/2,q.r*s-g,q.r*s-g)}
   x.globalAlpha=1;el.innerHTML='';el.appendChild(cv);el.classList.add('m');
   var t=document.createElement('span');t.className='tx';t.textContent=cls.length.toLocaleString('en-US')+' TX';el.appendChild(t)}).catch(function(){})}
-var mods={};function mod(id){if(!mods[id]){var o=/ordinals\.com$/.test(location.hostname)?'':'https://ordinals.com';mods[id]=import(o+'/content/'+id+(o?'?origin='+o:''))}return mods[id]}
-function oci(h){return mod(h<=MZ.cacheLast?MZ.cache:MZ.live).then(function(m){return m.getBitmapInscriptionId(h)}).catch(function(){return null})}
+var O=/ordinals\.com$/.test(location.hostname)?'':'https://ordinals.com',mods={},found={};
+function mod(id){if(!mods[id])mods[id]=import(O+'/content/'+id+(O?'?origin='+O:''));return mods[id]}
+/* Above the cache: LiveOCI's own rule, run here because its block parser import
+   carries no ?origin and 404s outside ordinals.com. First inscription whose body is
+   exactly "<h>.bitmap", complete, no content encoding, no delegate; block h onward. */
+function live(h){if(h in found)return Promise.resolve(found[h]);return mod(MZ.parser).then(function(P){
+ var want=P.toHex(new TextEncoder().encode(h+'.bitmap'));
+ function step(n){if(n>h+MZ.span)return null;return P.fetchBlock(n,{classify:false,locate:false}).then(function(b){
+  var L=P.listInscriptions(b);for(var i=0;i<L.length;i++){var x=L[i];if(x.bodyHex===want&&x.complete===true&&!x.contentEncoding&&!x.delegate)return found[h]=x.id}
+  return step(n+1)},function(e){if(String(e&&e.message).indexOf('404')>=0)return null;throw e})}
+ return step(h)})}
+function oci(h){return (h<=MZ.cacheLast?mod(MZ.cache).then(function(m){return m.getBitmapInscriptionId(h)}):live(h)).catch(function(){return null})}
 window.BM={draw:draw,oci:oci};
 })();
 `;
