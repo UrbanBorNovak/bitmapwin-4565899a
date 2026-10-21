@@ -120,3 +120,39 @@ export const sealStore = {
   undo: () => read<Record<string, HeldSealed[]>>(K.undo, {}), setUndo: (v: Record<string, HeldSealed[]>) => write(K.undo, v),
 };
 export const sealKey = (r: { txid: string; vout: number }) => `${r.txid}:${r.vout}`;
+
+/* ── 1-click transfer pipeline (pure, injectable so it can be tested with a mock wallet) ── */
+
+/** Smallest confirmed coin that can pay the fee and keep change, skipping coins that fail the plain-coin check. */
+export async function pickPlainCoin(coins: Coin[], feeRate: number, isPlain: (c: Coin) => Promise<void> = assertPlainCoin): Promise<Coin> {
+  const cands = coins.filter((c) => c.confirmed && c.value >= sealFee(feeRate) + DUST + 1000).sort((a, b) => a.value - b.value);
+  for (const c of cands) {
+    try { await isPlain(c); return c; } catch { /* not plain or not checkable — try next */ }
+  }
+  throw new Error("NO PLAIN COIN FOUND — ADD A SMALL PLAIN BITCOIN COIN (5,000+ SATS) TO YOUR WALLET");
+}
+
+/** Plans, asks the wallet to sign, and checks the result. Nothing is stored here: if signing is cancelled the caller's notes are untouched. */
+export async function prepareTransfer(o: {
+  bundle: HeldSealed[]; give: Record<string, string>; coin: Coin; address: string; tapInternalKeyHex?: string | undefined;
+  feeRate: number; sign: (psbtB64: string) => Promise<string>;
+}) {
+  if (!Object.keys(o.give).length) throw new Error("CHOOSE AT LEAST ONE NOTE TO GIVE");
+  const { assignments, commitment } = planBundle(o.bundle, o.give);
+  const { psbt, fee, keepValue } = buildSealSpendPsbt({ coin: o.coin, address: o.address, tapInternalKeyHex: o.tapInternalKeyHex, commitment, feeRate: o.feeRate });
+  let signedB64: string;
+  try { signedB64 = await o.sign(psbt); } catch { throw new Error("SIGNING CANCELLED — NOTHING CHANGED, YOUR NOTES ARE STILL ON THEIR COIN"); }
+  const out = finishSigned(signedB64, commitment);
+  return { ...out, fee, keepValue, ...applySpend(o.bundle, assignments, out.txid) };
+}
+
+/** Sends a signed tx to Bitcoin via mempool.space. Only called when the holder presses the button. */
+export async function broadcastTx(rawHex: string, fetchImpl: typeof fetch = fetch): Promise<string> {
+  let r: Response;
+  try { r = await fetchImpl("https://mempool.space/api/tx", { method: "POST", body: rawHex }); }
+  catch { throw new Error("COULD NOT REACH BITCOIN — NOT SENT, TRY AGAIN"); }
+  const t = (await r.text()).trim();
+  if (!r.ok) throw new Error(`BITCOIN REJECTED IT: ${t.slice(0, 120)}`);
+  if (!/^[0-9a-f]{64}$/i.test(t)) throw new Error("UNEXPECTED REPLY — CHECK MEMPOOL.SPACE BEFORE RETRYING");
+  return t;
+}
