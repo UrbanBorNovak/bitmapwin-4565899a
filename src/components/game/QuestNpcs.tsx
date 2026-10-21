@@ -61,6 +61,10 @@ const LOOK: Record<string, Look> = {
   kodro: { body: "#33404d", head: "#d9b08c", accent: "#28e0ff" },
   iman: { body: "#0b0b0f", head: "#3a0a0a", accent: "#ff1a1a" },
   will: { body: "#16061f", head: "#2a0a3a", accent: "#b026ff" },
+  limitless: { body: "#1a1a2a", head: "#3a3a5a", accent: "#28e0ff" },
+  joker: { body: "#4a1a6a", head: "#e8e2d0", accent: "#3ee07a" },
+  "mr-gold": { body: "#6a5010", head: "#c8a040", accent: "#ffd23f" },
+  "john-wick": { body: "#0b0b0f", head: "#3a2a20", accent: "#888888" },
   ladybird: { body: "#c8102e", head: "#f0cfae", accent: "#141414" }, // red shell, black spots
 };
 
