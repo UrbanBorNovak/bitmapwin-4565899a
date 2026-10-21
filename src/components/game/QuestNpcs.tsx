@@ -8,6 +8,31 @@ import type { Group, Mesh } from "three";
 import { CREW_PIXEL_AVATAR, QUEST_NPCS, itemSpot, npcSpot, pendingItems, useQuestState, type QuestItem, type QuestNpc } from "@/lib/biternam-quests";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { groundY } from "@/lib/world-terrain";
+import { LANDMARKS } from "@/lib/world-landmarks";
+import { WORLD_CELL } from "@/lib/player-state";
+import { INTERIOR_DOORS } from "@/lib/biternam-doors";
+
+/** A glowing retro doorway beside each landmark that has a Biternam interior. */
+function Door({ id, unit }: { id: string; unit: number }) {
+  const lm = LANDMARKS.find((l) => l.id === id);
+  const d = INTERIOR_DOORS[id]!;
+  const glow = useRef<Mesh>(null);
+  useFrame(({ clock }) => { if (glow.current) (glow.current.material as { opacity: number }).opacity = 0.45 + Math.sin(clock.elapsedTime * 3) * 0.2; });
+  if (!lm) return null;
+  const r = (lm.radius + 0.35) * WORLD_CELL;
+  const x = lm.cell[0] * WORLD_CELL + Math.cos(lm.yaw + Math.PI / 4) * r;
+  const z = lm.cell[1] * WORLD_CELL + Math.sin(lm.yaw + Math.PI / 4) * r;
+  const s = unit * 1.6;
+  return (
+    <group position={[x, groundY(x, z), z]} rotation-y={Math.atan2(lm.cell[0] * WORLD_CELL - x, lm.cell[1] * WORLD_CELL - z) + Math.PI}>
+      <mesh position={[-s * 0.45, s * 0.75, 0]}><boxGeometry args={[s * 0.12, s * 1.5, s * 0.12]} /><meshStandardMaterial color="#2a2420" /></mesh>
+      <mesh position={[s * 0.45, s * 0.75, 0]}><boxGeometry args={[s * 0.12, s * 1.5, s * 0.12]} /><meshStandardMaterial color="#2a2420" /></mesh>
+      <mesh position={[0, s * 1.55, 0]}><boxGeometry args={[s * 1.05, s * 0.16, s * 0.14]} /><meshStandardMaterial color={d.color} emissive={d.color} emissiveIntensity={1.6} /></mesh>
+      <mesh ref={glow} position={[0, s * 0.72, 0]}><planeGeometry args={[s * 0.78, s * 1.44]} /><meshBasicMaterial color={d.color} transparent opacity={0.5} side={2} /></mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[0, s * 0.02, s * 0.4]}><planeGeometry args={[s * 0.9, s * 0.6]} /><meshBasicMaterial color={d.color} transparent opacity={0.35} /></mesh>
+    </group>
+  );
+}
 
 type Look = { body: string; head: string; accent: string };
 const DROID: Look = { body: "#7a7f86", head: "#a9b0b8", accent: "#28e0ff" };
@@ -115,6 +140,7 @@ export function QuestNpcs({ unit }: { unit: number }) {
   return (
     <>
       {QUEST_NPCS.map((n) => <Npc key={n.id} npc={n} unit={unit} active={nearId === n.id} />)}
+      {Object.keys(INTERIOR_DOORS).map((id) => <Door key={id} id={id} unit={unit} />)}
       {pendingItems(progress).map((it) => <Item key={it.id} item={it} unit={unit} />)}
     </>
   );
