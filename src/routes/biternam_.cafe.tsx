@@ -88,11 +88,26 @@ function CafePage() {
     (window as unknown as { __cafeTest?: unknown }).__cafeTest = { questStore, act: (v: Verb, h: CafeHotspot, it: string | null = null) => actRef.current(v, it, h) };
   }, []);
 
-  const sentence = item ? `USE SAT TOKEN ON ${hover ? CAFE_HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? CAFE_HOTSPOT_NAMES[hover] : ""}`;
+  // Fit the room to the visible window: the page-size zoom on <html> makes plain 100vh overflow and hides the verb bar.
+  const mainRef = useRef<HTMLElement>(null);
+  const [fitH, setFitH] = useState<number | null>(null);
+  useEffect(() => {
+    const fit = () => {
+      const el = mainRef.current; if (!el) return;
+      const z = Number((document.documentElement.style as CSSStyleDeclaration & { zoom: string }).zoom) || 1;
+      const vh = (window.visualViewport?.height ?? window.innerHeight) / z;
+      let top = 0; for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) top += n.offsetTop;
+      setFitH(Math.max(320, Math.floor(vh - top)));
+    };
+    fit(); window.addEventListener("resize", fit); window.visualViewport?.addEventListener("resize", fit);
+    return () => { window.removeEventListener("resize", fit); window.visualViewport?.removeEventListener("resize", fit); };
+  }, []);
+
+  const sentence =  item ? `USE SAT TOKEN ON ${hover ? CAFE_HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? CAFE_HOTSPOT_NAMES[hover] : ""}`;
 
   return (
-    <main className="relative flex h-[calc(100vh-4rem)] min-h-[560px] flex-col bg-background">
-      <div className="relative flex-1">
+    <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
+      <div className="relative min-h-0 flex-1">
         <CafeInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasCoin={held.includes("coin") || distracted} distracted={distracted} falling={falling} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · CHAPTER 2</div>
@@ -114,7 +129,7 @@ function CafePage() {
           </div>
         ) : null}
       </div>
-      <div className="border-t border-border bg-card/90 p-3 font-mono backdrop-blur">
+      <div className="relative z-10 shrink-0 border-t border-border bg-card/90 p-2 font-mono backdrop-blur sm:p-3">
         <div className="mb-2 text-center text-[12px] tracking-widest text-signal">{sentence}</div>
         <div className="mb-2 min-h-[1.25rem] text-center text-[13px] text-foreground">{say}</div>
         <div className="flex flex-wrap items-center justify-center gap-2">
