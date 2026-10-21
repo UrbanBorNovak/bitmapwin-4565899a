@@ -14,11 +14,11 @@ export function SealedRelicsPanel({ compact = false }: { compact?: boolean }) {
         <ul className="mt-1 space-y-1">
           {relics.map((r) => (
             <li key={r.key} className="flex flex-wrap items-center justify-between gap-2 text-[11px]" title={r.item?.blurb}>
-              <span>
+              <span className="text-foreground">
                 <span className="mr-1 text-primary">{r.item?.icon ?? "⚷"}</span>
                 {r.kind.type === "keycard" ? `KEYCARD · ${r.kind.slug}` : r.item?.name ?? r.label}
               </span>
-              <span className={unlocks(r.state) ? "text-signal" : "text-muted-foreground"}>{relicStateLabel(r.state)}</span>
+              <span className={unlocks(r.state) ? "text-signal" : "text-primary"}>{relicStateLabel(r.state)}</span>
               {r.kind.type === "keycard" && !unlocks(r.state) ? (() => { const d = keycardDenial([r], r.kind.slug); return d ? <span className="w-full text-[10px] text-muted-foreground">{d.reason} Next: {d.next}</span> : null; })() : null}
             </li>
           ))}
