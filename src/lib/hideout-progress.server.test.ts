@@ -34,3 +34,12 @@ describe.skipIf(!live)("hideout steps on the server (throwaway user)", () => {
     expect(await hideoutStepCount(db, user, "batcave")).toBe(2);
   }, 15000);
 });
+
+describe.skipIf(!live)("1138 vault story lock (throwaway user)", () => {
+  const u = crypto.randomUUID();
+  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
+  it("refuses vault steps before the Island Hotel is solved and saves nothing", async () => {
+    expect(await recordHideoutStep(db, u, { room: "vault", index: 0, key: HIDEOUT_STEPS.vault[0] })).toEqual({ ok: false, status: "locked" });
+    expect(await hideoutStepCount(db, u, "vault")).toBe(0);
+  });
+});

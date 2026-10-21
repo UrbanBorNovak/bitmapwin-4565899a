@@ -90,6 +90,7 @@ import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
 import { Route as BiternamSafehouseRouteImport } from './routes/biternam_.safehouse'
 import { Route as BiternamStudioRouteImport } from './routes/biternam_.studio'
+import { Route as BiternamVaultRouteImport } from './routes/biternam_.vault'
 import { Route as BiternamVoidRouteImport } from './routes/biternam_.void'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
@@ -556,6 +557,11 @@ const BiternamStudioRoute = BiternamStudioRouteImport.update({
   path: '/biternam/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamVaultRoute = BiternamVaultRouteImport.update({
+  id: '/biternam_/vault',
+  path: '/biternam/vault',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamVoidRoute = BiternamVoidRouteImport.update({
   id: '/biternam_/void',
   path: '/biternam/void',
@@ -937,6 +943,7 @@ export interface FileRoutesByFullPath {
   '/biternam/outpost': typeof BiternamOutpostRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
   '/biternam/studio': typeof BiternamStudioRoute
+  '/biternam/vault': typeof BiternamVaultRoute
   '/biternam/void': typeof BiternamVoidRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
@@ -1075,6 +1082,7 @@ export interface FileRoutesByTo {
   '/biternam/outpost': typeof BiternamOutpostRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
   '/biternam/studio': typeof BiternamStudioRoute
+  '/biternam/vault': typeof BiternamVaultRoute
   '/biternam/void': typeof BiternamVoidRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
@@ -1218,6 +1226,7 @@ export interface FileRoutesById {
   '/biternam_/outpost': typeof BiternamOutpostRoute
   '/biternam_/safehouse': typeof BiternamSafehouseRoute
   '/biternam_/studio': typeof BiternamStudioRoute
+  '/biternam_/vault': typeof BiternamVaultRoute
   '/biternam_/void': typeof BiternamVoidRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
@@ -1362,6 +1371,7 @@ export interface FileRouteTypes {
     | '/biternam/outpost'
     | '/biternam/safehouse'
     | '/biternam/studio'
+    | '/biternam/vault'
     | '/biternam/void'
     | '/bitmap/$block'
     | '/clan/$tag'
@@ -1500,6 +1510,7 @@ export interface FileRouteTypes {
     | '/biternam/outpost'
     | '/biternam/safehouse'
     | '/biternam/studio'
+    | '/biternam/vault'
     | '/biternam/void'
     | '/bitmap/$block'
     | '/clan/$tag'
@@ -1642,6 +1653,7 @@ export interface FileRouteTypes {
     | '/biternam_/outpost'
     | '/biternam_/safehouse'
     | '/biternam_/studio'
+    | '/biternam_/vault'
     | '/biternam_/void'
     | '/bitmap/$block'
     | '/clan/$tag'
@@ -1785,6 +1797,7 @@ export interface RootRouteChildren {
   BiternamOutpostRoute: typeof BiternamOutpostRoute
   BiternamSafehouseRoute: typeof BiternamSafehouseRoute
   BiternamStudioRoute: typeof BiternamStudioRoute
+  BiternamVaultRoute: typeof BiternamVaultRoute
   BiternamVoidRoute: typeof BiternamVoidRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
@@ -2372,6 +2385,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/studio'
       fullPath: '/biternam/studio'
       preLoaderRoute: typeof BiternamStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/vault': {
+      id: '/biternam_/vault'
+      path: '/biternam/vault'
+      fullPath: '/biternam/vault'
+      preLoaderRoute: typeof BiternamVaultRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/void': {
@@ -3010,6 +3030,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiternamOutpostRoute: BiternamOutpostRoute,
   BiternamSafehouseRoute: BiternamSafehouseRoute,
   BiternamStudioRoute: BiternamStudioRoute,
+  BiternamVaultRoute: BiternamVaultRoute,
   BiternamVoidRoute: BiternamVoidRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
