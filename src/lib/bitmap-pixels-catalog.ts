@@ -1,4 +1,5 @@
 import raw from "@/lib/vendor/bitmap-pixels-catalog.json";
+// dev9 wears MM-9, BOP wears DG - 9 (added to STARRED_SERIES below).
 
 export type PixelItem = { number: number; name: string; id: string; artist: string };
 
