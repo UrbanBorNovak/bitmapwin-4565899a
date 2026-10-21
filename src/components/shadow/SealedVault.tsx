@@ -239,6 +239,21 @@ export function SealedVault() {
         </>
       )}
 
+      {wallet && held.length ? (
+        <div className="mt-4 rounded border border-primary/60 bg-background/60 p-3">
+          <div className="text-[11px] tracking-widest text-primary">1-CLICK TRANSFER</div>
+          <p className="mt-1 font-sans text-[11px] text-muted-foreground">Tick notes, paste the recipient's code. Fee is set from live Bitcoin rates ({feeRate} sat/vB). You'll see the full review, then your wallet asks you to sign.</p>
+          <div className="mt-2 space-y-1 text-[12px]">
+            {held.map((h) => { const n = noteKey(h.c.note.genesis); return (
+              <label key={n} className="flex items-center gap-2"><input type="checkbox" checked={!!quickPick[n]} onChange={(e) => { setQuickPick({ ...quickPick, [n]: e.target.checked }); setPaste((p) => p); }} />{h.c.note.label}<span className="text-[10px] text-muted-foreground">· coin {short(h.mine.txid)}</span></label>
+            ); })}
+          </div>
+          <input value={quickTo} onChange={(e) => setQuickTo(e.target.value)} placeholder="Recipient's SEAL-RECV code" className="mt-2 w-full rounded border border-border bg-background px-2 py-1 text-[11px]" data-no-translate />
+          {quickCoin === "MANY" ? <p className="mt-1 text-[11px] text-destructive">Pick notes from one seal coin at a time.</p> : null}
+          <button disabled={busy} onClick={quickSend} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1.5 text-[11px] text-primary">[ PREPARE TRANSFER ]</button>
+        </div>
+      ) : null}
+
       {msg ? <p className="mt-3 text-[12px] text-signal">{msg}</p> : null}
       {signed ? (
         <div className="mt-3 rounded border border-primary/60 p-3 text-[11px]">
