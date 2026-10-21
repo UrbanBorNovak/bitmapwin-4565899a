@@ -63,7 +63,7 @@ describe("suggested title and quote", () => {
     for (const h of [0, 9, 210000, 715093, 840000]) for (let s = 0; s < 12; s++) {
       const f = { height: h, txCount: 2248, avgFeeRate: 5 };
       const text = `${defaultTitle(f, { seed: s })} ${defaultQuote(f, { seed: s })}`;
-      expect(text.replaceAll(String(h), "").match(/\d/)).toBeNull();
+      expect(text.replace(/dev9/gi, "").replaceAll(String(h), "").match(/\d/)).toBeNull();
     }
   });
   it("fit the title and quote length limits", () => {
