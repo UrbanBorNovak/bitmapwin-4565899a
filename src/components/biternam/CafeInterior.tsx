@@ -127,7 +127,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         {Array.from({ length: 12 }, (_, i) => (
           <mesh key={i} position={[-0.6 + (i % 6) * 0.62, i < 6 ? 2.33 : 2.98, -3.78]}>
             <boxGeometry args={[0.14, 0.38, 0.14]} />
-            <meshStandardMaterial color={["#2f6", NEON, TRIM, "#e33", "#a6f", "#ff5"][i % 6]} emissive={["#2f6", NEON, TRIM, "#e33", "#a6f", "#ff5"][i % 6]} emissiveIntensity={0.35} transparent opacity={0.85} />
+            <meshStandardMaterial color={["#2f6", NEON, TRIM, "#e33", "#a6f", "#ff5"][i % 6]!} emissive={["#2f6", NEON, TRIM, "#e33", "#a6f", "#ff5"][i % 6]!} emissiveIntensity={0.35} transparent opacity={0.85} />
           </mesh>
         ))}
         {/* Wall neon "BIT" sign + pendant lamps + plant + rug */}
