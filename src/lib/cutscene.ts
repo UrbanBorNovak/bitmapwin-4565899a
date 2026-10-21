@@ -64,4 +64,16 @@ export const ROOM_CUTSCENES: Partial<Record<HideoutRoom, Partial<Record<CutTrigg
       { focus: [50, 46], zoom: 1.6, ms: 2100, light: "warm", speaker: "DEV9", face: "dev9", line: "Not bad, kid. Go sleep. Tomorrow we hire somebody who can write." },
     ] },
   },
+  fortress: {
+    gain: { id: "fortress-gain", frames: [
+      { focus: [30, 55], zoom: 1.7, ms: 2400, light: "spot", sfx: "pickup", speaker: "BITOSHI", face: "bitoshi", line: "Bait key, fresh off the stove. Smells like a whale wallet." },
+    ] },
+    solve: { id: "fortress-solve", frames: [
+      { focus: [55, 48], zoom: 1.8, ms: 1600, light: "flash", sfx: "dance", line: "The scanner swallows the bait key. ACCESS GRANTED." },
+      { focus: [62, 45], zoom: 1.9, ms: 2000, light: "dim", speaker: "LIMITLESS", face: "limitless", line: "Finally. A key with no cap. Let me see that balance..." },
+      { focus: [62, 45], zoom: 2.1, ms: 1400, light: "flash", line: "The wallet opens. Inside: a mirror." },
+      { focus: [42, 50], zoom: 1.8, ms: 1800, speaker: "THE JOKER", face: "joker", line: "HONK. He paid the fee to see his own face. That's my bit!" },
+      { focus: [50, 46], zoom: 1.6, ms: 2200, light: "warm", speaker: "WIERDAMOTO", face: "wierdamoto", line: "The cage is open. Sat 1138 comes home. Iman and Will are next." },
+    ] },
+  },
 };

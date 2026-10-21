@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, FortressHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
@@ -209,13 +209,16 @@ function VaultGhost({ calm }: { calm: boolean }) {
   const arms = useRef<Group>(null);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    if (g.current) { g.current.position.y = 0.25 + Math.sin(t * 0.9) * 0.08; g.current.rotation.y = Math.sin(t * 0.35) * 0.08; }
-    if (arms.current) arms.current.rotation.z = Math.sin(t * 1.1) * 0.1;
+    // Slow layered sines only: no steps or random jitter, so the ghost glides instead of flinching.
+    if (g.current) { g.current.position.y = 0.25 + Math.sin(t * 0.6) * 0.06 + Math.sin(t * 0.23) * 0.03; g.current.rotation.y = Math.sin(t * 0.18) * 0.05; }
+    if (arms.current) arms.current.rotation.z = Math.sin(t * 0.5) * 0.06;
   });
   const glow = calm ? "#ffe6b0" : "#9fe6ff";
   const em = calm ? TRIM : NEON;
   const mat = (o: number, i = 0.9) => <meshStandardMaterial color={glow} transparent opacity={o} emissive={em} emissiveIntensity={i} depthWrite={false} />;
   return (
+    <>
+    <mesh position-y={1.2}><boxGeometry args={[0.9, 2.4, 0.6]} /><meshBasicMaterial transparent opacity={0} depthWrite={false} /></mesh>
     <group ref={g}>
       {/* Tapering spectral tail */}
       {[0, 1, 2, 3].map((k) => <mesh key={k} position-y={0.15 + k * 0.22}><boxGeometry args={[0.18 + k * 0.1, 0.22, 0.14 + k * 0.06]} />{mat(0.3 + k * 0.08)}</mesh>)}
@@ -234,6 +237,7 @@ function VaultGhost({ calm }: { calm: boolean }) {
       {!calm ? [-1, 1].map((sd) => <mesh key={`c${sd}`} position={[sd * 0.5, 0.95, 0.06]}><torusGeometry args={[0.1, 0.03, 4, 8]} /><meshStandardMaterial color="#e8e2d0" emissive="#e8e2d0" emissiveIntensity={0.3} /></mesh>) : null}
       <pointLight position-y={1.4} intensity={calm ? 4 : 2.5} distance={3} color={em} />
     </group>
+    </>
   );
 }
 function Printer({ blast }: { blast: boolean }) {
@@ -586,7 +590,7 @@ export function HoldersScene({ onHit, onHover, hover, st, hazard }: SceneProps<H
 }
 
 /** IMAN / WILL wear their pixel skins; the shadow figure stays as fallback. */
-function VillainRig({ id, body, eye }: { id: "iman" | "will"; body: string; eye: string }) {
+function VillainRig({ id, body, eye }: { id: "iman" | "will" | "limitless" | "joker"; body: string; eye: string }) {
   const skin = CREW_PIXEL_AVATAR[id];
   if (!skin) return <Shade body={body} eye={eye} />;
   return <group scale={1.5}><ToonPixelRig inscriptionId={skin} pose="talk" movingRef={still} fallback={<Shade body={body} eye={eye} />} /></group>;
@@ -656,6 +660,74 @@ export function HandshakeScene({ onHit, onHover, hover, st, hazard }: SceneProps
           <mesh position-y={1.2}><boxGeometry args={[1.1, 2.4, 0.12]} /><meshStandardMaterial color="#3a2414" emissive={hover === "door" ? TRIM : "#000"} emissiveIntensity={0.4} /></mesh>
         </Hot>
         <CafeSmoke count={30} color={hazard ? "#80b0ff" : "#f0e0c8"} opacity={hazard ? 0.12 : 0.03} mist={["#120c08", st.solved ? TRIM : "#5a3a20"]} />
+      </SafeCanvas>
+    </div>
+  );
+}
+
+// ======================= CH.11 · THE KEY FORTRESS =======================
+export function FortressScene({ onHit, onHover, hover, st, hazard }: SceneProps<FortressHotspot>) {
+  const hp = { onHit, onHover };
+  const RED = "#ff2a4a";
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[0, 0.8, 0]} />
+        <color attach="background" args={["#0a0610"]} />
+        <fog attach="fog" args={["#0a0610", 12, 25]} />
+        <ambientLight intensity={0.75} color="#e8d8ff" />
+        <pointLight position={[1.6, 3, -1.4]} intensity={st.solved ? 30 : 14} color={st.solved ? TRIM : RED} castShadow />
+        <pointLight position={[-2.4, 2.4, 1]} intensity={10} color="#ffcc33" />
+        {/* Circus-stripe floor */}
+        {Array.from({ length: 64 }, (_, i) => (
+          <mesh key={i} position={[(i % 8) - 3.5, -0.05, Math.floor(i / 8) - 3.5]} receiveShadow>
+            <boxGeometry args={[0.97, 0.1, 0.97]} /><meshStandardMaterial color={(i % 8) % 2 ? "#5a1420" : "#2a1a3a"} roughness={0.85} />
+          </mesh>
+        ))}
+        {/* Fortress walls with battlements */}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#2a2232" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#241c2c" roughness={1} /></mesh>
+        {Array.from({ length: 8 }, (_, i) => <mesh key={i} position={[i - 3.5, 4.2, -4]}><boxGeometry args={[0.5, 0.4, 0.34]} /><meshStandardMaterial color="#3a3044" /></mesh>)}
+        {/* Bunting */}
+        {Array.from({ length: 9 }, (_, i) => <mesh key={`b${i}`} position={[i * 0.85 - 3.4, 3.4, -3.8]} rotation-z={Math.PI / 4}><boxGeometry args={[0.22, 0.22, 0.02]} /><meshStandardMaterial color={i % 2 ? "#ffcc33" : RED} emissive={i % 2 ? "#ffcc33" : RED} emissiveIntensity={0.4} /></mesh>)}
+        {/* Sat 1138 cage */}
+        <group position={[2.6, 0, -2.6]}>
+          <mesh position-y={0.1}><boxGeometry args={[1.3, 0.2, 1.3]} /><meshStandardMaterial color="#1a1a22" /></mesh>
+          {!st.solved ? [-0.55, -0.18, 0.18, 0.55].flatMap((x) => [<mesh key={`f${x}`} position={[x, 1, 0.6]}><boxGeometry args={[0.05, 1.8, 0.05]} /><meshStandardMaterial color="#888" metalness={0.8} /></mesh>, <mesh key={`s${x}`} position={[0.6, 1, x]}><boxGeometry args={[0.05, 1.8, 0.05]} /><meshStandardMaterial color="#888" metalness={0.8} /></mesh>]) : null}
+          <mesh position-y={st.solved ? 1.4 : 0.9}><cylinderGeometry args={[0.28, 0.28, 0.06, 18]} /><meshStandardMaterial color={TRIM} emissive={TRIM} emissiveIntensity={st.solved ? 2 : 0.8} metalness={0.6} /></mesh>
+        </group>
+        {/* Bitoshi's bait crate */}
+        <Hot id="crate" {...hp} position={[-2.8, 0, 1.4]}>
+          <mesh position-y={0.35}><boxGeometry args={[0.8, 0.7, 0.8]} /><meshStandardMaterial color="#7a5a2a" emissive={hover === "crate" ? TRIM : "#000"} emissiveIntensity={0.35} /></mesh>
+          {!st.got && !st.solved ? <mesh position={[0, 0.78, 0]} rotation-z={0.3}><boxGeometry args={[0.4, 0.08, 0.12]} /><meshStandardMaterial color="#ffd060" emissive="#ffd060" emissiveIntensity={1} metalness={0.8} /></mesh> : null}
+        </Hot>
+        {/* Limitless's key scanner gate */}
+        <Hot id="scanner" {...hp} position={[0.6, 0, -2.4]}>
+          <mesh position-y={1}><boxGeometry args={[0.7, 2, 0.5]} /><meshStandardMaterial color="#1c1c26" metalness={0.7} /></mesh>
+          <mesh position={[0, 1.4, 0.26]}><boxGeometry args={[0.46, 0.3, 0.02]} /><meshStandardMaterial color="#000" emissive={st.solved ? GREEN : RED} emissiveIntensity={hover === "scanner" ? 2 : 1.2} /></mesh>
+          <mesh position={[0, 0.9, 0.26]}><boxGeometry args={[0.3, 0.08, 0.04]} /><meshStandardMaterial color="#333" emissive={NEON} emissiveIntensity={0.6} /></mesh>
+        </Hot>
+        <Hot id="limitless" {...hp} position={[1.7, 0, -1.2]} rotation={[0, -0.5, 0]}>
+          <Ring on={hover === "limitless"} color={RED} />
+          <VillainRig id="limitless" body="#14141a" eye={RED} />
+        </Hot>
+        <Hot id="joker" {...hp} position={[-1.2, 0, -1.4]} rotation={[0, 0.6, 0]}>
+          <Ring on={hover === "joker"} color="#7a3aff" />
+          <VillainRig id="joker" body="#2a1040" eye="#3ee07a" />
+        </Hot>
+        {/* Joker's dust cannon */}
+        <Hot id="cannon" {...hp} position={[-2.6, 0, -2.6]}>
+          <mesh position-y={0.3}><boxGeometry args={[0.7, 0.6, 0.7]} /><meshStandardMaterial color="#4a2a5a" /></mesh>
+          <mesh position={[0, 0.8, 0.2]} rotation-x={-0.6}><cylinderGeometry args={[0.18, 0.24, 1, 10]} /><meshStandardMaterial color="#c8a020" metalness={0.6} emissive={hazard ? "#ffcc33" : hover === "cannon" ? TRIM : "#000"} emissiveIntensity={hazard ? 1.6 : 0.4} /></mesh>
+        </Hot>
+        <Hot id="ghost" {...hp} position={[2.4, 0, 0.8]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm={st.solved} />
+        </Hot>
+        <Hot id="gate" {...hp} position={[-3.8, 0, -0.4]} rotation={[0, Math.PI / 2, 0]}>
+          <mesh position-y={1.2}><boxGeometry args={[1.2, 2.4, 0.12]} /><meshStandardMaterial color="#3a2a44" emissive={hover === "gate" ? TRIM : "#000"} emissiveIntensity={0.4} /></mesh>
+        </Hot>
+        <CafeSmoke count={30} color={hazard ? "#ffe080" : "#e0d0ff"} opacity={hazard ? 0.14 : 0.03} mist={["#0e0814", st.solved ? TRIM : "#5a1a30"]} />
       </SafeCanvas>
     </div>
   );

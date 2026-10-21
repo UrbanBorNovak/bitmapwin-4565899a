@@ -288,3 +288,40 @@ export function resolveHandshakeVerb(verb: Verb, h: HandshakeHotspot, s: Hideout
       return o("The back-room door to the Trading Post.");
   }
 }
+
+// ======================= CH.11 · THE KEY FORTRESS =======================
+export type FortressHotspot = "crate" | "scanner" | "limitless" | "joker" | "cannon" | "ghost" | "gate";
+export const FORTRESS_NAMES: Record<FortressHotspot, string> = {
+  crate: "BITOSHI'S CRATE", scanner: "KEY SCANNER", limitless: "LIMITLESS", joker: "THE JOKER", cannon: "DUST CANNON", ghost: "GHOST OF 1138", gate: "FORTRESS GATE",
+};
+export function resolveFortressVerb(verb: Verb, h: FortressHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "crate":
+      if (s.got || s.solved) return o("The crate is empty. Straw, a recipe card, and the smell of fake whale.");
+      if (verb === "pickup" || act) return o("You lift THE BAIT KEY out of Bitoshi's crate. Gold-plated. Holds exactly zero sats. Smells rich.", "gain");
+      return o("A crate stamped FRAGILE · DEFINITELY NOT A TRAP. Bitoshi's handwriting.");
+    case "scanner":
+      if (s.solved) return o("The scanner screen reads: ACCESS GRANTED · BALANCE 0. The cage stands open.");
+      if (act && s.got) return o("You slide THE BAIT KEY into the scanner. It beeps greedily. The cage around Sat 1138 swings open.", "solve");
+      if (act) return o("RED LIGHT. 'INSERT KEY WITH NO CAP.' Limitless only opens for keys he wants.");
+      return o("Limitless's key scanner. It guards the cage holding Sat 1138, the ghost's own sat.");
+    case "limitless":
+      if (verb === "talk") return o(s.solved ? "LIMITLESS: 'A mirror. I paid a fee to look at a MIRROR.'" : "LIMITLESS: 'Every key in Biternam, one day. No cap. Bring me something shiny.'");
+      if (verb === "look") return o("LIMITLESS, the third partner. Pupils shaped like private keys.");
+      return o("He slaps your hand away. 'Keys only.'");
+    case "joker":
+      if (verb === "talk") return o(s.solved ? "THE JOKER: 'Best bit of the year. Iman's going to HATE this.'" : "THE JOKER: 'Want to see a trick? I make your fee disappear!'");
+      if (verb === "look") return o("THE JOKER, juggling unconfirmed transactions. Some of them are yours.");
+      return o("He honks a horn in your face. HONK.");
+    case "cannon":
+      if (verb === "pickup" || act) return o("You poke the dust cannon. BOOM! A cloud of 1-sat dust fills the courtyard. HONK!", "hazard");
+      return o("A circus cannon loaded with dust outputs. Labelled FEE CHART SPAM.");
+    case "ghost":
+      if (verb === "talk") return o(s.solved ? "GHOST: 'My sat. My actual sat. I can feel my block again.'" : "GHOST: 'That cage holds my sat. Limitless wants a key. Give him a bad one.'");
+      return o(s.solved ? "The ghost of 1138 glows warm orange beside his freed sat." : "The ghost of 1138 floats near the cage, very still.");
+    case "gate":
+      if (act) return o("", "exit");
+      return o("The fortress gate back to the Oasis.");
+  }
+}
