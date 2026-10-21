@@ -83,7 +83,7 @@ const EXPLORER_REPLY: Pool = [
 ];
 const UNKNOWN_REPLY: Pool = [
   "The Guardian records are out of reach. Cindy says it's 'complicated'.",
-  "Can't reach the Guardian records right now. I'll act brave anyway.",
+  "The Guardian records are out of reach right now. I'll act brave anyway.",
 ];
 const FINALE: Pool = [
   "Block {H}! MY chapter! Carve it into the chain, I'm not reading it twice!",
@@ -102,3 +102,63 @@ export function heroReply(c: { guardian: { species: string } | null; guardianUnk
 }
 export function finaleLine(h: number, s: number) { return pick(FINALE, rnd(h, s, 6)).replace("{H}", h.toLocaleString("en-US")); }
 export type { BlockFacts };
+
+/** Room flavour for titles/quotes (set key → short punchline nouns). Pure jokes, no chain claims. */
+const ROOM: Record<string, { place: string; gag: string }> = {
+  cafe: { place: "the Bit-Café", gag: "the espresso machine is running a full node" },
+  batcave: { place: "dev9's Batcave", gag: "the CRTs are whispering block hashes again" },
+  chinatown: { place: "the Skyscraper District", gag: "the neon signs only accept sats" },
+  vault: { place: "the Biternam Vault", gag: "the vault door wants two signatures and a compliment" },
+  "b-museum": { place: "the Bit Museum", gag: "the exhibits keep asking for royalties" },
+  "b-arcade": { place: "the Mempool Arcade", gag: "every cabinet charges a priority fee" },
+  "b-lab": { place: "BOP's Lab", gag: "something in a jar just got boptimized" },
+  "b-studio": { place: "the Bitmap News Studio", gag: "the teleprompter is reading the mempool live" },
+  "b-outpost": { place: "Bitoshi's Outpost", gag: "the RV smells like pure block matter" },
+  "b-safehouse": { place: "Wierdamoto's Safehouse", gag: "even the fridge is multisig" },
+  "b-island": { place: "Urban's Island Hotel", gag: "room service delivers seed phrases on ice" },
+  "b-void": { place: "the Mempool Void", gag: "the unconfirmed are screaming politely" },
+  "b-lair": { place: "the Lair", gag: "the villain monologue has a fee estimate" },
+  "b-basement": { place: "the Basement", gag: "the boiler is mining something" },
+  "b-archive": { place: "the Archive", gag: "the receipts have receipts" },
+  "b-canon": { place: "the Canon Crypt", gag: "the ancestors are arguing about lore again" },
+  "b-holders": { place: "the Holders Lounge", gag: "nobody has stood up since the last halving" },
+  "b-receipt": { place: "the Receipt Office", gag: "the printer only prints regrets" },
+  "b-fortress": { place: "the Fortress", gag: "the moat is filled with cold storage" },
+  "b-handshake": { place: "Handshake Station", gag: "every handshake needs six confirmations" },
+};
+const THEME_TITLES: Record<ChapterTheme, Pool> = {
+  genesis: ["Chancellor on Brink, Me on Brink Too", "Page One, Coffee Stain Included", "In the Beginning Was the Block"],
+  halving: ["Half the Reward, Twice the Screaming", "The Great Halving Meltdown", "Miners Crying, Holders Vibing"],
+  patoshi: ["One Laptop to Rule Them All", "Dust Older Than Your Passwords", "The CPU That Hummed Too Hard"],
+  crowded: ["Mempool Mosh Pit", "Everybody Paid the Bouncer", "Standing Room Only in the Ledger"],
+  quiet: ["The Block Where Nobody Came", "Suspiciously Empty, Suspiciously Mine", "Library Full of Ninjas"],
+  plain: ["Totally Normal Block, Nothing to See", "Ten Strides and a Bad Idea", "An Honest Block Gets Weird"],
+};
+const TITLE_TPL: Pool = ["{T}", "{T}", "{C} Ruins {P}", "{H}.bitmap vs. {P}", "Chaos at {P}", "{C} Was Never Here"];
+const QUOTE_TPL: Pool = [
+  "I came to {P} for peace and quiet. Turns out {G}.",
+  "{C} told me not to touch anything. I touched everything.",
+  "{H}.bitmap. One owner per tile, zero chill per tile.",
+  "If {C} asks, I was never in {P}.",
+  "{G}. This is fine. Everything is load-bearing.",
+];
+const lead = (c: { guardian?: { species: string } | null }) => c.guardian ? `the ${c.guardian.species}` : "the explorer";
+const fill = (t: string, h: number, set: string, coStar: string, c: { guardian?: { species: string } | null }) => {
+  const r = ROOM[set] ?? { place: "Biternam", gag: "the bedrock is humming" };
+  return t.replaceAll("{P}", r.place).replaceAll("{G}", r.gag).replaceAll("{C}", coStar).replaceAll("{H}", String(h)).replaceAll("{L}", lead(c));
+};
+const titleCase = (s: string) => s.replace(/(^|\s)\w/g, (m) => m.toUpperCase());
+
+export type TitleCtx = { set: string; coStar: string; guardian?: { species: string } | null; seed?: number };
+/** Suggested chapter title: block theme + room + co-star. Uses only the height and derived theme, never invented numbers. */
+export function loreTitle(theme: ChapterTheme, h: number, ctx: TitleCtx) {
+  const s = ctx.seed ?? 0, base = pick(THEME_TITLES[theme], rnd(h, s, 7));
+  const coStar = ctx.coStar.split(" ").map((w) => w[0] + w.slice(1).toLowerCase()).join(" ");
+  return titleCase(fill(pick(TITLE_TPL, rnd(h, s, 8)).replace("{T}", base), h, ctx.set, coStar, ctx)).slice(0, 60);
+}
+export function loreQuote(_theme: ChapterTheme, h: number, ctx: TitleCtx) {
+  const s = ctx.seed ?? 0;
+  const coStar = ctx.coStar.split(" ").map((w) => w[0] + w.slice(1).toLowerCase()).join(" ");
+  const q = fill(pick(QUOTE_TPL, rnd(h, s, 9)), h, ctx.set, coStar, ctx);
+  return (q[0]!.toUpperCase() + q.slice(1)).slice(0, 140);
+}

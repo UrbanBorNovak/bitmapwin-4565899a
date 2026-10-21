@@ -55,14 +55,15 @@ function ChaptersPage() {
   const f = { height, txCount: facts.data?.txCount ?? null, avgFeeRate: facts.data?.avgFeeRate ?? null, minedAt: facts.data?.minedAt ?? null };
   const existing = chapters.data?.find((c) => c.height === height);
 
-  useEffect(() => { setTitle(existing?.title ?? defaultTitle(f)); setQuote(existing?.quote ?? defaultQuote(f)); setMsg(null); },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, facts.data?.txCount, existing?.title]);
 
   const species = guardian.state === "found" ? guardian.value : null, hasBuild = build.state === "found";
   const guardianUnknown = guardian.state === "checking" || guardian.state === "unavailable";
   const chosenSet = setPick === "auto" ? autoSet(f) : setPick;
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown, seed, camera }),
+  const sug = { set: chosenSet, seed, guardian: species ? { species } : null };
+  useEffect(() => { setTitle(existing?.title ?? defaultTitle(f, sug)); setQuote(existing?.quote ?? defaultQuote(f, sug)); setMsg(null); },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [height, facts.data?.txCount, existing?.title, chosenSet, seed, species]);
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f, sug), quote || defaultQuote(f, sug), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown, seed, camera }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown, seed, camera]);
   const total = episodeLength(episode);
