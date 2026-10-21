@@ -11,6 +11,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { HIDEOUT_STEPS, hideoutStateFromCount, type HideoutRoom } from "@/lib/hideout-progress";
 import { hideoutStatusFn, recordHideoutStepFn } from "@/lib/hideout-progress.functions";
+import { useCutscene, CutsceneStage } from "@/components/biternam/CutsceneDirector";
+import { ROOM_CUTSCENES } from "@/lib/cutscene";
 
 export function HideoutShell<H extends string>(props: {
   room: HideoutRoom; storageKey: string; mood: RoomMood; kicker: string; title: string; item: string; hazardText: string;
@@ -27,6 +29,7 @@ export function HideoutShell<H extends string>(props: {
   const [hazard, setHazard] = useState(false);
   const [call, setCall] = useState(0);
   const [say, setSay] = useState(props.intro);
+  const cut = useCutscene();
   useEffect(() => { try { setSt((s) => ({ ...s, ...JSON.parse(localStorage.getItem(props.storageKey) || "{}") })); } catch { /* fresh */ } setLoaded(true); }, [props.storageKey]);
   useEffect(() => { if (loaded) localStorage.setItem(props.storageKey, JSON.stringify(st)); }, [loaded, st, props.storageKey]);
   useEffect(() => {
@@ -54,13 +57,14 @@ export function HideoutShell<H extends string>(props: {
     return false;
   };
   const hit = async (h: H) => {
-    if (hazard) return;
+    if (hazard || cut.active) return;
     const r = props.resolve(verb, h, st);
     if ((r.effect === "gain" || r.effect === "solve") && !(await save(r.effect === "gain" ? 0 : 1))) { playSfx("deny"); return; }
     playSfx(r.effect === "talk" ? "talk" : r.effect === "gain" ? "pickup" : r.effect === "solve" ? "dance" : r.effect === "exit" ? "door" : r.effect === "hazard" ? "fall" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
     if (r.effect === "exit") navigate({ to: "/oasis" });
+    if (r.effect === "gain" || r.effect === "solve") cut.play(ROOM_CUTSCENES[props.room]?.[r.effect]);
     if (r.effect === "gain") setSt((s) => ({ ...s, got: true }));
     if (r.effect === "solve") { setSt({ got: false, solved: true }); setCall(Date.now()); }
     if (r.effect === "hazard") { setHazard(true); setTimeout(() => setHazard(false), 1600); }
@@ -70,7 +74,9 @@ export function HideoutShell<H extends string>(props: {
   return (
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
-        {props.scene({ onHit: (h) => { void hit(h); }, onHover: (h) => { if (h) playSfx("hover"); setHover(h); }, hover, st, hazard })}
+        <CutsceneStage cut={cut}>
+          {props.scene({ onHit: (h) => { void hit(h); }, onHover: (h) => { if (h) playSfx("hover"); setHover(h); }, hover, st, hazard })}
+        </CutsceneStage>
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">{props.kicker}</div>
           <div className="font-display text-2xl text-foreground">{props.title}</div>
@@ -84,7 +90,7 @@ export function HideoutShell<H extends string>(props: {
           </div>
         ) : null}
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
-        {call ? (
+        {call && !cut.active ? (
           <div className="absolute right-4 top-16 z-50">
             <TracyCom key={call} script={props.script(st)} voice={props.voice} onEnd={() => setCall(0)} />
           </div>
