@@ -19,7 +19,7 @@ export const cutsceneLength = (c: Cutscene) => c.frames.reduce((n, f) => n + f.m
 /** Index of the frame playing at elapsed ms; -1 once the cutscene is over. */
 export function frameAt(c: Cutscene, elapsed: number): number {
   let t = 0;
-  for (let i = 0; i < c.frames.length; i++) { t += c.frames[i].ms; if (elapsed < t) return i; }
+  for (let i = 0; i < c.frames.length; i++) { t += c.frames[i]!.ms; if (elapsed < t) return i; }
   return -1;
 }
 
