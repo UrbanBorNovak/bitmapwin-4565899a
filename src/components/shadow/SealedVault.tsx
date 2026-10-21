@@ -298,7 +298,7 @@ export function SealedVault() {
               <select value={mintType} onChange={(e) => setMintType(e.target.value)} className="mt-2 w-full rounded border border-border bg-background px-2 py-1.5 text-[12px]" aria-label="What to seal">
                 <option value="memo">PLAIN NOTE</option>
                 {wristItems.map((i) => <option key={i.id} value={relicKind(i.id)}>BITERNAM RELIC · {i.name}</option>)}
-                <option value="keycard">SHADOW GATE KEYCARD (from a pass on this device)</option>
+                <option value="keycard">SHADOW GATE KEYCARD (turns this device's pass into a giftable entry key)</option>
               </select>
               {mintType === "keycard" ? <input value={gateSlug} onChange={(e) => setGateSlug(e.target.value)} placeholder="Gate name, e.g. night-market" className="mt-2 w-full rounded border border-border bg-background px-2 py-1 text-[12px]" /> : null}
               <div className="mt-2 flex gap-2">
