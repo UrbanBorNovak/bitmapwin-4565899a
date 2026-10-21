@@ -39,14 +39,14 @@ function ChaptersPage() {
 
   const facts = useQuery({ queryKey: ["block-facts", height], queryFn: () => blockFactsFn({ data: { height } }), retry: 1 });
   const chapters = useQuery({ queryKey: ["biternam-chapters"], queryFn: () => listChaptersFn(), staleTime: 30_000 });
-  const f = { height, txCount: facts.data?.txCount ?? null };
+  const f = { height, txCount: facts.data?.txCount ?? null, avgFeeRate: facts.data?.avgFeeRate ?? null, minedAt: facts.data?.minedAt ?? null };
   const existing = chapters.data?.find((c) => c.height === height);
 
   useEffect(() => { setTitle(existing?.title ?? defaultTitle(f)); setQuote(existing?.quote ?? defaultQuote(f)); setMsg(null); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, facts.data?.txCount, existing?.title]);
 
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f)), [height, f.txCount, title, quote]);
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f)), [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote]);
   const total = episodeLength(episode);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);

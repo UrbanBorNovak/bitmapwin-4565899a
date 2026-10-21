@@ -2,7 +2,7 @@ import { rng, type Music, type ToonEpisode, type ToonSet } from "@/lib/toon-scri
 
 /** Community Chronicles: a free, deterministic Biternam chapter built only from a block's own facts.
  * Same (height, txCount, title, quote) → same episode on every device; nothing is rendered server-side. */
-export type BlockFacts = { height: number; txCount: number | null };
+export type BlockFacts = { height: number; txCount: number | null; avgFeeRate?: number | null; minedAt?: string | null };
 export type ChapterTheme = "genesis" | "halving" | "patoshi" | "crowded" | "quiet" | "plain";
 
 export const HALVING_INTERVAL = 210_000;
@@ -41,9 +41,18 @@ export function cleanText(s: string, max: number): string {
   return s.replace(/\s+/g, " ").trim().slice(0, max);
 }
 
+/** Cindy's briefing: states only the facts that are known, and says plainly when they are not. */
+export function factsLine(f: BlockFacts): string {
+  const parts: string[] = [];
+  if (f.minedAt) parts.push(`Mined ${f.minedAt.slice(0, 10)}.`);
+  if (f.txCount != null) parts.push(`${f.txCount.toLocaleString("en-US")} transactions.`);
+  if (f.avgFeeRate != null) parts.push(`Fees around ${f.avgFeeRate} sat/vB.`);
+  return parts.length ? `${parts.join(" ")} Every one is a clue.` : "The ledger for this block is still being read.";
+}
+
 export function chapterEpisode(f: BlockFacts, title: string, quote: string): ToonEpisode {
   const theme = chapterTheme(f), t = THEME[theme], h = f.height;
-  const txLine = f.txCount == null ? "The ledger for this block is still being read." : `${f.txCount.toLocaleString("en-US")} transactions in this block. Every one is a clue.`;
+  const txLine = factsLine(f);
   const hero = { height: h, name: `${h}.bitmap` };
   return {
     title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
