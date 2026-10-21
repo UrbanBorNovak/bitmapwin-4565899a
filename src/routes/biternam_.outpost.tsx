@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { playSfx, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
+import { useFitHeight } from "@/hooks/use-fit-height";
 import { useEffect, useRef, useState } from "react";
 import { OutpostInterior } from "@/components/biternam/OutpostInterior";
 import { TracyCom } from "@/components/game/TracyCom";
@@ -83,10 +84,11 @@ function OutpostPage() {
     (window as unknown as { __outpostTest?: unknown }).__outpostTest = { questStore, act: (v: Verb, h: OutpostHotspot, it: string | null = null) => actRef.current(v, it, h) };
   }, []);
 
+  const [mainRef, fitH] = useFitHeight<HTMLElement>();
   const sentence = item ? `USE HAZMAT SUIT ON ${hover ? OUTPOST_HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? OUTPOST_HOTSPOT_NAMES[hover] : ""}`;
 
   return (
-    <main className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
+    <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
         <OutpostInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasSuit={hasSuit} suited={suited} blasting={blasting} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">

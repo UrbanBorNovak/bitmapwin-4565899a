@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { playSfx, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
+import { useFitHeight } from "@/hooks/use-fit-height";
 import { useEffect, useState } from "react";
 import { MuseumInterior } from "@/components/biternam/MuseumInterior";
 import { TracyCom } from "@/components/game/TracyCom";
@@ -57,10 +58,11 @@ function MuseumPage() {
     setItem(null);
   };
 
+  const [mainRef, fitH] = useFitHeight<HTMLElement>();
   const sentence = item ? `USE EXPLORER LENS ON ${hover ? HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? HOTSPOT_NAMES[hover] : ""}`;
 
   return (
-    <main className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
+    <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
         <MuseumInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasLens={held.includes("lens")} solved={solved} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
