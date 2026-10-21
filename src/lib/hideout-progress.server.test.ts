@@ -70,3 +70,12 @@ describe.skipIf(!live)("shredder archive story lock (throwaway user)", () => {
     expect(await hideoutStepCount(db, u, "archive")).toBe(0);
   });
 });
+
+describe.skipIf(!live)("forgery parlour story lock (throwaway user)", () => {
+  const u = crypto.randomUUID();
+  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
+  it("refuses holders steps before the archive is solved and saves nothing", async () => {
+    expect(await recordHideoutStep(db, u, { room: "holders", index: 0, key: HIDEOUT_STEPS.holders[0] })).toEqual({ ok: false, status: "locked" });
+    expect(await hideoutStepCount(db, u, "holders")).toBe(0);
+  });
+});
