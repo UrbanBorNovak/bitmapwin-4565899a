@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  DUST, applySpend, assertPlainCoin, buildSealSpendPsbt, decodeConsignment, finishSigned, listCoins, parseSealReceive, planBundle, sealFee,
+  assertPlainCoin, broadcastTx, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -70,12 +70,9 @@ export function SealedVault() {
   async function pickCoin(): Promise<Coin> {
     const chosen = coins?.find((x) => sealKey(x) === coinPick);
     if (chosen) { await assertPlainCoin(chosen); return chosen; }
-    // Auto-pick: smallest confirmed coin that can pay a seal fee, skipping any with inscriptions/runes.
-    const cands = (coins ?? []).filter((c) => c.confirmed && c.value >= sealFee(feeRate) + DUST + 1000).sort((a, b) => a.value - b.value);
-    for (const c of cands) {
-      try { await assertPlainCoin(c); setCoinPick(sealKey(c)); return c; } catch { /* not plain — try next */ }
-    }
-    throw new Error("NO PLAIN COIN FOUND — ADD A SMALL PLAIN BITCOIN COIN (5,000+ SATS) TO YOUR WALLET");
+    const c = await pickPlainCoin(coins ?? [], feeRate);
+    setCoinPick(sealKey(c));
+    return c;
   }
   useEffect(() => {
     fetch("https://mempool.space/api/v1/fees/recommended").then((r) => r.json()).then((f: { halfHourFee?: number }) => { if (f.halfHourFee) setFeeRate(Math.max(1, Math.ceil(f.halfHourFee))); }).catch(() => {});
@@ -98,10 +95,8 @@ export function SealedVault() {
   const broadcast = () => run(async () => {
     if (!signed) return;
     if (!window.confirm("Send this signed transaction to Bitcoin now? This can't be undone.")) return;
-    const r = await fetch("https://mempool.space/api/tx", { method: "POST", body: signed.rawHex });
-    const t = await r.text();
-    if (!r.ok) throw new Error(`BITCOIN REJECTED IT: ${t.slice(0, 120)}`);
-    setSentTx(t.trim()); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+    const t = await broadcastTx(signed.rawHex);
+    setSentTx(t); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
   });
   async function run(f: () => Promise<void>) { setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
@@ -139,11 +134,10 @@ export function SealedVault() {
     if (!coin) throw new Error("THIS SEAL COIN IS NOT IN YOUR WALLET ANY MORE");
     await assertPlainCoin(coin);
     const pick = Object.fromEntries(bundle.map((h) => noteKey(h.c.note.genesis)).filter((n) => give[n]?.trim()).map((n) => [n, give[n]!.trim()]));
-    if (!Object.keys(pick).length) throw new Error("CHOOSE AT LEAST ONE NOTE TO GIVE");
-    const { assignments, commitment } = planBundle(bundle, pick);
-    const { psbt } = buildSealSpendPsbt({ coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), commitment, feeRate });
-    const out = finishSigned(await signPsbtBase64(wallet.provider, psbt), commitment);
-    const { kept, sent } = applySpend(bundle, assignments, out.txid);
+    const { kept, sent, ...out } = await prepareTransfer({
+      bundle, give: pick, coin, address, tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey), feeRate,
+      sign: (p) => signPsbtBase64(wallet.provider, p),
+    });
     sealStore.setUndo({ ...sealStore.undo(), [out.txid]: bundle });
     sealStore.setSent([...sealStore.sent(), ...sent.map((s) => ({ ...s, at: new Date().toISOString() }))]);
     const next = [...held.filter((h) => sealKey(h.mine) !== k), ...kept];
