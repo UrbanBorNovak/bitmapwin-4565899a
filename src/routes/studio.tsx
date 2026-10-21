@@ -26,7 +26,6 @@ import { PublishToAtlas } from "@/components/studio/PublishToAtlas";
 import { ShadowGateIssuer } from "@/components/studio/ShadowGateIssuer";
 import { EMPTY_BLUEPRINT, blueprintFromManifest, codeFromBlueprint, type Blueprint } from "@/lib/blueprint";
 import { StudioHome } from "@/components/studio/StudioHome";
-import { ExperienceFlow } from "@/components/studio/ExperienceFlow";
 
 export const Route = createFileRoute("/studio")({
   validateSearch: (search: Record<string, unknown>): { selected?: string; tool?: "extenders" } => {
@@ -75,7 +74,6 @@ function StudioPage() {
   if (!session) {
     return (
       <div className="mx-auto max-w-[900px] px-4 py-20 md:px-8">
-        <ExperienceFlow current="edit" />
         <div className="label text-bitcoin">BEDROCK · STUDIO</div>
         <h1 className="display mt-3 text-3xl md:text-5xl">EXTENDER STUDIO</h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
@@ -92,7 +90,6 @@ function StudioPage() {
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-10 md:px-8 md:py-14">
-      <ExperienceFlow current={selected ? "publish" : "edit"} />
       <div className="label text-bitcoin">BEDROCK · STUDIO</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">EXTENDER STUDIO</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
