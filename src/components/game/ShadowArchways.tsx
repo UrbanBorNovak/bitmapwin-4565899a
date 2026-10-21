@@ -54,8 +54,7 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
   // Dev-only harness clock: steps the gate even when the 3D frame loop stalls (headless browsers).
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    const w = window as unknown as { __bwGateArches?: number; __bwGateTicks?: number };
-    w.__bwGateArches = (w.__bwGateArches ?? 0) + 1;
+    const w = window as unknown as { __bwGateTicks?: number };
     const id = window.setInterval(() => { const hp = harnessPose(); if (hp) { w.__bwGateTicks = (w.__bwGateTicks ?? 0) + 1; stepRef.current(hp); } }, 150);
     return () => window.clearInterval(id);
   }, []);

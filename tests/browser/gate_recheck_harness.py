@@ -2,8 +2,8 @@
 Run: python3 tests/browser/gate_recheck_harness.py  (dev server on :8080)"""
 import asyncio, json, subprocess, sys
 from playwright.async_api import async_playwright
-FX = "/tmp/browser/gate/fixtures.json"
-subprocess.run(["bun", "/tmp/browser/gate/fixtures.ts"], check=True, capture_output=True)
+FX = "/tmp/gate_fixtures.json"
+subprocess.run(["bun", "tests/browser/gate_fixtures.ts"], check=True, capture_output=True)
 F = json.load(open(FX))
 A, B = "cypherpunk-assembly", "the-hyperbolic-time-chamber-156795-5ibi"
 ok = True
