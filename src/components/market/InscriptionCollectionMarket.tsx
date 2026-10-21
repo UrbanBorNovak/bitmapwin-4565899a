@@ -1,6 +1,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { collectionListingsQuery } from "@/lib/collection-sales";
+import { getCollectionSalesFn } from "@/lib/collection-sales.functions";
+import { CollectionSalesChart } from "@/components/market/CollectionSalesChart";
 import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
@@ -16,6 +18,7 @@ export function InscriptionCollectionMarket({
 }) {
   const ids = useMemo(() => items.map((i) => i.id), [items]);
   const listings = useQuery({ ...collectionListingsQuery(pool, ids), enabled: ids.length > 0 });
+  const sales = useQuery({ queryKey: ["collection-sales", pool, ids.length], queryFn: () => getCollectionSalesFn({ data: { ids } }), enabled: ids.length > 0, staleTime: 60_000 });
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState<"all" | "listed">("all");
   const [q, setQ] = useState(initialQuery);
@@ -41,6 +44,7 @@ export function InscriptionCollectionMarket({
           </div>
         ))}
       </div>
+      <CollectionSalesChart sales={sales.data?.sales ?? []} pending={ids.length > 0 && sales.isPending} unavailable={sales.isError || !!sales.data?.unavailable} />
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button type="button" className={filter === "all" ? "btn-term" : "btn-term-ghost"} onClick={() => { setFilter("all"); setPage(0); }}>ALL</button>
         <button type="button" className={filter === "listed" ? "btn-term" : "btn-term-ghost"} onClick={() => { setFilter("listed"); setPage(0); }}>FOR SALE</button>

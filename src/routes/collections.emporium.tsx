@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { usePuppets, PUPPETS_POOL } from "@/lib/game/puppets";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getEmporiumImagesFn } from "@/lib/game/emporium-images.functions";
+import { PUPPETS_POOL } from "@/lib/game/puppets";
 import { inscriptionContentUrl } from "@/lib/game/pfpExtenders";
 import { InscriptionCollectionMarket } from "@/components/market/InscriptionCollectionMarket";
 
@@ -17,11 +19,12 @@ export const Route = createFileRoute("/collections/emporium")({
 });
 
 function Emporium() {
-  const set = usePuppets();
-  const items = useMemo(() => (set?.list ?? []).map((p) => ({ id: p.inscriptionId, label: `#${p.index + 1}` })), [set]);
+  const q = useQuery({ queryKey: ["emporium-images"], queryFn: () => getEmporiumImagesFn(), staleTime: 3600_000 });
+  const [broken, setBroken] = useState<Set<string>>(() => new Set());
+  const items = useMemo(() => (q.data?.items ?? []).filter(([id]) => !broken.has(id)).map(([id, n]) => ({ id, label: `#${n + 1}` })), [q.data, broken]);
   return (
-    <InscriptionCollectionMarket pool={PUPPETS_POOL} title="BITMAP EMPORIUM" blurb="CHILDREN OF 717328.BITMAP · TRADED BY SIGNED PSBT"
-      items={items} loading={!set}
-      preview={(i) => <img src={inscriptionContentUrl(i.id)} alt={`Emporium ${i.label}`} loading="lazy" className="aspect-square w-full bg-muted object-contain [image-rendering:pixelated]" />} />
+    <InscriptionCollectionMarket pool={PUPPETS_POOL} title="BITMAP EMPORIUM" blurb="IMAGE CHILDREN OF 717328.BITMAP · TRADED BY SIGNED PSBT"
+      items={items} loading={q.isPending}
+      preview={(i) => <img src={inscriptionContentUrl(i.id)} alt={`Emporium ${i.label}`} loading="lazy" onError={() => setBroken((b) => new Set(b).add(i.id))} className="aspect-square w-full bg-muted object-contain [image-rendering:pixelated]" />} />
   );
 }
