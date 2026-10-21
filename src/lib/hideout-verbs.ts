@@ -72,3 +72,37 @@ export function resolveIslandVerb(verb: Verb, h: IslandHotspot, s: HideoutState)
       return o("A speedboat back to the Oasis. Name painted on the hull: GENESIS TIDE.");
   }
 }
+
+// ---------- CH.5 Beneath 1138: lift WILL's forged ledger, use it on the vault to expose the real blueprint. ----------
+export type VaultHotspot = "ghost" | "ledger" | "vault" | "printer" | "villains" | "ladder";
+export const VAULT_NAMES: Record<VaultHotspot, string> = {
+  ghost: "GHOST OF 1138", ledger: "FORGED LEDGER", vault: "BLUEPRINT VAULT", printer: "CONFIRMATION PRINTER", villains: "TWO SHADOWS", ladder: "LADDER UP",
+};
+export function resolveVaultVerb(verb: Verb, h: VaultHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "ghost":
+      if (verb === "talk") return o("", "talk");
+      if (verb === "look") return o(s.solved ? "The ghost of 1138 is calm now, humming four notes in the right order." : "The ghost of 1138 stands guard over a vault, flickering. Its hands are chained with printed receipts.");
+      return o("Your hand passes straight through. Cold. Unconfirmed cold.");
+    case "ledger":
+      if (s.got || s.solved) return o("The ledger is in your hand. Every page signed 'W.' in fake ink.");
+      if (verb === "pickup" || act) return o("You lift WILL's FORGED LEDGER from the crate. Sixty 'confirmations' for blocks that never existed.", "gain");
+      return o("A thick ledger left on a crate. Embossed: PROPERTY OF WILL · DO NOT AUDIT.");
+    case "vault":
+      if (s.solved) return o("The vault stands open. Urban's real blueprint glows inside, every tile in the right place.");
+      if (act && s.got) return o("You slam the forged ledger onto the vault's audit plate. It counts every fake. The lock rejects them all — and opens.", "solve");
+      if (act) return o("The vault wants proof. Plate reads: AUDIT TO OPEN. Show me what's fake.");
+      return o("A steel vault set into the bedrock under 1138. Urban's hilbert-curve sigil is carved on the door.");
+    case "printer":
+      if (verb === "pickup" || act) return o("You poke the printer. It spits sixty confirmations straight in your face. INK BLAST!", "hazard");
+      return o("A humming printer stamping 'CONFIRMED' on blank receipts. This is how WILL forges blocks.");
+    case "villains":
+      if (verb === "talk") return o(s.solved ? "IMAN: 'You audited us. Fine. The Void has more doors than you have keys.' WILL: 'We'll print new ones.'" : "IMAN, from the dark: 'Turn back, Marshal. Orphans are inventory.' WILL laughs and keeps stamping.");
+      if (verb === "look") return o("Two shadows in the back: IMAN, red-eyed, counting orphans; WILL, violet, feeding the printer.");
+      return o("They step back into the dark. Not yet, they say. Not yet.");
+    case "ladder":
+      if (act) return o("", "exit");
+      return o("A rusted ladder back up to the Void catwalk.");
+  }
+}
