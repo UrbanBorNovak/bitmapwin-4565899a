@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RELIC_KINDS, RELIC_LABEL, TIER_LABEL, relicMasterHtml, relicMetadata, relicTribute, verifyRelic, withinTip, type RelicKind } from "@/lib/marauder-relics";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { CollectionParentBadge } from "@/components/CollectionParentBadge";
@@ -19,7 +19,7 @@ function RelicPayoutReview({ height, tip }: { height: number; tip: number }) {
     parents: [], bitmapParentId: null, masterInscriptionId: null });
   const payoutOk = plan.ok || !plan.missing.some((m) => m === "HOLDER" || m === "TREASURY" || m === "TIP");
   return (
-    <div className="space-y-1 rounded border border-border p-2">
+    <div className="space-y-1 rounded border border-border bg-card p-2">
       <p className="text-muted-foreground">TRIBUTE: {t.total} SATS · {t.holder} TO BITMAP HOLDER · {t.treasury} TO TREASURY (+ MINER FEE)</p>
       <p className={holder ? "text-accent" : "text-destructive"}>
         HOLDER: {q.isLoading ? "CHECKING CHAIN…" : holder ? `${holder.slice(0, 10)}…${holder.slice(-6)} (VERIFIED LIVE)` : `NOT VERIFIED${q.data?.note ? ` — ${q.data.note}` : ""}`}
@@ -35,14 +35,22 @@ function RelicTxPreview({ height, tip, metadataBytes }: { height: number; tip: n
   const [rate, setRate] = useState("5");
   const [res, setRes] = useState<Awaited<ReturnType<typeof relicPreviewFn>> | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => { setRes(null); }, [height, tip, metadataBytes, addr, rate]);
   const run = async () => {
     setBusy(true); setRes(null);
-    try { setRes(await fn({ data: { height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes } })); }
+    try {
+      // Dev-only test hook: mocked chain facts run through the real preview builder, no network.
+      const mock = import.meta.env.DEV ? (window as unknown as { __relicChainMock?: Record<string, unknown> }).__relicChainMock : undefined;
+      if (mock) {
+        const { buildRelicPreview } = await import("@/lib/relic-mint-preview");
+        setRes(buildRelicPreview({ ...(mock as object), height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes, treasuryAddress: DONATION_ADDRESS } as never) as never);
+      } else setRes(await fn({ data: { height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes } }));
+    }
     catch (e) { setRes({ ok: false, message: (e as Error).message.slice(0, 160) }); }
     finally { setBusy(false); }
   };
   return (
-    <div className="space-y-2 rounded border border-border p-2">
+    <div className="space-y-2 rounded border border-border bg-card p-2">
       <p className="text-primary">UNSIGNED TRANSACTION PREVIEW</p>
       <input value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="RELIC GOES TO (YOUR ADDRESS)" className="w-full rounded border border-border bg-background px-2 py-1 text-foreground" />
       <div className="flex gap-2">
@@ -120,6 +128,7 @@ function Relics() {
             <p className="text-accent">{check?.ok ? "✓ MATCHES THE BLOCK" : "✗ DOES NOT MATCH"} · {meta.v.split(";").length} VOXELS · 1 DRAW</p>
             <p className="text-primary">TIER: {TIER_LABEL[meta.r]}</p>
             <RelicPayoutReview height={height} tip={tip} />
+            <RelicTxPreview height={height} tip={tip} metadataBytes={json.length} />
             <div>
               <p className="text-muted-foreground">RELIC DATA (TAG 5) · {json.length} BYTES</p>
               <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px]">{json}</pre>
