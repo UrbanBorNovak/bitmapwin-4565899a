@@ -88,7 +88,7 @@ function Room({ s, timeRef }: { s: RoomSpec; timeRef: MutableRefObject<number> }
       else c.rotation.z = Math.sin(t * 1.2 + i) * 0.1; }); });
   return (
     <group>
-      <ambientLight intensity={0.5} color={s.amb} />
+      <ambientLight intensity={0.85} color={s.amb} />
       <pointLight position={[0, 34, 0]} intensity={1200} distance={120} decay={2} color={s.key} />
       <pointLight position={[-20, 18, 10]} intensity={500} distance={80} decay={2} color={s.accent} />
       {!s.open && <>
@@ -112,13 +112,13 @@ export function BiternamRoomSet({ room, timeRef }: { room: string; timeRef: Muta
 
 /** Where cameras and wandering extras may go inside each film set (stage units; extras walk in units ÷10). */
 export type SetBounds = { cam: { x: number; z0: number; z1: number; y0: number; y1: number }; walk: { x0: number; x1: number; z0: number; z1: number } };
-const WALLED: SetBounds = { cam: { x: 44, z0: -24, z1: 75, y0: 3, y1: 34 }, walk: { x0: -4.2, x1: 4.2, z0: -2.2, z1: 1.6 } };
+const WALLED: SetBounds = { cam: { x: 44, z0: -24, z1: 75, y0: 3, y1: 34 }, walk: { x0: -4.2, x1: 4.2, z0: -2.2, z1: 0.4 } };
 export const SET_BOUNDS: Record<string, SetBounds> = {
-  cafe: { ...WALLED, walk: { x0: -3.2, x1: 3.2, z0: -1.2, z1: 1.6 } }, vault: WALLED,
-  batcave: { ...WALLED, walk: { x0: -2.6, x1: 4.2, z0: -1.4, z1: 1.6 } },
-  chinatown: { cam: { x: 14, z0: -90, z1: 75, y0: 3, y1: 60 }, walk: { x0: -1.3, x1: 1.3, z0: -2.2, z1: 1.6 } },
-  "b-void": { cam: { x: 14, z0: -40, z1: 75, y0: 2, y1: 40 }, walk: { x0: -0.45, x1: 0.45, z0: -2.2, z1: 1.6 } },
-  "b-island": { cam: { x: 60, z0: -18, z1: 80, y0: 3, y1: 60 }, walk: { x0: -4.2, x1: 4.2, z0: -1.6, z1: 2 } },
+  cafe: { ...WALLED, walk: { x0: -3.2, x1: 3.2, z0: -1.2, z1: 0.4 } }, vault: WALLED,
+  batcave: { ...WALLED, walk: { x0: -2.6, x1: 4.2, z0: -1.4, z1: 0.4 } },
+  chinatown: { cam: { x: 14, z0: -90, z1: 75, y0: 3, y1: 60 }, walk: { x0: -1.3, x1: 1.3, z0: -2.2, z1: 0.4 } },
+  "b-void": { cam: { x: 14, z0: -40, z1: 75, y0: 2, y1: 40 }, walk: { x0: -0.45, x1: 0.45, z0: -2.2, z1: 0.4 } },
+  "b-island": { cam: { x: 60, z0: -18, z1: 80, y0: 3, y1: 60 }, walk: { x0: -4.2, x1: 4.2, z0: -1.6, z1: 0.4 } },
 };
 export function setBoundsFor(set: string | undefined): SetBounds | null {
   if (!set) return null;
