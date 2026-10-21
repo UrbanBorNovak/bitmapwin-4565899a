@@ -116,6 +116,7 @@ import { Route as CollectionsFreeRossRouteImport } from './routes/collections.fr
 import { Route as CollectionsGuardiansRouteImport } from './routes/collections.guardians'
 import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.jigglypuff'
 import { Route as CollectionsPixelsRouteImport } from './routes/collections.pixels'
+import { Route as CollectionsRelicsRouteImport } from './routes/collections.relics'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as EmbedOasisRouteImport } from './routes/embed.oasis'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
@@ -703,6 +704,11 @@ const CollectionsPixelsRoute = CollectionsPixelsRouteImport.update({
   path: '/pixels',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const CollectionsRelicsRoute = CollectionsRelicsRouteImport.update({
+  id: '/relics',
+  path: '/relics',
+  getParentRoute: () => CollectionsRoute,
+} as any)
 const DistrictSlugRoute = DistrictSlugRouteImport.update({
   id: '/district/$slug',
   path: '/district/$slug',
@@ -1064,6 +1070,7 @@ export interface FileRoutesByFullPath {
   '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/collections/pixels': typeof CollectionsPixelsRoute
+  '/collections/relics': typeof CollectionsRelicsRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -1219,6 +1226,7 @@ export interface FileRoutesByTo {
   '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/collections/pixels': typeof CollectionsPixelsRoute
+  '/collections/relics': typeof CollectionsRelicsRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -1379,6 +1387,7 @@ export interface FileRoutesById {
   '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/collections/pixels': typeof CollectionsPixelsRoute
+  '/collections/relics': typeof CollectionsRelicsRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -1540,6 +1549,7 @@ export interface FileRouteTypes {
     | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/collections/pixels'
+    | '/collections/relics'
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
@@ -1695,6 +1705,7 @@ export interface FileRouteTypes {
     | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/collections/pixels'
+    | '/collections/relics'
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
@@ -1854,6 +1865,7 @@ export interface FileRouteTypes {
     | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/collections/pixels'
+    | '/collections/relics'
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
@@ -2774,6 +2786,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsPixelsRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/collections/relics': {
+      id: '/collections/relics'
+      path: '/relics'
+      fullPath: '/collections/relics'
+      preLoaderRoute: typeof CollectionsRelicsRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
     '/district/$slug': {
       id: '/district/$slug'
       path: '/district/$slug'
@@ -3185,6 +3204,7 @@ interface CollectionsRouteChildren {
   CollectionsGuardiansRoute: typeof CollectionsGuardiansRoute
   CollectionsJigglypuffRoute: typeof CollectionsJigglypuffRoute
   CollectionsPixelsRoute: typeof CollectionsPixelsRoute
+  CollectionsRelicsRoute: typeof CollectionsRelicsRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
   CollectionsGuardiansHeightRoute: typeof CollectionsGuardiansHeightRoute
 }
@@ -3196,6 +3216,7 @@ const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsGuardiansRoute: CollectionsGuardiansRoute,
   CollectionsJigglypuffRoute: CollectionsJigglypuffRoute,
   CollectionsPixelsRoute: CollectionsPixelsRoute,
+  CollectionsRelicsRoute: CollectionsRelicsRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
   CollectionsGuardiansHeightRoute: CollectionsGuardiansHeightRoute,
 }
