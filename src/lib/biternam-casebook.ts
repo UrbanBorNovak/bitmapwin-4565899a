@@ -2,7 +2,7 @@ import { HEIST_STEPS } from "@/lib/void-heist";
 import { VOID_STEPS } from "@/lib/void-progress";
 import { HIDEOUT_STEPS } from "@/lib/hideout-progress";
 
-export type CaseKey = "heist" | "void" | "batcave" | "island" | "vault" | "lair" | "basement" | "archive" | "holders" | "handshake" | "fortress" | "canon";
+export type CaseKey = "heist" | "void" | "batcave" | "island" | "vault" | "lair" | "basement" | "archive" | "holders" | "handshake" | "fortress" | "canon" | "receipt";
 export type CaseEntry = { key: CaseKey; title: string; to: string; total: number; clue: string };
 
 /** Story-ordered case file; each clue is the evidence that chapter put on the record. */
@@ -19,6 +19,7 @@ export const CASEBOOK: CaseEntry[] = [
   { key: "handshake", title: "CH.10 · THE HANDSHAKE", to: "/biternam/handshake", total: HIDEOUT_STEPS.handshake.length, clue: "Row 1138: a third address paid the fee. Iman's pattern." },
   { key: "fortress", title: "CH.11 · THE KEY FORTRESS", to: "/biternam/fortress", total: HIDEOUT_STEPS.fortress.length, clue: "The bait key. Limitless takes it straight to Iman." },
   { key: "canon", title: "CH.12 · THE CANONICAL BLOCK", to: "/biternam/canon", total: HIDEOUT_STEPS.canon.length, clue: "Iman signed the bait with his own address. Fork orphaned." },
+  { key: "receipt", title: "CH.13 · THE MARSHAL'S RECEIPT", to: "/biternam/receipt", total: HIDEOUT_STEPS.receipt.length, clue: "Wierdamoto's old signature. UNPAID: ONE MEMORY. BENEFICIARY: THE DARKSIDE." },
 ];
 
 export type CaseCounts = Partial<Record<CaseKey, number>>;
@@ -29,5 +30,5 @@ export function caseSolved(e: CaseEntry, counts: CaseCounts): boolean {
 
 /** The Aftermath opens only once the Canonical Block is fully solved on the account. */
 export function aftermathUnlocked(counts: CaseCounts): boolean {
-  return caseSolved(CASEBOOK[CASEBOOK.length - 1]!, counts);
+  return caseSolved(CASEBOOK.find((c) => c.key === "canon")!, counts);
 }
