@@ -45,6 +45,9 @@ export function SealedVault() {
   const [signed, setSigned] = useState<{ txid: string; rawHex: string; sent: { label: string; code: string }[] } | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"send" | "receive">("send");
+  const [frozen, setFrozen] = useState(false);
+  const [backedUp, setBackedUp] = useState(false);
   const address = wallet?.ordinalsAddress ?? "";
 
   const store = (v: HeldSealed[]) => { sealStore.setHeld(v); setHeld(v); };
@@ -125,14 +128,59 @@ export function SealedVault() {
     store(next); setSigned(null); setMsg("PREPARED SPEND CANCELLED — NOTES ARE BACK ON THEIR COIN"); void check(next);
   });
 
+  const backup = () => {
+    const blob = new Blob([JSON.stringify({ held: sealStore.held(), recv: sealStore.recv(), sent: sealStore.sent() }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `sealed-notes-backup-${Date.now()}.json`; a.click();
+    setBackedUp(true);
+  };
+  const anyPending = Object.values(status).some((s) => s.state === "PENDING");
+  const anySealed = Object.values(status).some((s) => s.state === "SEALED");
+  const steps = mode === "send" ? [
+    { t: "Connect your Bitcoin wallet", done: !!wallet },
+    { t: "Pick a plain coin (no inscriptions or runes) — 5,000+ sats is plenty", done: !!coinPick || held.length > 0 },
+    { t: "Name a note and press SEAL ON COIN (free — no transaction)", done: held.length > 0 },
+    { t: "Ask the recipient for their SEAL-RECV code, then press GIVE FROM THIS COIN and paste it", done: !!review || !!signed },
+    { t: "Tick the safety checks, sign in your wallet, then broadcast it yourself (the only transaction)", done: !!signed },
+    { t: `Send each recipient their code and wait for ${FINAL_CONFIRMATIONS} confirmations`, done: anySealed && !anyPending },
+  ] : [
+    { t: "Connect your Bitcoin wallet", done: !!wallet },
+    { t: "Pick one of your plain coins to receive on", done: !!coinPick },
+    { t: "Press MAKE A RECEIVE CODE and send that code to the sender", done: !!recvCode },
+    { t: "Paste the SEAL-NOTE code they give you and press CHECK ON BITCOIN & ACCEPT (no transaction for you)", done: held.length > 0 },
+    { t: `Wait for ${FINAL_CONFIRMATIONS} confirmations — then it shows SEALED`, done: anySealed && !anyPending },
+  ];
+  const nextIdx = steps.findIndex((s) => !s.done);
+
   return (
     <section className="mt-10 rounded border border-primary/40 bg-card/60 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="text-[11px] tracking-widest text-primary">BITCOIN-SEALED NOTES · BETA</div>
-        <button onClick={() => void check(held)} className="text-[11px] text-signal">[ RECHECK ON BITCOIN ]</button>
+        <div className="flex gap-3 text-[11px]">
+          <button onClick={backup} className="text-signal">[ DOWNLOAD BACKUP ]</button>
+          <button onClick={() => void check(held)} className="text-signal">[ RECHECK ON BITCOIN ]</button>
+        </div>
       </div>
       <p className="mt-2 font-sans text-[12px] text-muted-foreground">A sealed note lives on one of your Bitcoin coins. Moving it means spending that coin, which Bitcoin allows only once. Your wallet signs; you send the transaction yourself. A note counts as sealed after {FINAL_CONFIRMATIONS} confirmations. Don't spend a seal coin anywhere else — every note on it would be lost.</p>
       <p className="mt-1 font-sans text-[12px] text-muted-foreground">Still in testing: the double-give warning above applies until this has been proven end to end.</p>
+
+      <div className="mt-4 rounded border border-signal/40 bg-background/60 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-[11px] tracking-widest text-signal">EASY GUIDE · STEP BY STEP</div>
+          <div className="flex gap-1 text-[11px]">
+            {(["send", "receive"] as const).map((m) => (
+              <button key={m} onClick={() => setMode(m)} className={`rounded border px-2 py-0.5 ${mode === m ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>{m === "send" ? "I'M SENDING" : "I'M RECEIVING"}</button>
+            ))}
+          </div>
+        </div>
+        <ol className="mt-2 space-y-1 font-sans text-[12px]">
+          {steps.map((s, i) => (
+            <li key={i} className={s.done ? "text-muted-foreground line-through" : i === nextIdx ? "text-foreground" : "text-muted-foreground"}>
+              <span className={`mr-2 font-mono ${s.done ? "text-signal" : i === nextIdx ? "text-primary" : ""}`}>{s.done ? "✓" : i === nextIdx ? "▶" : `${i + 1}.`}</span>{s.t}
+            </li>
+          ))}
+        </ol>
+        <p className="mt-2 font-sans text-[11px] text-muted-foreground">{mode === "send" ? "Total: one Bitcoin transaction, however many notes you give or keep." : "You never make a transaction to receive."} Tip: in your wallet, freeze the seal coin so it's never spent by accident, and download a backup after every change.</p>
+      </div>
 
       {!wallet ? (
         <p className="mt-4 text-[12px]">&gt; <Link to="/wallet" className="text-primary">CONNECT A WALLET</Link> TO SEAL NOTES_</p>
@@ -199,7 +247,9 @@ export function SealedVault() {
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span>FEE RATE</span><input type="number" min={1} value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} className="w-16 rounded border border-border bg-background px-1" aria-label="Fee rate" /><span>sat/vB · fee {sealFee(feeRate).toLocaleString()} sats</span>
               </div>
-              <button disabled={busy} onClick={() => prepare(k)} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1.5 text-primary">{busy ? "WORKING…" : "[ PREPARE & SIGN IN WALLET ]"}</button>
+              <label className="mt-2 flex items-center gap-2 font-sans"><input type="checkbox" checked={frozen} onChange={(e) => setFrozen(e.target.checked)} />I understand this coin must never be spent anywhere else (freeze it in my wallet).</label>
+              <label className="mt-1 flex items-center gap-2 font-sans"><input type="checkbox" checked={backedUp} onChange={(e) => setBackedUp(e.target.checked)} />I downloaded a backup of my notes.</label>
+              <button disabled={busy || !frozen || !backedUp} onClick={() => prepare(k)} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1.5 text-primary disabled:opacity-40">{busy ? "WORKING…" : "[ PREPARE & SIGN IN WALLET ]"}</button>
             </div>
           ) : null}
         </div>
