@@ -51,7 +51,14 @@ describe("archive", () => {
   });
 });
 
-import { resolveHoldersVerb } from "./hideout-verbs";
+import { resolveHoldersVerb, resolveHandshakeVerb } from "./hideout-verbs";
+describe("handshake", () => {
+  it("table needs the trace first", () => {
+    expect(resolveHandshakeVerb("use", "table", { got: false, solved: false }).effect).toBeNull();
+    expect(resolveHandshakeVerb("pickup", "printer", { got: false, solved: false }).effect).toBe("gain");
+    expect(resolveHandshakeVerb("use", "table", { got: true, solved: false }).effect).toBe("solve");
+  });
+});
 describe("holders", () => {
   it("mirror needs page three first", () => {
     expect(resolveHoldersVerb("use", "mirror", { got: false, solved: false }).effect).toBeNull();

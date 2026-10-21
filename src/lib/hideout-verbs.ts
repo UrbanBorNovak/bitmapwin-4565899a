@@ -247,3 +247,44 @@ export function resolveHoldersVerb(verb: Verb, h: HoldersHotspot, s: HideoutStat
       return o("A ladder back up to the Oasis.");
   }
 }
+
+// ======================= CH.10 · THE HANDSHAKE =======================
+export type HandshakeHotspot = "geek" | "printer" | "table" | "wierdamoto" | "bitoshi" | "flask" | "ghost" | "door";
+export const HANDSHAKE_NAMES: Record<HandshakeHotspot, string> = {
+  geek: "INVEST GEEK", printer: "TRACE PRINTER", table: "NEUTRAL TABLE", wierdamoto: "WIERDAMOTO", bitoshi: "BITOSHI", flask: "BITOSHI'S FLASK", ghost: "GHOST OF 1138", door: "BACK-ROOM DOOR",
+};
+export function resolveHandshakeVerb(verb: Verb, h: HandshakeHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "geek":
+      if (verb === "talk") return o("", "talk");
+      if (verb === "look") return o(s.solved ? "INVEST GEEK is adding a new column: FRIENDS AGAIN. It has two rows." : "INVEST GEEK, three monitors, one spreadsheet, row 1138 highlighted in orange.");
+      return o("'Don't touch the keyboard. Use the printer.'");
+    case "printer":
+      if (s.got || s.solved) return o("The printer is empty. The trace is in your hand.");
+      if (verb === "pickup" || act) return o("The printer spits out THE TRACE: row 1138, the input Wierdamoto paid, the change Bitoshi got, and a fee paid from a third, fresh address. Same pattern as IMAN.", "gain");
+      return o("A dot-matrix printer hooked to Invest Geek's spreadsheet. It's warm and ready.");
+    case "table":
+      if (s.solved) return o("Two empty mugs, one printout, and a handshake still echoing off the walls.");
+      if (act && s.got) return o("You slap THE TRACE on the neutral table. The mask reads it. The cook reads it. A long silence. Then: one gloved hand, one hazmat glove. HANDSHAKE.", "solve");
+      if (act) return o("Nobody sits down for an opinion. Bring them proof.");
+      return o("A small round table. Wierdamoto on one side, Bitoshi on the other, and a lot of glaring in between.");
+    case "wierdamoto":
+      if (verb === "talk") return o(s.solved ? "WIERDAMOTO: 'Framed. Both of us. By someone who knew we'd never check together.'" : "WIERDAMOTO: 'I'm not sitting until he admits he kept the key.'");
+      if (verb === "look") return o("The mask, arms crossed, cape pooled on the chair.");
+      return o("'Nobody takes custody of me.'");
+    case "bitoshi":
+      if (verb === "talk") return o(s.solved ? "BITOSHI: 'Fine. Ninety-nine point one percent friends.'" : "BITOSHI: 'I'm not sitting until he admits he left me a 1-of-2.'");
+      if (verb === "look") return o("Bitoshi, hazmat hood down for once, gripping a spatula like a gavel.");
+      return o("He raises the spatula. You reconsider.");
+    case "flask":
+      if (verb === "pickup" || act) return o("You shake Bitoshi's flask. FIZZ! Blue foam everywhere. Both of them yell at you. In unison. Progress?", "hazard");
+      return o("Blue matter, bubbling. Bitoshi never goes anywhere without it.");
+    case "ghost":
+      if (verb === "talk") return o(s.solved ? "GHOST: 'The third address is IMAN's. Now three of us know it.'" : "GHOST: 'Row 1138 is about me too. Print it.'");
+      return o(s.solved ? "The ghost of 1138 is glowing warm orange." : "The ghost of 1138 hovers by the printer.");
+    case "door":
+      if (act) return o("", "exit");
+      return o("The back-room door to the Trading Post.");
+  }
+}

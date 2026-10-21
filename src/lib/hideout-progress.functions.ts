@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const Room = z.enum(["batcave", "island", "vault", "lair", "basement", "archive", "holders"]);
+const Room = z.enum(["batcave", "island", "vault", "lair", "basement", "archive", "holders", "handshake"]);
 
 /** Account-saved hideout progress: steps recorded in order for one room. */
 export const hideoutStatusFn = createServerFn({ method: "POST" })

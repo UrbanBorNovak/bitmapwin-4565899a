@@ -86,6 +86,7 @@ import { Route as BiternamArchiveRouteImport } from './routes/biternam_.archive'
 import { Route as BiternamBasementRouteImport } from './routes/biternam_.basement'
 import { Route as BiternamBatcaveRouteImport } from './routes/biternam_.batcave'
 import { Route as BiternamCafeRouteImport } from './routes/biternam_.cafe'
+import { Route as BiternamHandshakeRouteImport } from './routes/biternam_.handshake'
 import { Route as BiternamHoldersRouteImport } from './routes/biternam_.holders'
 import { Route as BiternamIslandRouteImport } from './routes/biternam_.island'
 import { Route as BiternamLabRouteImport } from './routes/biternam_.lab'
@@ -541,6 +542,11 @@ const BiternamCafeRoute = BiternamCafeRouteImport.update({
   path: '/biternam/cafe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamHandshakeRoute = BiternamHandshakeRouteImport.update({
+  id: '/biternam_/handshake',
+  path: '/biternam/handshake',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamHoldersRoute = BiternamHoldersRouteImport.update({
   id: '/biternam_/holders',
   path: '/biternam/holders',
@@ -963,6 +969,7 @@ export interface FileRoutesByFullPath {
   '/biternam/basement': typeof BiternamBasementRoute
   '/biternam/batcave': typeof BiternamBatcaveRoute
   '/biternam/cafe': typeof BiternamCafeRoute
+  '/biternam/handshake': typeof BiternamHandshakeRoute
   '/biternam/holders': typeof BiternamHoldersRoute
   '/biternam/island': typeof BiternamIslandRoute
   '/biternam/lab': typeof BiternamLabRoute
@@ -1106,6 +1113,7 @@ export interface FileRoutesByTo {
   '/biternam/basement': typeof BiternamBasementRoute
   '/biternam/batcave': typeof BiternamBatcaveRoute
   '/biternam/cafe': typeof BiternamCafeRoute
+  '/biternam/handshake': typeof BiternamHandshakeRoute
   '/biternam/holders': typeof BiternamHoldersRoute
   '/biternam/island': typeof BiternamIslandRoute
   '/biternam/lab': typeof BiternamLabRoute
@@ -1254,6 +1262,7 @@ export interface FileRoutesById {
   '/biternam_/basement': typeof BiternamBasementRoute
   '/biternam_/batcave': typeof BiternamBatcaveRoute
   '/biternam_/cafe': typeof BiternamCafeRoute
+  '/biternam_/handshake': typeof BiternamHandshakeRoute
   '/biternam_/holders': typeof BiternamHoldersRoute
   '/biternam_/island': typeof BiternamIslandRoute
   '/biternam_/lab': typeof BiternamLabRoute
@@ -1403,6 +1412,7 @@ export interface FileRouteTypes {
     | '/biternam/basement'
     | '/biternam/batcave'
     | '/biternam/cafe'
+    | '/biternam/handshake'
     | '/biternam/holders'
     | '/biternam/island'
     | '/biternam/lab'
@@ -1546,6 +1556,7 @@ export interface FileRouteTypes {
     | '/biternam/basement'
     | '/biternam/batcave'
     | '/biternam/cafe'
+    | '/biternam/handshake'
     | '/biternam/holders'
     | '/biternam/island'
     | '/biternam/lab'
@@ -1693,6 +1704,7 @@ export interface FileRouteTypes {
     | '/biternam_/basement'
     | '/biternam_/batcave'
     | '/biternam_/cafe'
+    | '/biternam_/handshake'
     | '/biternam_/holders'
     | '/biternam_/island'
     | '/biternam_/lab'
@@ -1841,6 +1853,7 @@ export interface RootRouteChildren {
   BiternamBasementRoute: typeof BiternamBasementRoute
   BiternamBatcaveRoute: typeof BiternamBatcaveRoute
   BiternamCafeRoute: typeof BiternamCafeRoute
+  BiternamHandshakeRoute: typeof BiternamHandshakeRoute
   BiternamHoldersRoute: typeof BiternamHoldersRoute
   BiternamIslandRoute: typeof BiternamIslandRoute
   BiternamLabRoute: typeof BiternamLabRoute
@@ -2409,6 +2422,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/cafe'
       fullPath: '/biternam/cafe'
       preLoaderRoute: typeof BiternamCafeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/handshake': {
+      id: '/biternam_/handshake'
+      path: '/biternam/handshake'
+      fullPath: '/biternam/handshake'
+      preLoaderRoute: typeof BiternamHandshakeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/holders': {
@@ -3106,6 +3126,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiternamBasementRoute: BiternamBasementRoute,
   BiternamBatcaveRoute: BiternamBatcaveRoute,
   BiternamCafeRoute: BiternamCafeRoute,
+  BiternamHandshakeRoute: BiternamHandshakeRoute,
   BiternamHoldersRoute: BiternamHoldersRoute,
   BiternamIslandRoute: BiternamIslandRoute,
   BiternamLabRoute: BiternamLabRoute,
