@@ -652,7 +652,7 @@ export function HandshakeScene({ onHit, onHover, hover, st, hazard }: SceneProps
           <Ring on={hover === "ghost"} color={NEON} />
           <VaultGhost calm={st.solved} />
         </Hot>
-        <Hot id="door" {...hp} position={[-3.8, 0, 2.6]} rotation={[0, Math.PI / 2, 0]}>
+        <Hot id="door" {...hp} position={[-3.8, 0, -0.9]} rotation={[0, Math.PI / 2, 0]}>
           <mesh position-y={1.2}><boxGeometry args={[1.1, 2.4, 0.12]} /><meshStandardMaterial color="#3a2414" emissive={hover === "door" ? TRIM : "#000"} emissiveIntensity={0.4} /></mesh>
         </Hot>
         <CafeSmoke count={30} color={hazard ? "#80b0ff" : "#f0e0c8"} opacity={hazard ? 0.12 : 0.03} mist={["#120c08", st.solved ? TRIM : "#5a3a20"]} />
