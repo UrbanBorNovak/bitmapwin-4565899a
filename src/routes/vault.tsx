@@ -45,7 +45,7 @@ function VaultPage() {
     if (n.chain.at(-1)!.to !== ownerCommit(secret)) return setMsg("✗ THIS NOTE WAS SENT TO A DIFFERENT RECEIVE CODE");
     if (notes.some((x) => x.note.chain.at(-1)!.hash === n.chain.at(-1)!.hash)) return setMsg("ALREADY IN YOUR VAULT");
     store([...notes, { note: n, secret }]); rotateReceive(); setRecv(ownerCommit(receiveSecret()));
-    setPaste(""); setMsg(`✓ RECEIVED "${n.label}" · ${n.chain.length} VERIFIED HANDOFFS`);
+    setPaste(""); setMsg(`✓ RECEIVED "${n.label}" · ${n.chain.length - 1} VERIFIED HANDOFFS`);
   }
   function send(i: number) {
     try {
