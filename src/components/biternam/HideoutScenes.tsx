@@ -720,7 +720,7 @@ export function FortressScene({ onHit, onHover, hover, st, hazard }: SceneProps<
           <mesh position-y={0.3}><boxGeometry args={[0.7, 0.6, 0.7]} /><meshStandardMaterial color="#4a2a5a" /></mesh>
           <mesh position={[0, 0.8, 0.2]} rotation-x={-0.6}><cylinderGeometry args={[0.18, 0.24, 1, 10]} /><meshStandardMaterial color="#c8a020" metalness={0.6} emissive={hazard ? "#ffcc33" : hover === "cannon" ? TRIM : "#000"} emissiveIntensity={hazard ? 1.6 : 0.4} /></mesh>
         </Hot>
-        <Hot id="ghost" {...hp} position={[2.4, 0, 0.8]}>
+        <Hot id="ghost" {...hp} position={[-0.6, 0, 1.8]}>
           <Ring on={hover === "ghost"} color={NEON} />
           <VaultGhost calm={st.solved} />
         </Hot>
