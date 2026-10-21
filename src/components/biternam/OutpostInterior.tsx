@@ -4,6 +4,9 @@ import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "
 import type { Group, Mesh, MeshStandardMaterial } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { OutpostHotspot } from "@/lib/outpost-verbs";
+import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
+import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+const still = { current: false };
 
 const WALL = "#d8d2c0", FLOOR = "#6b6355", RUST = "#8a4b2a", TRIM = "#f7931a", BLUE = "#28e0ff", HAZ = "#e8c21a";
 type HP = { onHit: (h: OutpostHotspot) => void; onHover: (h: OutpostHotspot | null) => void };
@@ -93,7 +96,10 @@ export function OutpostInterior({ onHit, onHover, hover, hasSuit, suited, blasti
         <mesh position={[0, 0.25, -2.05]}><boxGeometry args={[7, 0.5, 0.06]} /><meshStandardMaterial color={RUST} /></mesh>
         <Vapor />
         <Hot id="flask" {...hp} position={[-1.6, 0, -1.6]}><Flask hot={hover === "flask"} /></Hot>
-        <Hot id="bitoshi" {...hp} position={[-0.2, 0, -0.6]} rotation={[0, 0.5, 0]}><Bitoshi hot={hover === "bitoshi"} /></Hot>
+        <Hot id="bitoshi" {...hp} position={[-0.2, 0, -0.6]} rotation={[0, 0.5, 0]}>
+          <Ring hot={hover === "bitoshi"} />
+          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["bitoshi"]!} pose="idle" movingRef={still} fallback={<Bitoshi hot={hover === "bitoshi"} />} />
+        </Hot>
         <Hot id="stove" {...hp} position={[1.8, 0, -1.6]}>
           <mesh position-y={0.5} castShadow><boxGeometry args={[1, 1, 0.7]} /><meshStandardMaterial color="#3c3c3c" emissive={TRIM} emissiveIntensity={blasting ? 1.5 : hover === "stove" ? 0.35 : 0.05} /></mesh>
           <mesh position={[0, 1.02, 0]}><boxGeometry args={[0.9, 0.04, 0.6]} /><meshStandardMaterial color="#111" /></mesh>
