@@ -86,6 +86,7 @@ import { Route as BiternamCafeRouteImport } from './routes/biternam_.cafe'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
 import { Route as BiternamSafehouseRouteImport } from './routes/biternam_.safehouse'
+import { Route as BiternamStudioRouteImport } from './routes/biternam_.studio'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
 import { Route as CodexIndexRouteImport } from './routes/codex.index'
@@ -531,6 +532,11 @@ const BiternamSafehouseRoute = BiternamSafehouseRouteImport.update({
   path: '/biternam/safehouse',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamStudioRoute = BiternamStudioRouteImport.update({
+  id: '/biternam_/studio',
+  path: '/biternam/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BitmapBlockRoute = BitmapBlockRouteImport.update({
   id: '/bitmap/$block',
   path: '/bitmap/$block',
@@ -903,6 +909,7 @@ export interface FileRoutesByFullPath {
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
+  '/biternam/studio': typeof BiternamStudioRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1036,6 +1043,7 @@ export interface FileRoutesByTo {
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
   '/biternam/safehouse': typeof BiternamSafehouseRoute
+  '/biternam/studio': typeof BiternamStudioRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1174,6 +1182,7 @@ export interface FileRoutesById {
   '/biternam_/museum': typeof BiternamMuseumRoute
   '/biternam_/outpost': typeof BiternamOutpostRoute
   '/biternam_/safehouse': typeof BiternamSafehouseRoute
+  '/biternam_/studio': typeof BiternamStudioRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
@@ -1313,6 +1322,7 @@ export interface FileRouteTypes {
     | '/biternam/museum'
     | '/biternam/outpost'
     | '/biternam/safehouse'
+    | '/biternam/studio'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1446,6 +1456,7 @@ export interface FileRouteTypes {
     | '/biternam/museum'
     | '/biternam/outpost'
     | '/biternam/safehouse'
+    | '/biternam/studio'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1583,6 +1594,7 @@ export interface FileRouteTypes {
     | '/biternam_/museum'
     | '/biternam_/outpost'
     | '/biternam_/safehouse'
+    | '/biternam_/studio'
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
@@ -1721,6 +1733,7 @@ export interface RootRouteChildren {
   BiternamMuseumRoute: typeof BiternamMuseumRoute
   BiternamOutpostRoute: typeof BiternamOutpostRoute
   BiternamSafehouseRoute: typeof BiternamSafehouseRoute
+  BiternamStudioRoute: typeof BiternamStudioRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
   CodexBestiaryRoute: typeof CodexBestiaryRoute
@@ -2279,6 +2292,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/safehouse'
       fullPath: '/biternam/safehouse'
       preLoaderRoute: typeof BiternamSafehouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/studio': {
+      id: '/biternam_/studio'
+      path: '/biternam/studio'
+      fullPath: '/biternam/studio'
+      preLoaderRoute: typeof BiternamStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bitmap/$block': {
@@ -2906,6 +2926,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiternamMuseumRoute: BiternamMuseumRoute,
   BiternamOutpostRoute: BiternamOutpostRoute,
   BiternamSafehouseRoute: BiternamSafehouseRoute,
+  BiternamStudioRoute: BiternamStudioRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
   CodexBestiaryRoute: CodexBestiaryRoute,
