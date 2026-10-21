@@ -43,3 +43,12 @@ describe.skipIf(!live)("1138 vault story lock (throwaway user)", () => {
     expect(await hideoutStepCount(db, u, "vault")).toBe(0);
   });
 });
+
+describe.skipIf(!live)("re-org lair story lock (throwaway user)", () => {
+  const u = crypto.randomUUID();
+  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
+  it("refuses lair steps before the 1138 vault is solved and saves nothing", async () => {
+    expect(await recordHideoutStep(db, u, { room: "lair", index: 0, key: HIDEOUT_STEPS.lair[0] })).toEqual({ ok: false, status: "locked" });
+    expect(await hideoutStepCount(db, u, "lair")).toBe(0);
+  });
+});

@@ -284,3 +284,91 @@ export function VaultScene({ onHit, onHover, hover, st, hazard }: SceneProps<Vau
     </div>
   );
 }
+
+function Sparks({ on }: { on: boolean }) {
+  const g = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!g.current) return;
+    g.current.children.forEach((c, i) => {
+      const t = (clock.elapsedTime * (on ? 3 : 1.2) + i * 0.37) % 1;
+      c.position.set(Math.sin(i * 2.3) * 0.5 * t, 1.6 + t * 0.9, Math.cos(i * 1.7) * 0.4 * t);
+      c.visible = on || i % 3 === 0;
+    });
+  });
+  return <group ref={g}>{Array.from({ length: 14 }, (_, i) => <mesh key={i}><boxGeometry args={[0.05, 0.05, 0.05]} /><meshBasicMaterial color={i % 2 ? "#ffcc33" : TRIM} /></mesh>)}</group>;
+}
+
+export function LairScene({ onHit, onHover, hover, st, hazard }: SceneProps<LairHotspot>) {
+  const hp = { onHit, onHover };
+  const hot = !st.solved;
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[-0.2, 0.8, 0.2]} />
+        <color attach="background" args={["#08040a"]} />
+        <fog attach="fog" args={["#08040a", 13, 26]} />
+        <ambientLight intensity={0.8} color={st.solved ? "#bfe6ff" : "#ffb0a0"} />
+        <pointLight position={[-2.4, 2.4, -2.4]} intensity={hot ? 26 : 6} color="#ff3a1a" castShadow />
+        <pointLight position={[1.4, 2.6, -1]} intensity={st.solved ? 30 : 10} color={st.solved ? NEON : "#b026ff"} />
+        <pointLight position={[3, 1.8, 1.5]} intensity={8} color={TRIM} />
+        {/* Steel grate floor */}
+        {Array.from({ length: 64 }, (_, i) => (
+          <mesh key={i} position={[(i % 8) - 3.5, -0.05, Math.floor(i / 8) - 3.5]} receiveShadow>
+            <boxGeometry args={[0.95, 0.1, 0.95]} /><meshStandardMaterial color={(i + Math.floor(i / 8)) % 2 ? "#1c1a1f" : "#24212a"} metalness={0.6} roughness={0.6} />
+          </mesh>
+        ))}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#160d12" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#120a0f" roughness={1} /></mesh>
+        {/* Warning stripes + hazard sign */}
+        {Array.from({ length: 8 }, (_, i) => <mesh key={`w${i}`} position={[-3.5 + i, 3.7, -3.83]}><boxGeometry args={[0.5, 0.18, 0.02]} /><meshStandardMaterial color={i % 2 ? "#111" : "#f2c400"} emissive={i % 2 ? "#000" : "#5a4500"} /></mesh>)}
+        <mesh position={[1.8, 3.1, -3.83]}><boxGeometry args={[2.2, 0.4, 0.03]} /><meshStandardMaterial color="#000" emissive={st.solved ? NEON : "#ff1a1a"} emissiveIntensity={1.4} /></mesh>
+        {/* Overclocked ASIC racks along the left wall */}
+        <Hot id="rack" {...hp} position={[-3.3, 0, -1.4]}>
+          {[0, 1, 2].map((r) => (
+            <group key={r} position={[0, 0, r * 1.1 - 1.1]}>
+              <mesh position-y={1.1}><boxGeometry args={[0.7, 2.2, 0.9]} /><meshStandardMaterial color="#2a1a1a" metalness={0.6} /></mesh>
+              {Array.from({ length: 6 }, (_, k) => <mesh key={k} position={[0.36, 0.3 + k * 0.32, 0]}><boxGeometry args={[0.02, 0.18, 0.7]} /><meshStandardMaterial color="#000" emissive={hot ? "#ff3a1a" : "#1a3a4a"} emissiveIntensity={hover === "rack" ? 2 : 1.1} /></mesh>)}
+            </group>
+          ))}
+          <Sparks on={hazard || hot} />
+        </Hot>
+        {/* Rogue console */}
+        <Hot id="console" {...hp} position={[0.2, 0, -2.9]}>
+          <mesh position-y={0.5}><boxGeometry args={[1.8, 1, 0.8]} /><meshStandardMaterial color="#2a2433" metalness={0.5} emissive={hover === "console" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          <mesh position={[0, 1.35, -0.15]} rotation-x={-0.25}><boxGeometry args={[1.5, 0.8, 0.06]} /><meshStandardMaterial color="#000" emissive={st.got || st.solved ? GREEN : "#ff1a1a"} emissiveIntensity={1.3} /></mesh>
+          {[-0.5, 0, 0.5].map((x) => <mesh key={x} position={[x, 1.02, 0.25]}><boxGeometry args={[0.2, 0.05, 0.2]} /><meshStandardMaterial color="#c41e1e" emissive="#c41e1e" emissiveIntensity={0.6} /></mesh>)}
+        </Hot>
+        {/* Siphon breaker */}
+        <Hot id="breaker" {...hp} position={[2.6, 0, -3.3]}>
+          <mesh position-y={1.3}><boxGeometry args={[1, 1.6, 0.4]} /><meshStandardMaterial color="#3a3f46" metalness={0.8} roughness={0.35} emissive={hover === "breaker" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          {st.got || st.solved ? (
+            <group position={[0, 1.3, 0.25]} rotation-x={st.solved ? 1.1 : -0.4}>
+              <mesh position-y={0.35}><boxGeometry args={[0.1, 0.7, 0.1]} /><meshStandardMaterial color="#aaa" metalness={0.9} /></mesh>
+              <mesh position-y={0.72}><boxGeometry args={[0.4, 0.12, 0.12]} /><meshStandardMaterial color="#c41e1e" /></mesh>
+            </group>
+          ) : <mesh position={[0, 1.3, 0.22]}><boxGeometry args={[0.18, 0.18, 0.06]} /><meshStandardMaterial color="#111" /></mesh>}
+          {/* Siphon pipe into the ceiling */}
+          <mesh position={[0, 3, 0]}><cylinderGeometry args={[0.18, 0.18, 1.8, 10]} /><meshStandardMaterial color="#4a2a2a" metalness={0.6} emissive={hot ? "#ff3a1a" : "#000"} emissiveIntensity={0.4} /></mesh>
+        </Hot>
+        <Hot id="ghost" {...hp} position={[1.4, 0, -1.6]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm={st.solved} />
+        </Hot>
+        <Hot id="iman" {...hp} position={[-0.9, 0, -0.6]} rotation={[0, 0.4, 0]}>
+          <Ring on={hover === "iman"} color="#ff1a1a" />
+          <Shade body="#0b0b0f" eye="#ff1a1a" />
+        </Hot>
+        <Hot id="will" {...hp} position={[2.8, 0, 0.4]} rotation={[0, -0.7, 0]}>
+          <Ring on={hover === "will"} color="#b026ff" />
+          <Shade body="#16061f" eye="#b026ff" />
+          {!st.solved ? <mesh position={[-0.5, 0.35, 0.2]}><boxGeometry args={[0.5, 0.7, 0.4]} /><meshStandardMaterial color="#e8e2d0" emissive="#b026ff" emissiveIntensity={0.15} /></mesh> : null}
+        </Hot>
+        <Hot id="hatch" {...hp} position={[-3, 0, 2.8]}>
+          <mesh position-y={0.04}><boxGeometry args={[1.1, 0.08, 1.1]} /><meshStandardMaterial color="#5a5a62" metalness={0.8} emissive={TRIM} emissiveIntensity={hover === "hatch" ? 0.6 : 0.1} /></mesh>
+          <mesh position-y={0.1} rotation-x={Math.PI / 2}><torusGeometry args={[0.3, 0.05, 6, 16]} /><meshStandardMaterial color="#888" metalness={0.9} /></mesh>
+        </Hot>
+        <CafeSmoke count={55} color={st.solved ? "#cfe8ff" : "#ffb8a0"} opacity={0.04} mist={["#1a0808", st.solved ? NEON : "#ff3a1a"]} />
+      </SafeCanvas>
+    </div>
+  );
+}
