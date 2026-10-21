@@ -21,7 +21,7 @@ export type Bounds = { x0: number; x1: number; z0: number; z1: number };
 export function Patron({ skin, start, seed, bounds = BOUNDS, isBlocked = blocked, home = [1, 1.2] }: { skin: string; start: readonly [number, number]; seed: number; bounds?: Bounds; isBlocked?: (x: number, z: number) => boolean; home?: readonly [number, number] }) {
   const g = useRef<Group>(null);
   const moving = useRef(false);
-  const s = useMemo(() => ({ brain: createFlyBrain(seed), x: start[0], z: start[1], h: seed * 2.1, pause: 0 }), [seed, start]);
+  const s = useMemo(() => ({ brain: createFlyBrain(seed), x: start[0], z: start[1], h: seed * 2.1, pause: 0 }), [seed, start[0], start[1]]);
   useFrame((_, raw) => {
     const dt = Math.min(raw, 0.05);
     const act = s.brain.think({ now: performance.now(), hp: 1, maxHp: 1, snared: false, heading: s.h, playerDistance: null, playerAngle: 0, workDistance: null, workAngle: 0, worker: false, hostile: false, vendor: false }, dt);
