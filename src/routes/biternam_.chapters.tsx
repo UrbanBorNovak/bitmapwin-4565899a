@@ -6,8 +6,8 @@ import { useChainTip } from "@/lib/use-chain-tip";
 import { episodeLength, sceneAt } from "@/lib/toon-script";
 import { styleFilter } from "@/lib/toon-style";
 import { CHAPTER_SETS, QUOTE_MAX, TITLE_MAX, autoSet, chapterEpisode, chapterTheme, defaultQuote, defaultTitle, type ChapterSet } from "@/lib/biternam-chapter";
-import { guardianQuery } from "@/lib/bitmon-queries";
-import { forgeBuiltQuery } from "@/lib/forge";
+import { supabase } from "@/integrations/supabase/client";
+import { fromQuery, lookup, statusLabel } from "@/lib/chapter-cast";
 import { blockFactsFn, listChaptersFn, publishChapterFn } from "@/lib/biternam-chapter.functions";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
@@ -40,8 +40,12 @@ function ChaptersPage() {
   const [busy, setBusy] = useState(false);
 
   const facts = useQuery({ queryKey: ["chapter-block-facts", height], queryFn: () => blockFactsFn({ data: { height } }), retry: 1 });
-  const guardian = useQuery(guardianQuery(height));
-  const build = useQuery(forgeBuiltQuery(height));
+  const guardianQ = useQuery({ queryKey: ["chapter-guardian", height], retry: 1, staleTime: 30_000,
+    queryFn: async () => ({ height, l: await lookup(() => supabase.from("bitmon_guardians").select("species").eq("block_height", height).maybeSingle(), (r) => r.species || null) }) });
+  const buildQ = useQuery({ queryKey: ["chapter-build", height], retry: 1, staleTime: 60_000,
+    queryFn: async () => ({ height, l: await lookup(() => supabase.from("bitmap_forge_builds").select("inscription_id").eq("bitmap_height", height).maybeSingle(), (r) => r.inscription_id || null) }) });
+  const guardian = fromQuery({ ...guardianQ, data: guardianQ.data?.l }, height, guardianQ.data?.height);
+  const build = fromQuery({ ...buildQ, data: buildQ.data?.l }, height, buildQ.data?.height);
   const [setPick, setSetPick] = useState<ChapterSet | "auto">("auto");
   const chapters = useQuery({ queryKey: ["biternam-chapters"], queryFn: () => listChaptersFn(), staleTime: 30_000 });
   const f = { height, txCount: facts.data?.txCount ?? null, avgFeeRate: facts.data?.avgFeeRate ?? null, minedAt: facts.data?.minedAt ?? null };
@@ -51,11 +55,12 @@ function ChaptersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, facts.data?.txCount, existing?.title]);
 
-  const species = guardian.data?.species ?? null, hasBuild = !!build.data;
+  const species = guardian.state === "found" ? guardian.value : null, hasBuild = build.state === "found";
+  const guardianUnknown = guardian.state === "checking" || guardian.state === "unavailable";
   const chosenSet = setPick === "auto" ? autoSet(f) : setPick;
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f), { guardian: species ? { species } : null, hasBuild, set: chosenSet }),
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet]);
+    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown]);
   const total = episodeLength(episode);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
