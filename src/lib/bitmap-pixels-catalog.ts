@@ -1,5 +1,4 @@
 import raw from "@/lib/vendor/bitmap-pixels-catalog.json";
-// dev9 wears MM-9, BOP wears DG - 9 (added to STARRED_SERIES below).
 
 export type PixelItem = { number: number; name: string; id: string; artist: string };
 
@@ -9,6 +8,8 @@ export const PIXELS: PixelItem[] = (raw as [number, string, string, string][]).m
 /** Series each starred Biternam character's skin comes from (matched by series name). */
 export const STARRED_SERIES: Record<string, string> = {
   wierdamoto: "V for Vendetta",
+  dev9: "MM-9",
+  bop: "DG - 9",
   dabber: "Ninja Dabber",
   "mr-shiddy": "MrShiddy3D",
   kodro: "DJ Kodro - 9 by Urbannoki",
