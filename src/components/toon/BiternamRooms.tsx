@@ -109,3 +109,38 @@ export function BiternamRoomSet({ room, timeRef }: { room: string; timeRef: Muta
   const s = ROOMS[room];
   return s ? <Room s={s} timeRef={timeRef} /> : null;
 }
+
+/** Where cameras and wandering extras may go inside each film set (stage units; extras walk in units ÷10). */
+export type SetBounds = { cam: { x: number; z0: number; z1: number; y0: number; y1: number }; walk: { x0: number; x1: number; z0: number; z1: number } };
+const WALLED: SetBounds = { cam: { x: 44, z0: -24, z1: 75, y0: 3, y1: 34 }, walk: { x0: -4.2, x1: 4.2, z0: -2.2, z1: 1.6 } };
+export const SET_BOUNDS: Record<string, SetBounds> = {
+  cafe: { ...WALLED, walk: { x0: -3.2, x1: 3.2, z0: -1.2, z1: 1.6 } }, vault: WALLED,
+  batcave: { ...WALLED, walk: { x0: -2.6, x1: 4.2, z0: -1.4, z1: 1.6 } },
+  chinatown: { cam: { x: 14, z0: -90, z1: 75, y0: 3, y1: 60 }, walk: { x0: -1.3, x1: 1.3, z0: -2.2, z1: 1.6 } },
+  "b-void": { cam: { x: 14, z0: -40, z1: 75, y0: 2, y1: 40 }, walk: { x0: -0.45, x1: 0.45, z0: -2.2, z1: 1.6 } },
+  "b-island": { cam: { x: 60, z0: -18, z1: 80, y0: 3, y1: 60 }, walk: { x0: -4.2, x1: 4.2, z0: -1.6, z1: 2 } },
+};
+export function setBoundsFor(set: string | undefined): SetBounds | null {
+  if (!set) return null;
+  return SET_BOUNDS[set] ?? (set.startsWith("b-") && ROOMS[set.slice(2)] ? WALLED : null);
+}
+/** Furniture footprints near the floor (stage units) for a room set. */
+function solids(set: string) { return (ROOMS[set.slice(2)]?.props ?? []).filter((b) => b.p[1] - b.s[1] / 2 < 8 && b.s[1] > 1.5 && !b.anim); }
+/** Extras (units ÷10) may not walk into furniture. */
+export function walkBlocked(set: string | undefined, x: number, z: number): boolean {
+  if (!set?.startsWith("b-")) return false;
+  const X = x * 10, Z = z * 10;
+  return solids(set).some((b) => Math.abs(X - b.p[0]) < b.s[0] / 2 + 2 && Math.abs(Z - b.p[2]) < b.s[2] / 2 + 2);
+}
+/** Keep a camera inside the set's walls and out of its furniture. */
+export function clampCamera(set: string | undefined, c: number[]): void {
+  const b = setBoundsFor(set); if (!b) return;
+  c[0] = Math.max(-b.cam.x, Math.min(b.cam.x, c[0]!));
+  c[2] = Math.max(b.cam.z0, Math.min(b.cam.z1, c[2]!));
+  c[1] = Math.max(b.cam.y0, Math.min(b.cam.y1, c[1]!));
+  if (!set?.startsWith("b-")) return;
+  for (const p of ROOMS[set.slice(2)]?.props ?? []) {
+    if (Math.abs(c[0]! - p.p[0]) < p.s[0] / 2 + 1.5 && Math.abs(c[2]! - p.p[2]) < p.s[2] / 2 + 1.5 && Math.abs(c[1]! - p.p[1]) < p.s[1] / 2 + 1.5)
+      c[2] = p.p[2] + p.s[2] / 2 + 2; // step in front of the prop
+  }
+}
