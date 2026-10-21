@@ -46,7 +46,7 @@ describe("relic unsigned preview", () => {
   it("refuses to preview when a parent, holder or parent dust fails", () => {
     expect(buildRelicPreview({ ...base, masterInscriptionId: null }).ok).toBe(false);
     expect(buildRelicPreview({ ...base, holderAddress: null }).ok).toBe(false);
-    const low = [{ ...parents[0] }, { ...parents[1], value: 200 }];
+    const low = [parents[0]!, { ...parents[1]!, value: 200 }];
     expect(buildRelicPreview({ ...base, parents: low }).ok).toBe(false);
     expect(buildRelicPreview({ ...base, feeRate: 0 }).ok).toBe(false);
   });
