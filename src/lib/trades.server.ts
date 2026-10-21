@@ -141,6 +141,7 @@ export async function traceBitmapTrades(
     ownerAddress,
     transfers: trades.length,
     trades,
+    finalOutput: `${txid}:${vout}`,
   };
 }
 
