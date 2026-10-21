@@ -180,7 +180,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
           pose={actor.pose}
           movingRef={movingRef}
           timeRef={timeRef}
-          fallback={<ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />}
+          fallback={isPixelSkin(actor.avatar.skin) ? null : <ToonAvatarBody avatar={actor.avatar} pose={actor.pose} timeRef={timeRef} movingRef={movingRef} />}
         />
         {!isPixelSkin(actor.avatar.skin) && <ModelGear model={actor.avatar.model} accent={AVATAR_SKINS.find((k) => k.v === actor.avatar!.skin)?.accent ?? "#f7931a"} />}
         {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} slot={slot} scene={scene} />}
