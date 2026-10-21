@@ -32,10 +32,10 @@ export function useCutscene() {
 
 type Cut = ReturnType<typeof useCutscene>;
 const LIGHT: Record<string, string> = {
-  spot: "radial-gradient(circle at 50% 50%, transparent 22%, hsl(var(--background) / 0.75) 60%)",
-  dim: "hsl(var(--background) / 0.45)",
-  flash: "hsl(var(--foreground) / 0.35)",
-  warm: "radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.18), transparent 70%)",
+  spot: "radial-gradient(circle at 50% 50%, transparent 22%, color-mix(in oklch, var(--background) 75%, transparent) 60%)",
+  dim: "color-mix(in oklch, var(--background) 45%, transparent)",
+  flash: "color-mix(in oklch, var(--foreground) 35%, transparent)",
+  warm: "radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--primary) 18%, transparent), transparent 70%)",
   cold: "radial-gradient(circle at 50% 50%, hsl(var(--signal, 190 100% 58%) / 0.18), transparent 70%)",
 };
 
