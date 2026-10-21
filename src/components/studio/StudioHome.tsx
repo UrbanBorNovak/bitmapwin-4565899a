@@ -43,7 +43,8 @@ export function StudioHome() {
         experiences and take them to market. Everything you inscribe is proven by Bitcoin, not by us.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link to="/forge" className="btn-term">[ OPEN LAND FORGE ]</Link>
+        <Link to="/build" className="btn-term">[ START BUILDING ]</Link>
+        <Link to="/forge" className="btn-term-ghost">[ OPEN LAND FORGE ]</Link>
         <Link to="/studio" search={{ tool: "extenders" }} className="btn-term-ghost">[ BUILD AN EXTENDER ]</Link>
         <Link to="/create" className="btn-term-ghost">[ DESCRIBE A PLACE ]</Link>
       </div>
