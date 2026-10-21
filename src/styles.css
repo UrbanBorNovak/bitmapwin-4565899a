@@ -1801,3 +1801,4 @@
 @keyframes tracy-flicker { 50% { opacity: 0.85; } }
 @keyframes tracy-shake { 50% { transform: translateX(1px) skewX(-1deg); } }
 @media (prefers-reduced-motion: reduce) { .tracy-crt::after, .tracy-glitch { animation: none; } }
+@keyframes cut-shake { 0% { translate: 0 0; } 25% { translate: 3px -2px; } 50% { translate: -3px 2px; } 75% { translate: 2px 3px; } 100% { translate: 0 0; } }

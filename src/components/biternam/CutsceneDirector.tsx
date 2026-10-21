@@ -58,7 +58,7 @@ export function CutsceneStage({ cut, children }: { cut: Cut; children: ReactNode
           <button onClick={cut.skip} className="absolute right-4 top-3 z-20 font-mono text-[11px] tracking-widest text-muted-foreground hover:text-signal">[ ESC ] SKIP</button>
           {kf.line ? (
             <div className="pointer-events-none absolute inset-x-0 bottom-[3%] z-20 flex justify-center px-4">
-              <div key={kf.line} className="flex max-w-xl items-center gap-3 font-mono animate-fade-in">
+              <div key={kf.line} className="flex max-w-xl items-center gap-3 font-mono animate-[passport-reveal_0.4s_ease-out]">
                 {face ? <PixelFace inscriptionId={face} label={kf.speaker ?? ""} className="h-10 w-10 shrink-0 rounded border border-border" /> : null}
                 <div>
                   {kf.speaker ? <div className="text-[11px] tracking-[0.3em] text-primary">{kf.speaker}</div> : null}
