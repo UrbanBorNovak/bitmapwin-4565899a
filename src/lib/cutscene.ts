@@ -76,4 +76,16 @@ export const ROOM_CUTSCENES: Partial<Record<HideoutRoom, Partial<Record<CutTrigg
       { focus: [50, 46], zoom: 1.6, ms: 2200, light: "warm", speaker: "WIERDAMOTO", face: "wierdamoto", line: "The cage is open. Sat 1138 comes home. Iman and Will are next." },
     ] },
   },
+  canon: {
+    gain: { id: "canon-gain", frames: [
+      { focus: [35, 52], zoom: 1.7, ms: 2200, light: "spot", sfx: "pickup", speaker: "WIERDAMOTO", face: "wierdamoto", line: "Your sat. Carry it. They can copy a picture, not a sat." },
+    ] },
+    solve: { id: "canon-solve", frames: [
+      { focus: [50, 48], zoom: 1.6, ms: 1400, light: "flash", shake: 1, sfx: "dance", line: "Sat 1138 enters the honest node. The real chain is longer." },
+      { focus: [62, 45], zoom: 1.9, ms: 1700, light: "dim", speaker: "WILL", face: "will", line: "Our fork… it's orphaned. All of it." },
+      { focus: [58, 45], zoom: 1.9, ms: 1700, speaker: "IMAN", face: "iman", line: "You can't re-org the work, can you." },
+      { focus: [40, 48], zoom: 1.8, ms: 1800, light: "warm", speaker: "BITOSHI", face: "bitoshi", line: "Most work wins. Always did. Nobody cooks faster than the chain." },
+      { focus: [50, 42], zoom: 2, ms: 2400, light: "warm", speaker: "GHOST OF 1138", line: "Block 1138. Confirmed. I can rest." },
+    ] },
+  },
 };

@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, FortressHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, FortressHotspot, CanonHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
@@ -728,6 +728,83 @@ export function FortressScene({ onHit, onHover, hover, st, hazard }: SceneProps<
           <mesh position-y={1.2}><boxGeometry args={[1.2, 2.4, 0.12]} /><meshStandardMaterial color="#3a2a44" emissive={hover === "gate" ? TRIM : "#000"} emissiveIntensity={0.4} /></mesh>
         </Hot>
         <CafeSmoke count={30} color={hazard ? "#ffe080" : "#e0d0ff"} opacity={hazard ? 0.14 : 0.03} mist={["#0e0814", st.solved ? TRIM : "#5a1a30"]} />
+      </SafeCanvas>
+    </div>
+  );
+}
+
+// ======================= CH.12 · THE CANONICAL BLOCK =======================
+export function CanonScene({ onHit, onHover, hover, st, hazard }: SceneProps<CanonHotspot>) {
+  const hp = { onHit, onHover };
+  const RED = "#ff2a4a";
+  const fork = !st.solved;
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[0, 0.8, 0]} />
+        <color attach="background" args={["#08080c"]} />
+        <fog attach="fog" args={["#08080c", 12, 25]} />
+        <ambientLight intensity={0.8} color="#e0e4f0" />
+        <pointLight position={[0.4, 3.2, 0.2]} intensity={st.solved ? 34 : 14} color={st.solved ? TRIM : "#c8d8ff"} castShadow />
+        <pointLight position={[2.4, 2.4, -2]} intensity={fork ? 14 : 2} color={RED} />
+        {/* Bedrock floor: each tile a block, the fork row glows red until it is orphaned */}
+        {Array.from({ length: 64 }, (_, i) => {
+          const x = i % 8, z = Math.floor(i / 8);
+          const forkTile = x >= 5 && z <= 2;
+          return (
+            <mesh key={i} position={[x - 3.5, -0.05, z - 3.5]} receiveShadow>
+              <boxGeometry args={[0.97, 0.1, 0.97]} />
+              <meshStandardMaterial color={(x + z) % 2 ? "#2a2a34" : "#1e1e26"} emissive={forkTile ? (fork ? RED : "#222") : z === 3 ? TRIM : "#000"} emissiveIntensity={forkTile ? 0.35 : z === 3 ? 0.18 : 0} roughness={0.9} />
+            </mesh>
+          );
+        })}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#1c1c24" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#18181f" roughness={1} /></mesh>
+        {/* Chain of blocks on the back wall: the honest chain (orange) vs the fork (red) */}
+        {Array.from({ length: 6 }, (_, i) => <mesh key={`h${i}`} position={[i * 0.7 - 3, 2.9, -3.84]}><boxGeometry args={[0.5, 0.5, 0.04]} /><meshStandardMaterial color="#1a1208" emissive={TRIM} emissiveIntensity={st.solved ? 1.4 : 0.6} /></mesh>)}
+        {st.solved ? <mesh position={[1.2, 2.9, -3.84]}><boxGeometry args={[0.5, 0.5, 0.04]} /><meshStandardMaterial color="#1a1208" emissive={TRIM} emissiveIntensity={2} /></mesh> : null}
+        {Array.from({ length: 3 }, (_, i) => <mesh key={`f${i}`} position={[i * 0.7 - 0.9, 2.1, -3.84]}><boxGeometry args={[0.5, 0.5, 0.04]} /><meshStandardMaterial color="#1a0808" emissive={fork ? RED : "#333"} emissiveIntensity={fork ? 0.9 : 0.2} /></mesh>)}
+        {/* Wierdamoto's skiff, carrying the recovered sat */}
+        <Hot id="wierdamoto" {...hp} position={[-2.4, 0, 0.8]} rotation={[0, 0.7, 0]}>
+          <Ring on={hover === "wierdamoto"} color="#c41e1e" />
+          <CrewRig id="wierdamoto" color="#111114" />
+        </Hot>
+        <Hot id="skiff" {...hp} position={[-2.9, 0, 2.3]}>
+          <mesh position-y={0.2}><boxGeometry args={[1.2, 0.3, 0.6]} /><meshStandardMaterial color="#2a1a10" emissive={hover === "skiff" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          {!st.got && !st.solved ? <mesh position={[0, 0.5, 0]} rotation-x={Math.PI / 2}><cylinderGeometry args={[0.2, 0.2, 0.05, 16]} /><meshStandardMaterial color={TRIM} emissive={TRIM} emissiveIntensity={1.6} metalness={0.6} /></mesh> : null}
+        </Hot>
+        <Hot id="bitoshi" {...hp} position={[-1.2, 0, 2.4]} rotation={[0, 0.3, 0]}>
+          <Ring on={hover === "bitoshi"} color="#3a7aff" />
+          <CrewRig id="bitoshi" color="#e8d040" />
+        </Hot>
+        {/* The honest node at the centre */}
+        <Hot id="node" {...hp} position={[0.4, 0, 0]}>
+          <mesh position-y={0.6}><boxGeometry args={[0.9, 1.2, 0.9]} /><meshStandardMaterial color="#141418" metalness={0.6} /></mesh>
+          <mesh position-y={1.3}><boxGeometry args={[0.5, 0.2, 0.5]} /><meshStandardMaterial color="#000" emissive={st.solved ? TRIM : NEON} emissiveIntensity={hover === "node" ? 2 : 1} /></mesh>
+          {st.solved ? <mesh position-y={1.62} rotation-x={Math.PI / 2}><cylinderGeometry args={[0.18, 0.18, 0.04, 16]} /><meshStandardMaterial color={TRIM} emissive={TRIM} emissiveIntensity={2} /></mesh> : null}
+        </Hot>
+        {/* Iman and Will's re-org rig */}
+        <Hot id="rig" {...hp} position={[2.8, 0, -2.6]}>
+          <mesh position-y={0.8}><boxGeometry args={[1, 1.6, 0.8]} /><meshStandardMaterial color="#22121a" metalness={0.5} emissive={hazard ? RED : "#000"} emissiveIntensity={hazard ? 1.5 : 0} /></mesh>
+          {[0.3, 0.7, 1.1].map((y) => <mesh key={y} position={[0, y, 0.41]}><boxGeometry args={[0.8, 0.06, 0.02]} /><meshStandardMaterial color="#000" emissive={fork ? RED : "#333"} emissiveIntensity={1} /></mesh>)}
+        </Hot>
+        <Hot id="iman" {...hp} position={[1.8, 0, -1.4]} rotation={[0, -0.6, 0]}>
+          <Ring on={hover === "iman"} color={RED} />
+          <VillainRig id="iman" body="#0b0b0f" eye={RED} />
+        </Hot>
+        <Hot id="will" {...hp} position={[3, 0, -0.6]} rotation={[0, -0.9, 0]}>
+          <Ring on={hover === "will"} color="#b026ff" />
+          <VillainRig id="will" body="#16061f" eye="#b026ff" />
+        </Hot>
+        <Hot id="ghost" {...hp} position={[-0.2, 0, -2.4]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm={st.solved} />
+        </Hot>
+        <Hot id="ladder" {...hp} position={[-3.6, 0, -2.6]}>
+          {[-0.25, 0.25].map((x) => <mesh key={x} position={[x, 1.8, 0]}><boxGeometry args={[0.06, 3.6, 0.06]} /><meshStandardMaterial color="#7a4a22" emissive={TRIM} emissiveIntensity={hover === "ladder" ? 0.6 : 0} /></mesh>)}
+          {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.4, 0]}><boxGeometry args={[0.5, 0.04, 0.04]} /><meshStandardMaterial color="#7a4a22" /></mesh>)}
+        </Hot>
+        <CafeSmoke count={30} color={hazard ? "#ff8090" : "#d0d8f0"} opacity={hazard ? 0.14 : 0.03} mist={["#0a0a10", st.solved ? TRIM : "#3a1a24"]} />
       </SafeCanvas>
     </div>
   );
