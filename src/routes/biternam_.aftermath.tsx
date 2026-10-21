@@ -46,7 +46,7 @@ function AftermathPage() {
       if (!live) return;
       if (!data.session) { setState("out"); return; }
       try {
-        const rooms = CASEBOOK.slice(2).map((c) => c.key) as ("batcave" | "island" | "vault" | "lair" | "basement" | "archive" | "holders" | "handshake" | "fortress" | "canon")[];
+        const rooms = CASEBOOK.slice(2).map((c) => c.key) as ("batcave" | "island" | "vault" | "lair" | "basement" | "archive" | "holders" | "handshake" | "fortress" | "canon" | "receipt")[];
         const [h, v, ...rest] = await Promise.all([heist(), voidS(), ...rooms.map((room) => hideout({ data: { room } }))]);
         if (!live) return;
         if (!h.ok || !v.ok || rest.some((r) => !r.ok)) { setState("error"); return; }
