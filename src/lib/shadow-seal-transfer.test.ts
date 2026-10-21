@@ -645,7 +645,7 @@ describe("restore under storage failures, reloads, tab races and wallet switches
   it("a crash mid-restore is undone on reload, without touching an unfinished transfer", async () => {
     reset(); sealStore.setHeld(bundle);
     const r = await go(); const pend = mem.get(PK); const heldBefore = mem.get(HK);
-    mem.set(JK, JSON.stringify({ prev: { [HK]: heldBefore, "bitmapwin:sealed-recv": null, [SK]: mem.get(SK) ?? null } }));
+    mem.set(JK, JSON.stringify({ prev: { [HK]: heldBefore, "bitmapwin:sealed-recv": null, [SK]: mem.get(SK) ?? null }, next: { [HK]: JSON.stringify(bundle) } }));
     mem.set(HK, JSON.stringify(bundle)); // half-written stale notes
     const l = loadHeld(); // "reload"
     expect(mem.has(JK)).toBe(false);
@@ -715,6 +715,104 @@ describe("restore under storage failures, reloads, tab races and wallet switches
   it("without a lock manager restore refuses rather than race", async () => {
     reset();
     await expect(restoreBackup(old, { outspend: unspent, address })).rejects.toThrow(/TWO TABS/);
+    done();
+  });
+});
+
+describe("crashes during restore rollback and journal recovery, with another tab signing", () => {
+  const mem = new Map<string, string>();
+  let failSet = new Set<string>(), failRemove = false;
+  const store = {
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => { if (failSet.has(k)) throw new DOMException("quota", "QuotaExceededError"); mem.set(k, v); },
+    removeItem: (k: string) => { if (!failRemove) mem.delete(k); },
+  } as unknown as Storage;
+  const real = globalThis.localStorage;
+  const lk = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (lk.has(name)) return cb(null); lk.add(name); try { return await cb({}); } finally { lk.delete(name); } } };
+  const HK = "bitmapwin:sealed-notes", SK = "bitmapwin:sealed-sent", RK = "bitmapwin:sealed-recv", JK = "bitmapwin:sealed-restore-journal", PK = "bitmapwin:sealed-pending";
+  const reset = () => { mem.clear(); failSet = new Set(); failRemove = false; lk.clear(); globalThis.localStorage = store; sealStore.setHeld(bundle); };
+  const go = (sign: (p: string) => Promise<string> = mockWallet) =>
+    runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign, currentWallet: () => address, locks });
+  const labels = () => sealStore.held().map((h) => h.c.note.label).sort();
+  /** Leaves a journal as if a restore crashed right after writing `written` (its own value for the notes list). */
+  const crashedRestore = (written: string) => {
+    mem.set(JK, JSON.stringify({ prev: { [HK]: mem.get(HK) ?? null, [RK]: mem.get(RK) ?? null, [SK]: mem.get(SK) ?? null }, next: { [HK]: written, [RK]: "{}", [SK]: "[]" } }));
+    mem.set(HK, written);
+  };
+  const done = () => { globalThis.localStorage = real; };
+
+  it("another tab signs after the crash: recovery runs first, then the transfer, nothing lost", async () => {
+    reset(); crashedRestore(JSON.stringify([]));
+    const r = await go(); // signing settles the half-finished restore first
+    expect(mem.has(JK)).toBe(false);
+    expect(labels()).toEqual(["Key", "Map"]);
+    expect(pendingStore.onAnchor(coin)[0]!.before!.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+    expect(sealStore.held().every((h) => h.mine.txid === r.txid)).toBe(true);
+    done();
+  });
+  it("a transfer saved after the restore wrote its notes is never rolled back by recovery", async () => {
+    reset(); crashedRestore(JSON.stringify(bundle));
+    mem.delete(JK); const r = await go(); // other tab ran before seeing the journal…
+    crashedRestore(JSON.stringify(bundle)); // …then the crashed journal is (re)found
+    mem.set(HK, JSON.stringify(sealStore.held())); // newer notes from that tab are on disk
+    // journal's "next" no longer matches what's on disk → recovery keeps the newer notes
+    const newer = mem.get(HK); const pend = mem.get(PK);
+    mem.set(JK, JSON.stringify({ ...JSON.parse(mem.get(JK)!), next: { [HK]: JSON.stringify(bundle) } }));
+    loadHeld();
+    expect(mem.get(HK)).toBe(newer);
+    expect(mem.get(PK)).toBe(pend);
+    expect(labels()).toEqual(["Key", "Map"]);
+    expect(sealStore.held().every((h) => h.mine.txid === r.txid)).toBe(true);
+    done();
+  });
+  it("newer notes saved after a crash survive recovery (only the restore's own writes are undone)", () => {
+    reset(); crashedRestore(JSON.stringify([bundle[0]]));
+    mem.set(HK, JSON.stringify(bundle.slice(0, 2))); // another tab saved newer notes
+    mem.set(SK, JSON.stringify([{ label: "New", code: "c", at: "t" }]));
+    recoverInterruptedRestore();
+    expect(labels()).toEqual(["Key", "Pass"]);
+    expect(sealStore.sent().map((x) => x.label)).toEqual(["New"]);
+    expect(mem.has(JK)).toBe(false);
+    done();
+  });
+  it("an unresolved transfer is never touched by recovery", async () => {
+    reset(); await go(); const pend = mem.get(PK);
+    crashedRestore(JSON.stringify(bundle));
+    loadHeld();
+    expect(mem.get(PK)).toBe(pend);
+    expect(labels()).toEqual(["Key", "Map"]); // stale restore value undone, then repaired from the transfer
+    done();
+  });
+  it("storage failing during rollback: fail closed, journal kept, signing refused before the wallet opens", async () => {
+    reset(); crashedRestore(JSON.stringify([])); failSet.add(HK);
+    expect(() => loadHeld()).toThrow(/COULDN'T BE UNDONE/);
+    expect(mem.has(JK)).toBe(true);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/COULDN'T BE UNDONE/);
+    expect(spy).not.toHaveBeenCalled();
+    failSet.clear(); loadHeld(); // later: recovers fully
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    done();
+  });
+  it("journal that can't be removed after rollback stays and blocks (fail closed), then clears", () => {
+    reset(); crashedRestore(JSON.stringify([])); failRemove = true;
+    expect(() => recoverInterruptedRestore()).toThrow(/COULDN'T BE UNDONE/);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]); // notes already put back
+    failRemove = false;
+    expect(recoverInterruptedRestore()).toBe(true);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]); // second run doesn't double-undo
+    done();
+  });
+  it("crash during a failed restore's own rollback is finished on reload", async () => {
+    reset(); const before = mem.get(HK);
+    failSet.add(SK); failRemove = true; // write fails, rollback can't clear the journal
+    await expect(restoreBackup({ held: [], recv: {}, sent: [{ label: "x", code: "y", at: "t" }] }, { outspend: async () => ({ spent: false }), locks, address })).rejects.toThrow();
+    failSet.clear(); failRemove = false;
+    loadHeld(); // "reload"
+    expect(mem.has(JK)).toBe(false);
+    expect(mem.get(HK)).toBe(before);
     done();
   });
 });
