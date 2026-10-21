@@ -192,3 +192,36 @@ export async function broadcastTx(rawHex: string, txid: string, fetchImpl: typeo
   if (t.toLowerCase() !== txid.toLowerCase()) throw new BroadcastUnknown(txid);
   return t;
 }
+
+/* ── unresolved signed transfers (survive reloads + wallet reconnects) ── */
+export type PendingTransfer = {
+  txid: string; rawHex: string; anchor: { txid: string; vout: number };
+  sent: { label: string; code: string }[]; at: string; unknown?: boolean;
+};
+const PK = "bitmapwin:sealed-pending";
+export const pendingStore = {
+  all: () => read<PendingTransfer[]>(PK, []),
+  put: (p: PendingTransfer) => write(PK, [...read<PendingTransfer[]>(PK, []).filter((x) => x.txid !== p.txid), p]),
+  drop: (txid: string) => write(PK, read<PendingTransfer[]>(PK, []).filter((x) => x.txid !== txid)),
+};
+
+export type Resolution = "SENT" | "SAFE_TO_CANCEL" | "UNRESOLVED" | "CONFLICT";
+/**
+ * Decides a signed-but-unconfirmed transfer from two independent facts:
+ * is this exact txid known to Bitcoin, and is the anchor coin still unspent?
+ * Only "absent" + "unspent" may be cancelled or replaced. Anything unavailable
+ * or contradictory stays UNRESOLVED.
+ */
+export async function resolvePending(p: PendingTransfer, deps: {
+  txSeen: (txid: string) => Promise<"seen" | "absent" | "unknown">;
+  outspend: (o: { txid: string; vout: number }) => Promise<{ spent: boolean; txid?: string }>;
+}): Promise<Resolution> {
+  let seen: "seen" | "absent" | "unknown", os: { spent: boolean; txid?: string } | null;
+  try { seen = await deps.txSeen(p.txid); } catch { seen = "unknown"; }
+  try { os = await deps.outspend(p.anchor); } catch { os = null; }
+  if (!os || seen === "unknown") return seen === "seen" && os?.spent && os.txid === p.txid ? "SENT" : "UNRESOLVED";
+  if (os.spent && os.txid && os.txid !== p.txid) return "CONFLICT";
+  if (seen === "seen" && os.spent && os.txid === p.txid) return "SENT";
+  if (seen === "absent" && !os.spent) return "SAFE_TO_CANCEL";
+  return "UNRESOLVED"; // e.g. seen but anchor unspent, or absent but anchor spent by us
+}
