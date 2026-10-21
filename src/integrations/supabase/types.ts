@@ -1580,6 +1580,21 @@ export type Database = {
         }
         Relationships: []
       }
+      collection_backfill_lock: {
+        Row: {
+          id: string
+          last_run_at: string
+        }
+        Insert: {
+          id: string
+          last_run_at?: string
+        }
+        Update: {
+          id?: string
+          last_run_at?: string
+        }
+        Relationships: []
+      }
       collection_crawl_state: {
         Row: {
           collection: string
