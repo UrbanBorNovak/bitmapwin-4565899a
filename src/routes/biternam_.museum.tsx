@@ -14,6 +14,7 @@ import { HOTSPOT_NAMES, SIGNATURE_PLAQUES, VERBS, resolveVerb, type Hotspot, typ
 
 export const Route = createFileRoute("/biternam_/museum")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({ focus: s.focus === "signatures" ? ("signatures" as const) : undefined }),
   head: () => ({
     meta: [
       { title: "Bit Museum Interior · Biternam Chapter 1 | BITMAPWIN" },
@@ -42,13 +43,15 @@ function MuseumPage() {
   const hideout = useServerFn(hideoutStatusFn);
   const [exhibitOpen, setExhibitOpen] = useState(false);
   const [plaque, setPlaque] = useState(-1);
+  const { focus } = Route.useSearch();
+  const [focusCase, setFocusCase] = useState(focus === "signatures");
 
   // The exhibit opens only when CH.12 is solved on the signed-in account. No BIT.
   useEffect(() => {
     let live = true;
     void supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return;
-      try { const r = await hideout({ data: { room: "canon" } }); if (live && r.ok && r.count >= HIDEOUT_STEPS.canon.length) setExhibitOpen(true); } catch { /* stays draped */ }
+      try { const r = await hideout({ data: { room: "canon" } }); if (live && r.ok && r.count >= HIDEOUT_STEPS.canon.length) { setExhibitOpen(true); if (focus === "signatures") setSay("Astral: \"The Night of Two Signatures. LOOK AT the case, one plaque at a time.\""); } } catch { /* stays draped */ }
     });
     return () => { live = false; };
   }, [hideout]);
@@ -66,6 +69,7 @@ function MuseumPage() {
   }, []);
 
   const hit = (h: Hotspot) => {
+    if (h !== "signatures") setFocusCase(false);
     const r = resolveVerb(verb, h, { held, solved, item, exhibitOpen });
     playSfx(r.effect === "talk" ? "talk" : r.effect?.startsWith("pickup") ? "pickup" : r.effect === "exit" ? "door" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
@@ -84,7 +88,7 @@ function MuseumPage() {
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
         <HeistPanel room="museum" ready={true} />
-        <MuseumInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasLens={held.includes("lens")} solved={solved} exhibitOpen={exhibitOpen} plaque={plaque} />
+        <MuseumInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasLens={held.includes("lens")} solved={solved} exhibitOpen={exhibitOpen} plaque={plaque} focus={focusCase} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · CHAPTER 1</div>
           <div className="font-display text-2xl text-foreground">BIT MUSEUM · ARCHIVE HALL</div>

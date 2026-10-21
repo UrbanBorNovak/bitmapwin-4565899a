@@ -140,20 +140,31 @@ function SignaturesCase({ open, hot, plaque }: { open: boolean; hot: boolean; pl
   );
 }
 
-function FixedCam() {
-  useFrame(({ camera }) => camera.lookAt(-0.6, -0.6, 1.4));
+/** Fixed camera; when `focus` is set it glides to frame the Night of Two Signatures case. */
+const HOME = { pos: [8, 9, 11], look: [-0.6, -0.6, 1.4] } as const;
+const CASE = { pos: [7.2, 4.6, 5.2], look: [3.2, 0.9, 1.4] } as const;
+const look = { x: HOME.look[0], y: HOME.look[1], z: HOME.look[2] };
+function FixedCam({ focus = false }: { focus?: boolean }) {
+  useFrame(({ camera }, dt) => {
+    const t = focus ? CASE : HOME, k = 1 - Math.exp(-Math.min(dt, 0.1) * 2.5);
+    camera.position.x += (t.pos[0] - camera.position.x) * k;
+    camera.position.y += (t.pos[1] - camera.position.y) * k;
+    camera.position.z += (t.pos[2] - camera.position.z) * k;
+    look.x += (t.look[0] - look.x) * k; look.y += (t.look[1] - look.y) * k; look.z += (t.look[2] - look.z) * k;
+    camera.lookAt(look.x, look.y, look.z);
+  });
   return null;
 }
 
-export function MuseumInterior({ onHit, onHover, hover, hasLens, solved, exhibitOpen = false, plaque = -1 }: {
-  onHit: (h: Hotspot) => void; onHover: (h: Hotspot | null) => void; hover: Hotspot | null; hasLens: boolean; solved: boolean; exhibitOpen?: boolean; plaque?: number;
+export function MuseumInterior({ onHit, onHover, hover, hasLens, solved, exhibitOpen = false, plaque = -1, focus = false }: {
+  onHit: (h: Hotspot) => void; onHover: (h: Hotspot | null) => void; hover: Hotspot | null; hasLens: boolean; solved: boolean; exhibitOpen?: boolean; plaque?: number; focus?: boolean;
 }) {
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
       <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
-        <FixedCam />
+        <FixedCam focus={focus && exhibitOpen} />
         <color attach="background" args={["#120d14"]} />
         <fog attach="fog" args={["#120d14", 14, 26]} />
         <ambientLight intensity={0.55} color="#ffd9b0" />

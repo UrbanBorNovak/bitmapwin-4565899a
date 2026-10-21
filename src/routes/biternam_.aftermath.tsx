@@ -108,7 +108,7 @@ function AftermathPage() {
               <div className="text-[11px] tracking-[0.3em] text-bitcoin">MUSEUM · NEW EXHIBIT · CURATED BY ASTRAL</div>
               <h3 className="mt-2 font-display text-xl">THE NIGHT OF TWO SIGNATURES</h3>
               <p className="mt-2 text-xs text-muted-foreground">The shared key. The third fee address. Urban's blueprint. The bait key. The canonical proof. Five objects, one story, under glass.</p>
-              <Link to="/biternam/museum" className="mt-3 inline-block rounded border border-bitcoin px-3 py-1.5 text-xs text-bitcoin hover:bg-bitcoin hover:text-background">[ VISIT THE EXHIBIT ]</Link>
+              <Link to="/biternam/museum" search={{ focus: "signatures" }} className="mt-3 inline-block rounded border border-bitcoin px-3 py-1.5 text-xs text-bitcoin hover:bg-bitcoin hover:text-background">[ VISIT THE EXHIBIT ]</Link>
             </div>
 
             <div className="mt-6 rounded border border-signal/40 bg-card/40 p-5 text-center backdrop-blur">
