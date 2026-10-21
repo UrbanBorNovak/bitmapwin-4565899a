@@ -14,7 +14,7 @@ import { HOTSPOT_NAMES, SIGNATURE_PLAQUES, VERBS, resolveVerb, type Hotspot, typ
 
 export const Route = createFileRoute("/biternam_/museum")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({ focus: s.focus === "signatures" ? ("signatures" as const) : undefined }),
+  validateSearch: (s: Record<string, unknown>): { focus?: "signatures" } => (s["focus"] === "signatures" ? { focus: "signatures" } : {}),
   head: () => ({
     meta: [
       { title: "Bit Museum Interior · Biternam Chapter 1 | BITMAPWIN" },
