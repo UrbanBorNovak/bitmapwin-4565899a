@@ -46,6 +46,7 @@ function BiternamPage() {
         <Link to="/biternam/outpost" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ BITOSHI'S RV ]</Link>
         <Link to="/biternam/safehouse" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ WIERDAMOTO'S SAFEHOUSE ]</Link>
         <Link to="/biternam/arcade" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ MEMPOOL ARCADE ]</Link>
+        <Link to="/biternam/studio" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ BITMAP NEWS STUDIO ]</Link>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BITERNAM_CREW.map((c) => (
             <div key={c.id} className="rounded border border-border bg-card/40 p-4 backdrop-blur">
