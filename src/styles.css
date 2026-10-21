@@ -1108,6 +1108,12 @@
   box-shadow: inset 0 -1px 0 var(--color-bitcoin);
 }
 
+/* The group that holds the page you are on stays lit even when its menu is closed. */
+.nav-trigger.is-here {
+  color: var(--color-bitcoin);
+  box-shadow: inset 0 -2px 0 var(--color-bitcoin);
+}
+
 .icon-control:hover,
 .icon-control[aria-expanded="true"] {
   border-color: var(--color-bitcoin);

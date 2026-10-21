@@ -14,7 +14,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { startGuidedTour } from "@/components/GuidedTour";
 
-type NavItem = { to: string; label: string; note?: string };
+type NavItem = { to: string; label: string; note?: string; match?: string[] };
 type NavSection = { title: string; items: NavItem[] };
 type NavGroup = { id: string; label: string; note: string; sections: NavSection[] };
 
@@ -59,7 +59,7 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
           { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
           { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
-          { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
+          { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world", match: ["/map"] },
           { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests" },
           { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
           { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
@@ -150,6 +150,11 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 const groupItems = (g: NavGroup) => g.sections.flatMap((s) => s.items);
 
+// Pages that live outside the menu but belong to one of its entries — the Atlas
+// district and place chapters belong to VISIT CITIES. Keyed by the menu entry path.
+const EXTRA_MATCH = new Map<string, string[]>();
+for (const g of NAV_GROUPS) for (const s of g.sections) for (const i of s.items) if (i.match) EXTRA_MATCH.set(i.to, i.match);
+
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -193,7 +198,10 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-  const itemIsActive = (to: string) => pathname === to || (to !== "/play" && pathname.startsWith(`${to}/`));
+  const itemIsActive = (to: string) =>
+    [...(EXTRA_MATCH.get(to) ?? []), to].some(
+      (p) => pathname === p || (p !== "/play" && pathname.startsWith(`${p}/`)),
+    );
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<string | null>(null);
   const currentGroup = NAV_GROUPS.find((g) => groupItems(g).some((i) => itemIsActive(i.to)));
@@ -230,7 +238,9 @@ export function SiteHeader() {
         </Link>
 
         <nav ref={desktopNavRef} className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.map((group) => {
+            const here = groupItems(group).some((i) => itemIsActive(i.to));
+            return (
             <div
               key={group.id}
               className="relative"
@@ -250,7 +260,7 @@ export function SiteHeader() {
                 }}
               className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
-                }`}
+                } ${here && openGroup !== group.id ? "is-here" : ""}`}
               >
                 <GroupIcon id={group.id} />
                 {group.label}
@@ -265,9 +275,13 @@ export function SiteHeader() {
                   <div className={group.sections.length > 2 ? "grid grid-cols-4 divide-x divide-border" : "divide-y divide-border"}>
                     {group.sections.map((section) => {
                       const compact = group.sections.length > 2;
+                      const sectionHere = section.items.some((i) => itemIsActive(i.to));
                       return (
                         <div key={section.title} className="p-2">
-                          <div className="label px-2 pb-1 pt-1 text-[0.55rem] text-signal">{section.title}</div>
+                          <div className={`label flex items-center gap-1.5 px-2 pb-1 pt-1 text-[0.55rem] ${sectionHere ? "text-bitcoin" : "text-signal"}`}>
+                            {sectionHere && <span className="size-1 shrink-0 rounded-full bg-bitcoin" aria-hidden="true" />}
+                            {section.title}
+                          </div>
                           {section.items.map((item) => {
                             const active = itemIsActive(item.to);
                             return (
@@ -278,13 +292,14 @@ export function SiteHeader() {
                                 onClick={() => setOpenGroup(null)}
                                 aria-current={active ? "page" : undefined}
                                 title={item.note}
-                                className={`nav-menu-item group block border px-2 ${compact ? "py-1.5" : "py-2"} ${active ? "border-border bg-surface" : "border-transparent hover:border-border hover:bg-surface"}`}
+                                className={`nav-menu-item group block border px-2 ${compact ? "py-1.5" : "py-2"} ${active ? "border-bitcoin bg-surface" : "border-transparent hover:border-border hover:bg-surface"}`}
                               >
                                 <div className="flex items-center gap-2">
                                   {compact ? null : <ItemIcon to={item.to} active={active} />}
                                   <div className="min-w-0">
                                     <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
                                     {item.note && !compact && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                                    {active && <div className="label mt-1 text-[0.5rem] text-bitcoin">YOU ARE HERE</div>}
                                   </div>
                                 </div>
                               </Link>
@@ -297,7 +312,8 @@ export function SiteHeader() {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
           <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
             <Globe className="size-3.5" strokeWidth={1.75} /> ENTER OASIS
           </Link>
@@ -373,23 +389,29 @@ export function SiteHeader() {
                     type="button"
                     aria-expanded={expanded}
                     onClick={() => setMobileSection((v) => (v === group.id ? null : group.id))}
-                    className={`flex min-h-12 w-full items-center gap-3 px-4 py-3 text-left ${expanded ? "bg-surface" : ""}`}
+                    className={`flex min-h-12 w-full items-center gap-3 border-l-2 px-4 py-3 text-left ${hasCurrent ? "border-bitcoin" : "border-transparent"} ${expanded ? "bg-surface" : ""}`}
                   >
                     <span className={hasCurrent ? "text-bitcoin" : "text-muted-foreground"}><GroupIcon id={group.id} /></span>
                     <span className="min-w-0 flex-1">
                       <span className={`label block ${hasCurrent ? "text-bitcoin" : "text-foreground"}`}>{group.label}</span>
                       <span className="block truncate font-mono text-[10px] text-muted-foreground">{group.note}</span>
                     </span>
+                    {hasCurrent && <span className="label text-[0.5rem] text-bitcoin">HERE</span>}
                     <span className="label text-[0.55rem] text-muted-foreground">{groupItems(group).length}</span>
                     <ChevronDown className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </button>
                   {expanded && (
                     <div className="pb-2">
-                      {group.sections.map((section) => (
+                      {group.sections.map((section) => {
+                        const here = section.items.some((i) => itemIsActive(i.to));
+                        return (
                         <div key={section.title}>
-                          <div className="label sticky top-0 z-10 flex items-center justify-between gap-2 border-y border-border bg-surface px-4 py-1.5 text-[0.55rem] text-signal">
-                            {section.title}
-                            <span className="font-mono text-[0.5rem] text-muted-foreground">{section.items.length}</span>
+                          <div className={`label sticky top-0 z-10 flex items-center justify-between gap-2 border-y border-border bg-surface px-4 py-1.5 text-[0.55rem] ${here ? "text-bitcoin" : "text-signal"}`}>
+                            <span className="flex items-center gap-1.5">
+                              {here && <span className="size-1 shrink-0 rounded-full bg-bitcoin" aria-hidden="true" />}
+                              {section.title}
+                            </span>
+                            <span className="font-mono text-[0.5rem] text-muted-foreground">{here ? "YOU ARE HERE" : section.items.length}</span>
                           </div>
                           <ul>
                             {section.items.map((item) => {
@@ -415,7 +437,8 @@ export function SiteHeader() {
                             })}
                           </ul>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </section>
