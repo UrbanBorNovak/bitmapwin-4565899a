@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VoidInterior } from "@/components/biternam/VoidInterior";
 import { TracyCom } from "@/components/game/TracyCom";
 import { VERBS, type Verb } from "@/lib/museum-verbs";
@@ -75,7 +75,8 @@ function VoidPage() {
   }, []);
 
   const quake = (ms: number) => { setShaking(true); setTimeout(() => setShaking(false), ms); };
-  const hit = (h: VoidHotspot) => {
+  const hit = (h: VoidHotspot) => hitAs(verb, item, h);
+  const hitAs = (verb: Verb, item: string | null, h: VoidHotspot) => {
     const r = resolveVoidVerb(verb, h, { ...st, item });
     playSfx(r.effect === "talk" ? "talk" : r.effect === "pickup-block" ? "pickup" : r.effect === "exit" ? "door" : r.effect === "fall" ? "fall" : r.effect === "confirm" ? "dance" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
@@ -86,6 +87,13 @@ function VoidPage() {
     if (r.effect === "fall") quake(600);
     setItem(null);
   };
+
+  // Dev-only play-test hook (3D picking is unreliable in headless software rendering).
+  const actRef = useRef(hitAs); actRef.current = hitAs;
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __voidTest?: unknown }).__voidTest = { act: (v: Verb, h: VoidHotspot, it: string | null = null) => actRef.current(v, it, h) };
+  }, []);
 
   const [mainRef, fitH] = useFitHeight<HTMLElement>();
   const sentence = item ? `USE ORPHAN BLOCK ON ${hover ? VOID_HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? VOID_HOTSPOT_NAMES[hover] : ""}`;
