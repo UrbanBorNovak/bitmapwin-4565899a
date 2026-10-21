@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { playSfx, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { useEffect, useRef, useState } from "react";
 import { OutpostInterior } from "@/components/biternam/OutpostInterior";
 import { TracyCom } from "@/components/game/TracyCom";
@@ -56,9 +57,16 @@ function OutpostPage() {
   }, []);
   useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify({ hasSuit, suited })); }, [loaded, hasSuit, suited]);
 
+  useEffect(() => {
+    const go = () => { if (localStorage.getItem("bitmapwin:sound-muted") !== "1") startCafeMusic("outpost"); };
+    window.addEventListener("pointerdown", go, { once: true });
+    return () => { window.removeEventListener("pointerdown", go); stopCafeMusic(); };
+  }, []);
+
   const hitAs = (v: Verb, it: string | null, h: OutpostHotspot) => {
     if (blasting) return;
     const r = resolveOutpostVerb(v, h, { suited, item: it });
+    playSfx(r.effect === "talk" ? "talk" : r.effect?.startsWith("pickup") ? "pickup" : r.effect === "exit" ? "door" : r.effect === "blast" ? "fall" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") { if (suited) questStore.record("pickup", "hazmat-suit"); setMission(missionStepFor("bitoshi", questStore.get())); setCall(Date.now()); }
     if (r.effect === "exit") navigate({ to: "/map" });
@@ -78,9 +86,9 @@ function OutpostPage() {
   const sentence = item ? `USE HAZMAT SUIT ON ${hover ? OUTPOST_HOTSPOT_NAMES[hover] : "…"}` : `${VERBS.find((v) => v.id === verb)!.label} ${hover ? OUTPOST_HOTSPOT_NAMES[hover] : ""}`;
 
   return (
-    <main className="relative flex h-[calc(100vh-4rem)] min-h-[560px] flex-col bg-background">
-      <div className="relative flex-1">
-        <OutpostInterior onHit={hit} onHover={setHover} hover={hover} hasSuit={hasSuit} suited={suited} blasting={blasting} />
+    <main className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
+      <div className="relative min-h-0 flex-1">
+        <OutpostInterior onHit={hit} onHover={(h) => { if (h) playSfx("hover"); setHover(h); }} hover={hover} hasSuit={hasSuit} suited={suited} blasting={blasting} />
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">BITERNAM · CHAPTER 3 · BREAKING BLOCK</div>
           <div className="font-display text-2xl text-foreground">SALT FLAT RV · BITOSHI'S COOK</div>
@@ -100,12 +108,12 @@ function OutpostPage() {
           </div>
         ) : null}
       </div>
-      <div className="border-t border-border bg-card/90 p-3 font-mono backdrop-blur">
+      <div className="relative z-10 shrink-0 border-t border-border bg-card/90 p-2 font-mono backdrop-blur sm:p-3" style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
         <div className="mb-2 text-center text-[12px] tracking-widest text-signal">{sentence}</div>
         <div className="mb-2 min-h-[1.25rem] text-center text-[13px] text-foreground">{say}</div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           {VERBS.map((v) => (
-            <button key={v.id} onClick={() => { setVerb(v.id); setItem(null); }}
+            <button key={v.id} onClick={() => { playSfx("verb"); setVerb(v.id); setItem(null); }}
               className={`rounded border px-3 py-1.5 text-[12px] tracking-widest ${verb === v.id && !item ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:border-signal hover:text-foreground"}`}>
               [ {v.label} ]
             </button>

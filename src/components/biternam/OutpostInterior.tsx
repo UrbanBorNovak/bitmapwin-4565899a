@@ -6,7 +6,17 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { OutpostHotspot } from "@/lib/outpost-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+import { CafeSmoke, Patron } from "@/components/biternam/CafeLife";
 const still = { current: false };
+// Unused BITMAP Pixel: Bitoshi's jittery lookout pacing the open aisle.
+const LOOKOUT = "f558bd99682f78080a0aa529163280dfe65e5e8c215f859d04f5bd9b4b434ca0i0";
+const L_BOUNDS = { x0: 0.4, x1: 2.3, z0: 0.3, z1: 1.8 };
+
+function Flicker() {
+  const m = useRef<Mesh>(null);
+  useFrame(({ clock }) => { if (m.current) (m.current.material as MeshStandardMaterial).emissiveIntensity = Math.sin(clock.elapsedTime * 37) > 0.93 ? 0.1 : 1.1; });
+  return <mesh ref={m} position={[0, 3.1, 0]}><boxGeometry args={[3, 0.06, 0.25]} /><meshStandardMaterial color="#eef" emissive="#e8f4ff" emissiveIntensity={1} /></mesh>;
+}
 
 const WALL = "#d8d2c0", FLOOR = "#6b6355", RUST = "#8a4b2a", TRIM = "#f7931a", BLUE = "#28e0ff", HAZ = "#e8c21a";
 type HP = { onHit: (h: OutpostHotspot) => void; onHover: (h: OutpostHotspot | null) => void };
@@ -95,6 +105,23 @@ export function OutpostInterior({ onHit, onHover, hover, hasSuit, suited, blasti
         <mesh position={[0.8, 2, -2.08]}><boxGeometry args={[1.6, 0.8, 0.04]} /><meshStandardMaterial color="#ffe9b0" emissive="#ffd27a" emissiveIntensity={0.7} /></mesh>
         <mesh position={[0, 0.25, -2.05]}><boxGeometry args={[7, 0.5, 0.06]} /><meshStandardMaterial color={RUST} /></mesh>
         <Vapor />
+        <Flicker />
+        {/* Cook dressing: copper coil, gauges, crates, exhaust pipe, salt dust */}
+        <group position={[-0.6, 0, -1.85]}>
+          {[0, 1, 2, 3].map((i) => <mesh key={i} position={[0, 1.3 + i * 0.18, 0]} rotation-x={Math.PI / 2}><torusGeometry args={[0.22, 0.035, 6, 14]} /><meshStandardMaterial color="#b8733a" metalness={0.7} roughness={0.35} /></mesh>)}
+        </group>
+        {[0.2, 0.6].map((x) => (
+          <group key={x} position={[x, 1.9, -2.08]}>
+            <mesh rotation-x={Math.PI / 2}><cylinderGeometry args={[0.13, 0.13, 0.05, 12]} /><meshStandardMaterial color="#ddd" /></mesh>
+            <mesh position-z={0.03} rotation-z={x * 4}><boxGeometry args={[0.02, 0.1, 0.01]} /><meshBasicMaterial color="#c00" /></mesh>
+          </group>
+        ))}
+        {[[-3, 0.3, -1.6], [-3, 0.9, -1.6], [-2.4, 0.3, -1.7]].map((p, i) => (
+          <mesh key={i} position={p as [number, number, number]} castShadow><boxGeometry args={[0.6, 0.6, 0.6]} /><meshStandardMaterial color={i === 1 ? HAZ : "#6a5a3a"} /></mesh>
+        ))}
+        <mesh position={[2.6, 2.4, -1.9]}><cylinderGeometry args={[0.12, 0.12, 1.6, 8]} /><meshStandardMaterial color={RUST} /></mesh>
+        <CafeSmoke count={60} color="#e8e2cf" opacity={0.06} mist={["#6ad8e8", "#d8c08a"]} />
+        <Patron skin={LOOKOUT} start={[1.2, 1.2]} seed={9.1} bounds={L_BOUNDS} isBlocked={() => false} home={[1.3, 1]} />
         <Hot id="flask" {...hp} position={[-1.6, 0, -1.6]}><Flask hot={hover === "flask"} /></Hot>
         <Hot id="bitoshi" {...hp} position={[-0.2, 0, -0.6]} rotation={[0, 0.5, 0]}>
           <Ring hot={hover === "bitoshi"} />
