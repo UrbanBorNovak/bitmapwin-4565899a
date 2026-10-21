@@ -4,7 +4,7 @@ import { Transaction, p2wpkh, utils } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { mintSealed, noteKey, readAnchorScript } from "./shadow-seal";
-import { BroadcastUnknown, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
+import { BroadcastUnknown, VaultStorageError, loadHeld, repairedHeld, runLockedTransfer, intentStore, clearInterrupted, networkOf, withAnchorLock, pendingStore, resolvePending, sealStore, type PendingTransfer, type Resolution, txSeenOnChain, broadcastTx, pickPlainCoin, prepareTransfer, sealFee, sealReceiveCode, type Coin, type HeldSealed } from "./shadow-seal-wallet";
 
 const priv = utils.randomPrivateKeyBytes();
 const address = p2wpkh(secp256k1.getPublicKey(priv, true)).address!;
@@ -422,5 +422,99 @@ describe("stale signatures after an interrupted signing is cleared", () => {
     const ra = await pa;
     expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([ra.txid]);
     expect([...labels(), ...ra.sent.map((x) => x.label)].sort()).toEqual(["Key", "Map", "Pass"]);
+  });
+});
+
+describe("browser storage failures and damaged recovery records", () => {
+  // A storage that can be told to fail setItem for given keys, drop writes silently, or throw on read.
+  const mem = new Map<string, string>();
+  let failSet = new Set<string>(), dropSet = new Set<string>(), failRead = false;
+  const faulty = {
+    getItem: (k: string) => { if (failRead) throw new Error("SecurityError"); return mem.get(k) ?? null; },
+    setItem: (k: string, v: string) => { if (failSet.has(k)) throw new DOMException("quota", "QuotaExceededError"); if (!dropSet.has(k)) mem.set(k, v); },
+    removeItem: (k: string) => void mem.delete(k),
+  } as unknown as Storage;
+  const real = globalThis.localStorage;
+  const reset = () => { mem.clear(); failSet = new Set(); dropSet = new Set(); failRead = false; globalThis.localStorage = faulty; sealStore.setHeld(bundle); };
+  const after = () => { globalThis.localStorage = real; };
+  const held = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (held.has(name)) return cb(null); held.add(name); try { return await cb({}); } finally { held.delete(name); } } };
+  const go = (sign: (p: string) => Promise<string> = mockWallet) =>
+    runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign, currentWallet: () => address, locks });
+  const labels = () => sealStore.held().map((h) => h.c.note.label).sort();
+  const PK = "bitmapwin:sealed-pending", IK = "bitmapwin:sealed-intent", HK = "bitmapwin:sealed-notes";
+
+  it("BEFORE signing: if the signing lock can't be saved, the wallet never opens", async () => {
+    reset(); failSet.add(IK);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toBeInstanceOf(VaultStorageError);
+    expect(spy).not.toHaveBeenCalled();
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    after();
+  });
+  it("BEFORE signing: a save the browser silently drops is caught too", async () => {
+    reset(); dropSet.add(IK);
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/DID NOT KEEP|SIGNING LOCK/);
+    expect(spy).not.toHaveBeenCalled();
+    after();
+  });
+  it("AFTER signing: if the signed transfer can't be saved, the signature is discarded, notes unchanged, coin stays blocked", async () => {
+    reset(); failSet.add(PK);
+    await expect(go()).rejects.toThrow(/COULD NOT SAVE THE SIGNED TRANSFER/);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    expect(intentStore.onAnchor(coin)).toHaveLength(1); // shows as interrupted
+    failSet.clear();
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/INTERRUPTED/);
+    expect(spy).not.toHaveBeenCalled();
+    after();
+  });
+  it("AFTER signing: if only the notes list fails to save, the transfer record repairs it on reload", async () => {
+    reset(); failSet.add(HK);
+    const r = await go();
+    expect(labels()).toEqual(["Key", "Map", "Pass"]); // stale on disk
+    failSet.clear();
+    const fixed = loadHeld(); // "reload"
+    expect(fixed.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map"]);
+    expect(fixed.every((h) => h.mine.txid === r.txid)).toBe(true);
+    expect(pendingStore.onAnchor(coin)[0]!.sent.map((x) => x.label)).toEqual(["Pass"]);
+    expect(pendingStore.onAnchor(coin)[0]!.before!.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+    after();
+  });
+  it("a corrupted unfinished-transfer record blocks new transfers instead of reading as empty", async () => {
+    reset(); mem.set(PK, "{not json");
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/DAMAGED VAULT RECORD/);
+    expect(spy).not.toHaveBeenCalled();
+    expect(() => pendingStore.put({ txid: "1".repeat(64), rawHex: "", anchor: coin, address, network: "mainnet", sent: [], at: "" })).toThrow(/DAMAGED/);
+    expect(mem.get(PK)).toBe("{not json"); // never overwritten
+    after();
+  });
+  it("a wrongly shaped signing-lock record also blocks (fail closed)", async () => {
+    reset(); mem.set(IK, JSON.stringify([{ anchor: { txid: "zz", vout: "x" } }]));
+    await expect(go()).rejects.toThrow(/DAMAGED/);
+    after();
+  });
+  it("a corrupted notes list is never overwritten by an empty one", () => {
+    reset(); mem.set(HK, JSON.stringify([{ junk: true }]));
+    expect(() => loadHeld()).toThrow(/DAMAGED/);
+    expect(() => sealStore.setHeld([])).toThrow(/DAMAGED/);
+    expect(mem.get(HK)).toBe(JSON.stringify([{ junk: true }]));
+    after();
+  });
+  it("storage that can't be read at all refuses everything", async () => {
+    reset(); failRead = true;
+    const spy = vi.fn(mockWallet);
+    await expect(go(spy)).rejects.toThrow(/UNAVAILABLE/);
+    expect(spy).not.toHaveBeenCalled();
+    failRead = false; after();
+  });
+  it("repair never duplicates or drops notes", () => {
+    const p: PendingTransfer = { txid: "5".repeat(64), rawHex: "", anchor: coin, address, network: "mainnet", sent: [], at: "", before: bundle, kept: bundle.slice(0, 2).map((h) => ({ ...h, mine: { txid: "5".repeat(64), vout: 0, salt: "" } })) };
+    const once = repairedHeld(bundle, [p]);
+    expect(once.map((h) => h.c.note.label)).toEqual(["Key", "Pass"]);
+    expect(repairedHeld(once, [p])).toBe(once); // idempotent
   });
 });
