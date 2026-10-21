@@ -23,3 +23,12 @@ describe("vault", () => {
     expect(resolveVaultVerb("use", "vault", { got: true, solved: false }).effect).toBe("solve");
   });
 });
+
+import { resolveLairVerb } from "./hideout-verbs";
+describe("lair", () => {
+  it("breaker needs the handle from the console first", () => {
+    expect(resolveLairVerb("use", "breaker", { got: false, solved: false }).effect).toBeNull();
+    expect(resolveLairVerb("use", "console", { got: false, solved: false }).effect).toBe("gain");
+    expect(resolveLairVerb("use", "breaker", { got: true, solved: false }).effect).toBe("solve");
+  });
+});

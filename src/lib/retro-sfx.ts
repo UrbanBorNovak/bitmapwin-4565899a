@@ -32,7 +32,7 @@ export function playSfx(s: Sfx) {
 /** Smoky lounge loop: slow Rhodes-ish chords, warm sub bass, vinyl hiss. Faster and brighter while the jukebox plays. */
 let music: { stop: () => void; setHot: (on: boolean) => void } | null = null;
 export function isCafeMusicOn() { return music !== null; }
-export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse" | "arcade" | "studio" | "lab" | "void" | "batcave" | "island" | "vault";
+export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse" | "arcade" | "studio" | "lab" | "void" | "batcave" | "island" | "vault" | "lair";
 const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: OscillatorType; lp: number; lead: OscillatorType; hiss: number }> = {
   cafe: { chords: [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2], [164.8, 207.7, 246.9, 329.6]], beat: 0.6, wave: "triangle", lp: 1100, lead: "square", hiss: 0.08 },
   // Hushed gallery: suspended chords, long reverb tails, glassy chimes.
@@ -54,6 +54,8 @@ const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: Oscillat
   island: { chords: [[261.6, 329.6, 392, 493.9], [220, 277.2, 329.6, 440], [293.7, 370, 440, 523.3], [246.9, 311.1, 370, 440]], beat: 0.55, wave: "triangle", lp: 1600, lead: "triangle", hiss: 0.1 },
   // Buried vault under 1138: tense diminished drone, low saw, dusty hiss.
   vault: { chords: [[65.4, 77.8, 92.5, 110], [61.7, 73.4, 87.3, 103.8], [58.3, 69.3, 82.4, 98], [65.4, 77.8, 92.5, 116.5]], beat: 1, wave: "sawtooth", lp: 650, lead: "triangle", hiss: 0.12 },
+  // Rogue re-org lair: fast tense showdown pulse, square lead, electric hiss.
+  lair: { chords: [[82.4, 98, 123.5, 146.8], [77.8, 92.5, 116.5, 138.6], [73.4, 87.3, 110, 130.8], [87.3, 103.8, 130.8, 155.6]], beat: 0.32, wave: "sawtooth", lp: 1100, lead: "square", hiss: 0.11 },
   void: { chords: [[55, 82.4, 110, 155.6], [51.9, 77.8, 103.8, 146.8], [49, 73.4, 98, 138.6], [55, 82.4, 116.5, 164.8]], beat: 1.2, wave: "sine", lp: 600, lead: "triangle", hiss: 0.14 },
 };
 export function startCafeMusic(mood: RoomMood = "cafe") {

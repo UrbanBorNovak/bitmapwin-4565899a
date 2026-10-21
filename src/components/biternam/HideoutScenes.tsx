@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
