@@ -78,14 +78,14 @@ export const ROOM_CUTSCENES: Partial<Record<HideoutRoom, Partial<Record<CutTrigg
   },
   canon: {
     gain: { id: "canon-gain", frames: [
-      { focus: [35, 52], zoom: 1.7, ms: 2200, light: "spot", sfx: "pickup", speaker: "WIERDAMOTO", face: "wierdamoto", line: "Your sat. Carry it. They can copy a picture, not a sat." },
+      { focus: [35, 52], zoom: 1.7, ms: 2200, light: "spot", sfx: "pickup", speaker: "WIERDAMOTO", face: "wierdamoto", line: "The bait key was watched. Limitless ran straight to Iman's rig. Now we know which door." },
     ] },
     solve: { id: "canon-solve", frames: [
-      { focus: [50, 48], zoom: 1.6, ms: 1400, light: "flash", shake: 1, sfx: "dance", line: "Sat 1138 enters the honest node. The real chain is longer." },
-      { focus: [62, 45], zoom: 1.9, ms: 1700, light: "dim", speaker: "WILL", face: "will", line: "Our fork… it's orphaned. All of it." },
-      { focus: [58, 45], zoom: 1.9, ms: 1700, speaker: "IMAN", face: "iman", line: "You can't re-org the work, can you." },
-      { focus: [40, 48], zoom: 1.8, ms: 1800, light: "warm", speaker: "BITOSHI", face: "bitoshi", line: "Most work wins. Always did. Nobody cooks faster than the chain." },
-      { focus: [50, 42], zoom: 2, ms: 2400, light: "warm", speaker: "GHOST OF 1138", line: "Block 1138. Confirmed. I can rest." },
+      { focus: [50, 48], zoom: 1.6, ms: 1400, light: "flash", shake: 1, sfx: "dance", line: "Sat 1138 hits the honest node. The red fork goes dark." },
+      { focus: [62, 45], zoom: 1.9, ms: 1700, light: "dim", speaker: "WILL", face: "will", line: "Wait, wait. I have receipts! Forty thousand receipts!" },
+      { focus: [58, 45], zoom: 1.9, ms: 1900, speaker: "IMAN", face: "iman", line: "Receipts aren't work, Will. They let us sign their bait. With my address." },
+      { focus: [40, 48], zoom: 1.8, ms: 1900, light: "warm", speaker: "WIERDAMOTO", face: "wierdamoto", line: "One fee framed us in 1138. One signature on an empty key framed you." },
+      { focus: [50, 42], zoom: 2, ms: 2400, light: "warm", speaker: "GHOST OF 1138", line: "My sat, on the honest chain. Now I can rest." },
     ] },
   },
 };

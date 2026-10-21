@@ -21,12 +21,12 @@ export const Route = createFileRoute("/biternam_/canon")({
       names={CANON_NAMES} voice={120} resolve={resolveCanonVerb}
       intro="Iman and Will are printing a fork. Wierdamoto brought the sat. Choose a verb and click."
       script={(s) => ({ id: "npc-wierdamoto-canon", title: "BEDROCK · WIERDAMOTO", start: "a", nodes: s.solved ? [
-        { id: "a", speaker: "WIERDAMOTO", mood: "smug", text: "Trace proved the fee. Bait proved the greed. The sat proved the rest.", next: "b" },
-        { id: "b", speaker: "DEV9", mood: "idle", text: "(on the wrist-com) Logged in the Marauder file. Closed.", next: "c" },
-        { id: "c", speaker: "URBAN", mood: "smug", text: "(on the wrist-com) Told you the blueprint was real. Now let me sleep.", next: null },
+        { id: "a", speaker: "WIERDAMOTO", mood: "smug", text: "The trace proved the fee. The bait key got Iman to sign. The sat sealed it.", next: "b" },
+        { id: "b", speaker: "DEV9", mood: "idle", text: "(on the wrist-com) Marauder log, last line: third address, identified. Case closed.", next: "c" },
+        { id: "c", speaker: "URBAN", mood: "smug", text: "(on the wrist-com) Blueprint held up in court. Don't wake me for the parade.", next: null },
       ] : [
-        { id: "a", speaker: "WIERDAMOTO", mood: "idle", text: "They have receipts. We have the sat. Take it from my skiff.", next: "b" },
-        { id: "b", speaker: "WIERDAMOTO", mood: "smug", text: "Then give it to the node. Don't argue with them. Let the chain do it.", next: null },
+        { id: "a", speaker: "WIERDAMOTO", mood: "idle", text: "Limitless carried the bait key straight here. Iman signed it. That's my proof.", next: "b" },
+        { id: "b", speaker: "WIERDAMOTO", mood: "smug", text: "Take the sat from my skiff and give it to the node. Don't argue with them. The chain will.", next: null },
       ] })}
       scene={(p) => <CanonScene {...p} />}
     />
