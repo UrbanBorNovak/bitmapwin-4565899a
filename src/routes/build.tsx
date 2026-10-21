@@ -27,8 +27,8 @@ const CHOICES: Choice[] = [
 
 function BuildChooser() {
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-10 md:px-8 md:py-14">
-      <Link to="/studio" className="label text-muted-foreground hover:text-bitcoin">← STUDIO</Link>
+    <div className="mx-auto max-w-[1100px] px-4 pb-28 pt-10 md:px-8 md:py-14">
+      <Link to="/studio" className="label -ml-2 inline-block px-2 py-3 text-muted-foreground hover:text-bitcoin">← STUDIO</Link>
       <div className="label mt-4 text-bitcoin">BUILD · LAND FORGE</div>
       <h1 className="display mt-3 text-4xl md:text-5xl">HOW DO YOU WANT TO BUILD?</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
