@@ -259,7 +259,7 @@ export async function withAnchorLock<T>(anchor: { txid: string; vout: number }, 
 }
 
 /* ── signing intents: written BEFORE the wallet opens, so a crash/reload mid-popup is never forgotten ── */
-export type SigningIntent = { anchor: { txid: string; vout: number }; address: string; network: BtcNetwork; at: string };
+export type SigningIntent = { anchor: { txid: string; vout: number }; address: string; network: BtcNetwork; at: string; /** random id of this signing attempt */ attempt?: string };
 const IK = "bitmapwin:sealed-intent";
 export const intentStore = {
   all: () => read<SigningIntent[]>(IK, []),
@@ -267,7 +267,11 @@ export const intentStore = {
   forWallet: (address: string) => read<SigningIntent[]>(IK, []).filter((i) => i.address === address && i.network === networkOf(address)),
   put: (i: SigningIntent) => write(IK, [...read<SigningIntent[]>(IK, []).filter((x) => sealKey(x.anchor) !== sealKey(i.anchor)), i]),
   drop: (a: { txid: string; vout: number }) => write(IK, read<SigningIntent[]>(IK, []).filter((x) => sealKey(x.anchor) !== sealKey(a))),
+  /** Drops the intent only if it still belongs to this attempt (never a newer one). */
+  dropAttempt: (a: { txid: string; vout: number }, attempt: string) => write(IK, read<SigningIntent[]>(IK, []).filter((x) => !(sealKey(x.anchor) === sealKey(a) && x.attempt === attempt))),
+  isCurrent: (a: { txid: string; vout: number }, attempt: string) => read<SigningIntent[]>(IK, []).some((x) => sealKey(x.anchor) === sealKey(a) && x.attempt === attempt),
 };
+const newAttempt = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
 
 /**
  * The whole sign step under the anchor lock:
@@ -285,23 +289,28 @@ export async function runLockedTransfer(o: {
   const now = o.now ?? (() => new Date().toISOString());
   const anchor = { txid: o.coin.txid, vout: o.coin.vout };
   return withAnchorLock(anchor, async () => {
-    intentStore.put({ anchor, address: o.address, network, at: now() });
+    const attempt = newAttempt();
+    intentStore.put({ anchor, address: o.address, network, at: now(), attempt });
     let r: Awaited<ReturnType<typeof prepareTransfer>>;
     try {
       r = await prepareTransfer({ ...o, allHeld: sealStore.held() });
-    } catch (e) { intentStore.drop(anchor); throw e; }
+    } catch (e) { intentStore.dropAttempt(anchor, attempt); throw e; }
     // From here on everything is synchronous: one tick, so no other tab can interleave.
+    // Stale check: this attempt must still be the live one (not cleared, not superseded, no other transfer filed).
+    if (!intentStore.isCurrent(anchor, attempt) || pendingStore.onAnchor(anchor).length) {
+      throw new Error("THIS SIGNATURE IS STALE — THAT SIGNING WAS CLEARED OR REPLACED. DISCARDED, NOTHING SAVED OR SENT");
+    }
     const heldNow = sealStore.held();
     const ck = sealKey(anchor);
     if (heldNow.some((h) => sealKey(h.mine) === ck && !o.bundle.some((b) => noteKey(b.c.note.genesis) === noteKey(h.c.note.genesis)))) {
-      intentStore.drop(anchor);
+      intentStore.dropAttempt(anchor, attempt);
       throw new Error("NOTES ON THIS COIN CHANGED WHILE SIGNING — SIGNATURE DISCARDED, NOTHING SENT");
     }
     sealStore.setUndo({ ...sealStore.undo(), [r.txid]: o.bundle });
     pendingStore.put({ txid: r.txid, rawHex: r.rawHex, anchor, address: o.address, network, sent: r.sent, at: now() });
     sealStore.setSent([...sealStore.sent(), ...r.sent.map((x) => ({ ...x, at: now() }))]);
     sealStore.setHeld([...heldNow.filter((h) => sealKey(h.mine) !== ck), ...r.kept]);
-    intentStore.drop(anchor);
+    intentStore.dropAttempt(anchor, attempt);
     const cur = o.currentWallet();
     return { ...r, walletChanged: cur !== o.address || networkOf(cur ?? "") !== network };
   }, o.locks);
