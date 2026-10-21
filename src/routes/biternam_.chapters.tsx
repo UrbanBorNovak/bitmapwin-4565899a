@@ -139,8 +139,8 @@ function ChaptersPage() {
             <span className="text-muted-foreground">AVG FEE</span><span>{facts.isPending ? "…" : f.avgFeeRate == null ? "UNAVAILABLE" : `${f.avgFeeRate} sat/vB`}</span>
             <span className="text-muted-foreground">MINED</span><span>{facts.isPending ? "…" : f.minedAt == null ? "UNAVAILABLE" : new Date(f.minedAt).toISOString().slice(0, 16).replace("T", " ") + " UTC"}</span>
             <span className="text-muted-foreground">SOURCE</span><span className={facts.data?.note ? "text-destructive" : ""}>{facts.isError ? "LOOKUP FAILED" : facts.data ? `${(facts.data.source ?? "unavailable").toUpperCase()}${facts.data.note ? ` · ${facts.data.note}` : ""}` : "…"}</span>
-            <span className="text-muted-foreground">GUARDIAN</span><span className={species ? "text-bitcoin" : "text-muted-foreground"}>{guardian.isPending ? "…" : species ? `AWAKE · ${species}` : "NONE · EXPLORER CAST"}</span>
-            <span className="text-muted-foreground">BUILD</span><span className={hasBuild ? "text-bitcoin" : "text-muted-foreground"}>{build.isPending ? "…" : hasBuild ? "INSCRIBED · SHOWN ON LAND" : "NONE · BARE LAND"}</span>
+            <span className="text-muted-foreground">GUARDIAN</span><span data-testid="guardian-status" className={species ? "text-bitcoin" : guardian.state === "unavailable" ? "text-destructive" : "text-muted-foreground"}>{statusLabel(guardian, `AWAKE · ${species}`, "NONE CONFIRMED · EXPLORER CAST")}</span>
+            <span className="text-muted-foreground">BUILD</span><span data-testid="build-status" className={hasBuild ? "text-bitcoin" : build.state === "unavailable" ? "text-destructive" : "text-muted-foreground"}>{statusLabel(build, "INSCRIBED · SHOWN ON LAND", "NONE CONFIRMED · BARE LAND")}</span>
           </div>
           <div>
             <label htmlFor="set" className="text-muted-foreground">BITERNAM SET</label>
