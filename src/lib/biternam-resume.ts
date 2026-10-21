@@ -5,7 +5,7 @@ import { HIDEOUT_STEPS } from "@/lib/hideout-progress";
 export type ResumeTarget = { to: string; label: string; done: boolean };
 
 /** Next unfinished puzzle from server-saved counts, in story order: Heist, Void, Batcave, Island Hotel, 1138 Vault, Re-Org Lair, Void Basement, Shredder Archive, Forgery Parlour, Handshake. */
-export function resumeTarget(heistStage: number, voidCount: number, batcaveCount = 0, islandCount = 0, vaultCount = 0, lairCount = 0, basementCount = 0, archiveCount = 0, holdersCount = 0, handshakeCount = 0, fortressCount = 0): ResumeTarget {
+export function resumeTarget(heistStage: number, voidCount: number, batcaveCount = 0, islandCount = 0, vaultCount = 0, lairCount = 0, basementCount = 0, archiveCount = 0, holdersCount = 0, handshakeCount = 0, fortressCount = 0, canonCount = 0): ResumeTarget {
   if (heistStage < HEIST_STEPS.length) {
     const s = HEIST_STEPS[Math.max(0, heistStage)]!;
     return { to: `/biternam/${s.room}`, label: `CH.4 · ${heistStage + 1}/${HEIST_STEPS.length} · ${s.hint}`, done: false };
@@ -40,5 +40,8 @@ export function resumeTarget(heistStage: number, voidCount: number, batcaveCount
   if (fortressCount < HIDEOUT_STEPS.fortress.length) {
     return { to: "/biternam/fortress", label: `CH.11 · THE KEY FORTRESS · ${fortressCount + 1}/${HIDEOUT_STEPS.fortress.length}`, done: false };
   }
-  return { to: "/biternam/fortress", label: "ALL PUZZLES SOLVED · REVISIT THE KEY FORTRESS", done: true };
+  if (canonCount < HIDEOUT_STEPS.canon.length) {
+    return { to: "/biternam/canon", label: `CH.12 · THE CANONICAL BLOCK · ${canonCount + 1}/${HIDEOUT_STEPS.canon.length}`, done: false };
+  }
+  return { to: "/biternam/canon", label: "ALL PUZZLES SOLVED · REVISIT THE CANONICAL BLOCK", done: true };
 }
