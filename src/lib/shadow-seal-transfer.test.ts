@@ -929,7 +929,7 @@ describe("deterministic failure injection at every storage write", () => {
     "crashed restore journal, then sign (recovery first)": () => {
       mem.set(JK, JSON.stringify({ prev: { [HK]: mem.get(HK)!, "bitmapwin:sealed-recv": null, [SK]: null }, next: { [HK]: "[]", "bitmapwin:sealed-recv": "{}", [SK]: "[]" } }));
       mem.set(HK, "[]");
-      return [sign().then(() => {}), Promise.resolve(loadHeld()).then(() => {})];
+      return [sign().then(() => {}), (async () => { loadHeld(); })()];
     },
     "restore whose save fails → rollback, then sign": () => [failingRestore().catch(() => {}), sign().then(() => {})],
     "sign, then reload with a stale journal": () => [sign().then(() => {
