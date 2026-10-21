@@ -6,6 +6,7 @@ import { PixelFace } from "@/components/game/PixelFace";
 import { SECTOR_09_BRIEFING } from "@/lib/tracy-com";
 import { BITERNAM_PART_1 } from "@/lib/biternam-story";
 import { BITERNAM_CREW, CREW_MISSION_ROLE, CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+import { CommunityChronicles } from "@/components/biternam/CommunityChronicles";
 
 export const Route = createFileRoute("/biternam")({
   head: () => ({
@@ -94,6 +95,7 @@ function BiternamPage() {
           </section>
         ))}
         <p className="mt-12 font-mono text-[10px] text-muted-foreground">Original parody fiction. Inspired by the tone of 1990s adventure-game manuals; all characters and quotes are invented.</p>
+        <CommunityChronicles />
       </article>
       {!ended && (
         <div className="fixed right-4 top-20 z-50">
