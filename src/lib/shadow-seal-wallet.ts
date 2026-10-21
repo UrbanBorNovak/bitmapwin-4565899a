@@ -155,13 +155,40 @@ export async function prepareTransfer(o: {
   return { ...out, fee, keepValue, ...applySpend(o.bundle, assignments, out.txid) };
 }
 
-/** Sends a signed tx to Bitcoin via mempool.space. Only called when the holder presses the button. */
-export async function broadcastTx(rawHex: string, fetchImpl: typeof fetch = fetch): Promise<string> {
-  let r: Response;
-  try { r = await fetchImpl("https://mempool.space/api/tx", { method: "POST", body: rawHex }); }
-  catch { throw new Error("COULD NOT REACH BITCOIN — NOT SENT, TRY AGAIN"); }
-  const t = (await r.text()).trim();
-  if (!r.ok) throw new Error(`BITCOIN REJECTED IT: ${t.slice(0, 120)}`);
-  if (!/^[0-9a-f]{64}$/i.test(t)) throw new Error("UNEXPECTED REPLY — CHECK MEMPOOL.SPACE BEFORE RETRYING");
+/** Thrown when we can't tell whether Bitcoin received the tx (timeout / connection drop). Never treat as "not sent". */
+export class BroadcastUnknown extends Error {
+  constructor(public txid: string) { super("NO REPLY FROM BITCOIN — IT MAY OR MAY NOT HAVE BEEN SENT. CHECK BEFORE CANCELLING OR RETRYING"); }
+}
+
+/** Is this txid known to Bitcoin (mempool or block)? "unknown" when the check itself fails. */
+export async function txSeenOnChain(txid: string, fetchImpl: typeof fetch = fetch): Promise<"seen" | "absent" | "unknown"> {
+  try {
+    const r = await fetchImpl(`https://mempool.space/api/tx/${txid}/status`);
+    if (r.status === 404) return "absent";
+    if (!r.ok) return "unknown";
+    return "seen";
+  } catch { return "unknown"; }
+}
+
+/**
+ * Sends a signed tx via mempool.space. Only called when the holder presses the button.
+ * Returns the txid when accepted. Throws BroadcastUnknown on timeout/connection loss,
+ * and a plain Error only when Bitcoin definitively rejected it.
+ */
+export async function broadcastTx(rawHex: string, txid: string, fetchImpl: typeof fetch = fetch, timeoutMs = 20_000): Promise<string> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
+  let r: Response, t: string;
+  try {
+    r = await fetchImpl("https://mempool.space/api/tx", { method: "POST", body: rawHex, signal: ctl.signal });
+    t = (await r.text()).trim();
+  } catch { throw new BroadcastUnknown(txid); }
+  finally { clearTimeout(timer); }
+  if (!r.ok) {
+    if (/already|known|in-mempool|in-chain/i.test(t)) return txid;
+    if (r.status >= 500) throw new BroadcastUnknown(txid);
+    throw new Error(`BITCOIN REJECTED IT: ${t.slice(0, 120)}`);
+  }
+  if (t.toLowerCase() !== txid.toLowerCase()) throw new BroadcastUnknown(txid);
   return t;
 }
