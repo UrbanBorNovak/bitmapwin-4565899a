@@ -67,7 +67,7 @@ function StageLight({ hot, blind }: { hot: boolean; blind: boolean }) {
       <mesh position-y={0.9}><cylinderGeometry args={[0.03, 0.03, 1.8, 6]} /><meshStandardMaterial color="#222" /></mesh>
       {[0, 2.1, 4.2].map((r) => <mesh key={r} position={[Math.cos(r) * 0.3, 0.05, Math.sin(r) * 0.3]} rotation-y={-r}><boxGeometry args={[0.6, 0.04, 0.04]} /><meshStandardMaterial color="#222" /></mesh>)}
       <mesh position={[0, 1.9, 0.05]} rotation-x={0.5}><cylinderGeometry args={[0.2, 0.26, 0.4, 10]} /><meshStandardMaterial color="#111" emissive="#fff4d0" emissiveIntensity={blind ? 4 : hot ? 1.2 : 0.4} /></mesh>
-      <spotLight position={[0, 1.9, 0]} target-position={[-1.5, 0.8, 0]} angle={0.5} intensity={blind ? 80 : 18} color="#fff1c8" penumbra={0.5} />
+      <spotLight position={[0, 1.9, 0]} target-position={[-2, 0.8, -1.8]} angle={0.5} intensity={blind ? 80 : 18} color="#fff1c8" penumbra={0.5} />
     </group>
   );
 }
@@ -100,8 +100,9 @@ export function StudioInterior({ onHit, onHover, hover, wireRead, headline, onAi
         <FixedCam />
         <color attach="background" args={["#0c0b10"]} />
         <fog attach="fog" args={["#0c0b10", 14, 26]} />
-        <ambientLight intensity={0.6} color="#d8d0ff" />
-        <pointLight position={[0, 3.6, 0]} intensity={18} color="#fff0dc" castShadow />
+        <ambientLight intensity={1.1} color="#d8d0ff" />
+        <pointLight position={[0.6, 2.4, 0]} intensity={14} color="#ffe6c0" />
+        <pointLight position={[0, 3.6, 0]} intensity={22} color="#fff0dc" castShadow />
         <pointLight position={[1.6, 3, -3]} intensity={onAir ? 16 : 2} color={RED} />
         {/* Checkered studio floor + walls */}
         {Array.from({ length: 64 }, (_, i) => (
@@ -143,7 +144,7 @@ export function StudioInterior({ onHit, onHover, hover, wireRead, headline, onAi
           {Array.from({ length: 12 }, (_, i) => <mesh key={i} position={[-0.55 + (i % 6) * 0.2, 1.02, -0.15 + Math.floor(i / 6) * 0.18]}><boxGeometry args={[0.08, 0.04, 0.08]} /><meshStandardMaterial color={i % 3 ? "#555" : NEON} emissive={i % 3 ? "#000" : NEON} emissiveIntensity={0.6} /></mesh>)}
           <mesh position={[0.45, 1.12, 0.2]}><boxGeometry args={[0.22, 0.2, 0.22]} /><meshStandardMaterial color={RED} emissive={RED} emissiveIntensity={onAir ? 1.8 : hover === "switch" ? 0.9 : 0.3} /></mesh>
         </Hot>
-        <Hot id="light" {...hp} position={[1.4, 0, -0.2]}><StageLight hot={hover === "light"} blind={blind} /></Hot>
+        <Hot id="light" {...hp} position={[2.6, 0, 0.6]}><StageLight hot={hover === "light"} blind={blind} /></Hot>
         {/* TV camera on tripod */}
         <group position={[1.0, 0, 2.2]} rotation-y={-2.4}>
           <mesh position-y={0.6}><cylinderGeometry args={[0.04, 0.12, 1.2, 6]} /><meshStandardMaterial color="#222" /></mesh>
