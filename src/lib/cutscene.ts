@@ -56,9 +56,12 @@ export const ROOM_CUTSCENES: Partial<Record<HideoutRoom, Partial<Record<CutTrigg
       { focus: [70, 50], zoom: 1.7, ms: 2400, light: "spot", sfx: "pickup", speaker: "INVEST GEEK", face: "invest-geek", line: "Row 1138. A third address paid the fee." },
     ] },
     solve: { id: "handshake-solve", frames: [
-      { focus: [42, 50], zoom: 1.8, ms: 2000, light: "dim", speaker: "WIERDAMOTO", face: "wierdamoto", line: "So it was never you." },
-      { focus: [58, 50], zoom: 1.8, ms: 2000, speaker: "BITOSHI", face: "bitoshi", line: "It was never you either, old friend." },
-      { focus: [50, 52], zoom: 2.1, ms: 2600, light: "warm", sfx: "dance", line: "THE HANDSHAKE." },
+      { focus: [42, 50], zoom: 1.8, ms: 1500, light: "dim", speaker: "WIERDAMOTO", face: "wierdamoto", line: "So it was never you." },
+      { focus: [58, 50], zoom: 1.8, ms: 1500, speaker: "BITOSHI", face: "bitoshi", line: "Six years. Six years I spat in your soup." },
+      { focus: [50, 52], zoom: 2.1, ms: 1300, light: "warm", sfx: "dance", line: "THE HANDSHAKE." },
+      { focus: [42, 48], zoom: 1.9, ms: 2000, light: "spot", speaker: "WIERDAMOTO", face: "wierdamoto", line: "Iman wants keys. Fine. We cook him one. Empty, and watched." },
+      { focus: [58, 48], zoom: 1.9, ms: 1500, speaker: "BITOSHI", face: "bitoshi", line: "I make the bait. You sit on the door." },
+      { focus: [50, 46], zoom: 1.6, ms: 2100, light: "warm", speaker: "DEV9", face: "dev9", line: "Not bad, kid. Go sleep. Tomorrow we hire somebody who can write." },
     ] },
   },
 };
