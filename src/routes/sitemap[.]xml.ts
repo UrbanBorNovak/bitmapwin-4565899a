@@ -18,7 +18,7 @@ async function heightsFrom(table: "trades" | "offers" | "bitmap_forge_builds", o
   return out;
 }
 
-const MAIN_PAGES = ["/tools", "/forge", "/toon", "/watch", "/mint", "/breed", "/guardians", "/guardians-guide", "/church", "/store-kit", "/co-forge", "/tiny-studio", "/bot", "/clips", "/traits", "/kennels", "/explore", "/experiences", "/extenders", "/history", "/builders", "/cities", "/world-stats", "/trading-post", "/ranks", "/codex", "/genesis-ranks", "/novelty"];
+const MAIN_PAGES = ["/tools", "/forge", "/toon", "/watch", "/mint", "/breed", "/guardians", "/guardians-guide", "/church", "/store-kit", "/co-forge", "/tiny-studio", "/bot", "/clips", "/traits", "/kennels", "/explore", "/experiences", "/make", "/extenders", "/history", "/builders", "/cities", "/world-stats", "/trading-post", "/ranks", "/codex", "/genesis-ranks", "/novelty"];
 
 const BASE_URL = "https://bitmapwin.app";
 
