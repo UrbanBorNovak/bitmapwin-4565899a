@@ -6,8 +6,12 @@
 
 export const OCI_CACHE_MODULE_ID = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0";
 export const LIVE_OCI_MODULE_ID = "0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0";
+/** bop's on-chain block parser that LiveOCI itself imports. */
+export const BLOCK_PARSER_MODULE_ID = "bbbb2172ebca174579884df1ad7487196c39e860b3aacdf4e052a33bf5ec31fai0";
+/** Blocks searched past the height before a claim counts as not found (browser budget). */
+export const LIVE_SPAN = 12;
 
-/** Expects globals: MZ = { base, cache, live, cacheLast }. Defines window.BM.{draw,oci}. */
+/** Expects globals: MZ = { base, cache, live, parser, span, cacheLast }. Defines window.BM.{draw,oci}. */
 export const MOSAIC_JS = String.raw`
 (function(){
 function M(list){var w=0;for(var i=0;i<list.length;i++)w+=list[i]*list[i];this.w=Math.max(1,Math.ceil(Math.sqrt(w)));this.off=0;this.rows=[];this.slots=[];for(var j=0;j<list.length;j++)this.place(Math.max(1,list[j]))}
@@ -61,5 +65,5 @@ export const MOSAIC_CSS = `.v{position:relative}.v.m{display:block}.v canvas{wid
 .o{display:inline-block;margin-top:8px;font:700 10px ui-monospace,monospace;letter-spacing:.08em;padding:3px 7px;border-radius:4px;border:1px solid var(--ln);color:var(--mut);text-decoration:none}.o.ok{border-color:#22d3ee88;color:#22d3ee}.o.bad{border-color:#ff4d6d88;color:#ff4d6d}`;
 
 export function mosaicConfig(base: string, cacheLast = 969_999): string {
-  return JSON.stringify({ base, cache: OCI_CACHE_MODULE_ID, live: LIVE_OCI_MODULE_ID, cacheLast });
+  return JSON.stringify({ base, cache: OCI_CACHE_MODULE_ID, live: LIVE_OCI_MODULE_ID, parser: BLOCK_PARSER_MODULE_ID, span: LIVE_SPAN, cacheLast });
 }
