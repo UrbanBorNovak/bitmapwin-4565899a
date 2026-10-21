@@ -6,7 +6,7 @@ import {
   TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
   FileText, Terminal, Wrench, ArrowRight, Clapperboard, Menu as MenuIcon, type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
@@ -153,6 +153,42 @@ const groupItems = (g: NavGroup) => g.sections.flatMap((s) => s.items);
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const desktopNavRef = useRef<HTMLElement | null>(null);
+
+  // Hover-away closes, but only after a grace period so a pointer that briefly
+  // leaves the trigger (mid-click, zoom rounding) never slams the menu shut.
+  const cancelScheduledClose = () => {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+  const scheduleClose = () => {
+    cancelScheduledClose();
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      setOpenGroup(null);
+    }, 220);
+  };
+
+  // Close on Escape and on clicks outside the desktop nav (a pinned menu still closes there).
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      if (desktopNavRef.current && !desktopNavRef.current.contains(e.target as Node)) setOpenGroup(null);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenGroup(null);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
   const [term, setTerm] = useState("");
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -193,18 +229,25 @@ export function SiteHeader() {
           <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => (
             <div
               key={group.id}
               className="relative"
-              onMouseEnter={() => setOpenGroup(group.id)}
-              onMouseLeave={() => setOpenGroup((v) => (v === group.id ? null : v))}
+              onMouseEnter={() => {
+                cancelScheduledClose();
+                setOpenGroup(group.id);
+              }}
+              onMouseLeave={scheduleClose}
             >
               <button
                 type="button"
                 aria-expanded={openGroup === group.id}
-                onClick={() => setOpenGroup(group.id)}
+                // Hover already opens the menu; clicking the label must pin it open, never toggle it closed.
+                onClick={() => {
+                  cancelScheduledClose();
+                  setOpenGroup(group.id);
+                }}
               className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
