@@ -12,7 +12,7 @@ import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/caf
 import { ZapDialog } from "@/components/lightning/ZapDialog";
 
 /** Lightning Address that receives Bit-Café tips. Empty = jar not connected yet. */
-const CAFE_TIP_ADDRESS = "";
+const CAFE_TIP_ADDRESS = "inspiringupliftment32114@getalby.com";
 
 export const Route = createFileRoute("/biternam_/cafe")({
   ssr: false,
