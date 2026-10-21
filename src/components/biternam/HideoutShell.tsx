@@ -7,9 +7,13 @@ import { VERBS, type Verb } from "@/lib/museum-verbs";
 import type { HideoutOutcome, HideoutState } from "@/lib/hideout-verbs";
 import { playSfx, startCafeMusic, stopCafeMusic, type RoomMood } from "@/lib/retro-sfx";
 import { useFitHeight } from "@/hooks/use-fit-height";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { HIDEOUT_STEPS, hideoutStateFromCount, type HideoutRoom } from "@/lib/hideout-progress";
+import { hideoutStatusFn, recordHideoutStepFn } from "@/lib/hideout-progress.functions";
 
 export function HideoutShell<H extends string>(props: {
-  storageKey: string; mood: RoomMood; kicker: string; title: string; item: string; hazardText: string;
+  room: HideoutRoom; storageKey: string; mood: RoomMood; kicker: string; title: string; item: string; hazardText: string;
   names: Record<H, string>; intro: string; voice: number;
   resolve: (v: Verb, h: H, s: HideoutState) => HideoutOutcome;
   script: (s: HideoutState) => TracyScript;
@@ -30,9 +34,29 @@ export function HideoutShell<H extends string>(props: {
     window.addEventListener("pointerdown", go, { once: true });
     return () => { window.removeEventListener("pointerdown", go); stopCafeMusic(); };
   }, [props.mood]);
-  const hit = (h: H) => {
+  const status = useServerFn(hideoutStatusFn);
+  const record = useServerFn(recordHideoutStepFn);
+  const [signedIn, setSignedIn] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const resync = async () => { try { const r = await status({ data: { room: props.room } }); if (r.ok) setSt(hideoutStateFromCount(r.count)); } catch { /* keep local */ } };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { if (data.session) { setSignedIn(true); void resync(); } });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Signed in: the server must accept the step before the room changes. */
+  const save = async (i: 0 | 1) => {
+    if (!signedIn) return true;
+    try {
+      const r = await record({ data: { room: props.room, index: i, key: HIDEOUT_STEPS[props.room][i] } });
+      if (r.ok) { setNote(null); return true; }
+      setNote(r.status === "too_fast" ? "TOO FAST — TRY AGAIN" : r.status === "out_of_order" ? "OUT OF ORDER — RESYNCING" : "COULD NOT SAVE");
+      if (r.status === "out_of_order") void resync();
+    } catch { setNote("COULD NOT SAVE"); }
+    return false;
+  };
+  const hit = async (h: H) => {
     if (hazard) return;
     const r = props.resolve(verb, h, st);
+    if ((r.effect === "gain" || r.effect === "solve") && !(await save(r.effect === "gain" ? 0 : 1))) { playSfx("deny"); return; }
     playSfx(r.effect === "talk" ? "talk" : r.effect === "gain" ? "pickup" : r.effect === "solve" ? "dance" : r.effect === "exit" ? "door" : r.effect === "hazard" ? "fall" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
@@ -46,11 +70,13 @@ export function HideoutShell<H extends string>(props: {
   return (
     <main ref={mainRef} style={{ height: fitH ?? undefined }} className="relative flex h-[calc(100dvh-4rem)] flex-col overflow-hidden bg-background">
       <div className="relative min-h-0 flex-1">
-        {props.scene({ onHit: hit, onHover: (h) => { if (h) playSfx("hover"); setHover(h); }, hover, st, hazard })}
+        {props.scene({ onHit: (h) => { void hit(h); }, onHover: (h) => { if (h) playSfx("hover"); setHover(h); }, hover, st, hazard })}
         <div className="pointer-events-none absolute left-4 top-4 font-mono">
           <div className="text-[11px] tracking-[0.3em] text-signal">{props.kicker}</div>
           <div className="font-display text-2xl text-foreground">{props.title}</div>
           <div className="mt-1 text-[11px] text-primary">{st.solved ? "● SOLVED" : st.got ? `◐ HOLDING ${props.item}` : "○ UNSOLVED"}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
+          {note ? <div className="mt-1 text-[11px] text-destructive">{note}</div> : null}
         </div>
         {hazard ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70">

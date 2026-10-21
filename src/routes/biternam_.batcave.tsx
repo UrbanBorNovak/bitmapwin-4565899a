@@ -17,7 +17,7 @@ export const Route = createFileRoute("/biternam_/batcave")({
   }),
   component: () => (
     <HideoutShell<BatcaveHotspot>
-      storageKey="biternam.batcave.v1" mood="batcave" kicker="BITERNAM · BEDROCK -9" title="DEV9'S BATCAVE" item="COLD FUSE" hazardText="SCREEECH!"
+      room="batcave" storageKey="biternam.batcave.v1" mood="batcave" kicker="BITERNAM · BEDROCK -9" title="DEV9'S BATCAVE" item="COLD FUSE" hazardText="SCREEECH!"
       names={BATCAVE_NAMES} voice={150} resolve={resolveBatcaveVerb}
       intro="Choose a verb, then click something in the cave. dev9 is watching the screens."
       script={(s) => ({ id: "npc-dev9-cave", title: "DEV9 · THE MARAUDER", start: "a", nodes: [
