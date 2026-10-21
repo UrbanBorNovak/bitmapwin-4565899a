@@ -384,29 +384,39 @@ export function SiteHeader() {
                     <ChevronDown className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </button>
                   {expanded && (
-                    <ul className="pb-2">
-                      {groupItems(group).map((item) => {
-                        const active = itemIsActive(item.to);
-                        return (
-                          <li key={item.to}>
-                            <Link
-                              to={item.to}
-                              activeOptions={{ exact: true }}
-                              onClick={() => setMobileOpen(false)}
-                              aria-current={active ? "page" : undefined}
-                              className={`group flex min-h-11 items-center gap-3 border-l-2 py-2 pl-5 pr-4 ${active ? "border-bitcoin bg-surface" : "border-transparent hover:bg-surface"}`}
-                            >
-                              <ItemIcon to={item.to} active={active} />
-                              <span className="min-w-0 flex-1">
-                                <span className={`label block ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</span>
-                                {item.note && <span className="block truncate text-[11px] text-muted-foreground">{item.note}</span>}
-                              </span>
-                              {active && <span className="label text-[0.5rem] text-bitcoin">YOU ARE HERE</span>}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <div className="pb-2">
+                      {group.sections.map((section) => (
+                        <div key={section.title}>
+                          <div className="label sticky top-0 z-10 flex items-center justify-between gap-2 border-y border-border bg-surface px-4 py-1.5 text-[0.55rem] text-signal">
+                            {section.title}
+                            <span className="font-mono text-[0.5rem] text-muted-foreground">{section.items.length}</span>
+                          </div>
+                          <ul>
+                            {section.items.map((item) => {
+                              const active = itemIsActive(item.to);
+                              return (
+                                <li key={item.to}>
+                                  <Link
+                                    to={item.to}
+                                    activeOptions={{ exact: true }}
+                                    onClick={() => setMobileOpen(false)}
+                                    aria-current={active ? "page" : undefined}
+                                    className={`group flex min-h-11 items-center gap-3 border-l-2 py-2 pl-5 pr-4 ${active ? "border-bitcoin bg-surface" : "border-transparent hover:bg-surface"}`}
+                                  >
+                                    <ItemIcon to={item.to} active={active} />
+                                    <span className="min-w-0 flex-1">
+                                      <span className={`label block ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</span>
+                                      {item.note && <span className="block truncate text-[11px] text-muted-foreground">{item.note}</span>}
+                                    </span>
+                                    {active && <span className="label text-[0.5rem] text-bitcoin">YOU ARE HERE</span>}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </section>
               );
