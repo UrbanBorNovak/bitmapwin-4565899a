@@ -61,3 +61,12 @@ describe.skipIf(!live)("void basement story lock (throwaway user)", () => {
     expect(await hideoutStepCount(db, u, "basement")).toBe(0);
   });
 });
+
+describe.skipIf(!live)("shredder archive story lock (throwaway user)", () => {
+  const u = crypto.randomUUID();
+  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
+  it("refuses archive steps before the void basement is solved and saves nothing", async () => {
+    expect(await recordHideoutStep(db, u, { room: "archive", index: 0, key: HIDEOUT_STEPS.archive[0] })).toEqual({ ok: false, status: "locked" });
+    expect(await hideoutStepCount(db, u, "archive")).toBe(0);
+  });
+});

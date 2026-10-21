@@ -82,6 +82,7 @@ import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BiternamArcadeRouteImport } from './routes/biternam_.arcade'
+import { Route as BiternamArchiveRouteImport } from './routes/biternam_.archive'
 import { Route as BiternamBasementRouteImport } from './routes/biternam_.basement'
 import { Route as BiternamBatcaveRouteImport } from './routes/biternam_.batcave'
 import { Route as BiternamCafeRouteImport } from './routes/biternam_.cafe'
@@ -519,6 +520,11 @@ const BiternamArcadeRoute = BiternamArcadeRouteImport.update({
   path: '/biternam/arcade',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamArchiveRoute = BiternamArchiveRouteImport.update({
+  id: '/biternam_/archive',
+  path: '/biternam/archive',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamBasementRoute = BiternamBasementRouteImport.update({
   id: '/biternam_/basement',
   path: '/biternam/basement',
@@ -947,6 +953,7 @@ export interface FileRoutesByFullPath {
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
+  '/biternam/archive': typeof BiternamArchiveRoute
   '/biternam/basement': typeof BiternamBasementRoute
   '/biternam/batcave': typeof BiternamBatcaveRoute
   '/biternam/cafe': typeof BiternamCafeRoute
@@ -1088,6 +1095,7 @@ export interface FileRoutesByTo {
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
+  '/biternam/archive': typeof BiternamArchiveRoute
   '/biternam/basement': typeof BiternamBasementRoute
   '/biternam/batcave': typeof BiternamBatcaveRoute
   '/biternam/cafe': typeof BiternamCafeRoute
@@ -1234,6 +1242,7 @@ export interface FileRoutesById {
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam_/arcade': typeof BiternamArcadeRoute
+  '/biternam_/archive': typeof BiternamArchiveRoute
   '/biternam_/basement': typeof BiternamBasementRoute
   '/biternam_/batcave': typeof BiternamBatcaveRoute
   '/biternam_/cafe': typeof BiternamCafeRoute
@@ -1381,6 +1390,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/biternam/arcade'
+    | '/biternam/archive'
     | '/biternam/basement'
     | '/biternam/batcave'
     | '/biternam/cafe'
@@ -1522,6 +1532,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/biternam/arcade'
+    | '/biternam/archive'
     | '/biternam/basement'
     | '/biternam/batcave'
     | '/biternam/cafe'
@@ -1667,6 +1678,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/biternam_/arcade'
+    | '/biternam_/archive'
     | '/biternam_/basement'
     | '/biternam_/batcave'
     | '/biternam_/cafe'
@@ -1813,6 +1825,7 @@ export interface RootRouteChildren {
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BiternamArcadeRoute: typeof BiternamArcadeRoute
+  BiternamArchiveRoute: typeof BiternamArchiveRoute
   BiternamBasementRoute: typeof BiternamBasementRoute
   BiternamBatcaveRoute: typeof BiternamBatcaveRoute
   BiternamCafeRoute: typeof BiternamCafeRoute
@@ -2355,6 +2368,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/arcade'
       fullPath: '/biternam/arcade'
       preLoaderRoute: typeof BiternamArcadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/archive': {
+      id: '/biternam_/archive'
+      path: '/biternam/archive'
+      fullPath: '/biternam/archive'
+      preLoaderRoute: typeof BiternamArchiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/basement': {
@@ -3062,6 +3082,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BiternamArcadeRoute: BiternamArcadeRoute,
+  BiternamArchiveRoute: BiternamArchiveRoute,
   BiternamBasementRoute: BiternamBasementRoute,
   BiternamBatcaveRoute: BiternamBatcaveRoute,
   BiternamCafeRoute: BiternamCafeRoute,
