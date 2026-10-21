@@ -814,3 +814,83 @@ describe("crashes during restore rollback and journal recovery, with another tab
     done();
   });
 });
+
+describe("randomized cross-tab interleavings with crashes and storage failures at every write", () => {
+  const mem = new Map<string, string>();
+  let failP = 0, crashed = false, rnd = () => 0.5;
+  const store = {
+    getItem: (k: string) => mem.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      if (crashed || rnd() < failP) { if (rnd() < 0.3) crashed = true; throw new DOMException("quota", "QuotaExceededError"); }
+      mem.set(k, v);
+    },
+    removeItem: (k: string) => { if (crashed || rnd() < failP) throw new DOMException("quota", "QuotaExceededError"); mem.delete(k); },
+  } as unknown as Storage;
+  const real = globalThis.localStorage;
+  const lk = new Set<string>();
+  const locks = { request: async (name: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => {
+    if (lk.has(name)) return cb(null); lk.add(name); try { return await cb({}); } finally { lk.delete(name); } } };
+  const PK = "bitmapwin:sealed-pending", IK = "bitmapwin:sealed-intent";
+  const mulberry = (a: number) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+  const old = { held: bundle, recv: {}, sent: [] };
+
+  it("200 random runs keep every invariant", async () => {
+    globalThis.localStorage = store;
+    for (let seed = 1; seed <= 200; seed++) {
+      rnd = mulberry(seed); mem.clear(); lk.clear(); crashed = false; failP = 0;
+      sealStore.setHeld(bundle);
+      let firstPending: string | null = null;
+      const walletCalls: { afterPending: boolean }[] = [];
+      const wallet = async (p: string) => {
+        walletCalls.push({ afterPending: firstPending != null });
+        for (let i = Math.floor(rnd() * 3); i > 0; i--) await tick();
+        if (rnd() < 0.2) throw new Error("user cancelled");
+        return mockWallet(p);
+      };
+      const ops = [
+        () => runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: wallet, currentWallet: () => address, locks }),
+        () => restoreBackup(old, { outspend: async () => { await tick(); return { spent: firstPending != null && rnd() < 0.5 }; }, locks, address }),
+        async () => loadHeld(),
+        async () => recoverInterruptedRestore(),
+        async () => clearInterrupted(coin, async () => ({ spent: firstPending != null }), locks),
+      ];
+      for (let step = 0; step < 6; step++) {
+        failP = rnd() < 0.5 ? 0 : rnd() * 0.4;
+        // two "tabs" race this step
+        const a = ops[Math.floor(rnd() * ops.length)]!, b = ops[Math.floor(rnd() * ops.length)]!;
+        await Promise.allSettled([a(), (async () => { await tick(); return b(); })()]);
+        // "reload": faults off, settle recovery
+        crashed = false; failP = 0;
+        const view = loadHeld(); // must never throw: nothing ever writes a damaged record
+        const pend = pendingStore.onAnchor(coin);
+        expect(pend.length).toBeLessThanOrEqual(1);
+        if (firstPending == null && pend.length) firstPending = mem.get(PK)!;
+        if (firstPending != null) {
+          // unresolved transfer is never overwritten, never lost
+          expect(mem.get(PK)).toBe(firstPending);
+          const p = pend[0]!;
+          expect(p.sent.map((x) => x.label)).toEqual(["Pass"]);
+          expect(p.before!.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+          // newer state wins: kept notes on the new coin, given note never resurrected
+          expect(view.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map"]);
+          expect(view.every((h) => h.mine.txid === p.txid)).toBe(true);
+        } else {
+          expect(view.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+          expect(view.every((h) => h.mine.txid === coin.txid)).toBe(true);
+        }
+        // no duplicates
+        expect(new Set(view.map((h) => noteKey(h.c.note.genesis))).size).toBe(view.length);
+      }
+      // the coin stays locked: a fresh signing attempt after a filed transfer never opens the wallet
+      if (firstPending != null) {
+        const spy = vi.fn(mockWallet);
+        await expect(runLockedTransfer({ bundle, give: { [k(1)]: bob }, coin, address, feeRate: 4, sign: spy, currentWallet: () => address, locks })).rejects.toThrow();
+        expect(spy).not.toHaveBeenCalled();
+      }
+      expect(walletCalls.every((c) => !c.afterPending)).toBe(true);
+      expect(mem.get(IK) === undefined || Array.isArray(JSON.parse(mem.get(IK)!))).toBe(true);
+    }
+    globalThis.localStorage = real;
+  }, 60_000);
+});
