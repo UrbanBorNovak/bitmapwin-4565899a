@@ -43,6 +43,16 @@ export function advanceHeist(from: number) {
   return true;
 }
 export function resetHeist() { cache = 0; try { localStorage.removeItem(KEY); } catch { /* ignore */ } subs.forEach((f) => f()); }
+/** Adopt the account's server-recorded stage (signed-in players). */
+export function setHeistStage(n: number) {
+  cache = Math.max(0, Math.min(HEIST_STEPS.length, n));
+  try { localStorage.setItem(KEY, String(cache)); } catch { /* ignore */ }
+  subs.forEach((f) => f());
+}
+/** Server quest id + fixed payout, same rules as CH.1–CH.3. */
+export const HEIST_QUEST_ID = "ch4";
+export const HEIST_BIT = 100;
+export const heistStepKey = (s: HeistStep) => `${s.room}:${s.gives}`;
 export function useHeistStage() {
   return useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, read, () => 0);
 }
