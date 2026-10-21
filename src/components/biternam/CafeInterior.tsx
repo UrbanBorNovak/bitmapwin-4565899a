@@ -106,7 +106,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         <mesh position={[-1.8, 0.75, 1.2]}><boxGeometry args={[0.9, 0.08, 1.2]} /><meshStandardMaterial color={WOOD} /></mesh>
         <Hot id="dev9" {...hp} position={[-2.7, 0.2, 1.2]} rotation={[0, Math.PI / 2, 0]}>
           <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={TRIM} transparent opacity={hover === "dev9" ? 1 : 0.4} /></mesh>
-          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR.dev9!} pose="talk" movingRef={still} fallback={<Person body="#1a1a22" skin="#d9b08c" shades hot={hover === "dev9"} />} />
+          <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["dev9"]!} pose="talk" movingRef={still} fallback={<Person body="#1a1a22" skin="#d9b08c" shades hot={hover === "dev9"} />} />
         </Hot>
         <Hot id="jukebox" {...hp} position={[-3.4, 0, -2.8]} rotation={[0, 0.6, 0]}><Jukebox playing={distracted} hot={hover === "jukebox"} /></Hot>
         <Hot id="hatch" {...hp} position={[1.4, 0.02, 1.4]}>
