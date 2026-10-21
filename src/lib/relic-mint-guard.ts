@@ -6,6 +6,7 @@
  * The tier tribute is then split 50/50 as two extra reveal outputs.
  */
 import * as btc from "@scure/btc-signer";
+import { hex } from "@scure/base";
 import { checkMintParents, type ParentCheckInput } from "@/lib/mint-parents-guard";
 import { relicTribute, withinTip } from "@/lib/marauder-relics";
 
@@ -59,11 +60,11 @@ export function revealPaysPlan(tx: btc.Transaction, payouts: RelicPayout[]): { o
   for (let i = 0; i < tx.outputsLength; i++) {
     const o = tx.getOutput(i);
     if (!o.script) continue;
-    const k = btc.utils ? Buffer.from(o.script).toString("hex") : "";
+    const k = hex.encode(o.script);
     paid.set(k, (paid.get(k) ?? 0n) + (o.amount ?? 0n));
   }
   for (const p of payouts) {
-    const k = Buffer.from(btc.OutScript.encode(btc.Address(btc.NETWORK).decode(p.address))).toString("hex");
+    const k = hex.encode(btc.OutScript.encode(btc.Address(btc.NETWORK).decode(p.address)));
     if ((paid.get(k) ?? 0n) < BigInt(p.sats)) return { ok: false, reason: `TRANSACTION DOES NOT PAY ${p.role} ${p.sats} SATS` };
   }
   return { ok: true };
