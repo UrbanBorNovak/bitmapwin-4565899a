@@ -204,6 +204,36 @@ export type Database = {
           },
         ]
       }
+      biternam_chapters: {
+        Row: {
+          block_height: number
+          created_at: string
+          owner_address: string
+          quote: string
+          set_by: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          block_height: number
+          created_at?: string
+          owner_address: string
+          quote: string
+          set_by: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          block_height?: number
+          created_at?: string
+          owner_address?: string
+          quote?: string
+          set_by?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       biternam_quest_claims: {
         Row: {
           address: string
