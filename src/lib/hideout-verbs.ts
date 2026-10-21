@@ -179,3 +179,37 @@ export function resolveBasementVerb(verb: Verb, h: BasementHotspot, s: HideoutSt
       return o("A ladder back up through the Void to the Oasis.");
   }
 }
+
+// ---------- CH.8 The Missing Pages: fish page two out of IMAN's shredder, decode it on the honest chain reader. ----------
+export type ArchiveHotspot = "shredder" | "reader" | "iman" | "fan" | "ghost" | "ladder";
+export const ARCHIVE_NAMES: Record<ArchiveHotspot, string> = {
+  shredder: "IMAN'S SHREDDER", reader: "CHAIN READER", iman: "IMAN", fan: "PAPER FAN", ghost: "GHOST OF 1138", ladder: "LADDER UP",
+};
+export function resolveArchiveVerb(verb: Verb, h: ArchiveHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "shredder":
+      if (s.got || s.solved) return o("The shredder chews on nothing. Page two is safe in your hand.");
+      if (verb === "pickup" || act) return o("You jam the shredder with your boot and pull out a half-eaten sheet: PAGE TWO of WILL's map.", "gain");
+      return o("A shredder the size of a car. Labelled: ARCHIVE. IMAN's idea of filing.");
+    case "reader":
+      if (s.solved) return o("The reader shows page two plainly: a list of BITMAPs IMAN and WILL wanted to copy next. Every one still verified on chain.");
+      if (act && s.got) return o("You feed page two into the chain reader. It checks every height against real blocks. Fake list, real targets. The plan is exposed.", "solve");
+      if (act) return o("CHAIN READER · INSERT DOCUMENT TO VERIFY. It reads only blocks, never promises.");
+      return o("An old CRT that only shows what the chain can prove. The one honest machine down here.");
+    case "iman":
+      if (verb === "talk") return o("", "talk");
+      if (verb === "look") return o(s.solved ? "IMAN, shadow-eyed, watching his list scroll on an honest screen." : "IMAN feeding pages into the shredder, one by one. He hasn't seen you yet.");
+      return o("IMAN steps back. 'Don't touch the filing, Marshal.'");
+    case "fan":
+      if (verb === "pickup" || act) return o("You switch the fan to MAX. A blizzard of shredded receipts. FLUTTER!", "hazard");
+      return o("A big industrial fan. It keeps the shreds moving so nobody can read them.");
+    case "ghost":
+      if (verb === "look") return o(s.solved ? "The ghost reads the list over your shoulder and nods." : "The ghost of 1138 hovers by the shredder, pointing at the slot.");
+      if (verb === "talk") return o(s.solved ? "GHOST: 'Not just me. They wanted the whole district. Warn the others.'" : "GHOST: 'Page two never made it into the bin. Grab it before it does.'");
+      return o("Cold. He points at the shredder.");
+    case "ladder":
+      if (act) return o("", "exit");
+      return o("A ladder back up to the Oasis.");
+  }
+}

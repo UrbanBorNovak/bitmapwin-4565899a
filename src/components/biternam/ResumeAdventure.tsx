@@ -21,10 +21,10 @@ export function ResumeAdventure() {
       if (!live) return;
       if (!data.session) { setState("out"); return; }
       try {
-        const [h, v, b, i, w, l, d] = await Promise.all([heist(), voidS(), hideout({ data: { room: "batcave" } }), hideout({ data: { room: "island" } }), hideout({ data: { room: "vault" } }), hideout({ data: { room: "lair" } }), hideout({ data: { room: "basement" } })]);
+        const [h, v, b, i, w, l, d, a] = await Promise.all([heist(), voidS(), hideout({ data: { room: "batcave" } }), hideout({ data: { room: "island" } }), hideout({ data: { room: "vault" } }), hideout({ data: { room: "lair" } }), hideout({ data: { room: "basement" } }), hideout({ data: { room: "archive" } })]);
         if (!live) return;
-        if (!h.ok || !v.ok || !b.ok || !i.ok || !w.ok || !l.ok || !d.ok) { setState("error"); return; }
-        setTarget(resumeTarget(h.stage, v.count, b.count, i.count, w.count, l.count, d.count));
+        if (!h.ok || !v.ok || !b.ok || !i.ok || !w.ok || !l.ok || !d.ok || !a.ok) { setState("error"); return; }
+        setTarget(resumeTarget(h.stage, v.count, b.count, i.count, w.count, l.count, d.count, a.count));
         setState("ready");
       } catch { if (live) setState("error"); }
     });

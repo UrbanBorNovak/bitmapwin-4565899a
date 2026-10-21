@@ -4,8 +4,8 @@ import { HIDEOUT_STEPS } from "@/lib/hideout-progress";
 
 export type ResumeTarget = { to: string; label: string; done: boolean };
 
-/** Next unfinished puzzle from server-saved counts, in story order: Heist, Void, Batcave, Island Hotel, 1138 Vault, Re-Org Lair, Void Basement. */
-export function resumeTarget(heistStage: number, voidCount: number, batcaveCount = 0, islandCount = 0, vaultCount = 0, lairCount = 0, basementCount = 0): ResumeTarget {
+/** Next unfinished puzzle from server-saved counts, in story order: Heist, Void, Batcave, Island Hotel, 1138 Vault, Re-Org Lair, Void Basement, Shredder Archive. */
+export function resumeTarget(heistStage: number, voidCount: number, batcaveCount = 0, islandCount = 0, vaultCount = 0, lairCount = 0, basementCount = 0, archiveCount = 0): ResumeTarget {
   if (heistStage < HEIST_STEPS.length) {
     const s = HEIST_STEPS[Math.max(0, heistStage)]!;
     return { to: `/biternam/${s.room}`, label: `CH.4 · ${heistStage + 1}/${HEIST_STEPS.length} · ${s.hint}`, done: false };
@@ -28,5 +28,8 @@ export function resumeTarget(heistStage: number, voidCount: number, batcaveCount
   if (basementCount < HIDEOUT_STEPS.basement.length) {
     return { to: "/biternam/basement", label: `CH.7 · THE VOID BASEMENT · ${basementCount + 1}/${HIDEOUT_STEPS.basement.length}`, done: false };
   }
-  return { to: "/biternam/basement", label: "ALL PUZZLES SOLVED · REVISIT THE VOID BASEMENT", done: true };
+  if (archiveCount < HIDEOUT_STEPS.archive.length) {
+    return { to: "/biternam/archive", label: `CH.8 · THE MISSING PAGES · ${archiveCount + 1}/${HIDEOUT_STEPS.archive.length}`, done: false };
+  }
+  return { to: "/biternam/archive", label: "ALL PUZZLES SOLVED · REVISIT THE SHREDDER ARCHIVE", done: true };
 }

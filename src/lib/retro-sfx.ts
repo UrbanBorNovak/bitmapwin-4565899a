@@ -32,7 +32,7 @@ export function playSfx(s: Sfx) {
 /** Smoky lounge loop: slow Rhodes-ish chords, warm sub bass, vinyl hiss. Faster and brighter while the jukebox plays. */
 let music: { stop: () => void; setHot: (on: boolean) => void } | null = null;
 export function isCafeMusicOn() { return music !== null; }
-export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse" | "arcade" | "studio" | "lab" | "void" | "batcave" | "island" | "vault" | "lair" | "basement";
+export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse" | "arcade" | "studio" | "lab" | "void" | "batcave" | "island" | "vault" | "lair" | "basement" | "archive";
 const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: OscillatorType; lp: number; lead: OscillatorType; hiss: number }> = {
   cafe: { chords: [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2], [164.8, 207.7, 246.9, 329.6]], beat: 0.6, wave: "triangle", lp: 1100, lead: "square", hiss: 0.08 },
   // Hushed gallery: suspended chords, long reverb tails, glassy chimes.
@@ -58,6 +58,8 @@ const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: Oscillat
   lair: { chords: [[82.4, 98, 123.5, 146.8], [77.8, 92.5, 116.5, 138.6], [73.4, 87.3, 110, 130.8], [87.3, 103.8, 130.8, 155.6]], beat: 0.32, wave: "sawtooth", lp: 1100, lead: "square", hiss: 0.11 },
   // Void basement: hollow counterfeit-mint drone, slow sine bells, heavy hiss.
   basement: { chords: [[49, 58.3, 73.4, 87.3], [46.2, 55, 69.3, 82.4], [43.7, 51.9, 65.4, 77.8], [49, 61.7, 73.4, 92.5]], beat: 1.4, wave: "triangle", lp: 520, lead: "sine", hiss: 0.15 },
+  // Shredder archive: ticking minor clockwork, square pings, paper hiss.
+  archive: { chords: [[69.3, 82.4, 103.8, 123.5], [65.4, 77.8, 98, 116.5], [61.7, 73.4, 92.5, 110], [73.4, 87.3, 110, 130.8]], beat: 0.45, wave: "square", lp: 700, lead: "triangle", hiss: 0.13 },
   void: { chords: [[55, 82.4, 110, 155.6], [51.9, 77.8, 103.8, 146.8], [49, 73.4, 98, 138.6], [55, 82.4, 116.5, 164.8]], beat: 1.2, wave: "sine", lp: 600, lead: "triangle", hiss: 0.14 },
 };
 export function startCafeMusic(mood: RoomMood = "cafe") {

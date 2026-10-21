@@ -41,3 +41,12 @@ describe("basement", () => {
     expect(resolveBasementVerb("use", "monument", { got: true, solved: false }).effect).toBe("solve");
   });
 });
+
+import { resolveArchiveVerb } from "./hideout-verbs";
+describe("archive", () => {
+  it("chain reader needs page two first", () => {
+    expect(resolveArchiveVerb("use", "reader", { got: false, solved: false }).effect).toBeNull();
+    expect(resolveArchiveVerb("pickup", "shredder", { got: false, solved: false }).effect).toBe("gain");
+    expect(resolveArchiveVerb("use", "reader", { got: true, solved: false }).effect).toBe("solve");
+  });
+});

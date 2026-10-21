@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
@@ -430,6 +430,77 @@ export function BasementScene({ onHit, onHover, hover, st, hazard }: SceneProps<
           {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.4, 0]}><boxGeometry args={[0.5, 0.04, 0.04]} /><meshStandardMaterial color="#7a4a22" /></mesh>)}
         </Hot>
         <CafeSmoke count={60} color="#c8c4cc" opacity={0.045} mist={["#0c0a0e", st.solved ? TRIM : NEON]} />
+      </SafeCanvas>
+    </div>
+  );
+}
+
+function Shreds({ storm }: { storm: boolean }) {
+  const g = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!g.current) return;
+    g.current.children.forEach((c, i) => {
+      const t = clock.elapsedTime * (storm ? 2.5 : 0.4) + i;
+      c.position.set(Math.sin(t * 0.7 + i) * 3, 0.3 + ((t * 0.3 + i * 0.13) % 1) * (storm ? 3 : 0.6), Math.cos(t * 0.5 + i * 2) * 3);
+      c.rotation.set(t, t * 0.7, 0);
+    });
+  });
+  return <group ref={g}>{Array.from({ length: 30 }, (_, i) => <mesh key={i}><boxGeometry args={[0.12, 0.02, 0.06]} /><meshStandardMaterial color="#e8e2d0" /></mesh>)}</group>;
+}
+
+export function ArchiveScene({ onHit, onHover, hover, st, hazard }: SceneProps<ArchiveHotspot>) {
+  const hp = { onHit, onHover };
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[-0.2, 0.8, 0.2]} />
+        <color attach="background" args={["#07060a"]} />
+        <fog attach="fog" args={["#07060a", 12, 25]} />
+        <ambientLight intensity={0.8} color="#d0c8b8" />
+        <pointLight position={[1.6, 2.6, -2.4]} intensity={st.solved ? 30 : 14} color={st.solved ? GREEN : NEON} castShadow />
+        <pointLight position={[-2.4, 2, -1.6]} intensity={12} color="#ff2a3a" />
+        {Array.from({ length: 64 }, (_, i) => (
+          <mesh key={i} position={[(i % 8) - 3.5, -0.05, Math.floor(i / 8) - 3.5]} receiveShadow>
+            <boxGeometry args={[0.97, 0.1, 0.97]} /><meshStandardMaterial color={(i + Math.floor(i / 8)) % 2 ? "#1d1a17" : "#25211c"} roughness={1} />
+          </mesh>
+        ))}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#14110e" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#110f0c" roughness={1} /></mesh>
+        {/* Filing cabinets along the back wall */}
+        {[-3.2, -2.4, 3.2].map((x) => (
+          <group key={x} position={[x, 0, -3.5]}>
+            <mesh position-y={1.1}><boxGeometry args={[0.7, 2.2, 0.6]} /><meshStandardMaterial color="#4a4a42" metalness={0.5} /></mesh>
+            {[0, 1, 2, 3].map((k) => <mesh key={k} position={[0, 0.35 + k * 0.5, 0.31]}><boxGeometry args={[0.3, 0.05, 0.02]} /><meshStandardMaterial color="#aaa" metalness={0.9} /></mesh>)}
+          </group>
+        ))}
+        <Hot id="shredder" {...hp} position={[-2, 0, -1.4]}>
+          <mesh position-y={0.6}><boxGeometry args={[1.3, 1.2, 0.9]} /><meshStandardMaterial color="#2c2a30" metalness={0.6} emissive={hover === "shredder" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          <mesh position={[0, 1.22, 0]}><boxGeometry args={[1, 0.04, 0.15]} /><meshStandardMaterial color="#000" emissive="#ff2a3a" emissiveIntensity={1} /></mesh>
+          {!st.got && !st.solved ? <mesh position={[0, 1.35, 0]} rotation-x={0.2}><boxGeometry args={[0.6, 0.3, 0.02]} /><meshStandardMaterial color="#e8e2d0" emissive="#b026ff" emissiveIntensity={hover === "shredder" ? 0.5 : 0.1} /></mesh> : null}
+        </Hot>
+        <Hot id="reader" {...hp} position={[1.6, 0, -3]}>
+          <mesh position-y={0.45}><boxGeometry args={[1.4, 0.9, 0.7]} /><meshStandardMaterial color="#3a342c" /></mesh>
+          <mesh position={[0, 1.35, 0]}><boxGeometry args={[1.1, 0.9, 0.8]} /><meshStandardMaterial color="#cfc6a8" emissive={hover === "reader" ? NEON : "#000"} emissiveIntensity={0.25} /></mesh>
+          <mesh position={[0, 1.35, 0.41]}><boxGeometry args={[0.85, 0.65, 0.02]} /><meshStandardMaterial color="#000" emissive={st.solved ? GREEN : st.got ? NEON : "#0a3a2a"} emissiveIntensity={1.3} /></mesh>
+        </Hot>
+        <Hot id="iman" {...hp} position={[-0.6, 0, -0.4]} rotation={[0, 0.6, 0]}>
+          <Ring on={hover === "iman"} color="#ff1a1a" />
+          <Shade body="#0b0b0f" eye="#ff1a1a" />
+        </Hot>
+        <Hot id="fan" {...hp} position={[2.8, 0, 1]} rotation={[0, -0.8, 0]}>
+          <mesh position-y={0.6}><cylinderGeometry args={[0.08, 0.08, 1.2, 8]} /><meshStandardMaterial color="#555" /></mesh>
+          <mesh position-y={1.3} rotation-x={Math.PI / 2}><torusGeometry args={[0.45, 0.05, 6, 18]} /><meshStandardMaterial color="#777" metalness={0.8} emissive={hover === "fan" ? NEON : "#000"} emissiveIntensity={0.4} /></mesh>
+        </Hot>
+        <Hot id="ghost" {...hp} position={[0.6, 0, -1.8]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm={st.solved} />
+        </Hot>
+        <Hot id="ladder" {...hp} position={[-3.5, 0, 2.8]}>
+          {[-0.25, 0.25].map((x) => <mesh key={x} position={[x, 1.8, 0]}><boxGeometry args={[0.06, 3.6, 0.06]} /><meshStandardMaterial color="#7a4a22" emissive={TRIM} emissiveIntensity={hover === "ladder" ? 0.6 : 0} /></mesh>)}
+          {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.4, 0]}><boxGeometry args={[0.5, 0.04, 0.04]} /><meshStandardMaterial color="#7a4a22" /></mesh>)}
+        </Hot>
+        <Shreds storm={hazard} />
+        <CafeSmoke count={40} color="#d8d0c0" opacity={0.035} mist={["#0e0b08", st.solved ? GREEN : NEON]} />
       </SafeCanvas>
     </div>
   );
