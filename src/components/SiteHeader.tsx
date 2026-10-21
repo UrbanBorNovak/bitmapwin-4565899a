@@ -6,7 +6,7 @@ import {
   TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
   FileText, Terminal, Wrench, ArrowRight, Clapperboard, Menu as MenuIcon, type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
@@ -153,6 +153,42 @@ const groupItems = (g: NavGroup) => g.sections.flatMap((s) => s.items);
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const desktopNavRef = useRef<HTMLElement | null>(null);
+
+  // Hover-away closes, but only after a grace period so a pointer that briefly
+  // leaves the trigger (mid-click, zoom rounding) never slams the menu shut.
+  const cancelScheduledClose = () => {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+  const scheduleClose = () => {
+    cancelScheduledClose();
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      setOpenGroup(null);
+    }, 220);
+  };
+
+  // Close on Escape and on clicks outside the desktop nav (a pinned menu still closes there).
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      if (desktopNavRef.current && !desktopNavRef.current.contains(e.target as Node)) setOpenGroup(null);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenGroup(null);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
   const [term, setTerm] = useState("");
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
