@@ -128,7 +128,7 @@ function ChaptersPage() {
             <div aria-hidden className="pointer-events-none absolute inset-0 p-3 font-mono text-sm tracking-widest text-foreground [text-shadow:2px_0_hsl(0_90%_55%/.7),-2px_0_hsl(190_90%_55%/.7)]" data-no-translate>
               <div className="flex justify-between"><span>{playing ? "▶ PLAY" : "❚❚ PAUSE"}</span><span>SP</span></div>
               {playing && <div className="mt-1 text-destructive animate-pulse">● REC</div>}
-              <div className="absolute bottom-3 right-3 text-right">
+              <div className="absolute right-3 top-9 text-right">
                 <div>{`00:${String(Math.floor(time / 60)).padStart(2, "0")}:${String(Math.floor(time % 60)).padStart(2, "0")}`}</div>
                 <div>{["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][height % 12]} {String(1 + (height % 28)).padStart(2, "0")} 199{height % 10}</div>
               </div>
