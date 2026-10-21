@@ -129,7 +129,7 @@ function CafePage() {
           </div>
         ) : null}
       </div>
-      <div className="relative z-10 shrink-0 border-t border-border bg-card/90 p-2 font-mono backdrop-blur sm:p-3">
+      <div className="relative z-10 shrink-0 border-t border-border bg-card/90 p-2 font-mono backdrop-blur sm:p-3" style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}>
         <div className="mb-2 text-center text-[12px] tracking-widest text-signal">{sentence}</div>
         <div className="mb-2 min-h-[1.25rem] text-center text-[13px] text-foreground">{say}</div>
         <div className="flex flex-wrap items-center justify-center gap-2">
