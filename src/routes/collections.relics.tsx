@@ -5,7 +5,7 @@ import { useChainTip } from "@/lib/use-chain-tip";
 import { CollectionParentBadge } from "@/components/CollectionParentBadge";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { relicHolderFn } from "@/lib/relic-mint.functions";
+import { relicHolderFn, relicPreviewFn } from "@/lib/relic-mint.functions";
 import { DONATION_ADDRESS } from "@/lib/donations";
 import { planRelicMint } from "@/lib/relic-mint-guard";
 
@@ -25,6 +25,40 @@ function RelicPayoutReview({ height, tip }: { height: number; tip: number }) {
         HOLDER: {q.isLoading ? "CHECKING CHAIN…" : holder ? `${holder.slice(0, 10)}…${holder.slice(-6)} (VERIFIED LIVE)` : `NOT VERIFIED${q.data?.note ? ` — ${q.data.note}` : ""}`}
       </p>
       <p className={payoutOk ? "text-muted-foreground" : "text-destructive"}>{payoutOk ? "SIGNING ALSO REQUIRES BOTH PARENTS AT MINT TIME" : "SIGNING BLOCKED UNTIL HOLDER IS VERIFIED"}</p>
+    </div>
+  );
+}
+
+function RelicTxPreview({ height, tip, metadataBytes }: { height: number; tip: number; metadataBytes: number }) {
+  const fn = useServerFn(relicPreviewFn);
+  const [addr, setAddr] = useState("");
+  const [rate, setRate] = useState("5");
+  const [res, setRes] = useState<Awaited<ReturnType<typeof relicPreviewFn>> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true); setRes(null);
+    try { setRes(await fn({ data: { height, tip, minterAddress: addr.trim(), feeRate: Number(rate) || 0, metadataBytes } })); }
+    catch (e) { setRes({ ok: false, message: (e as Error).message.slice(0, 160) }); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="space-y-2 rounded border border-border p-2">
+      <p className="text-primary">UNSIGNED TRANSACTION PREVIEW</p>
+      <input value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="RELIC GOES TO (YOUR ADDRESS)" className="w-full rounded border border-border bg-background px-2 py-1 text-foreground" />
+      <div className="flex gap-2">
+        <input value={rate} onChange={(e) => setRate(e.target.value.replace(/[^\d.]/g, ""))} className="w-20 rounded border border-border bg-background px-2 py-1 text-foreground" />
+        <span className="self-center text-muted-foreground">SAT/VB</span>
+        <button disabled={busy || addr.trim().length < 14} onClick={run} className="ml-auto rounded border border-accent px-2 py-1 text-accent disabled:opacity-40">{busy ? "CHECKING…" : "PREVIEW"}</button>
+      </div>
+      {res && !res.ok && <p className="text-destructive">{res.message}</p>}
+      {res && res.ok && <div className="space-y-1">
+        {res.parents.map((p) => <p key={p.inscriptionId} className="text-accent">✓ {p.role} PARENT {p.inscriptionId.slice(0, 10)}…{p.inscriptionId.slice(-4)}</p>)}
+        <table className="w-full text-[10px]"><tbody>
+          {res.outputs.map((o, i) => <tr key={i} className="border-t border-border"><td>{i}. {o.role}</td><td className="text-muted-foreground">{o.address.slice(0, 8)}…{o.address.slice(-4)}</td><td className="text-right">{o.sats}</td><td className="text-right text-muted-foreground">DUST {o.dust}</td></tr>)}
+        </tbody></table>
+        <p className="text-muted-foreground">TRIBUTE {res.tribute} SATS · MINER FEE ≈ {res.minerFee.toLocaleString()} SATS ({res.vbytes} VB × {res.feeRate})</p>
+        <button disabled className="w-full rounded border border-border px-2 py-1 text-muted-foreground opacity-40">SIGN & BROADCAST — {res.signingNote}</button>
+      </div>}
     </div>
   );
 }
