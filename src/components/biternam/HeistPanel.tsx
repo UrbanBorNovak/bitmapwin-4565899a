@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { HEIST_STEPS, HEIST_ITEMS, HEIST_BIT, advanceHeist, heistStepKey, heldHeistItem, resetHeist, setHeistStage, useHeistStage, type HeistRoom } from "@/lib/void-heist";
@@ -97,6 +98,7 @@ export function HeistPanel({ room, ready = true }: { room: HeistRoom; ready?: bo
             ) : (
               <div className="space-y-1">
                 <div className="text-primary">★ VOID HEIST COMPLETE — the trapdoor stands open.</div>
+                <Link to="/biternam/void" className="block w-full border border-signal bg-signal/10 px-2 py-1.5 text-center text-signal hover:bg-signal/25">▼ CLIMB DOWN INTO THE VOID</Link>
                 {signedIn && !claimed && (
                   address
                     ? <button onClick={collect} disabled={busy} className="w-full border border-primary bg-primary/15 px-2 py-1.5 text-primary hover:bg-primary/30 disabled:opacity-40">CLAIM {HEIST_BIT} BIT</button>

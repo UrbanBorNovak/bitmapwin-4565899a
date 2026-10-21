@@ -6,6 +6,7 @@ import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { VOID_HOTSPOT_NAMES, resolveVoidVerb, type VoidHotspot } from "@/lib/void-verbs";
 import { playSfx, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { useFitHeight } from "@/hooks/use-fit-height";
+import type { TracyScript } from "@/lib/tracy-com";
 
 export const Route = createFileRoute("/biternam_/void")({
   ssr: false,
@@ -25,14 +26,11 @@ export const Route = createFileRoute("/biternam_/void")({
 const KEY = "biternam.void.v1";
 type Save = { heard: boolean; hasBlock: boolean; confirmed: boolean };
 const FRESH: Save = { heard: false, hasBlock: false, confirmed: false };
-const GHOST = {
-  start: "a",
-  nodes: {
-    a: { who: "GHOST OF 1138", text: "You came down the trapdoor... nobody climbs down here on purpose.", options: [{ label: "Who are you?", next: "b" }, { label: "How do I fix this place?", next: "c" }] },
-    b: { who: "GHOST OF 1138", text: "1138.bitmap. Early land. They say I stayed down here to keep the old blocks company.", options: [{ label: "How do I fix this place?", next: "c" }] },
-    c: { who: "GHOST OF 1138", text: "The orphans drift because nobody builds on them. Whisper 'heaviest chain wins', catch one, and feed it to the terminal.", options: [{ label: "Got it.", next: null }] },
-  },
-} as const;
+const GHOST: TracyScript = { id: "void-ghost", title: "THE MEMPOOL VOID", start: "a", nodes: [
+  { id: "a", speaker: "GHOST OF 1138", mood: "idle", text: "You came down the trapdoor... nobody climbs down here on purpose.", choices: [{ label: "\"Who are you?\"", next: "b" }, { label: "\"How do I fix this place?\"", next: "c" }] },
+  { id: "b", speaker: "GHOST OF 1138", mood: "idle", text: "1138.bitmap. Early land. They say I stayed down here to keep the old blocks company.", next: "c" },
+  { id: "c", speaker: "GHOST OF 1138", mood: "smug", text: "The orphans drift because nobody builds on them. Whisper 'heaviest chain wins', catch one, and feed it to the terminal.", next: null },
+] };
 
 function VoidPage() {
   const navigate = useNavigate();
@@ -86,7 +84,7 @@ function VoidPage() {
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
         {call ? (
           <div className="absolute right-4 top-16 z-50">
-            <TracyCom key={call} script={GHOST as never} voice={90} onEnd={() => { setSt((s) => ({ ...s, heard: true })); setCall(0); }} />
+            <TracyCom key={call} script={GHOST} voice={90} onEnd={() => { setSt((s) => ({ ...s, heard: true })); setCall(0); }} />
           </div>
         ) : null}
       </div>
