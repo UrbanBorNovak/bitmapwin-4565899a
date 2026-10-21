@@ -5,7 +5,9 @@ import { useAuthSession } from "@/lib/auth";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { episodeLength, sceneAt } from "@/lib/toon-script";
 import { styleFilter } from "@/lib/toon-style";
-import { QUOTE_MAX, TITLE_MAX, chapterEpisode, chapterTheme, defaultQuote, defaultTitle } from "@/lib/biternam-chapter";
+import { CHAPTER_SETS, QUOTE_MAX, TITLE_MAX, autoSet, chapterEpisode, chapterTheme, defaultQuote, defaultTitle, type ChapterSet } from "@/lib/biternam-chapter";
+import { guardianQuery } from "@/lib/bitmon-queries";
+import { forgeBuiltQuery } from "@/lib/forge";
 import { blockFactsFn, listChaptersFn, publishChapterFn } from "@/lib/biternam-chapter.functions";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
@@ -38,6 +40,9 @@ function ChaptersPage() {
   const [busy, setBusy] = useState(false);
 
   const facts = useQuery({ queryKey: ["chapter-block-facts", height], queryFn: () => blockFactsFn({ data: { height } }), retry: 1 });
+  const guardian = useQuery(guardianQuery(height));
+  const build = useQuery(forgeBuiltQuery(height));
+  const [setPick, setSetPick] = useState<ChapterSet | "auto">("auto");
   const chapters = useQuery({ queryKey: ["biternam-chapters"], queryFn: () => listChaptersFn(), staleTime: 30_000 });
   const f = { height, txCount: facts.data?.txCount ?? null, avgFeeRate: facts.data?.avgFeeRate ?? null, minedAt: facts.data?.minedAt ?? null };
   const existing = chapters.data?.find((c) => c.height === height);
@@ -46,7 +51,11 @@ function ChaptersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, facts.data?.txCount, existing?.title]);
 
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f)), [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote]);
+  const species = guardian.data?.species ?? null, hasBuild = !!build.data;
+  const chosenSet = setPick === "auto" ? autoSet(f) : setPick;
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f), { guardian: species ? { species } : null, hasBuild, set: chosenSet }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet]);
   const total = episodeLength(episode);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -125,8 +134,17 @@ function ChaptersPage() {
             <span className="text-muted-foreground">AVG FEE</span><span>{facts.isPending ? "…" : f.avgFeeRate == null ? "UNAVAILABLE" : `${f.avgFeeRate} sat/vB`}</span>
             <span className="text-muted-foreground">MINED</span><span>{facts.isPending ? "…" : f.minedAt == null ? "UNAVAILABLE" : new Date(f.minedAt).toISOString().slice(0, 16).replace("T", " ") + " UTC"}</span>
             <span className="text-muted-foreground">SOURCE</span><span className={facts.data?.note ? "text-destructive" : ""}>{facts.isError ? "LOOKUP FAILED" : facts.data ? `${(facts.data.source ?? "unavailable").toUpperCase()}${facts.data.note ? ` · ${facts.data.note}` : ""}` : "…"}</span>
+            <span className="text-muted-foreground">GUARDIAN</span><span className={species ? "text-bitcoin" : "text-muted-foreground"}>{guardian.isPending ? "…" : species ? `AWAKE · ${species}` : "NONE · EXPLORER CAST"}</span>
+            <span className="text-muted-foreground">BUILD</span><span className={hasBuild ? "text-bitcoin" : "text-muted-foreground"}>{build.isPending ? "…" : hasBuild ? "INSCRIBED · SHOWN ON LAND" : "NONE · BARE LAND"}</span>
           </div>
-          {beyondTip && <div className="text-destructive">UNMINED · BEYOND CHAIN TIP ({tip.toLocaleString("en-US")})</div>}
+          <div>
+            <label htmlFor="set" className="text-muted-foreground">BITERNAM SET</label>
+            <select id="set" value={setPick} onChange={(e) => setSetPick(e.target.value as ChapterSet | "auto")} className="mt-1 w-full rounded border border-border bg-background px-2 py-1.5">
+              <option value="auto">AUTO · {CHAPTER_SETS.find((s) => s.v === autoSet(f))!.label}</option>
+              {CHAPTER_SETS.map((s) => <option key={s.v} value={s.v}>{s.label}</option>)}
+            </select>
+          </div>
+          {beyondTip &&  <div className="text-destructive">UNMINED · BEYOND CHAIN TIP ({tip.toLocaleString("en-US")})</div>}
           <div>
             <label htmlFor="ttl" className="text-muted-foreground">TITLE ({title.length}/{TITLE_MAX})</label>
             <input id="ttl" maxLength={TITLE_MAX} value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 w-full rounded border border-border bg-background px-2 py-1.5" />

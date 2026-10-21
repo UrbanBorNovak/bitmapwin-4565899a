@@ -24,3 +24,22 @@ describe("facts line", () => {
     expect(factsLine({ height: 1, txCount: 5, avgFeeRate: null, minedAt: "2025-06-15T00:00:00Z" })).toBe("Mined 2025-06-15. 5 transactions. Every one is a clue.");
   });
 });
+import { autoSet } from "./biternam-chapter";
+describe("cast only what exists", () => {
+  const f = { height: 800000, txCount: 2000 };
+  it("no Guardian means no Guardian actor", () => {
+    const ep = chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false });
+    expect(ep.scenes.every((s) => s.cast.every((a) => !!a.avatar))).toBe(true);
+  });
+  it("an awakened Guardian is cast from its block", () => {
+    const ep = chapterEpisode(f, "A", "B", { guardian: { species: "VOID PHANTOM" }, hasBuild: true });
+    expect(ep.scenes[0]!.cast[0]!.avatar).toBeUndefined();
+    expect(ep.scenes[0]!.cast[0]!.height).toBe(800000);
+  });
+  it("Biternam sets follow the block or the holder's pick", () => {
+    expect(autoSet({ height: 0, txCount: 1 })).toBe("vault");
+    expect(autoSet({ height: 9, txCount: 1 })).toBe("batcave");
+    expect(autoSet({ height: 800000, txCount: 3500 })).toBe("chinatown");
+    expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "batcave" }).scenes[1]!.set).toBe("batcave");
+  });
+});
