@@ -62,6 +62,7 @@ function BiternamPage() {
         <Link to="/biternam/canon" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ CH.12 · THE CANONICAL BLOCK ]</Link>
         <Link to="/biternam/receipt" className="ml-2 mt-3 inline-block rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary hover:bg-primary hover:text-primary-foreground">[ CH.13 · THE MARSHAL'S RECEIPT ]</Link>
         <Link to="/biternam/aftermath" className="ml-2 mt-3 inline-block rounded border border-bitcoin px-3 py-1.5 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">[ AFTERMATH · CASEBOOK ]</Link>
+        <Link to="/biternam/pixels" className="ml-2 mt-3 inline-block rounded border border-signal px-3 py-1.5 font-mono text-xs text-signal hover:bg-signal hover:text-background">[ PIXELS AVATAR MARKET ]</Link>
         <Link to="/biternam/void" className="ml-2 mt-3 inline-block rounded border border-signal px-3 py-1.5 font-mono text-xs text-signal hover:bg-signal hover:text-background">[ THE MEMPOOL VOID ]</Link>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BITERNAM_CREW.map((c) => (
