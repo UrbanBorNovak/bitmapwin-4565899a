@@ -54,6 +54,7 @@ export function relicsFrom(held: HeldSealed[], states: Record<string, SealState>
 let states: Record<string, SealState> = {};
 let snapshot: HeldRelic[] = [];
 let lastCheck = 0;
+let built = false;
 const listeners = new Set<() => void>();
 const EMPTY: HeldRelic[] = [];
 
@@ -63,7 +64,7 @@ function readHeld(): HeldSealed[] {
 function rebuild() { snapshot = relicsFrom(readHeld(), states); listeners.forEach((f) => f()); }
 
 export const relicStore = {
-  get: () => snapshot,
+  get: () => { if (!built && typeof window !== "undefined") { built = true; snapshot = relicsFrom(readHeld(), states); void relicStore.refresh(); } return snapshot; },
   subscribe(fn: () => void) {
     listeners.add(fn);
     if (listeners.size === 1) { rebuild(); void relicStore.refresh(); }
