@@ -155,7 +155,7 @@ export function IslandScene({ onHit, onHover, hover, st }: SceneProps<IslandHots
           <Palm x={-1.2} z={-3.2} lean={0.1} />
           {/* hammock between palms */}
           <mesh position={[-2.1, 1.2, -2.8]} rotation-y={0.4}><boxGeometry args={[1.6, 0.05, 0.5]} /><meshStandardMaterial color="#ff5a5a" emissive={hover === "palm" ? TRIM : "#000"} emissiveIntensity={0.4} /></mesh>
-          {!st.got && !st.solved ? <mesh position={[-1.8, 0.12, -2.2]}><sphereGeometry args={[0.001, 4, 4]} /><meshBasicMaterial /></mesh> : null}
+          {!st.got && !st.solved ? <mesh position={[-1.8, 0.12, -2.2]}><sphereGeometry args={[0.14, 8, 8]} /><meshStandardMaterial color="#5a3a1a" /></mesh> : null}
         </Hot>
         {/* Hangover hotel bed: canopy, rumpled linen, blueprints */}
         <Hot id="bed" {...hp} position={[1.2, 0, -1.6]}>

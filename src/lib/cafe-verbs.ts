@@ -3,7 +3,7 @@ import type { Verb } from "@/lib/museum-verbs";
 
 export type CafeHotspot = "dev9" | "droid" | "jukebox" | "hatch" | "coin" | "door";
 export const CAFE_HOTSPOT_NAMES: Record<CafeHotspot, string> = {
-  dev9: "DEV9", droid: "BARISTA DROID", jukebox: "MEMPOOL JUKEBOX", hatch: "VIP HATCH", coin: "SAT TOKEN", door: "SALOON DOORS",
+  dev9: "ELEVATED DABBER", droid: "BARISTA DROID", jukebox: "MEMPOOL JUKEBOX", hatch: "VIP HATCH", coin: "SAT TOKEN", door: "SALOON DOORS",
 };
 export type CafeState = { held: string[]; distracted: boolean; item: string | null };
 export type CafeEffect = "talk" | "exit" | "pickup-coin" | "distract" | "trapdoor" | null;
@@ -20,8 +20,8 @@ export function resolveCafeVerb(verb: Verb, h: CafeHotspot, s: CafeState): CafeO
   switch (h) {
     case "dev9":
       if (verb === "talk") return s.distracted ? o("", "talk") : o("The droid steps in front of the booth: 'MEMBERS ONLY. UNCONFIRMED GUESTS WAIT.'");
-      if (verb === "look") return o("dev9. Dark shades, cold espresso, back to the wall. He sees you seeing him.");
-      if (verb === "pickup") return o("dev9 lowers his shades by one millimetre. You reconsider.");
+      if (verb === "look") return o("Elevated Dabber holds dev9's old booth now, wrapped in summit smoke. dev9 calls in through the table CRT from his cave.");
+      if (verb === "pickup") return o("Dabber exhales a slow cloud. 'Gravity is FUD, friend.'");
       return o("Try talking. Carefully.");
     case "droid":
       if (verb === "look") return s.distracted ? o("The droid is dancing. Badly. Gloriously.") : o("A barista droid polishing the same mug for 14 blocks. It watches the booth.");
