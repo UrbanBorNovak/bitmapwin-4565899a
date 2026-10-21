@@ -50,3 +50,12 @@ describe("archive", () => {
     expect(resolveArchiveVerb("use", "reader", { got: true, solved: false }).effect).toBe("solve");
   });
 });
+
+import { resolveHoldersVerb } from "./hideout-verbs";
+describe("holders", () => {
+  it("mirror needs page three first", () => {
+    expect(resolveHoldersVerb("use", "mirror", { got: false, solved: false }).effect).toBeNull();
+    expect(resolveHoldersVerb("pickup", "plotter", { got: false, solved: false }).effect).toBe("gain");
+    expect(resolveHoldersVerb("use", "mirror", { got: true, solved: false }).effect).toBe("solve");
+  });
+});

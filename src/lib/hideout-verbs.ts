@@ -213,3 +213,37 @@ export function resolveArchiveVerb(verb: Verb, h: ArchiveHotspot, s: HideoutStat
       return o("A ladder back up to the Oasis.");
   }
 }
+
+// ---------- CH.9 Page Three: take WILL's forged holder list, hold it to the Ownership Mirror that only shows what keys can move. ----------
+export type HoldersHotspot = "plotter" | "mirror" | "will" | "wallets" | "ghost" | "ladder";
+export const HOLDERS_NAMES: Record<HoldersHotspot, string> = {
+  plotter: "SIGNATURE PLOTTER", mirror: "OWNERSHIP MIRROR", will: "WILL", wallets: "WALL OF FAKE WALLETS", ghost: "GHOST OF 1138", ladder: "LADDER UP",
+};
+export function resolveHoldersVerb(verb: Verb, h: HoldersHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "plotter":
+      if (s.got || s.solved) return o("The plotter scratches at an empty tray. PAGE THREE is in your hand.");
+      if (verb === "pickup" || act) return o("You snatch PAGE THREE from the plotter tray: a list of BITMAP holders, each with a 'signature' drawn in pen.", "gain");
+      return o("A pen plotter drawing signatures, one holder after another. Very neat. Very fake.");
+    case "mirror":
+      if (s.solved) return o("The mirror shows every BITMAP still with its real holder. A pen can draw a name. Only a key can move a sat.");
+      if (act && s.got) return o("You hold PAGE THREE to the Ownership Mirror. It checks each BITMAP against the chain. Not one drawn signature moves a single sat. The page goes blank.", "solve");
+      if (act) return o("The mirror shows only what the chain shows. Bring it a claim to check.");
+      return o("A tall mirror framed in old block headers. It reflects holders, not faces.");
+    case "will":
+      if (verb === "talk") return o("", "talk");
+      if (verb === "look") return o(s.solved ? "WILL stares at his blank page. 'It was such nice handwriting.'" : "WILL, violet-eyed, practising signatures with a quill. Hundreds of them.");
+      return o("WILL swats your hand with the quill. 'Ink's wet, Marshal.'");
+    case "wallets":
+      if (verb === "pickup" || act) return o("You poke a fake wallet. It's just paper and air. POP! Confetti everywhere.", "hazard");
+      return o("Paper wallets pinned to the wall, each labelled with a real holder's name. None of them hold anything.");
+    case "ghost":
+      if (verb === "look") return o(s.solved ? "The ghost of 1138 is laughing. First time anyone's heard it." : "The ghost of 1138 hovers by the mirror, tapping the frame.");
+      if (verb === "talk") return o(s.solved ? "GHOST: 'They can't fake a key. That's the whole trick of Bitcoin.'" : "GHOST: 'Names on paper. Show them to the mirror. It only trusts keys.'");
+      return o("Cold. He nods at the plotter.");
+    case "ladder":
+      if (act) return o("", "exit");
+      return o("A ladder back up to the Oasis.");
+  }
+}

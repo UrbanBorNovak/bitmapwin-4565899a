@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
@@ -501,6 +501,63 @@ export function ArchiveScene({ onHit, onHover, hover, st, hazard }: SceneProps<A
         </Hot>
         <Shreds storm={hazard} />
         <CafeSmoke count={40} color="#d8d0c0" opacity={0.035} mist={["#0e0b08", st.solved ? GREEN : NEON]} />
+      </SafeCanvas>
+    </div>
+  );
+}
+
+function PlotterArm({ on }: { on: boolean }) {
+  const g = useRef<Group>(null);
+  useFrame(({ clock }) => { if (g.current) { const t = clock.elapsedTime * (on ? 4 : 0); g.current.position.set(Math.sin(t) * 0.35, 0.95, Math.cos(t * 1.7) * 0.2); } });
+  return <group ref={g}><mesh><boxGeometry args={[0.06, 0.25, 0.06]} /><meshStandardMaterial color="#b026ff" emissive="#b026ff" emissiveIntensity={0.8} /></mesh></group>;
+}
+
+export function HoldersScene({ onHit, onHover, hover, st, hazard }: SceneProps<HoldersHotspot>) {
+  const hp = { onHit, onHover };
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[-0.2, 0.8, 0.2]} />
+        <color attach="background" args={["#08060c"]} />
+        <fog attach="fog" args={["#08060c", 12, 25]} />
+        <ambientLight intensity={0.8} color="#d4c4e8" />
+        <pointLight position={[-1.4, 2.8, -2.6]} intensity={st.solved ? 32 : 14} color={st.solved ? TRIM : NEON} castShadow />
+        <pointLight position={[2.4, 2, -1]} intensity={12} color="#b026ff" />
+        {/* Parquet floor */}
+        {Array.from({ length: 64 }, (_, i) => (
+          <mesh key={i} position={[(i % 8) - 3.5, -0.05, Math.floor(i / 8) - 3.5]} receiveShadow>
+            <boxGeometry args={[0.97, 0.1, 0.97]} /><meshStandardMaterial color={(i + Math.floor(i / 8)) % 2 ? "#3a2416" : "#2c1a10"} roughness={0.8} />
+          </mesh>
+        ))}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#1e1426" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#1a1120" roughness={1} /></mesh>
+        <Hot id="mirror" {...hp} position={[-1.4, 0, -3.6]}>
+          <mesh position-y={1.6}><boxGeometry args={[1.5, 2.8, 0.15]} /><meshStandardMaterial color="#6a4a1a" metalness={0.7} emissive={hover === "mirror" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          <mesh position={[0, 1.6, 0.09]}><boxGeometry args={[1.2, 2.5, 0.02]} /><meshStandardMaterial color="#8aa4b8" metalness={1} roughness={0.05} emissive={st.solved ? TRIM : NEON} emissiveIntensity={st.solved ? 0.8 : 0.25} /></mesh>
+        </Hot>
+        <Hot id="wallets" {...hp} position={[1.6, 0, -3.8]}>
+          {Array.from({ length: 12 }, (_, i) => <mesh key={i} position={[-0.9 + (i % 4) * 0.6, 1.4 + Math.floor(i / 4) * 0.55, 0.1]} rotation-z={((i * 7) % 5 - 2) * 0.06}><boxGeometry args={[0.45, 0.35, 0.02]} /><meshStandardMaterial color={hazard ? "#ffcc33" : "#e8e2d0"} emissive={hover === "wallets" ? "#b026ff" : "#000"} emissiveIntensity={0.3} /></mesh>)}
+        </Hot>
+        <Hot id="plotter" {...hp} position={[-2.6, 0, 0.6]}>
+          <mesh position-y={0.4}><boxGeometry args={[1.2, 0.8, 0.9]} /><meshStandardMaterial color="#2c2a30" metalness={0.5} emissive={hover === "plotter" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
+          <mesh position-y={0.82}><boxGeometry args={[1, 0.03, 0.7]} /><meshStandardMaterial color={!st.got && !st.solved ? "#e8e2d0" : "#333"} /></mesh>
+          <PlotterArm on={!st.got && !st.solved} />
+        </Hot>
+        <Hot id="will" {...hp} position={[2.4, 0, 0.2]} rotation={[0, -0.7, 0]}>
+          <Ring on={hover === "will"} color="#b026ff" />
+          <Shade body="#16061f" eye="#b026ff" />
+          <mesh position={[-0.6, 0.4, 0.2]}><boxGeometry args={[0.8, 0.8, 0.5]} /><meshStandardMaterial color="#3a2416" /></mesh>
+        </Hot>
+        <Hot id="ghost" {...hp} position={[0.2, 0, -1.6]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm={st.solved} />
+        </Hot>
+        <Hot id="ladder" {...hp} position={[-3.5, 0, 2.8]}>
+          {[-0.25, 0.25].map((x) => <mesh key={x} position={[x, 1.8, 0]}><boxGeometry args={[0.06, 3.6, 0.06]} /><meshStandardMaterial color="#7a4a22" emissive={TRIM} emissiveIntensity={hover === "ladder" ? 0.6 : 0} /></mesh>)}
+          {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.4, 0]}><boxGeometry args={[0.5, 0.04, 0.04]} /><meshStandardMaterial color="#7a4a22" /></mesh>)}
+        </Hot>
+        <Shreds storm={hazard} />
+        <CafeSmoke count={35} color="#e0d0f0" opacity={0.03} mist={["#0e0812", st.solved ? TRIM : "#b026ff"]} />
       </SafeCanvas>
     </div>
   );
