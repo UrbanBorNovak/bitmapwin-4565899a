@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  BroadcastUnknown, loadHeld, runLockedTransfer, intentStore, clearInterrupted, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
+  BroadcastUnknown, loadHeld, restoreBackup, runLockedTransfer, intentStore, clearInterrupted, pendingStore, resolvePending, type Resolution, assertPlainCoin, broadcastTx, txSeenOnChain, decodeConsignment, listCoins, parseSealReceive, pickPlainCoin, prepareTransfer, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -204,6 +204,14 @@ export function SealedVault() {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `sealed-notes-backup-${Date.now()}.json`; a.click();
     setBackedUp(true);
   };
+  const restore = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      const r = await restoreBackup(JSON.parse(await f.text()), { outspend: (o) => mempoolChain().outspend(o) });
+      const l = loadHeld(); setHeld(l); setDamaged(null); void check(l);
+      setMsg(`RESTORED ${r.restored.length}` + (r.skippedSpent.length ? ` · ${r.skippedSpent.length} SKIPPED (COIN ALREADY SPENT)` : "") + (r.skippedInFlight.length ? ` · ${r.skippedInFlight.length} KEPT AS IN YOUR UNFINISHED TRANSFER` : ""));
+    } catch (e) { setMsg(e instanceof SyntaxError ? "THIS IS NOT A VALID SEALED-NOTES BACKUP — NOTHING CHANGED" : (e as Error).message); }
+  };
   const anyPending = Object.values(status).some((s) => s.state === "PENDING");
   const anySealed = Object.values(status).some((s) => s.state === "SEALED");
   const steps = mode === "send" ? [
@@ -228,6 +236,7 @@ export function SealedVault() {
         <div className="text-[11px] tracking-widest text-primary">BITCOIN-SEALED NOTES · BETA</div>
         <div className="flex gap-3 text-[11px]">
           <button onClick={backup} className="text-signal">[ DOWNLOAD BACKUP ]</button>
+          <label className="cursor-pointer text-signal">[ RESTORE BACKUP ]<input type="file" accept="application/json" className="hidden" onChange={(e) => { void restore(e.target.files?.[0]); e.target.value = ""; }} /></label>
           <button onClick={() => void check(held)} className="text-signal">[ RECHECK ON BITCOIN ]</button>
         </div>
       </div>
