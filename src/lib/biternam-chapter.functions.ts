@@ -5,13 +5,21 @@ import { QUOTE_MAX, TITLE_MAX, cleanText } from "@/lib/biternam-chapter";
 
 export type CommunityChapter = { height: number; title: string; quote: string; owner: string; updatedAt: string };
 
-/** Public: the block's tx count from stored block_stats (null when not recorded — never guessed). */
+/** Public: tx count, avg fee rate and time from stored records, filling gaps from a hash-checked explorer read. */
 export const blockFactsFn = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ height: z.number().int().min(0).max(10_000_000) }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin.from("block_stats").select("tx_count").eq("block_height", data.height).maybeSingle();
-    return { height: data.height, txCount: row ? Number(row.tx_count) : null };
+    const { resolveChapterFacts } = await import("@/lib/chapter-block-facts");
+    const [{ data: s }, { data: bf }] = await Promise.all([
+      supabaseAdmin.from("block_stats").select("tx_count").eq("block_height", data.height).maybeSingle(),
+      supabaseAdmin.from("block_facts").select("avg_fee_rate,mined_at").eq("block_height", data.height).maybeSingle(),
+    ]);
+    return resolveChapterFacts(data.height, {
+      txCount: s ? Number(s.tx_count) : null,
+      avgFeeRate: bf?.avg_fee_rate == null ? null : Number(bf.avg_fee_rate),
+      minedAt: bf?.mined_at ?? null,
+    });
   });
 
 /** Public: published community chapters with tx counts, newest first. No account columns. */
