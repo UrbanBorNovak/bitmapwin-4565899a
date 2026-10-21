@@ -92,6 +92,7 @@ export function HeaderIdentity() {
           <Wallet className="size-3.5" /> MY BITMAPS · LIST WITH TRAITS
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void navigate({ to: "/my-land" })}>MY LAND</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void navigate({ to: "/my-world" })}>MY WORLD</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void navigate({ to: "/dashboard" })}>DASHBOARD</DropdownMenuItem>
         <DropdownMenuSeparator />
         {wallet ? (
