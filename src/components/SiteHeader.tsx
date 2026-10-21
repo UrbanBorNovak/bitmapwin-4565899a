@@ -169,7 +169,7 @@ export function SiteHeader() {
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1 hidden text-[0.5rem] sm:block">BITCOIN-NATIVE WORLDS</div>
+          <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
         <nav className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
