@@ -159,7 +159,7 @@ export function SiteHeader() {
   return (
     <header className="site-header sticky top-0 z-50 border-b border-border">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 md:flex md:justify-between md:gap-3 md:px-5">
-        <Link to="/" className="site-brand min-w-0 leading-none">
+        <Link to="/" className="site-brand min-w-0 shrink-0 whitespace-nowrap leading-none">
           <div className="display flex items-end gap-1 text-sm sm:text-base">
             <span className="text-bitcoin">BITMAP</span>
             <span className="relative hidden sm:inline">
@@ -169,7 +169,7 @@ export function SiteHeader() {
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1 hidden text-[0.5rem] sm:block">BITCOIN-NATIVE WORLDS</div>
+          <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
         <nav className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
