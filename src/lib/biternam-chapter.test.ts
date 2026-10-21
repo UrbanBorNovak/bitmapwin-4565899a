@@ -43,3 +43,15 @@ describe("cast only what exists", () => {
     expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "batcave" }).scenes[1]!.set).toBe("batcave");
   });
 });
+import { pickCoStars } from "./biternam-cast";
+describe("random cast and cameras", () => {
+  const f = { height: 800000, txCount: 2000 };
+  it("co-stars are two different Unreasonables wearing BITMAP Pixels", () => {
+    for (let s = 0; s < 30; s++) { const [a, b] = pickCoStars(800000, s); expect(a.id).not.toBe(b.id); expect(a.avatar.skin.startsWith("px:")).toBe(true); }
+  });
+  it("rolling changes cast or cameras; Guardian stays lead when awake", () => {
+    const eps = [0, 1, 2, 3].map((seed) => JSON.stringify(chapterEpisode(f, "A", "B", { guardian: { species: "X" }, hasBuild: false, seed })));
+    expect(new Set(eps).size).toBeGreaterThan(1);
+    expect(chapterEpisode(f, "A", "B", { guardian: { species: "X" }, hasBuild: false, seed: 5 }).scenes[0]!.cast[0]!.avatar).toBeUndefined();
+  });
+});
