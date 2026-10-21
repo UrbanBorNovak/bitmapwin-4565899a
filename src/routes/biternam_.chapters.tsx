@@ -7,6 +7,7 @@ import { episodeLength, sceneAt } from "@/lib/toon-script";
 import { styleFilter } from "@/lib/toon-style";
 import { CHAPTER_SETS, QUOTE_MAX, TITLE_MAX, autoSet, chapterEpisode, chapterTheme, defaultQuote, defaultTitle, type ChapterSet } from "@/lib/biternam-chapter";
 import { supabase } from "@/integrations/supabase/client";
+import { CAMERA_PRESETS, pickCoStars, type CameraPreset } from "@/lib/biternam-cast";
 import { fromQuery, lookup, statusLabel } from "@/lib/chapter-cast";
 import { blockFactsFn, listChaptersFn, publishChapterFn } from "@/lib/biternam-chapter.functions";
 
@@ -47,6 +48,8 @@ function ChaptersPage() {
   const guardian = fromQuery({ ...guardianQ, data: guardianQ.data?.l }, height, guardianQ.data?.height);
   const build = fromQuery({ ...buildQ, data: buildQ.data?.l }, height, buildQ.data?.height);
   const [setPick, setSetPick] = useState<ChapterSet | "auto">("auto");
+  const [seed, setSeed] = useState(0);
+  const [camera, setCamera] = useState<CameraPreset>("auto");
   const chapters = useQuery({ queryKey: ["biternam-chapters"], queryFn: () => listChaptersFn(), staleTime: 30_000 });
   const f = { height, txCount: facts.data?.txCount ?? null, avgFeeRate: facts.data?.avgFeeRate ?? null, minedAt: facts.data?.minedAt ?? null };
   const existing = chapters.data?.find((c) => c.height === height);
@@ -58,9 +61,9 @@ function ChaptersPage() {
   const species = guardian.state === "found" ? guardian.value : null, hasBuild = build.state === "found";
   const guardianUnknown = guardian.state === "checking" || guardian.state === "unavailable";
   const chosenSet = setPick === "auto" ? autoSet(f) : setPick;
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown }),
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f), quote || defaultQuote(f), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown, seed, camera }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown]);
+    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown, seed, camera]);
   const total = episodeLength(episode);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -148,6 +151,18 @@ function ChaptersPage() {
               <option value="auto">AUTO · {CHAPTER_SETS.find((s) => s.v === autoSet(f))!.label}</option>
               {CHAPTER_SETS.map((s) => <option key={s.v} value={s.v}>{s.label}</option>)}
             </select>
+          </div>
+          <div>
+            <label htmlFor="cam" className="text-muted-foreground">CAMERAS</label>
+            <select id="cam" value={camera} onChange={(e) => setCamera(e.target.value as CameraPreset)} className="mt-1 w-full rounded border border-border bg-background px-2 py-1.5">
+              {CAMERA_PRESETS.map((c) => <option key={c.v} value={c.v}>{c.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="text-muted-foreground">CO-STARS · THE UNREASONABLES</div>
+            <div className="mt-1 text-signal" data-testid="costars">{pickCoStars(height, seed).map((c) => c.name).join(" · ")}</div>
+            <div className="mt-1 text-[10px] text-muted-foreground">Everyone wears a real BITMAP Pixel. Background extras move by fly brain.</div>
+            <button onClick={() => { setSeed((s) => s + 1); setTime(0); setPlaying(false); }} className="mt-2 w-full rounded border border-signal py-1.5 text-signal hover:bg-signal/10">[ ROLL CAST &amp; CAMERAS ]</button>
           </div>
           {beyondTip &&  <div className="text-destructive">UNMINED · BEYOND CHAIN TIP ({tip.toLocaleString("en-US")})</div>}
           <div>
