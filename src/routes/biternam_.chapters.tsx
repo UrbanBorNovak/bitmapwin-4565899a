@@ -41,9 +41,9 @@ function ChaptersPage() {
 
   const facts = useQuery({ queryKey: ["chapter-block-facts", height], queryFn: () => blockFactsFn({ data: { height } }), retry: 1 });
   const guardianQ = useQuery({ queryKey: ["chapter-guardian", height], retry: 1, staleTime: 30_000,
-    queryFn: async () => ({ height, l: await lookup(() => supabase.from("bitmon_guardians").select("species").eq("block_height", height).maybeSingle(), (r) => r.species || null) }) });
+    queryFn: async () => ({ height, l: await lookup(() => supabase.from("bitmon_guardians").select("species").eq("block_height", height).maybeSingle(), (r: { species: string }) => r.species || null) }) });
   const buildQ = useQuery({ queryKey: ["chapter-build", height], retry: 1, staleTime: 60_000,
-    queryFn: async () => ({ height, l: await lookup(() => supabase.from("bitmap_forge_builds").select("inscription_id").eq("bitmap_height", height).maybeSingle(), (r) => r.inscription_id || null) }) });
+    queryFn: async () => ({ height, l: await lookup(() => supabase.from("bitmap_forge_builds").select("inscription_id").eq("bitmap_height", height).maybeSingle(), (r: { inscription_id: string }) => r.inscription_id || null) }) });
   const guardian = fromQuery({ ...guardianQ, data: guardianQ.data?.l }, height, guardianQ.data?.height);
   const build = fromQuery({ ...buildQ, data: buildQ.data?.l }, height, buildQ.data?.height);
   const [setPick, setSetPick] = useState<ChapterSet | "auto">("auto");
