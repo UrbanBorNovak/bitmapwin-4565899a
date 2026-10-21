@@ -61,7 +61,7 @@ function ArcadePage() {
     playSfx(r.effect === "talk" ? "talk" : r.effect === "prize" ? "pickup" : r.effect === "exit" ? "door" : r.effect === "zap" ? "fall" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
-    if (r.effect === "exit") navigate({ to: "/map" });
+    if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "play-fee") setGame("fee");
     if (r.effect === "play-hash") setGame("hash");
     if (r.effect === "prize") setSt((s) => ({ ...s, prize: true }));

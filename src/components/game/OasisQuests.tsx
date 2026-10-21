@@ -15,7 +15,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { useNavigate } from "@tanstack/react-router";
 import { saveLastPose } from "@/lib/map-identity";
 
-import { INTERIOR_DOORS as INTERIORS } from "@/lib/biternam-doors";
+import { INTERIOR_DOORS as INTERIORS, doorInReach, doorSpot } from "@/lib/biternam-doors";
 
 type Pose = { x: number; z: number; yaw?: number };
 
@@ -40,6 +40,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   const [unverified, setUnverified] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [atLandmark, setAtLandmark] = useState<string | null>(null);
+  const [atDoor, setAtDoor] = useState<string | null>(null);
   const navigate = useNavigate();
   // Remember the exact spot so leaving the interior drops you back here.
   const enterInterior = (id: string) => { const { x, z, yaw } = pose.current; saveLastPose({ x, z, yaw: yaw ?? 0 }); navigate({ to: INTERIORS[id]!.to }); };
@@ -52,7 +53,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
   // Dev-only hook for browser play-tests (never shipped: stripped from production builds).
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    (window as unknown as { __biternamTest?: unknown }).__biternamTest = { questStore, heldItems, landmarks: LANDMARKS, pose, cell: WORLD_CELL, nearestNpc };
+    (window as unknown as { __biternamTest?: unknown }).__biternamTest = { doorSpot, doors: INTERIORS, questStore, heldItems, landmarks: LANDMARKS, pose, cell: WORLD_CELL, nearestNpc };
   }, [pose]);
 
   // Proximity: who you can talk to, and which landmark you're standing at.
@@ -63,6 +64,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
       const lm = landmarkInReach(x, z);
       if (lm) questStore.record("visit", lm);
       setAtLandmark(lm);
+      setAtDoor(doorInReach(x, z) ?? (lm && INTERIORS[lm] ? lm : null));
       for (const it of pendingItems(questStore.get())) {
         const sp = itemSpot(it);
         if (sp && Math.hypot(sp.x - x, sp.z - z) <= PICKUP_REACH * WORLD_CELL) questStore.record("pickup", it.id);
@@ -145,9 +147,9 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
         </button>
       ) : null}
 
-      {atLandmark && INTERIORS[atLandmark] && !talking ? (
-        <button type="button" onClick={() => enterInterior(atLandmark)} className="glass-panel pointer-events-auto absolute bottom-52 left-1/2 z-[86] -translate-x-1/2 rounded-full border border-signal/60 px-4 py-2 font-mono text-[12px] tracking-widest text-signal">
-          ⌂ {INTERIORS[atLandmark]!.label}
+      {atDoor && !talking ? (
+        <button type="button" data-testid="enter-interior" onClick={() => enterInterior(atDoor)} className="glass-panel pointer-events-auto absolute bottom-52 left-1/2 z-[86] -translate-x-1/2 rounded-full border border-signal/60 px-4 py-2 font-mono text-[12px] tracking-widest text-signal">
+          ⌂ {INTERIORS[atDoor]!.label}
         </button>
       ) : null}
 

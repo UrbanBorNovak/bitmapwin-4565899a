@@ -8,21 +8,17 @@ import type { Group, Mesh } from "three";
 import { CREW_PIXEL_AVATAR, QUEST_NPCS, itemSpot, npcSpot, pendingItems, useQuestState, type QuestItem, type QuestNpc } from "@/lib/biternam-quests";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { groundY } from "@/lib/world-terrain";
-import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
-import { WORLD_CELL } from "@/lib/player-state";
-import { INTERIOR_DOORS } from "@/lib/biternam-doors";
+import { INTERIOR_DOORS, doorSpot } from "@/lib/biternam-doors";
 
 /** A glowing retro doorway beside each landmark that has a Biternam interior. */
 function Door({ id, unit }: { id: string; unit: number }) {
-  const lm = LANDMARKS.find((l) => l.id === id);
   const d = INTERIOR_DOORS[id]!;
+  const spot = doorSpot(id);
   const glow = useRef<Mesh>(null);
   useFrame(({ clock }) => { if (glow.current) (glow.current.material as { opacity: number }).opacity = 0.45 + Math.sin(clock.elapsedTime * 3) * 0.2; });
-  if (!lm) return null;
-  const c = landmarkSpot(lm);
-  const r = (lm.radius + 0.35) * WORLD_CELL;
-  const x = c.x + Math.cos(lm.yaw + Math.PI / 4) * r;
-  const z = c.z + Math.sin(lm.yaw + Math.PI / 4) * r;
+  if (!spot) return null;
+  const { x, z } = spot;
+  const c = { x: spot.cx, z: spot.cz };
   const s = unit * 1.6;
   return (
     <group position={[x, groundY(x, z), z]} rotation-y={Math.atan2(x - c.x, z - c.z)}>

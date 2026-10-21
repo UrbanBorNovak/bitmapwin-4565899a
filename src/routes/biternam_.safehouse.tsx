@@ -54,7 +54,7 @@ function SafehousePage() {
     playSfx(r.effect === "talk" ? "talk" : r.effect === "pickup-torch" || r.effect === "open-safe" ? "pickup" : r.effect === "exit" ? "door" : r.effect === "dye" ? "fall" : r.effect === "reveal" || r.effect === "give-key" ? "dance" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
-    if (r.effect === "exit") navigate({ to: "/map" });
+    if (r.effect === "exit") navigate({ to: "/oasis" });
     if (r.effect === "pickup-torch") setSt((s) => ({ ...s, hasTorch: true }));
     if (r.effect === "reveal") setSt((s) => ({ ...s, revealed: true }));
     if (r.effect === "open-safe") setSt((s) => ({ ...s, opened: true, hasKey: true }));
