@@ -30,7 +30,7 @@ const ITEM_ICONS: Record<string, LucideIcon> = {
   "/ownership": BadgeCheck, "/sdk": Code2, "/docs": FileText, "/api": Terminal, "/dev-tools": Wrench,
   "/forge": Hammer, "/watch": Clapperboard, "/create": Sparkles, "/parcel": MapIcon, "/tools": Wrench,
   "/colony": Users, "/registry": Package, "/traits": BadgeCheck, "/biternam": BookOpen, "/breed": Sparkles,
-  "/kennels": Building2, "/toon": Clapperboard, "/clips": Clapperboard,
+  "/kennels": Building2, "/toon": Clapperboard, "/clips": Clapperboard, "/build": Hammer,
 };
 function ItemIcon({ to, active }: { to: string; active: boolean }) {
   const I = ITEM_ICONS[to] ?? ArrowRight;
@@ -95,14 +95,8 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Build on your BITMAP, make media, deploy experiences",
     items: [
       { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
-      { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
-      { to: "/forge", label: "LAND FORGE", note: "Build voxels on your BITMAP and inscribe them" },
-      { to: "/parcel", label: "PARCEL STUDIO", note: "Map and inscribe the real parcels of a BITMAP" },
-      { to: "/kennels", label: "PARCEL FOUNDRY", note: "One Outpost per transaction parcel" },
-      { to: "/registry", label: "MODEL REGISTRY", note: "On-chain 3D models you can place" },
-      { to: "/toon", label: "TOON STUDIO", note: "Script cartoon episodes" },
-      { to: "/clips", label: "BITMAP CLIPS", note: "Turn a BITMAP into a 3D video (by @bitlodo)" },
-      { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
+      { to: "/build", label: "START BUILDING", note: "Solo, with crew, lightweight or from your Outpost" },
+      { to: "/create", label: "CREATE WITH AI", note: "Describe it and get a working experience" },
       { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool in one place" },
     ],
   },
@@ -127,12 +121,9 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Your holdings, identity and developer resources",
     items: [
       { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
-      { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
       { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and build unlocks" },
       { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT to use in the Oasis" },
-      { to: "/docs", label: "DOCS", note: "Guides and references" },
-      { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
-      { to: "/api", label: "API", note: "Public HTTP endpoints" },
+      { to: "/docs", label: "DOCS", note: "Guides, SDK and API references" },
       { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
     ],
   },
