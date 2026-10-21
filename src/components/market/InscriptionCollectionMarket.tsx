@@ -8,6 +8,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
 import { useWalletSession } from "@/lib/wallet-session";
 import { walletQuery } from "@/lib/wallet";
+import { ListPieceDialog } from "@/components/market/ListPieceDialog";
 
 export type MarketItem = { id: string; label: string; sub?: string };
 
@@ -34,6 +35,7 @@ export function InscriptionCollectionMarket({
   const [filter, setFilter] = useState<"all" | "listed" | "mine">("all");
   const [q, setQ] = useState(initialQuery);
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const [listing, setListing] = useState<MarketItem | null>(null);
   const offerById = useMemo(() => new Map((listings.data ?? []).map((o) => [o.inscriptionId ?? "", o])), [listings.data]);
   const open = listings.data ?? [];
   const floor = open.length ? Math.min(...open.map((o) => o.priceSats)) : null;
@@ -94,6 +96,8 @@ export function InscriptionCollectionMarket({
               <div className="mt-2 space-y-1">
                 {offer ? (
                   <BuyButton offerId={offer.id} priceSats={offer.priceSats} className="btn-term w-full !px-2 !py-1" />
+                ) : owned ? (
+                  <button type="button" className="btn-term w-full !px-2 !py-1" onClick={() => setListing(item)}>[ LIST FOR SALE ]</button>
                 ) : (
                   <>
                     <input inputMode="numeric" placeholder="PRICE SATS" value={prices[item.id] ?? ""}
@@ -107,6 +111,7 @@ export function InscriptionCollectionMarket({
           );
         })}
       </div>
+      <ListPieceDialog item={listing} onClose={() => setListing(null)} preview={listing ? preview(listing) : undefined} />
     </div>
   );
 }
