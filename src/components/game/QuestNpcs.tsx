@@ -8,7 +8,7 @@ import type { Group, Mesh } from "three";
 import { CREW_PIXEL_AVATAR, QUEST_NPCS, itemSpot, npcSpot, pendingItems, useQuestState, type QuestItem, type QuestNpc } from "@/lib/biternam-quests";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { groundY } from "@/lib/world-terrain";
-import { LANDMARKS } from "@/lib/world-landmarks";
+import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
 import { WORLD_CELL } from "@/lib/player-state";
 import { INTERIOR_DOORS } from "@/lib/biternam-doors";
 
@@ -19,12 +19,13 @@ function Door({ id, unit }: { id: string; unit: number }) {
   const glow = useRef<Mesh>(null);
   useFrame(({ clock }) => { if (glow.current) (glow.current.material as { opacity: number }).opacity = 0.45 + Math.sin(clock.elapsedTime * 3) * 0.2; });
   if (!lm) return null;
+  const c = landmarkSpot(lm);
   const r = (lm.radius + 0.35) * WORLD_CELL;
-  const x = lm.cell[0] * WORLD_CELL + Math.cos(lm.yaw + Math.PI / 4) * r;
-  const z = lm.cell[1] * WORLD_CELL + Math.sin(lm.yaw + Math.PI / 4) * r;
+  const x = c.x + Math.cos(lm.yaw + Math.PI / 4) * r;
+  const z = c.z + Math.sin(lm.yaw + Math.PI / 4) * r;
   const s = unit * 1.6;
   return (
-    <group position={[x, groundY(x, z), z]} rotation-y={Math.atan2(lm.cell[0] * WORLD_CELL - x, lm.cell[1] * WORLD_CELL - z) + Math.PI}>
+    <group position={[x, groundY(x, z), z]} rotation-y={Math.atan2(x - c.x, z - c.z)}>
       <mesh position={[-s * 0.45, s * 0.75, 0]}><boxGeometry args={[s * 0.12, s * 1.5, s * 0.12]} /><meshStandardMaterial color="#2a2420" /></mesh>
       <mesh position={[s * 0.45, s * 0.75, 0]}><boxGeometry args={[s * 0.12, s * 1.5, s * 0.12]} /><meshStandardMaterial color="#2a2420" /></mesh>
       <mesh position={[0, s * 1.55, 0]}><boxGeometry args={[s * 1.05, s * 0.16, s * 0.14]} /><meshStandardMaterial color={d.color} emissive={d.color} emissiveIntensity={1.6} /></mesh>
