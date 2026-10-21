@@ -64,7 +64,7 @@ function VaultPage() {
 
       <section className="mt-8 rounded border border-border bg-card/60 p-4">
         <div className="text-[11px] tracking-widest text-signal">YOUR RECEIVE CODE</div>
-        <div className="mt-2 break-all text-foreground" data-no-translate>{recv || "…"}</div>
+        <div aria-label="Receive code" className="mt-2 break-all text-foreground" data-no-translate>{recv || "…"}</div>
         <button onClick={() => navigator.clipboard.writeText(recv)} className="mt-2 text-[11px] text-primary">[ COPY ]</button>
       </section>
 
