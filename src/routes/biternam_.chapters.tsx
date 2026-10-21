@@ -117,12 +117,21 @@ function ChaptersPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div>
           <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-card">
-            <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
+            <div className="vhs-tape absolute inset-0" style={{ filter: `${styleFilter(episode.style)} saturate(1.25) contrast(1.08) sepia(0.12)` }}>
               <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
                 <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
                   <ToonStage3D episode={episode} time={time} />
                 </Suspense>
               </ClientOnly>
+            </div>
+            <div aria-hidden className="vhs-scan pointer-events-none absolute inset-0" />
+            <div aria-hidden className="pointer-events-none absolute inset-0 p-3 font-mono text-sm tracking-widest text-foreground [text-shadow:2px_0_hsl(0_90%_55%/.7),-2px_0_hsl(190_90%_55%/.7)]" data-no-translate>
+              <div className="flex justify-between"><span>{playing ? "▶ PLAY" : "❚❚ PAUSE"}</span><span>SP</span></div>
+              {playing && <div className="mt-1 text-destructive animate-pulse">● REC</div>}
+              <div className="absolute right-3 top-9 text-right">
+                <div>{`00:${String(Math.floor(time / 60)).padStart(2, "0")}:${String(Math.floor(time % 60)).padStart(2, "0")}`}</div>
+                <div>{["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][height % 12]} {String(1 + (height % 28)).padStart(2, "0")} 199{height % 10}</div>
+              </div>
             </div>
             {line && (
               <div className="pointer-events-none absolute inset-x-0 bottom-4 mx-auto w-fit max-w-[80%] rounded border border-border bg-background/85 px-3 py-2 text-center text-sm">
