@@ -15,10 +15,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { startGuidedTour } from "@/components/GuidedTour";
 
 type NavItem = { to: string; label: string; note?: string };
-type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
+type NavSection = { title: string; items: NavItem[] };
+type NavGroup = { id: string; label: string; note: string; sections: NavSection[] };
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  play: Globe, trade: MapIcon, guardians: Shield, create: Hammer, discover: Compass, account: User,
+  explore: Compass, create: Hammer, account: User,
 };
 const ITEM_ICONS: Record<string, LucideIcon> = {
   "/play": Layers, "/play/extenders": Sparkles, "/oasis": Globe, "/command": Swords, "/stream": Radio,
@@ -45,89 +46,109 @@ function GroupIcon({ id }: { id: string }) {
   return <I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />;
 }
 
-// Organised by the five pillars, then developers. Each page appears once,
-// in the order a visitor would naturally use it.
+// Three menus — explore, create, account — each split into labelled sections.
+// Every page appears exactly once.
 const NAV_GROUPS: NavGroup[] = [
   {
-    id: "play",
-    label: "WORLD",
-    note: "Enter the Oasis and everything you do inside it",
-    items: [
-      { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
-      { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
-      { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
-      { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests in the Oasis" },
-      { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
-      { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
-      { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },
-      { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
-    ],
-  },
-  {
-    id: "trade",
-    label: "LAND",
-    note: "BITMAPs: buy, rent, verify and research",
-    items: [
-      { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
-      { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
-      { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
-      { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Check who holds a BITMAP on-chain" },
-      { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
-      { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
-      { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
-    ],
-  },
-  {
-    id: "guardians",
-    label: "GUARDIANS",
-    note: "Mint, command and grow your Guardians",
-    items: [
-      { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
-      { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helper agents" },
-      { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
-      { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians and inscribe their pet" },
-      { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
+    id: "explore",
+    label: "EXPLORE",
+    note: "The world, the land, the Guardians and the community",
+    sections: [
+      {
+        title: "WORLD",
+        items: [
+          { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
+          { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
+          { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
+          { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests" },
+          { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
+          { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
+        ],
+      },
+      {
+        title: "LAND & MARKET",
+        items: [
+          { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
+          { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
+          { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
+          { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Who holds a BITMAP on-chain" },
+          { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
+          { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
+          { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
+        ],
+      },
+      {
+        title: "GUARDIANS",
+        items: [
+          { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
+          { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helpers" },
+          { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
+          { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians, inscribe their pet" },
+          { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
+        ],
+      },
+      {
+        title: "COMMUNITY",
+        items: [
+          { to: "/explore", label: "TRENDING", note: "Trending BITMAPs and activity" },
+          { to: "/stream", label: "WORLD STREAM", note: "Verified history as it happens" },
+          { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
+          { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
+          { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
+          { to: "/watch", label: "TOON CINEMA", note: "Episodes and trailers" },
+          { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
+        ],
+      },
     ],
   },
   {
     id: "create",
     label: "CREATE",
     note: "Build on your BITMAP, make media, deploy experiences",
-    items: [
-      { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
-      { to: "/build", label: "START BUILDING", note: "Solo, with crew, lightweight or from your Outpost" },
-      { to: "/create", label: "CREATE WITH AI", note: "Describe it and get a working experience" },
-      { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool in one place" },
-    ],
-  },
-  {
-    id: "discover",
-    label: "DISCOVER",
-    note: "What people are building and watching",
-    items: [
-      { to: "/explore", label: "EXPLORE", note: "Trending BITMAPs and activity" },
-      { to: "/stream", label: "WORLD STREAM", note: "Verified history as it happens" },
-      { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
-      { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
-      { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
-      { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
-      { to: "/watch", label: "TOON CINEMA", note: "Watch episodes and trailers" },
-      { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
+    sections: [
+      {
+        title: "BUILD",
+        items: [
+          { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
+          { to: "/build", label: "START BUILDING", note: "Solo, with crew, lightweight or Outpost" },
+          { to: "/create", label: "CREATE WITH AI", note: "Describe it, get a working experience" },
+          { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool" },
+        ],
+      },
+      {
+        title: "PACKAGES",
+        items: [
+          { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
+          { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
+        ],
+      },
     ],
   },
   {
     id: "account",
-    label: "ME",
+    label: "ACCOUNT",
     note: "Your holdings, identity and developer resources",
-    items: [
-      { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
-      { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and build unlocks" },
-      { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT to use in the Oasis" },
-      { to: "/docs", label: "DOCS", note: "Guides, SDK and API references" },
-      { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
+    sections: [
+      {
+        title: "MINE",
+        items: [
+          { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
+          { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and unlocks" },
+          { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },
+          { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT" },
+        ],
+      },
+      {
+        title: "DEVELOPERS",
+        items: [
+          { to: "/docs", label: "DOCS", note: "Guides, SDK and API references" },
+          { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
+        ],
+      },
     ],
   },
 ];
+const groupItems = (g: NavGroup) => g.sections.flatMap((s) => s.items);
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -139,8 +160,8 @@ export function SiteHeader() {
   const itemIsActive = (to: string) => pathname === to || (to !== "/play" && pathname.startsWith(`${to}/`));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<string | null>(null);
-  const currentGroup = NAV_GROUPS.find((g) => g.items.some((i) => itemIsActive(i.to)));
-  const currentItem = currentGroup?.items.find((i) => itemIsActive(i.to));
+  const currentGroup = NAV_GROUPS.find((g) => groupItems(g).some((i) => itemIsActive(i.to)));
+  const currentItem = (currentGroup ? groupItems(currentGroup) : []).find((i) => itemIsActive(i.to));
   useEffect(() => setMobileOpen(false), [pathname]);
 
   function submit(e: React.FormEvent) {
@@ -193,45 +214,43 @@ export function SiteHeader() {
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className={`nav-menu absolute left-0 top-full border border-border bg-background ${group.id === "play" ? "w-80" : "min-w-64"}`}>
+                <div className={`nav-menu absolute left-0 top-full border border-border bg-background ${group.sections.length > 2 ? "w-[52rem]" : "w-80"}`}>
                   <div className="border-b border-border bg-surface px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="label text-bitcoin">{group.label}</div>
-                      {group.id === "play" ? <span className="label text-[0.5rem]">OASIS ONLINE</span> : null}
-                    </div>
+                    <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
                   </div>
-                  <div className={group.id === "play" ? "space-y-1 p-2" : ""}>
-                    {group.items.map((item, index) => {
-                      const active = itemIsActive(item.to);
-                      const divider = group.id === "play" && (index === 2 || index === 5);
+                  <div className={group.sections.length > 2 ? "grid grid-cols-4 divide-x divide-border" : "divide-y divide-border"}>
+                    {group.sections.map((section) => {
+                      const compact = group.sections.length > 2;
                       return (
-                        <div key={item.to} className={divider ? "border-t border-border pt-1" : undefined}>
-                          <Link
-                            to={item.to}
-                            activeOptions={{ exact: true }}
-                            onClick={() => setOpenGroup(null)}
-                            aria-current={active ? "page" : undefined}
-                            className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <ItemIcon to={item.to} active={active} />
-                              <div className="min-w-0">
-                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
-                              </div>
-                            </div>
-                          </Link>
+                        <div key={section.title} className="p-2">
+                          <div className="label px-2 pb-1 pt-1 text-[0.55rem] text-signal">{section.title}</div>
+                          {section.items.map((item) => {
+                            const active = itemIsActive(item.to);
+                            return (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                activeOptions={{ exact: true }}
+                                onClick={() => setOpenGroup(null)}
+                                aria-current={active ? "page" : undefined}
+                                title={item.note}
+                                className={`nav-menu-item group block border px-2 ${compact ? "py-1.5" : "py-2"} ${active ? "border-border bg-surface" : "border-transparent hover:border-border hover:bg-surface"}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {compact ? null : <ItemIcon to={item.to} active={active} />}
+                                  <div className="min-w-0">
+                                    <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
+                                    {item.note && !compact && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
                         </div>
                       );
                     })}
                   </div>
-                  {group.id === "play" ? (
-                    <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                      <span className="label">9 COMMANDS</span>
-                      <span className="label text-bitcoin">READY</span>
-                    </div>
-                  ) : null}
                 </div>
               )}
             </div>
@@ -304,7 +323,7 @@ export function SiteHeader() {
           <div className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto pb-24 shadow-lg border-t border-border bg-background">
             {NAV_GROUPS.map((group) => {
               const expanded = mobileSection === group.id;
-              const hasCurrent = group.items.some((i) => itemIsActive(i.to));
+              const hasCurrent = groupItems(group).some((i) => itemIsActive(i.to));
               return (
                 <section key={group.id} className="border-b border-border">
                   <button
@@ -318,12 +337,12 @@ export function SiteHeader() {
                       <span className={`label block ${hasCurrent ? "text-bitcoin" : "text-foreground"}`}>{group.label}</span>
                       <span className="block truncate font-mono text-[10px] text-muted-foreground">{group.note}</span>
                     </span>
-                    <span className="label text-[0.55rem] text-muted-foreground">{group.items.length}</span>
+                    <span className="label text-[0.55rem] text-muted-foreground">{groupItems(group).length}</span>
                     <ChevronDown className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </button>
                   {expanded && (
                     <ul className="pb-2">
-                      {group.items.map((item) => {
+                      {groupItems(group).map((item) => {
                         const active = itemIsActive(item.to);
                         return (
                           <li key={item.to}>
