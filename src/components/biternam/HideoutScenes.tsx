@@ -166,8 +166,9 @@ export function IslandScene({ onHit, onHover, hover, st }: SceneProps<IslandHots
           <mesh position-y={2.6}><boxGeometry args={[2.3, 0.05, 1.5]} /><meshStandardMaterial color="#ffffff" transparent opacity={0.7} /></mesh>
           {[0, 1, 2].map((i) => <mesh key={i} position={[-0.92, 1.55, -0.4 + i * 0.35]} rotation-x={Math.PI / 2}><cylinderGeometry args={[0.06, 0.06, 0.3, 8]} /><meshStandardMaterial color="#3a7bd5" /></mesh>)}
         </Hot>
-        <Hot id="urban" {...hp} position={[1.3, 0.62, -1.5]} rotation={[-Math.PI / 2 + (st.solved ? Math.PI / 2 : 0), 0, st.solved ? 0 : Math.PI / 2]}>
-          <group scale={1.3}><ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["urban"]!} pose={st.solved ? "talk" : "idle"} movingRef={still} fallback={null} /></group>
+        {/* Urban lies on his side along the bed, head at the headboard; once cured he stands beside it. */}
+        <Hot id="urban" {...hp} position={st.solved ? [1.6, 0, -0.4] : [2.3, 0.78, -1.5]} rotation={st.solved ? [0, 0.4, 0] : [0, 0, Math.PI / 2]}>
+          <group scale={st.solved ? 1.3 : 1}><ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["urban"]!} pose={st.solved ? "talk" : "idle"} movingRef={still} fallback={null} /></group>
         </Hot>
         {/* Nightstand cocktail with umbrella */}
         <mesh position={[2.6, 0.35, -1.6]}><boxGeometry args={[0.5, 0.7, 0.5]} /><meshStandardMaterial color="#8a5a2b" /></mesh>
