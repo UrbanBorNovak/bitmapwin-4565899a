@@ -38,8 +38,10 @@ describe("cast only what exists", () => {
   });
   it("Biternam sets follow the block or the holder's pick", () => {
     expect(autoSet({ height: 0, txCount: 1 })).toBe("vault");
-    expect(autoSet({ height: 9, txCount: 1 })).toBe("batcave");
+    expect(autoSet({ height: 9, txCount: 1 })).toBe("b-archive");
     expect(autoSet({ height: 800000, txCount: 3500 })).toBe("chinatown");
+    expect(autoSet({ height: 800001, txCount: 3500 })).toBe("b-arcade");
+    expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "b-museum" }).scenes[1]!.set).toBe("b-museum");
     expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "batcave" }).scenes[1]!.set).toBe("batcave");
   });
 });
