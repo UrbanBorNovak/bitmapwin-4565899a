@@ -7,7 +7,7 @@ import {
 const T = (c: string) => c.repeat(64);
 /** Pretend Bitcoin: who spent which output, and each tx's outputs + block. */
 function fakeChain(tip: number, spends: Record<string, string>, txs: Record<string, { h?: number | undefined; scripts: string[] }>, down = false): ChainView {
-  const st = (x?: { h?: number }): TxStatus => (x?.h ? { confirmed: true, block_height: x.h } : { confirmed: false });
+  const st = (x?: { h?: number | undefined }): TxStatus => (x?.h ? { confirmed: true, block_height: x.h } : { confirmed: false });
   return {
     tip: async () => { if (down) throw new Error("UNREACHABLE"); return tip; },
     outspend: async (o) => { const t = spends[`${o.txid}:${o.vout}`]; return t ? { spent: true, txid: t, status: st(txs[t]) } : { spent: false }; },
