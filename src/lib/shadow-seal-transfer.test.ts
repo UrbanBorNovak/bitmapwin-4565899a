@@ -346,3 +346,80 @@ describe("crashes, reloads and late signatures while the wallet window is open",
     expect(intentStore.onAnchor(coin)).toHaveLength(0);
   });
 });
+
+describe("stale signatures after an interrupted signing is cleared", () => {
+  // A lock that always grants models the worst case: a stale tab whose lock was lost (crash/reload/
+  // wallet extension holding the request), so only the attempt check stands between it and the coin.
+  const open = { request: async (_n: string, _o: unknown, cb: (l: unknown) => Promise<unknown>) => cb({}) };
+  const reset = () => { for (const key of ["bitmapwin:sealed-pending", "bitmapwin:sealed-intent", "bitmapwin:sealed-undo", "bitmapwin:sealed-sent"]) localStorage.removeItem(key); sealStore.setHeld(bundle); };
+  const labels = () => sealStore.held().map((h) => h.c.note.label).sort();
+  const slow = () => { let release!: () => void; const sign = (ps: string) => new Promise<string>((res) => { release = () => res(mockWallet(ps)); }); return { sign, release: () => release() }; };
+  const go = (sign: (p: string) => Promise<string>, give = { [k(1)]: bob }, currentWallet = () => address as string | null) =>
+    runLockedTransfer({ bundle, give, coin, address, feeRate: 4, sign, currentWallet, locks: open });
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+
+  it("old signature arrives after clear + a new transfer finished → rejected, new transfer intact", async () => {
+    reset();
+    const old = slow(); const pa = go(old.sign);
+    await tick();
+    expect(await clearInterrupted(coin, async () => ({ spent: false }), open)).toBe("CLEARED");
+    const nb = await go(mockWallet, { [k(0)]: bob }); // new transfer gives "Key"
+    old.release();
+    await expect(pa).rejects.toThrow(/STALE/);
+    expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([nb.txid]);
+    expect(pendingStore.onAnchor(coin)[0]!.sent.map((x) => x.label)).toEqual(["Key"]);
+    expect(labels()).toEqual(["Map", "Pass"]);
+    expect(sealStore.undo()[nb.txid]!.map((h) => h.c.note.label).sort()).toEqual(["Key", "Map", "Pass"]);
+  });
+  it("old signature arrives while the new attempt is still in its wallet → rejected, new attempt unaffected", async () => {
+    reset();
+    const old = slow(); const pa = go(old.sign);
+    await tick();
+    await clearInterrupted(coin, async () => ({ spent: false }), open);
+    const nu = slow(); const pb = go(nu.sign, { [k(2)]: bob });
+    await tick();
+    old.release();
+    await expect(pa).rejects.toThrow(/STALE/);
+    expect(intentStore.onAnchor(coin)).toHaveLength(1); // the new attempt's intent was NOT dropped
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+    nu.release();
+    const rb = await pb;
+    expect(rb.sent.map((x) => x.label)).toEqual(["Map"]);
+    expect(labels()).toEqual(["Key", "Pass"]);
+    expect(intentStore.onAnchor(coin)).toHaveLength(0);
+  });
+  it("old attempt rejected by its wallet after being superseded never drops the new intent", async () => {
+    reset();
+    let reject!: () => void;
+    const pa = go(() => new Promise<string>((_, rej) => { reject = () => rej(new Error("user closed")); }));
+    await tick();
+    await clearInterrupted(coin, async () => ({ spent: false }), open);
+    const nu = slow(); const pb = go(nu.sign);
+    await tick();
+    reject();
+    await expect(pa).rejects.toThrow(/SIGNING CANCELLED/);
+    expect(intentStore.onAnchor(coin)).toHaveLength(1);
+    nu.release(); await pb;
+  });
+  it("stale signature after a reload + wallet switch is rejected and files nothing for either wallet", async () => {
+    reset();
+    const old = slow(); const pa = go(old.sign, { [k(1)]: bob }, () => "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq");
+    await tick();
+    await clearInterrupted(coin, async () => ({ spent: false }), open); // "reload", then cleared
+    old.release();
+    await expect(pa).rejects.toThrow(/STALE/);
+    expect(pendingStore.all()).toHaveLength(0);
+    expect(labels()).toEqual(["Key", "Map", "Pass"]);
+  });
+  it("two attempts racing with no lock: only the newest may file", async () => {
+    reset();
+    const a = slow(), b = slow();
+    const pa = go(a.sign); await tick();
+    const pb = go(b.sign, { [k(0)]: bob }); await tick(); // b overwrote a's intent
+    a.release(); b.release();
+    await expect(pa).rejects.toThrow(/STALE/);
+    const rb = await pb;
+    expect(pendingStore.onAnchor(coin).map((p) => p.txid)).toEqual([rb.txid]);
+    expect([...labels(), ...rb.sent.map((x) => x.label)].sort()).toEqual(["Key", "Map", "Pass"]);
+  });
+});
