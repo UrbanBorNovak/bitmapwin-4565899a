@@ -146,14 +146,22 @@ export const paidSalesCountQuery = () =>
  * trend explorer to chart observed floor and average prices over time.
  */
 export async function fetchPaidSales(): Promise<TradeRow[]> {
-  const { data, error } = await supabase
-    .from("trades")
-    .select("*")
-    .gt("price_sats", 0)
-    .order("created_at", { ascending: true })
-    .limit(5000);
-  if (error) throw error;
-  return normalise(data as TradeRow[] | null);
+  // The data API caps each response at 1,000 rows — page through every sale.
+  const rows: TradeRow[] = [];
+  const PAGE = 1_000;
+  for (let from = 0; from < 200_000; from += PAGE) {
+    const { data, error } = await supabase
+      .from("trades")
+      .select("*")
+      .gt("price_sats", 0)
+      .order("created_at", { ascending: true })
+      .order("txid", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    rows.push(...((data ?? []) as TradeRow[]));
+    if (!data || data.length < PAGE) break;
+  }
+  return normalise(rows);
 }
 
 export const paidSalesQuery = () =>

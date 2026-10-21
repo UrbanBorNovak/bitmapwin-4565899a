@@ -1,6 +1,6 @@
 import { useMemo, useState, type PointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { recentTradesQuery } from "@/lib/trade-store";
+import { paidSalesQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 
 type Range = "30D" | "90D" | "ALL";
@@ -26,7 +26,7 @@ function smoothPath(coords: Array<{ x: number; y: number }>) {
 
 /** Aggregate price history across every confirmed, paid Bitmap transfer in the trade index. */
 export function BitmapMarketChart() {
-  const trades = useQuery(recentTradesQuery(1000));
+  const trades = useQuery(paidSalesQuery());
   const [range, setRange] = useState<Range>("ALL");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
