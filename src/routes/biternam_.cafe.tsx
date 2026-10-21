@@ -5,7 +5,7 @@ import { TracyCom } from "@/components/game/TracyCom";
 import { useServerFn } from "@tanstack/react-start";
 import { heldItems, missionScript, missionStepFor, npcById, questStore, stepKey } from "@/lib/biternam-quests";
 import { recordQuestStepFn } from "@/lib/biternam-npc.functions";
-import { playSfx } from "@/lib/retro-sfx";
+import { playSfx, setCafeMusicHot, startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/cafe-verbs";
 
@@ -59,6 +59,13 @@ function CafePage() {
   }, []);
   // Save only after loading, or the first render's defaults overwrite saved room progress.
   useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify({ held, distracted })); }, [loaded, held, distracted]);
+  // Lounge music starts on the first tap (browsers block autoplay) and respects the site-wide mute.
+  useEffect(() => {
+    const go = () => { if (localStorage.getItem("bitmapwin:sound-muted") !== "1") startCafeMusic(); };
+    window.addEventListener("pointerdown", go, { once: true });
+    return () => { window.removeEventListener("pointerdown", go); stopCafeMusic(); };
+  }, []);
+  useEffect(() => { setCafeMusicHot(distracted); }, [distracted]);
 
   const hitAs = (v: Verb, it: string | null, h: CafeHotspot) => {
     if (falling) return;

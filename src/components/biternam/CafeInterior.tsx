@@ -6,6 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { CafeHotspot } from "@/lib/cafe-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+import { CafePatrons, CafeSmoke } from "@/components/biternam/CafeLife";
 const still = { current: false };
 
 const WALL = "#2f2622", WOOD = "#7a5233", DARK = "#4d321f", TRIM = "#f7931a", NEON = "#28e0ff";
@@ -151,6 +152,8 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
           <mesh position={[-0.4, 1.1, 0]}><boxGeometry args={[0.75, 1.3, 0.08]} /><meshStandardMaterial color={WOOD} emissive={NEON} emissiveIntensity={hover === "door" ? 0.4 : 0.05} /></mesh>
           <mesh position={[0.4, 1.1, 0]}><boxGeometry args={[0.75, 1.3, 0.08]} /><meshStandardMaterial color={WOOD} emissive={NEON} emissiveIntensity={hover === "door" ? 0.4 : 0.05} /></mesh>
         </Hot>
+        <CafeSmoke />
+        <CafePatrons />
       </SafeCanvas>
     </div>
   );
