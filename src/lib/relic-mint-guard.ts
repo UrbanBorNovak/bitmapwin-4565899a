@@ -51,7 +51,7 @@ export function planRelicMint(i: RelicPlanInput):
   if (missing.length) {
     const label: Record<RelicMissing, string> = {
       TIP: "A MINED BLOCK HEIGHT", BITMAP: "THE MATCHING BITMAP PARENT", COLLECTION: "THE VERIFIED COLLECTION PARENT",
-      HOLDER: "THE VERIFIED BITMAP HOLDER", TREASURY: "THE TREASURY ADDRESS",
+      HOLDER: "THE BITMAP HOLDER", TREASURY: "THE TREASURY ADDRESS",
     };
     return { ok: false, missing, message: `SIGNING BLOCKED — COULD NOT VERIFY ${missing.map((m) => label[m]).join(", ")}. NOTHING WAS SIGNED OR PAID.` };
   }
