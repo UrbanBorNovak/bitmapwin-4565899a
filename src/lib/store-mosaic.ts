@@ -6,8 +6,12 @@
 
 export const OCI_CACHE_MODULE_ID = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0";
 export const LIVE_OCI_MODULE_ID = "0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0";
+/** bop's on-chain block parser that LiveOCI itself imports. */
+export const BLOCK_PARSER_MODULE_ID = "bbbb2172ebca174579884df1ad7487196c39e860b3aacdf4e052a33bf5ec31fai0";
+/** Blocks searched past the height before a claim counts as not found (browser budget). */
+export const LIVE_SPAN = 12;
 
-/** Expects globals: MZ = { base, cache, live, cacheLast }. Defines window.BM.{draw,oci}. */
+/** Expects globals: MZ = { base, cache, live, parser, span, cacheLast }. Defines window.BM.{draw,oci}. */
 export const MOSAIC_JS = String.raw`
 (function(){
 function M(list){var w=0;for(var i=0;i<list.length;i++)w+=list[i]*list[i];this.w=Math.max(1,Math.ceil(Math.sqrt(w)));this.off=0;this.rows=[];this.slots=[];for(var j=0;j<list.length;j++)this.place(Math.max(1,list[j]))}
@@ -40,8 +44,18 @@ function draw(el,h){var cv=document.createElement('canvas');cv.width=cv.height=5
    x.fillRect(q.x*s+g/2,q.y*s+g/2,q.r*s-g,q.r*s-g)}
   x.globalAlpha=1;el.innerHTML='';el.appendChild(cv);el.classList.add('m');
   var t=document.createElement('span');t.className='tx';t.textContent=cls.length.toLocaleString('en-US')+' TX';el.appendChild(t)}).catch(function(){})}
-var mods={};function mod(id){if(!mods[id]){var o=/ordinals\.com$/.test(location.hostname)?'':'https://ordinals.com';mods[id]=import(o+'/content/'+id+(o?'?origin='+o:''))}return mods[id]}
-function oci(h){return mod(h<=MZ.cacheLast?MZ.cache:MZ.live).then(function(m){return m.getBitmapInscriptionId(h)}).catch(function(){return null})}
+var O=/ordinals\.com$/.test(location.hostname)?'':'https://ordinals.com',mods={},found={};
+function mod(id){if(!mods[id])mods[id]=import(O+'/content/'+id+(O?'?origin='+O:''));return mods[id]}
+/* Above the cache: LiveOCI's own rule, run here because its block parser import
+   carries no ?origin and 404s outside ordinals.com. First inscription whose body is
+   exactly "<h>.bitmap", complete, no content encoding, no delegate; block h onward. */
+function live(h){if(h in found)return Promise.resolve(found[h]);return mod(MZ.parser).then(function(P){
+ var want=P.toHex(new TextEncoder().encode(h+'.bitmap'));
+ function step(n){if(n>h+MZ.span)return null;return P.fetchBlock(n,{classify:false,locate:false}).then(function(b){
+  var L=P.listInscriptions(b);for(var i=0;i<L.length;i++){var x=L[i];if(x.bodyHex===want&&x.complete===true&&!x.contentEncoding&&!x.delegate)return found[h]=x.id}
+  return step(n+1)},function(e){if(String(e&&e.message).indexOf('404')>=0)return null;throw e})}
+ return step(h)})}
+function oci(h){return (h<=MZ.cacheLast?mod(MZ.cache).then(function(m){return m.getBitmapInscriptionId(h)}):live(h)).catch(function(){return null})}
 window.BM={draw:draw,oci:oci};
 })();
 `;
@@ -51,5 +65,5 @@ export const MOSAIC_CSS = `.v{position:relative}.v.m{display:block}.v canvas{wid
 .o{display:inline-block;margin-top:8px;font:700 10px ui-monospace,monospace;letter-spacing:.08em;padding:3px 7px;border-radius:4px;border:1px solid var(--ln);color:var(--mut);text-decoration:none}.o.ok{border-color:#22d3ee88;color:#22d3ee}.o.bad{border-color:#ff4d6d88;color:#ff4d6d}`;
 
 export function mosaicConfig(base: string, cacheLast = 969_999): string {
-  return JSON.stringify({ base, cache: OCI_CACHE_MODULE_ID, live: LIVE_OCI_MODULE_ID, cacheLast });
+  return JSON.stringify({ base, cache: OCI_CACHE_MODULE_ID, live: LIVE_OCI_MODULE_ID, parser: BLOCK_PARSER_MODULE_ID, span: LIVE_SPAN, cacheLast });
 }
