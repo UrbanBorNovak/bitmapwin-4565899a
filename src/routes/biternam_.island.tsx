@@ -17,7 +17,7 @@ export const Route = createFileRoute("/biternam_/island")({
   }),
   component: () => (
     <HideoutShell<IslandHotspot>
-      storageKey="biternam.island.v1" mood="island" kicker="BITERNAM · OFFSHORE ATOLL" title="URBAN'S ISLAND HOTEL" item="COCONUT" hazardText="OUCH!"
+      room="island" storageKey="biternam.island.v1" mood="island" kicker="BITERNAM · OFFSHORE ATOLL" title="URBAN'S ISLAND HOTEL" item="COCONUT" hazardText="OUCH!"
       names={ISLAND_NAMES} voice={200} resolve={resolveIslandVerb}
       intro="Choose a verb, then click something on the island. Urban is not awake yet."
       script={(s) => ({ id: "npc-urban-island", title: "URBAN · HANGOVER BED", start: "a", nodes: [
