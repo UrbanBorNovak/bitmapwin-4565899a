@@ -50,7 +50,7 @@ export function PixelAvatar3D({ inscriptionId, label }: { inscriptionId: string;
   return (
     <div ref={box} role="img" aria-label={label} className="relative aspect-square w-full bg-background">
       {seen && tex && (
-        <SafeCanvas camera={{ position: [0, 0.1, 2.2], fov: 35 }} dpr={[1, 1.5]} gl={{ antialias: true }}>
+        <SafeCanvas camera={{ position: [0, 0.15, 2.7], fov: 35 }} dpr={[1, 1.5]} gl={{ antialias: true }}>
           <ambientLight intensity={0.9} />
           <directionalLight position={[2, 3, 2]} intensity={1.4} />
           <Suspense fallback={null}><Spin tex={tex} /></Suspense>
