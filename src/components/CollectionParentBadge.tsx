@@ -5,7 +5,7 @@ import { MASTER_PARENT_ID, MASTER_PARENT_NUMBER, MASTER_DELEGATE_NUMBER, provenC
 type Line = { what: string; status: "PROVEN" | "PLANNED"; note: string };
 const LINES: Line[] = [
   { what: "GUARDIANS", status: "PROVEN", note: "Summoned Guardians are inscribed with this parent; children are listed on Bitcoin." },
-  { what: "VOXEL BUILDS", status: "PROVEN", note: "" },
+  { what: "VOXEL BUILDS", status: "PROVEN", note: "" }, // status shown per live counts below
   { what: "MARAUDER RELICS", status: "PLANNED", note: "No relic is inscribed yet. Planned parents: this collection + <height>.bitmap." },
 ];
 
@@ -17,14 +17,22 @@ export function CollectionParentBadge({ highlight }: { highlight?: string }) {
   const builds = useQuery({
     queryKey: ["collection-parent-builds", n], enabled: !!q.data,
     queryFn: async () => {
-      const { data } = await supabase.from("bitmap_forge_builds").select("inscription_id");
-      const ids = (data ?? []).map((r) => r.inscription_id);
+      const { data } = await supabase.from("bitmap_forge_builds").select("inscription_id, bitmap_height").limit(30);
+      const rows = data ?? [];
       const kids = new Set(q.data ?? []);
-      return { total: ids.length, members: ids.filter((i) => kids.has(i)).length };
+      // BITMAP lineage: a Tag 3 parent whose content is exactly "<height>.bitmap".
+      const lineage = await Promise.all(rows.map(async (r) => {
+        try {
+          const ps = ((await (await fetch(`https://ordinals.com/r/parents/${r.inscription_id}`)).json()) as { ids?: string[] }).ids ?? [];
+          for (const pid of ps) if (pid !== MASTER_PARENT_ID && (await (await fetch(`https://ordinals.com/content/${pid}`)).text()).trim() === `${r.bitmap_height}.bitmap`) return true;
+        } catch { /* unchecked = not proven */ }
+        return false;
+      }));
+      return { total: rows.length, members: rows.filter((r) => kids.has(r.inscription_id)).length, lineage: lineage.filter(Boolean).length };
     },
   });
   const buildNote = builds.data
-    ? `${builds.data.members} of ${builds.data.total} verified builds are on-chain children of this parent; each build's own <height>.bitmap parent is checked when it is verified. A mint can still go out without the collection parent if it is unavailable — those are not counted.`
+    ? `${builds.data.members}/${builds.data.total} listed builds are children of this parent; ${builds.data.lineage}/${builds.data.total} name their own <height>.bitmap as parent. Only these live checks count — a mint can go out without either parent if it was unavailable.`
     : "Checking which verified builds are children of this parent…";
   return (
     <div className="rounded-md border border-border bg-card p-3 font-mono text-[11px]">
