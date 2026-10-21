@@ -236,7 +236,7 @@ function SdkPage() {
       </section>
 
       <div className="mt-10 flex flex-wrap gap-2">
-        <Link to="/studio" className="btn-term">[ START BUILDING ]</Link>
+        <Link to="/studio" search={{ tool: "extenders" }} className="btn-term">[ START BUILDING ]</Link>
         <Link to="/extenders" className="btn-term-ghost">[ SEE WHAT EXISTS ]</Link>
       </div>
     </div>
