@@ -36,7 +36,7 @@ const LIGHT: Record<string, string> = {
   dim: "color-mix(in oklch, var(--background) 45%, transparent)",
   flash: "color-mix(in oklch, var(--foreground) 35%, transparent)",
   warm: "radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--primary) 18%, transparent), transparent 70%)",
-  cold: "radial-gradient(circle at 50% 50%, hsl(var(--signal, 190 100% 58%) / 0.18), transparent 70%)",
+  cold: "radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--signal) 18%, transparent), transparent 70%)",
 };
 
 export function CutsceneStage({ cut, children }: { cut: Cut; children: ReactNode }) {
