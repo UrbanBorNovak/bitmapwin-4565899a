@@ -127,7 +127,7 @@ export function StudioInterior({ onHit, onHover, hover, wireRead, headline, onAi
           <mesh position={[-0.4, 1.08, 0.2]}><cylinderGeometry args={[0.05, 0.05, 0.14, 8]} /><meshStandardMaterial color="#d33" /></mesh>
           <mesh position={[0.2, 1.1, 0.25]} rotation-x={-0.6}><cylinderGeometry args={[0.012, 0.012, 0.3, 6]} /><meshStandardMaterial color="#111" /></mesh>
         </group>
-        <Hot id="tornado" {...hp} position={[-1.2, 0, -2.25]}>
+        <Hot id="tornado" {...hp} position={[0.55, 0, -1.2]}>
           <mesh position-y={0.02} rotation-x={-Math.PI / 2}><ringGeometry args={[0.35, 0.45, 24]} /><meshBasicMaterial color={hover === "tornado" ? TRIM : NEON} transparent opacity={0.5} /></mesh>
           <ToonPixelRig inscriptionId={CREW_PIXEL_AVATAR["tornado"]!} pose="talk" movingRef={still} />
         </Hot>
