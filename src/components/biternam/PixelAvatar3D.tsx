@@ -4,26 +4,8 @@ import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 
-const cache = new Map<string, Promise<string | null>>();
-
-/** BRC-420 pixel avatars are HTML that declare a PNG texture; resolve the texture id (or the id itself if it is already an image). */
-export function resolvePixelTexture(id: string, depth = 0): Promise<string | null> {
-  let p = cache.get(id);
-  if (!p) {
-    p = fetch(`/api/public/inscription/${id}`).then(async (r) => {
-      if (!r.ok) return null;
-      if ((r.headers.get("content-type") ?? "").startsWith("image/")) return id;
-      const body = await r.text();
-      const m = body.match(/<texture[^>]*src=["']\/content\/([0-9a-f]{64}i\d+)/i);
-      if (m) return m[1]!;
-      // Gallery entries are often a bare "/content/<id>" pointer to the avatar HTML: follow it.
-      const ptr = body.trim().match(/^\/content\/([0-9a-f]{64}i\d+)$/i);
-      return ptr && depth < 3 ? resolvePixelTexture(ptr[1]!, depth + 1) : null;
-    }).catch(() => null);
-    cache.set(id, p);
-  }
-  return p;
-}
+import { resolvePixelTexture } from "@/lib/pixel-texture";
+export { resolvePixelTexture };
 
 function Spin({ tex }: { tex: string }) {
   const g = useRef<Group>(null);
