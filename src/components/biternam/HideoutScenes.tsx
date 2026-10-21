@@ -631,7 +631,7 @@ export function HandshakeScene({ onHit, onHover, hover, st, hazard }: SceneProps
           <mesh position-y={0.35}><boxGeometry args={[0.7, 0.7, 0.6]} /><meshStandardMaterial color="#c8c0b0" emissive={hover === "printer" ? TRIM : "#000"} emissiveIntensity={0.35} /></mesh>
           {!st.got && !st.solved ? <mesh position={[0, 0.8, 0]} rotation-x={-0.4}><boxGeometry args={[0.5, 0.02, 0.6]} /><meshStandardMaterial color="#f4f0e4" emissive={TRIM} emissiveIntensity={0.3} /></mesh> : null}
         </Hot>
-        <Hot id="table" {...hp} position={[0.6, 0, 0.4]}>
+        <Hot id="table" {...hp} position={[0.6, 0, 1.5]}>
           <mesh position-y={0.7}><cylinderGeometry args={[0.8, 0.8, 0.08, 16]} /><meshStandardMaterial color="#5a3a20" emissive={hover === "table" ? TRIM : "#000"} emissiveIntensity={0.3} /></mesh>
           <mesh position-y={0.35}><cylinderGeometry args={[0.1, 0.18, 0.7, 8]} /><meshStandardMaterial color="#2a1a10" /></mesh>
           {st.solved ? <mesh position={[0, 0.76, 0]}><boxGeometry args={[0.45, 0.01, 0.6]} /><meshStandardMaterial color="#f4f0e4" /></mesh> : null}
