@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SealedVault } from "@/components/shadow/SealedVault";
 import {
   decodeNote, encodeNote, loadNotes, mintNote, ownerCommit, receiveSecret, rotateReceive, saveNotes, transferNote, verifyNote,
   type HeldNote,
@@ -99,6 +100,7 @@ function VaultPage() {
           </div>
         ))}
       </section>
+      <SealedVault />
       <Link to="/passport" className="mt-8 inline-block text-[11px] text-signal">← PASSPORT</Link>
     </main>
   );
