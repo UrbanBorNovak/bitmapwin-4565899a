@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  applySpend, assertPlainCoin, buildSealSpendPsbt, decodeConsignment, finishSigned, listCoins, planBundle, sealFee,
+  DUST, applySpend, assertPlainCoin, buildSealSpendPsbt, decodeConsignment, finishSigned, listCoins, parseSealReceive, planBundle, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -68,11 +68,41 @@ export function SealedVault() {
   const coinOf = (k: string) => coins?.find((c) => sealKey(c) === k);
 
   async function pickCoin(): Promise<Coin> {
-    const c = coins?.find((x) => sealKey(x) === coinPick);
-    if (!c) throw new Error("PICK ONE OF YOUR COINS FIRST");
-    await assertPlainCoin(c);
-    return c;
+    const chosen = coins?.find((x) => sealKey(x) === coinPick);
+    if (chosen) { await assertPlainCoin(chosen); return chosen; }
+    // Auto-pick: smallest confirmed coin that can pay a seal fee, skipping any with inscriptions/runes.
+    const cands = (coins ?? []).filter((c) => c.confirmed && c.value >= sealFee(feeRate) + DUST + 1000).sort((a, b) => a.value - b.value);
+    for (const c of cands) {
+      try { await assertPlainCoin(c); setCoinPick(sealKey(c)); return c; } catch { /* not plain — try next */ }
+    }
+    throw new Error("NO PLAIN COIN FOUND — ADD A SMALL PLAIN BITCOIN COIN (5,000+ SATS) TO YOUR WALLET");
   }
+  useEffect(() => {
+    fetch("https://mempool.space/api/v1/fees/recommended").then((r) => r.json()).then((f: { halfHourFee?: number }) => { if (f.halfHourFee) setFeeRate(Math.max(1, Math.ceil(f.halfHourFee))); }).catch(() => {});
+  }, []);
+  const [quickTo, setQuickTo] = useState("");
+  const [quickPick, setQuickPick] = useState<Record<string, boolean>>({});
+  const [sentTx, setSentTx] = useState<string | null>(null);
+  const quickCoin = useMemo(() => {
+    const keys = new Set(held.filter((h) => quickPick[noteKey(h.c.note.genesis)]).map((h) => sealKey(h.mine)));
+    return keys.size === 1 ? [...keys][0]! : keys.size > 1 ? "MANY" : null;
+  }, [held, quickPick]);
+  const quickSend = () => run(async () => {
+    if (!parseSealReceive(quickTo)) throw new Error("PASTE THE RECIPIENT'S SEAL-RECV CODE");
+    if (!quickCoin) throw new Error("TICK AT LEAST ONE NOTE");
+    if (quickCoin === "MANY") throw new Error("PICK NOTES FROM ONE SEAL COIN AT A TIME");
+    const g: Record<string, string> = {};
+    for (const h of groups[quickCoin]!) { const n = noteKey(h.c.note.genesis); if (quickPick[n]) g[n] = quickTo.trim(); }
+    setGive(g); setReview(quickCoin);
+  });
+  const broadcast = () => run(async () => {
+    if (!signed) return;
+    if (!window.confirm("Send this signed transaction to Bitcoin now? This can't be undone.")) return;
+    const r = await fetch("https://mempool.space/api/tx", { method: "POST", body: signed.rawHex });
+    const t = await r.text();
+    if (!r.ok) throw new Error(`BITCOIN REJECTED IT: ${t.slice(0, 120)}`);
+    setSentTx(t.trim()); setMsg("✓ SENT TO BITCOIN — NOW GIVE EACH RECIPIENT THEIR CODE"); void check(held);
+  });
   async function run(f: () => Promise<void>) { setBusy(true); setMsg(""); try { await f(); } catch (e) { setMsg(`✗ ${(e as Error).message}`); } finally { setBusy(false); } }
 
   const mint = () => run(async () => {
@@ -209,11 +239,28 @@ export function SealedVault() {
         </>
       )}
 
+      {wallet && held.length ? (
+        <div className="mt-4 rounded border border-primary/60 bg-background/60 p-3">
+          <div className="text-[11px] tracking-widest text-primary">1-CLICK TRANSFER</div>
+          <p className="mt-1 font-sans text-[11px] text-muted-foreground">Tick notes, paste the recipient's code. Fee is set from live Bitcoin rates ({feeRate} sat/vB). You'll see the full review, then your wallet asks you to sign.</p>
+          <div className="mt-2 space-y-1 text-[12px]">
+            {held.map((h) => { const n = noteKey(h.c.note.genesis); return (
+              <label key={n} className="flex items-center gap-2"><input type="checkbox" checked={!!quickPick[n]} onChange={(e) => { setQuickPick({ ...quickPick, [n]: e.target.checked }); setPaste((p) => p); }} />{h.c.note.label}<span className="text-[10px] text-muted-foreground">· coin {short(h.mine.txid)}</span></label>
+            ); })}
+          </div>
+          <input value={quickTo} onChange={(e) => setQuickTo(e.target.value)} placeholder="Recipient's SEAL-RECV code" className="mt-2 w-full rounded border border-border bg-background px-2 py-1 text-[11px]" data-no-translate />
+          {quickCoin === "MANY" ? <p className="mt-1 text-[11px] text-destructive">Pick notes from one seal coin at a time.</p> : null}
+          <button disabled={busy} onClick={quickSend} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1.5 text-[11px] text-primary">[ PREPARE TRANSFER ]</button>
+        </div>
+      ) : null}
+
       {msg ? <p className="mt-3 text-[12px] text-signal">{msg}</p> : null}
       {signed ? (
         <div className="mt-3 rounded border border-primary/60 p-3 text-[11px]">
           <div className="text-primary">SIGNED BY YOUR WALLET · NOT SENT. Send it yourself, then give each recipient their code.</div>
           <div className="mt-1">TRANSACTION {short(signed.txid)} · <a className="text-signal underline" href="https://mempool.space/tx/push" target="_blank" rel="noreferrer">BROADCAST AT MEMPOOL.SPACE</a></div>
+          {sentTx ? <div className="mt-1 text-signal">✓ SENT · <a className="underline" href={`https://mempool.space/tx/${sentTx}`} target="_blank" rel="noreferrer">VIEW ON MEMPOOL</a></div>
+            : <button disabled={busy} onClick={broadcast} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1 text-primary">[ SEND TO BITCOIN NOW ]</button>}
           <textarea readOnly rows={2} value={signed.rawHex} onFocus={(e) => e.target.select()} className="mt-1 w-full rounded border border-border bg-background px-2 py-1" data-no-translate />
           {signed.sent.map((s) => (
             <div key={s.code} className="mt-2"><div>CODE FOR THE RECIPIENT OF "{s.label}"</div>
