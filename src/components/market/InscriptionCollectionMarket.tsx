@@ -6,6 +6,8 @@ import { CollectionSalesChart } from "@/components/market/CollectionSalesChart";
 import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
+import { useWalletSession } from "@/lib/wallet-session";
+import { walletQuery } from "@/lib/wallet";
 
 export type MarketItem = { id: string; label: string; sub?: string };
 
@@ -17,21 +19,31 @@ export function InscriptionCollectionMarket({
   pageSize?: number; preview: (item: MarketItem) => ReactNode; initialQuery?: string;
 }) {
   const ids = useMemo(() => items.map((i) => i.id), [items]);
+  const wallet = useWalletSession();
+  const ordinals = wallet?.ordinalsAddress ?? "";
+  const snapshot = useQuery({ ...walletQuery(ordinals), enabled: ordinals !== "" });
+  const ownedIds = useMemo(() => {
+    const held = new Set<string>();
+    for (const u of snapshot.data?.utxos ?? []) for (const i of u.inscriptions) held.add(i.id);
+    return new Set(ids.filter((id) => held.has(id)));
+  }, [snapshot.data, ids]);
   const listings = useQuery({ ...collectionListingsQuery(pool, ids), enabled: ids.length > 0 });
   const listedIds = useMemo(() => (listings.data ?? []).map((o) => o.inscriptionId ?? "").filter(Boolean), [listings.data]);
   const sales = useQuery({ queryKey: ["collection-sales", pool, ids.length], queryFn: () => getCollectionSalesFn({ data: { pool, ids, listed: listedIds } }), enabled: ids.length > 0 && !listings.isPending, staleTime: 60_000 });
   const [page, setPage] = useState(0);
-  const [filter, setFilter] = useState<"all" | "listed">("all");
+  const [filter, setFilter] = useState<"all" | "listed" | "mine">("all");
   const [q, setQ] = useState(initialQuery);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const offerById = useMemo(() => new Map((listings.data ?? []).map((o) => [o.inscriptionId ?? "", o])), [listings.data]);
   const open = listings.data ?? [];
   const floor = open.length ? Math.min(...open.map((o) => o.priceSats)) : null;
   const needle = q.trim().toLowerCase();
-  const list = items.filter((i) => (filter === "all" || offerById.has(i.id)) &&
-    (!needle || i.id.toLowerCase().includes(needle) || i.label.toLowerCase().includes(needle) || (i.sub ?? "").toLowerCase().includes(needle)));
+  const list = items.filter((i) => (filter === "all" || (filter === "listed" ? offerById.has(i.id) : ownedIds.has(i.id))) &&
+    (!needle || i.id.toLowerCase().includes(needle) || i.label.toLowerCase().includes(needle) || (i.sub ?? "").toLowerCase().includes(needle)))
+    .sort((a, b) => Number(ownedIds.has(b.id)) - Number(ownedIds.has(a.id)));
   const pages = Math.max(1, Math.ceil(list.length / pageSize));
   const view = list.slice(page * pageSize, page * pageSize + pageSize);
+  const myListed = [...ownedIds].filter((id) => offerById.has(id)).length;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-8">
@@ -49,18 +61,30 @@ export function InscriptionCollectionMarket({
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button type="button" className={filter === "all" ? "btn-term" : "btn-term-ghost"} onClick={() => { setFilter("all"); setPage(0); }}>ALL</button>
         <button type="button" className={filter === "listed" ? "btn-term" : "btn-term-ghost"} onClick={() => { setFilter("listed"); setPage(0); }}>FOR SALE</button>
+        <button type="button" className={filter === "mine" ? "btn-term" : "btn-term-ghost"} disabled={!wallet} onClick={() => { setFilter("mine"); setPage(0); }}>
+          MY ITEMS{wallet ? ` (${ownedIds.size})` : ""}
+        </button>
         <input value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }} placeholder="SEARCH NAME OR ID" className="border border-border bg-background px-2 py-1 font-mono text-xs" />
         <span className="label ml-auto">PAGE {page + 1}/{pages}</span>
         <button type="button" className="btn-term-ghost" disabled={page === 0} onClick={() => setPage(page - 1)}>PREV</button>
         <button type="button" className="btn-term-ghost" disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>NEXT</button>
       </div>
+      <p className="label mt-2 text-muted-foreground" data-no-translate={false}>
+        {!wallet ? "CONNECT A WALLET TO SEE WHICH PIECES YOU HOLD"
+          : snapshot.isPending ? "SCANNING CONNECTED WALLET ON CHAIN…"
+          : snapshot.isError ? "WALLET SCAN FAILED — TRY AGAIN SHORTLY"
+          : <><span className="text-primary">{ownedIds.size} HELD IN CONNECTED WALLET</span> · {myListed} LISTED · {ownedIds.size - myListed} READY TO LIST</>}
+      </p>
       {loading && <p className="label mt-4 text-signal">READING CHILDREN FROM CHAIN…</p>}
+      {filter === "mine" && ownedIds.size === 0 && !snapshot.isPending && <p className="label mt-4 text-muted-foreground">NO PIECES OF THIS COLLECTION IN THE CONNECTED WALLET</p>}
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
         {view.map((item) => {
           const offer = offerById.get(item.id);
           const price = Number(prices[item.id] ?? "");
+          const owned = ownedIds.has(item.id);
           return (
-            <div key={item.id} className="border border-border bg-card/60 p-2 backdrop-blur">
+            <div key={item.id} className={`relative border bg-card/60 p-2 backdrop-blur ${owned ? "border-primary ring-1 ring-primary/60" : "border-border"}`}>
+              {owned && <span className="label absolute left-3 top-3 z-10 border border-primary bg-background/90 px-1.5 py-0.5 text-primary">OWNED</span>}
               {preview(item)}
               <div className="mt-2 flex items-baseline justify-between gap-2">
                 <span className="label truncate text-foreground">{item.label}</span>
