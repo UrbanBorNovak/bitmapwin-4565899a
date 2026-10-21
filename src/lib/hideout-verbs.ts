@@ -370,3 +370,43 @@ export function resolveCanonVerb(verb: Verb, h: CanonHotspot, s: HideoutState): 
       return o("A ladder up to the Oasis.");
   }
 }
+
+// ======================= CH.13 · THE MARSHAL'S RECEIPT =======================
+export type ReceiptHotspot = "gold" | "counter" | "wierdamoto" | "astral" | "terminal" | "scales" | "ghost" | "door";
+export const RECEIPT_NAMES: Record<ReceiptHotspot, string> = {
+  gold: "MR. GOLD", counter: "TRADING COUNTER", wierdamoto: "WIERDAMOTO", astral: "ASTRAL", terminal: "OLD BLOCKRUNNER TERMINAL", scales: "GOLD SCALES", ghost: "GHOST OF 1138", door: "DOOR",
+};
+export function resolveReceiptVerb(verb: Verb, h: ReceiptHotspot, s: HideoutState): HideoutOutcome {
+  const act = verb === "use" || verb === "open";
+  switch (h) {
+    case "gold":
+      if (verb === "talk") return o(s.solved ? "MR. GOLD: 'One sat was left outside. You called it necessary. I called it a debt.'" : s.got ? "MR. GOLD: 'Your proof is clean. Your history is not. Read it on a machine that remembers.'" : "MR. GOLD: 'A debt does not disappear when a record is closed. The slip is on the counter.'");
+      if (verb === "look") return o("Mr. Gold, perfectly still. Receipt strips drift around him like slow moths. His shadow is made of paper.");
+      return o("He doesn't move. 'Entry noted.'");
+    case "counter":
+      if (s.got || s.solved) return o("The counter is bare. A pale square where the slip lay.");
+      if (verb === "pickup" || act) return o("You take the old receipt. Thermal paper, decades faded. One signature you know: Wierdamoto's.", "gain");
+      return o("A single receipt, squared exactly to the counter's edge.");
+    case "wierdamoto":
+      if (verb === "talk") return o(s.solved ? "WIERDAMOTO: 'Not here. Not in front of him. Ask Astral where the exhibit's back wall goes.'" : "WIERDAMOTO: 'Don't read it to him. Don't read it at all.'");
+      if (verb === "look") return o("The mask is still. For the first time, he looks like he's the one being watched.");
+      return o("'Hands off the cape. Today especially.'");
+    case "astral":
+      if (verb === "talk") return o(s.solved ? "ASTRAL: 'That slip was pinned behind my exhibit. I never put it there.'" : "ASTRAL: 'I curate evidence. That one curated itself into my museum.'");
+      return o("Astral, arms folded, watching Mr. Gold like a forgery.");
+    case "terminal":
+      if (s.solved) return o("The terminal keeps printing one line: CONFIRMATION OVERDUE.");
+      if (act && s.got) return o("You feed the slip into the Blockrunner terminal. It wakes up like it's been waiting.", "solve");
+      if (act) return o("The terminal is dark. Its slot is the exact width of a receipt.");
+      return o("A Blockrunner terminal, older than the Oasis. Brass keys. One amber line flickering.");
+    case "scales":
+      if (verb === "pickup" || act) return o("You tip Mr. Gold's scales. CLANG! Coins everywhere. He writes something down.", "hazard");
+      return o("Gold scales. One pan holds a coin. The other holds a single strip of paper. They balance.");
+    case "ghost":
+      if (verb === "talk") return o(s.solved ? "GHOST: 'Overdue? I was confirmed. Wasn't I?'" : "GHOST: 'He smells like my old block. Like before.'");
+      return o("The ghost of 1138 hovers near the door, uneasy.");
+    case "door":
+      if (act) return o("", "exit");
+      return o("The Trading Post door, back to the Oasis.");
+  }
+}

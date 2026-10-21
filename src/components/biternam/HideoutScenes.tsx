@@ -6,7 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
-import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, FortressHotspot, CanonHotspot, VaultHotspot } from "@/lib/hideout-verbs";
+import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, FortressHotspot, CanonHotspot, ReceiptHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
 const still = { current: false };
 const TRIM = "#f7931a", NEON = "#28e0ff", GREEN = "#3ee07a";
@@ -805,6 +805,83 @@ export function CanonScene({ onHit, onHover, hover, st, hazard }: SceneProps<Can
           {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.4, 0]}><boxGeometry args={[0.5, 0.04, 0.04]} /><meshStandardMaterial color="#7a4a22" /></mesh>)}
         </Hot>
         <CafeSmoke count={30} color={hazard ? "#ff8090" : "#d0d8f0"} opacity={hazard ? 0.14 : 0.03} mist={["#0a0a10", st.solved ? TRIM : "#3a1a24"]} />
+      </SafeCanvas>
+    </div>
+  );
+}
+
+// ======================= CH.13 · THE MARSHAL'S RECEIPT =======================
+const GOLD = "#e8b84a";
+/** Receipt strips orbiting Mr. Gold, the Ledger Collector. */
+function ReceiptOrbit({ fast }: { fast: boolean }) {
+  const g = useRef<Group>(null);
+  useFrame((_, dt) => { if (g.current) g.current.rotation.y += Math.min(dt, 0.05) * (fast ? 1.2 : 0.35); });
+  return (
+    <group ref={g}>
+      {Array.from({ length: 7 }, (_, i) => {
+        const a = (i / 7) * Math.PI * 2;
+        return <mesh key={i} position={[Math.cos(a) * 0.75, 1 + (i % 3) * 0.45, Math.sin(a) * 0.75]} rotation={[0.3, a, 0.2]}><planeGeometry args={[0.12, 0.3]} /><meshStandardMaterial color="#f2ead2" emissive={GOLD} emissiveIntensity={0.25} side={2} /></mesh>;
+      })}
+    </group>
+  );
+}
+export function ReceiptScene({ onHit, onHover, hover, st, hazard }: SceneProps<ReceiptHotspot>) {
+  const hp = { onHit, onHover };
+  return (
+    <div className="relative h-full w-full">
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+        <FixedCam at={[0, 0.8, 0]} />
+        <color attach="background" args={["#0c0906"]} />
+        <fog attach="fog" args={["#0c0906", 12, 25]} />
+        <ambientLight intensity={0.7} color="#f0dcc0" />
+        <pointLight position={[1.4, 3, 0.4]} intensity={18} color={GOLD} castShadow />
+        <pointLight position={[-1.6, 2.4, -1.6]} intensity={st.solved ? 14 : 4} color={st.solved ? NEON : "#806040"} />
+        {Array.from({ length: 8 }, (_, i) => <mesh key={i} position={[0, -0.05, i - 3.5]} receiveShadow><boxGeometry args={[8, 0.1, 0.97]} /><meshStandardMaterial color={i % 2 ? "#3a2614" : "#33210f"} roughness={0.95} /></mesh>)}
+        <mesh position={[0, 2, -4]}><boxGeometry args={[8, 4, 0.3]} /><meshStandardMaterial color="#2a1c10" roughness={1} /></mesh>
+        <mesh position={[-4, 2, 0]}><boxGeometry args={[0.3, 4, 8]} /><meshStandardMaterial color="#24180d" roughness={1} /></mesh>
+        {/* Ledger shelves on the back wall */}
+        {[1.2, 2, 2.8].map((y) => (
+          <group key={y}>
+            <mesh position={[-1.5, y, -3.75]}><boxGeometry args={[4, 0.06, 0.4]} /><meshStandardMaterial color="#5a3a1c" /></mesh>
+            {Array.from({ length: 10 }, (_, i) => <mesh key={i} position={[-3.2 + i * 0.36, y + 0.2, -3.7]}><boxGeometry args={[0.24, 0.36, 0.3]} /><meshStandardMaterial color={["#5a1a12", "#1a3a2a", "#2a2010", "#3a2a5a"][(i + y * 10) % 4]} /></mesh>)}
+          </group>
+        ))}
+        <Hot id="counter" {...hp} position={[1, 0, 0.6]}>
+          <mesh position-y={0.5}><boxGeometry args={[2.6, 1, 0.8]} /><meshStandardMaterial color="#4a2e14" emissive={hover === "counter" ? TRIM : "#000"} emissiveIntensity={0.25} roughness={0.7} /></mesh>
+          {!st.got && !st.solved ? <mesh position={[0, 1.02, 0]} rotation-x={-Math.PI / 2}><planeGeometry args={[0.22, 0.5]} /><meshStandardMaterial color="#f2ead2" emissive="#f2ead2" emissiveIntensity={0.5} /></mesh> : null}
+        </Hot>
+        <Hot id="scales" {...hp} position={[2, 0, 0.6]}>
+          <mesh position-y={1.3}><cylinderGeometry args={[0.03, 0.03, 0.6]} /><meshStandardMaterial color={GOLD} metalness={0.8} /></mesh>
+          <mesh position-y={1.6} rotation-z={hazard ? 0.5 : 0}><boxGeometry args={[0.7, 0.03, 0.03]} /><meshStandardMaterial color={GOLD} metalness={0.8} emissive={hover === "scales" ? GOLD : "#000"} emissiveIntensity={0.5} /></mesh>
+          {[-0.33, 0.33].map((x) => <mesh key={x} position={[x, 1.45, 0]}><cylinderGeometry args={[0.13, 0.1, 0.03, 12]} /><meshStandardMaterial color={GOLD} metalness={0.8} /></mesh>)}
+        </Hot>
+        <Hot id="gold" {...hp} position={[1.2, 0, -1]} rotation={[0, -0.4, 0]}>
+          <Ring on={hover === "gold"} color={GOLD} />
+          <CrewRig id="mr-gold" color={GOLD} />
+          <ReceiptOrbit fast={st.solved} />
+          <pointLight position={[0, 1.4, 0.6]} intensity={6} color={GOLD} distance={3} />
+        </Hot>
+        <Hot id="wierdamoto" {...hp} position={[-1.6, 0, 1.4]} rotation={[0, 0.9, 0]}>
+          <Ring on={hover === "wierdamoto"} color="#c41e1e" />
+          <CrewRig id="wierdamoto" color="#111114" />
+        </Hot>
+        <Hot id="astral" {...hp} position={[-0.2, 0, 2.6]} rotation={[0, 0.4, 0]}>
+          <Ring on={hover === "astral"} color={NEON} />
+          <CrewRig id="astral" color="#8a6aff" />
+        </Hot>
+        <Hot id="terminal" {...hp} position={[-2.6, 0, -2.4]} rotation={[0, 0.6, 0]}>
+          <mesh position-y={0.45}><boxGeometry args={[1, 0.9, 0.7]} /><meshStandardMaterial color="#3a2a14" metalness={0.4} /></mesh>
+          <mesh position={[0, 1.2, -0.05]}><boxGeometry args={[0.8, 0.6, 0.6]} /><meshStandardMaterial color="#1a140c" /></mesh>
+          <mesh position={[0, 1.2, 0.26]}><boxGeometry args={[0.6, 0.42, 0.02]} /><meshStandardMaterial color="#000" emissive={st.solved ? NEON : "#ffa030"} emissiveIntensity={hover === "terminal" ? 1.8 : st.solved ? 1.4 : 0.5} /></mesh>
+        </Hot>
+        <Hot id="ghost" {...hp} position={[-3, 0, 0.4]}>
+          <Ring on={hover === "ghost"} color={NEON} />
+          <VaultGhost calm />
+        </Hot>
+        <Hot id="door" {...hp} position={[-3.8, 0, 2.6]}>
+          <mesh position-y={1.2}><boxGeometry args={[0.1, 2.4, 1.1]} /><meshStandardMaterial color="#5a3818" emissive={TRIM} emissiveIntensity={hover === "door" ? 0.5 : 0} /></mesh>
+        </Hot>
+        <CafeSmoke count={30} color={hazard ? GOLD : "#f0dcc0"} opacity={hazard ? 0.14 : 0.04} mist={["#0c0906", st.solved ? NEON : "#3a2410"]} />
       </SafeCanvas>
     </div>
   );

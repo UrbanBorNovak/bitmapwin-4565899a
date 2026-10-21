@@ -558,7 +558,7 @@ export const BITERNAM_CREW = [
   { id: "will", name: "WILL", role: "Villain · confirmation forger", line: "IMAN's partner. Prints fake confirmations like flyers." },
   { id: "limitless", name: "LIMITLESS", role: "Villain · key hunter", line: "The third partner. No cap on anything, least of all greed. Wants the holders' keys." },
   { id: "joker", name: "THE JOKER", role: "Villain · mempool clown", line: "Spams dust for the fee chart. Paid by IMAN in unconfirmed sats." },
-  { id: "mr-gold", name: "MR. GOLD", role: "Guest · old-money convert", line: "Kept gold in a vault for forty years. Now checks his BITMAP every block." },
+  { id: "mr-gold", name: "MR. GOLD", role: "The Ledger Collector", line: "Former Blockrunner archivist. Keeps the receipts nobody else wanted. Only ever calls Wierdamoto 'Marshal'." },
   { id: "john-wick", name: "JOHN WICK", role: "Guest · key keeper", line: "Quiet professional. Back for self-custody." },
   { id: "curator", name: "ASTRAL", role: "Bitmapper · Bit Museum curator", line: "Only hangs chain-proven history. Is quietly assembling the Night of Two Signatures exhibit." },
   { id: "invest-geek", name: "INVEST GEEK", role: "Bitmapper · spreadsheet oracle", line: "Tracks every fee since genesis. Found the third address behind the Wierdamoto–Bitoshi feud." },
