@@ -81,6 +81,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as BiternamArcadeRouteImport } from './routes/biternam_.arcade'
 import { Route as BiternamCafeRouteImport } from './routes/biternam_.cafe'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
@@ -505,6 +506,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BiternamArcadeRoute = BiternamArcadeRouteImport.update({
+  id: '/biternam_/arcade',
+  path: '/biternam/arcade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamCafeRoute = BiternamCafeRouteImport.update({
   id: '/biternam_/cafe',
   path: '/biternam/cafe',
@@ -892,6 +898,7 @@ export interface FileRoutesByFullPath {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam/arcade': typeof BiternamArcadeRoute
   '/biternam/cafe': typeof BiternamCafeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
@@ -1024,6 +1031,7 @@ export interface FileRoutesByTo {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam/arcade': typeof BiternamArcadeRoute
   '/biternam/cafe': typeof BiternamCafeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
@@ -1161,6 +1169,7 @@ export interface FileRoutesById {
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/biternam_/arcade': typeof BiternamArcadeRoute
   '/biternam_/cafe': typeof BiternamCafeRoute
   '/biternam_/museum': typeof BiternamMuseumRoute
   '/biternam_/outpost': typeof BiternamOutpostRoute
@@ -1299,6 +1308,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam/arcade'
     | '/biternam/cafe'
     | '/biternam/museum'
     | '/biternam/outpost'
@@ -1431,6 +1441,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam/arcade'
     | '/biternam/cafe'
     | '/biternam/museum'
     | '/biternam/outpost'
@@ -1567,6 +1578,7 @@ export interface FileRouteTypes {
     | '/watch'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
+    | '/biternam_/arcade'
     | '/biternam_/cafe'
     | '/biternam_/museum'
     | '/biternam_/outpost'
@@ -1704,6 +1716,7 @@ export interface RootRouteChildren {
   WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  BiternamArcadeRoute: typeof BiternamArcadeRoute
   BiternamCafeRoute: typeof BiternamCafeRoute
   BiternamMuseumRoute: typeof BiternamMuseumRoute
   BiternamOutpostRoute: typeof BiternamOutpostRoute
@@ -2231,6 +2244,13 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/arcade': {
+      id: '/biternam_/arcade'
+      path: '/biternam/arcade'
+      fullPath: '/biternam/arcade'
+      preLoaderRoute: typeof BiternamArcadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/cafe': {
@@ -2881,6 +2901,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  BiternamArcadeRoute: BiternamArcadeRoute,
   BiternamCafeRoute: BiternamCafeRoute,
   BiternamMuseumRoute: BiternamMuseumRoute,
   BiternamOutpostRoute: BiternamOutpostRoute,
