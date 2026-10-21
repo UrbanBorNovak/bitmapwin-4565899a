@@ -1,7 +1,7 @@
 import { MASTER_PARENT_ID } from "@/lib/collection-parent";
 
 export type ParentCheckInput = {
-  parents: { inscriptionId: string }[];
+  parents: { inscriptionId: string; address?: string }[];
   bitmapParentId: string | null;
   masterInscriptionId: string | null;
   notes?: string[];

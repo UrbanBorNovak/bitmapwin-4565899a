@@ -27,7 +27,7 @@ export function firstSatRarity(height: number): SatRarity {
 }
 
 /** Tier/holder split tribute: special tiers pay more; half goes to the BITMAP holder. */
-export const RELIC_TRIBUTE: Record<RelicTier, number> = { STEEL: 546, CYAN: 546, VOID: 2100, GOLD: 2100 };
+export const RELIC_TRIBUTE: Record<RelicTier, number> = { STEEL: 1092, CYAN: 1092, VOID: 2100, GOLD: 2100 };
 export function relicTribute(height: number): { total: number; holder: number; treasury: number } {
   const total = RELIC_TRIBUTE[relicTier(height)];
   const holder = Math.floor(total / 2);

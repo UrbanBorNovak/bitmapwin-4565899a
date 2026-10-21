@@ -10,7 +10,16 @@ import { hex } from "@scure/base";
 import { checkMintParents, type ParentCheckInput } from "@/lib/mint-parents-guard";
 import { relicTribute, withinTip } from "@/lib/marauder-relics";
 
-export const RELIC_DUST = 546;
+/**
+ * Bitcoin Core default dust limits (3 sat/vB dust relay fee) by output script type.
+ * Unknown script types return null and fail closed.
+ */
+export function dustLimit(address: string): number | null {
+  try {
+    const t = btc.OutScript.decode(btc.OutScript.encode(btc.Address(btc.NETWORK).decode(address))).type;
+    return ({ pkh: 546, sh: 540, wpkh: 294, wsh: 330, tr: 330 } as Record<string, number>)[t] ?? null;
+  } catch { return null; }
+}
 export type RelicPayout = { address: string; sats: number; role: "HOLDER" | "TREASURY" };
 export type RelicMissing = "TIP" | "BITMAP" | "COLLECTION" | "HOLDER" | "TREASURY";
 
@@ -48,9 +57,13 @@ export function planRelicMint(i: RelicPlanInput):
   }
   const t = relicTribute(i.height);
   const payouts: RelicPayout[] = [
-    { address: i.holderAddress!, sats: Math.max(RELIC_DUST, t.holder), role: "HOLDER" },
-    { address: i.treasuryAddress!, sats: Math.max(RELIC_DUST, t.treasury), role: "TREASURY" },
+    { address: i.holderAddress!, sats: t.holder, role: "HOLDER" },
+    { address: i.treasuryAddress!, sats: t.treasury, role: "TREASURY" },
   ];
+  for (const p of payouts) {
+    const d = dustLimit(p.address);
+    if (d === null || p.sats < d) return { ok: false, missing: [p.role], message: `SIGNING BLOCKED — ${p.role} OUTPUT OF ${p.sats} SATS IS BELOW ITS ${d ?? "UNKNOWN"} SAT DUST LIMIT. NOTHING WAS SIGNED OR PAID.` };
+  }
   return { ok: true, payouts, total: payouts.reduce((s, x) => s + x.sats, 0) };
 }
 
