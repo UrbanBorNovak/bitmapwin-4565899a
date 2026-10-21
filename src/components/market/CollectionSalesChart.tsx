@@ -1,8 +1,10 @@
 import { formatSats } from "@/lib/trades";
 import type { CollectionSale } from "@/lib/collection-sales";
 
+type Sale = CollectionSale & { source?: string };
+
 /** Price per confirmed on-chain sale, in block order. */
-export function CollectionSalesChart({ sales, pending, unavailable }: { sales: CollectionSale[]; pending: boolean; unavailable: boolean }) {
+export function CollectionSalesChart({ sales, pending, unavailable, traced, total }: { sales: Sale[]; pending: boolean; unavailable: boolean; traced?: number; total?: number }) {
   const pts = sales.filter((s) => s.priceSats > 0 && s.blockHeight).sort((a, b) => (a.blockHeight! - b.blockHeight!));
   const W = 600, H = 160, P = 8;
   const max = Math.max(1, ...pts.map((s) => s.priceSats));
@@ -30,6 +32,24 @@ export function CollectionSalesChart({ sales, pending, unavailable }: { sales: C
             ))}
           </svg>
         )}
+      {total ? <p className="label mt-2 text-muted-foreground" data-no-translate>{(traced ?? 0).toLocaleString("en-US")}/{total.toLocaleString("en-US")} ITEMS TRACED ON CHAIN · ALL MARKETPLACES · COVERAGE GROWS AS PEOPLE BROWSE</p> : null}
+      {pts.length > 0 && (
+        <div className="mt-3 max-h-64 overflow-auto border-t border-border">
+          <table className="w-full font-mono text-xs">
+            <thead><tr className="text-left"><th className="label py-2 font-normal">PRICE</th><th className="label py-2 font-normal">SOURCE</th><th className="label py-2 font-normal">BLOCK</th><th className="label py-2 font-normal">TX</th></tr></thead>
+            <tbody>
+              {[...pts].reverse().map((s) => (
+                <tr key={s.txid} className="border-t border-border">
+                  <td className="py-1.5" data-no-translate>{formatSats(s.priceSats)}</td>
+                  <td className={`label py-1.5 ${s.source === "BITMAPWIN" ? "text-primary" : "text-signal"}`}>{s.source ?? "BITMAPWIN"}</td>
+                  <td className="py-1.5" data-no-translate>{s.blockHeight}</td>
+                  <td className="py-1.5"><a href={`https://mempool.space/tx/${s.txid}`} target="_blank" rel="noreferrer" className="hover:text-foreground" data-no-translate>{s.txid.slice(0, 10)}… ↗</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
