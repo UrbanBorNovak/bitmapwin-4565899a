@@ -160,8 +160,8 @@ export function SiteHeader() {
   const itemIsActive = (to: string) => pathname === to || (to !== "/play" && pathname.startsWith(`${to}/`));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<string | null>(null);
-  const currentGroup = NAV_GROUPS.find((g) => g.items.some((i) => itemIsActive(i.to)));
-  const currentItem = currentGroup?.items.find((i) => itemIsActive(i.to));
+  const currentGroup = NAV_GROUPS.find((g) => groupItems(g).some((i) => itemIsActive(i.to)));
+  const currentItem = (currentGroup ? groupItems(currentGroup) : []).find((i) => itemIsActive(i.to));
   useEffect(() => setMobileOpen(false), [pathname]);
 
   function submit(e: React.FormEvent) {
@@ -323,7 +323,7 @@ export function SiteHeader() {
           <div className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto pb-24 shadow-lg border-t border-border bg-background">
             {NAV_GROUPS.map((group) => {
               const expanded = mobileSection === group.id;
-              const hasCurrent = group.items.some((i) => itemIsActive(i.to));
+              const hasCurrent = groupItems(group).some((i) => itemIsActive(i.to));
               return (
                 <section key={group.id} className="border-b border-border">
                   <button
@@ -337,12 +337,12 @@ export function SiteHeader() {
                       <span className={`label block ${hasCurrent ? "text-bitcoin" : "text-foreground"}`}>{group.label}</span>
                       <span className="block truncate font-mono text-[10px] text-muted-foreground">{group.note}</span>
                     </span>
-                    <span className="label text-[0.55rem] text-muted-foreground">{group.items.length}</span>
+                    <span className="label text-[0.55rem] text-muted-foreground">{groupItems(group).length}</span>
                     <ChevronDown className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </button>
                   {expanded && (
                     <ul className="pb-2">
-                      {group.items.map((item) => {
+                      {groupItems(group).map((item) => {
                         const active = itemIsActive(item.to);
                         return (
                           <li key={item.to}>
