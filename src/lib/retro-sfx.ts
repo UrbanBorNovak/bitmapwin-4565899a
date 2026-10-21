@@ -32,7 +32,7 @@ export function playSfx(s: Sfx) {
 /** Smoky lounge loop: slow Rhodes-ish chords, warm sub bass, vinyl hiss. Faster and brighter while the jukebox plays. */
 let music: { stop: () => void; setHot: (on: boolean) => void } | null = null;
 export function isCafeMusicOn() { return music !== null; }
-export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse" | "arcade" | "studio";
+export type RoomMood = "cafe" | "museum" | "outpost" | "safehouse" | "arcade" | "studio" | "lab";
 const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: OscillatorType; lp: number; lead: OscillatorType; hiss: number }> = {
   cafe: { chords: [[220, 261.6, 329.6, 392], [174.6, 220, 261.6, 329.6], [196, 246.9, 293.7, 349.2], [164.8, 207.7, 246.9, 329.6]], beat: 0.6, wave: "triangle", lp: 1100, lead: "square", hiss: 0.08 },
   // Hushed gallery: suspended chords, long reverb tails, glassy chimes.
@@ -45,6 +45,8 @@ const MOODS: Record<RoomMood, { chords: number[][]; beat: number; wave: Oscillat
   arcade: { chords: [[261.6, 329.6, 392, 523.3], [220, 277.2, 329.6, 440], [174.6, 220, 261.6, 349.2], [196, 246.9, 293.7, 392]], beat: 0.42, wave: "square", lp: 2200, lead: "square", hiss: 0.02 },
   // News studio: urgent 90s broadcast sting, punchy saw stabs, light tape hiss.
   studio: { chords: [[146.8, 220, 293.7, 349.2], [130.8, 196, 261.6, 329.6], [116.5, 174.6, 233.1, 293.7], [130.8, 196, 246.9, 311.1]], beat: 0.5, wave: "sawtooth", lp: 1500, lead: "triangle", hiss: 0.05 },
+  // Server basement: hypnotic minor arpeggio pulse, square leads, fan-hum hiss.
+  lab: { chords: [[110, 130.8, 164.8, 220], [98, 123.5, 146.8, 196], [87.3, 110, 130.8, 174.6], [103.8, 123.5, 155.6, 207.7]], beat: 0.36, wave: "square", lp: 1300, lead: "sawtooth", hiss: 0.1 },
 };
 export function startCafeMusic(mood: RoomMood = "cafe") {
   const M = MOODS[mood];
