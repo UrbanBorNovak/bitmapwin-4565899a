@@ -207,7 +207,7 @@ export function SealedVault() {
   const restore = async (f: File | undefined) => {
     if (!f) return;
     try {
-      const r = await restoreBackup(JSON.parse(await f.text()), { outspend: (o) => mempoolChain().outspend(o), address, currentWallet: () => currentWallet.current });
+      const r = await restoreBackup(JSON.parse(await f.text()), { outspend: (o) => mempoolChain().outspend(o), address, currentWallet: () => addrRef.current });
       const l = loadHeld(); setHeld(l); setDamaged(null); void check(l);
       setMsg(`RESTORED ${r.restored.length}` + (r.skippedSpent.length ? ` · ${r.skippedSpent.length} SKIPPED (COIN ALREADY SPENT)` : "") + (r.skippedInFlight.length ? ` · ${r.skippedInFlight.length} KEPT AS IN YOUR UNFINISHED TRANSFER` : ""));
     } catch (e) { setMsg(e instanceof SyntaxError ? "THIS IS NOT A VALID SEALED-NOTES BACKUP — NOTHING CHANGED" : (e as Error).message); }
