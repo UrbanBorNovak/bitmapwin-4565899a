@@ -48,7 +48,7 @@ function MuseumPage() {
 
   const hit = (h: Hotspot) => {
     const r = resolveVerb(verb, h, { held, solved, item });
-    playSfx(r.effect === "talk" ? "talk" : r.effect?.startsWith("pickup") ? "pickup" : r.effect === "exit" ? "door" : r.effect === "blast" ? "fall" : r.effect ? "verb" : "deny");
+    playSfx(r.effect === "talk" ? "talk" : r.effect?.startsWith("pickup") ? "pickup" : r.effect === "exit" ? "door" : r.effect ? "verb" : "deny");
     if (r.text) setSay(r.text);
     if (r.effect === "talk") setCall(Date.now());
     if (r.effect === "exit") navigate({ to: "/map" });
