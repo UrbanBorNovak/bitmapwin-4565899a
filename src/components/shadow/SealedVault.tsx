@@ -4,7 +4,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signPsbtBase64, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { FINAL_CONFIRMATIONS, blindSeal, mintSealed, noteKey, verifySealed, mempoolChain, type SealState } from "@/lib/shadow-seal";
 import {
-  applySpend, assertPlainCoin, buildSealSpendPsbt, decodeConsignment, finishSigned, listCoins, planBundle, sealFee,
+  DUST, applySpend, assertPlainCoin, buildSealSpendPsbt, decodeConsignment, finishSigned, listCoins, parseSealReceive, planBundle, sealFee,
   sealKey, sealReceiveCode, sealStore, type Coin, type HeldSealed,
 } from "@/lib/shadow-seal-wallet";
 
@@ -244,6 +244,8 @@ export function SealedVault() {
         <div className="mt-3 rounded border border-primary/60 p-3 text-[11px]">
           <div className="text-primary">SIGNED BY YOUR WALLET · NOT SENT. Send it yourself, then give each recipient their code.</div>
           <div className="mt-1">TRANSACTION {short(signed.txid)} · <a className="text-signal underline" href="https://mempool.space/tx/push" target="_blank" rel="noreferrer">BROADCAST AT MEMPOOL.SPACE</a></div>
+          {sentTx ? <div className="mt-1 text-signal">✓ SENT · <a className="underline" href={`https://mempool.space/tx/${sentTx}`} target="_blank" rel="noreferrer">VIEW ON MEMPOOL</a></div>
+            : <button disabled={busy} onClick={broadcast} className="mt-2 rounded border border-primary bg-primary/15 px-3 py-1 text-primary">[ SEND TO BITCOIN NOW ]</button>}
           <textarea readOnly rows={2} value={signed.rawHex} onFocus={(e) => e.target.select()} className="mt-1 w-full rounded border border-border bg-background px-2 py-1" data-no-translate />
           {signed.sent.map((s) => (
             <div key={s.code} className="mt-2"><div>CODE FOR THE RECIPIENT OF "{s.label}"</div>
