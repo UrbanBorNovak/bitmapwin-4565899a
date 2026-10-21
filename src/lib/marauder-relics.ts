@@ -9,12 +9,30 @@
  */
 export const RELIC_PROTOCOL = "BITMAPWIN-RELIC";
 export const RELIC_MAX_VOXELS = 256;
-export const RELIC_KINDS = ["cassette", "skulltoshi", "floppy", "pizza", "visor", "chronometer", "passcard"] as const;
+export const RELIC_KINDS = ["cassette", "skulltoshi", "floppy", "pizza", "visor", "chronometer", "passcard", "times", "crt", "radar", "pickaxe"] as const;
 export type RelicKind = (typeof RELIC_KINDS)[number];
 export const RELIC_LABEL: Record<RelicKind, string> = {
   cassette: "SATOSHI'S CASSETTE", skulltoshi: "GOLDEN SKULLTOSHI", floppy: "CYBER FLOPPY 3.5\"",
   pizza: "10K BTC PIZZA SLICE", visor: "MARAUDER LASER VISOR", chronometer: "HALVING CHRONOMETER", passcard: "VOID PASSCARD MK II",
+  times: "THE TIMES 03/JAN/2009", crt: "FINNEY'S CRT TERMINAL", radar: "SAT HUNTER RADAR", pickaxe: "PATOSHI LASER PICKAXE",
 };
+
+/** Rarity of the block's first sat (Rodarmor scheme), pure block math. */
+export type SatRarity = "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "MYTHIC";
+export function firstSatRarity(height: number): SatRarity {
+  if (height === 0) return "MYTHIC";
+  if (height % 210_000 === 0) return "EPIC";
+  if (height % 2016 === 0) return "RARE";
+  return "UNCOMMON";
+}
+
+/** Tier/holder split tribute: special tiers pay more; half goes to the BITMAP holder. */
+export const RELIC_TRIBUTE: Record<RelicTier, number> = { STEEL: 546, CYAN: 546, VOID: 2100, GOLD: 2100 };
+export function relicTribute(height: number): { total: number; holder: number; treasury: number } {
+  const total = RELIC_TRIBUTE[relicTier(height)];
+  const holder = Math.floor(total / 2);
+  return { total, holder, treasury: total - holder };
+}
 /** [x,y,z,w,h,d,colour,glow] — same order as pet/Guardian voxels. */
 export type RelicVox = [number, number, number, number, number, number, string, number];
 
@@ -93,6 +111,47 @@ export function relicVoxels(kind: RelicKind, height: number): RelicVox[] {
     const fill = (height % 210_000) / 210_000;
     for (let i = 0; i < 5; i++) { const w = 1.8 - Math.abs(i - 2) * 0.6; add(0, 0.4 + i * 0.5, 0, w, 0.5, w, i / 5 < fill ? ORANGE : DARK, i / 5 < fill ? 1 : 0); }
     for (let i = 0; i < 5; i++) { const w = 1.8 - Math.abs(i - 2) * 0.6; add(0, 2.8 + i * 0.5, 0, w, 0.5, w, (1 - i / 5) <= fill ? DARK : CYAN, (1 - i / 5) <= fill ? 0 : 1); }
+  } else if (kind === "times") {
+    // Folded newspaper: block 0 in gold ink, ink fades with height.
+    const ink = height === 0 ? "#e8b923" : `hsl(0,0%,${Math.min(55, 6 + Math.floor(height / 20000))}%)`;
+    add(0, 0, 0, 5.6, 0.25, 7, "#ecebe4");
+    add(0, 0.25, -1.75, 5.6, 0.25, 3.5, "#e2e0d6");
+    add(0, 0.52, -3.0, 5.0, 0.12, 0.6, ink, height === 0 ? 1 : 0);
+    add(0, 0.52, -2.2, 4.6, 0.06, 0.4, CYAN, 1);
+    for (let i = 0; i < 12; i++) add(-2.2 + (i % 3) * 1.6, 0.27, 0.6 + Math.floor(i / 3) * 0.7, 1.3, 0.05, 0.2, ink);
+    // "Chancellor on brink of second bailout" etched as a bit row in the margin.
+    for (let i = 0; i < 20; i++) if (bits[i] === "1") add(2.75, 0.27, -3.2 + i * 0.33, 0.08, 0.06, 0.22, ink);
+  } else if (kind === "crt") {
+    const g = "#33ff66";
+    add(0, 0, 0, 5, 0.5, 4, "#cdbf9c");
+    add(0, 0.5, 0, 4.6, 4, 4, "#d9cca8");
+    add(0, 2.5, 2.01, 3.6, 2.8, 0.1, "#0b1a0f");
+    const lines = 3 + (height % 6);
+    for (let i = 0; i < lines; i++) add(-0.2, 1.4 + i * (2.4 / lines), 2.08, 3.0 - (i % 3) * 0.6, 0.08, 0.05, g, 1);
+    add(1.4, 3.6, 2.1, 0.3, 0.3, 0.05, g, height % 2);
+    add(0, -0.2, 3, 4.4, 0.25, 1.6, "#cdbf9c");
+    add(1.9, 0.75, 2.05, 0.3, 0.2, 0.05, ORANGE, 1);
+  } else if (kind === "radar") {
+    const sr = firstSatRarity(height);
+    const lit = sr === "MYTHIC" || sr === "EPIC" ? "#a855f7" : sr === "RARE" ? CYAN : ORANGE;
+    add(0, 0, 0, 2.4, 4, 1.4, "#b5893b");
+    add(0, 4.2, 0, 0.4, 0.8, 0.4, DARK);
+    const tilt = r() * 1.2 - 0.6;
+    add(tilt, 5.1, 0, 3.6, 0.3, 3.6, "#c9a14a");
+    add(tilt, 5.4, 0, 0.3, 0.6, 0.3, CYAN, 1);
+    const levels: SatRarity[] = ["COMMON", "UNCOMMON", "RARE", "EPIC", "MYTHIC"];
+    const rank = levels.indexOf(sr);
+    for (let i = 0; i < 5; i++) add(0, 0.5 + i * 0.7, 0.71, 1.2, 0.4, 0.1, i <= rank ? lit : DARK, i <= rank ? 1 : 0);
+  } else if (kind === "pickaxe") {
+    const shaft = height < 10_000 ? "#3a1f5c" : "#9ba3ad";
+    add(0, 0, 0, 0.5, 6, 0.5, shaft);
+    add(0, 6, 0, 5.6, 0.7, 0.7, shaft);
+    add(-3, 5.7, 0, 0.5, 0.4, 0.6, ORANGE, 1);
+    add(3, 5.7, 0, 0.5, 0.4, 0.6, ORANGE, 1);
+    add(0, 6.38, 0, 5.2, 0.08, 0.3, ORANGE, 1);
+    const sparks = 3 + (height % 6);
+    for (let i = 0; i < sparks; i++) add((r() * 2 - 1) * 3.5, 5 + r() * 2.5, (r() * 2 - 1) * 1.2, 0.15, 0.15, 0.15, i % 2 ? ORANGE : "#ffd27a", 1);
+    add(0, 0.2, 0, 0.7, 0.8, 0.7, DARK);
   } else {
     add(0, 0, 0, 6, 0.35, 3.8, B);
     add(0, 0.35, -1.3, 6, 0.06, 0.6, DARK);

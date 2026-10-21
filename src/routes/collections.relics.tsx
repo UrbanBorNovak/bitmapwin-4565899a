@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { RELIC_KINDS, RELIC_LABEL, TIER_LABEL, relicMasterHtml, relicMetadata, verifyRelic, withinTip, type RelicKind } from "@/lib/marauder-relics";
+import { RELIC_KINDS, RELIC_LABEL, TIER_LABEL, relicMasterHtml, relicMetadata, relicTribute, verifyRelic, withinTip, type RelicKind } from "@/lib/marauder-relics";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { CollectionParentBadge } from "@/components/CollectionParentBadge";
 
@@ -60,6 +60,9 @@ function Relics() {
           {meta && <>
             <p className="text-accent">{check?.ok ? "✓ MATCHES THE BLOCK" : "✗ DOES NOT MATCH"} · {meta.v.split(";").length} VOXELS · 1 DRAW</p>
             <p className="text-primary">TIER: {TIER_LABEL[meta.r]}</p>
+            {(() => { const t = relicTribute(height); return (
+              <p className="text-muted-foreground">PLANNED TRIBUTE: {t.total} SATS · {t.holder} TO BITMAP HOLDER · {t.treasury} TO TREASURY (+ MINER FEE)</p>
+            ); })()}
             <div>
               <p className="text-muted-foreground">RELIC DATA (TAG 5) · {json.length} BYTES</p>
               <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px]">{json}</pre>
