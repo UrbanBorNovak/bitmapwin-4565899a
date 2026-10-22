@@ -1,5 +1,5 @@
 /** Café atmosphere: drifting smoke voxels and fly-brain patrons wearing unused BITMAP Pixels. */
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, InstancedMesh } from "three";
 import { Object3D } from "three";
@@ -18,10 +18,21 @@ const blocked = (x: number, z: number) => Math.abs(x - 1.4) < 0.95 && Math.abs(z
 export type Bounds = { x0: number; x1: number; z0: number; z1: number };
 
 /** Fly-brain wanderer wearing a BITMAP Pixel; stays inside bounds and out of blocked furniture. */
-export function Patron({ skin, start, seed, bounds = BOUNDS, isBlocked = blocked, home = [1, 1.2] }: { skin: string; start: readonly [number, number]; seed: number; bounds?: Bounds; isBlocked?: (x: number, z: number) => boolean; home?: readonly [number, number] }) {
+export function Patron({ skin, start, seed, bounds = BOUNDS, isBlocked = blocked, home = [1, 1.2], bodies, bodyKey = "p", bodyScale = 1 }: { skin: string; start: readonly [number, number]; seed: number; bounds?: Bounds; isBlocked?: (x: number, z: number) => boolean; home?: readonly [number, number]; bodies?: Map<string, { x: number; z: number; r: number }>; bodyKey?: string; bodyScale?: number }) {
   const g = useRef<Group>(null);
   const moving = useRef(false);
   const s = useMemo(() => ({ brain: createFlyBrain(seed), x: start[0], z: start[1], h: seed * 2.1, pause: 0 }), [seed, start[0], start[1]]);
+  useEffect(() => () => { bodies?.delete(bodyKey); }, [bodies, bodyKey]);
+  // Other characters (cast and extras) are solid: a step into one is refused like a wall.
+  const R = 2 / bodyScale;
+  const hitsBody = (x: number, z: number) => {
+    if (!bodies) return false;
+    for (const [k, b] of bodies) if (k !== bodyKey && Math.hypot(x - b.x / bodyScale, z - b.z / bodyScale) < R + b.r / bodyScale) {
+      // Only refuse steps that get closer, so a character can always walk out of contact.
+      if (Math.hypot(x - b.x / bodyScale, z - b.z / bodyScale) < Math.hypot(s.x - b.x / bodyScale, s.z - b.z / bodyScale)) return true;
+    }
+    return false;
+  };
   useFrame((_, raw) => {
     const dt = Math.min(raw, 0.05);
     const act = s.brain.think({ now: performance.now(), hp: 1, maxHp: 1, snared: false, heading: s.h, playerDistance: null, playerAngle: 0, workDistance: null, workAngle: 0, worker: false, hostile: false, vendor: false }, dt);
@@ -29,10 +40,11 @@ export function Patron({ skin, start, seed, bounds = BOUNDS, isBlocked = blocked
     const rest = act.state === "rest" || act.throttle < 0.15;
     const sp = rest ? 0 : 0.55 * act.throttle;
     let nx = s.x + Math.sin(s.h) * sp * dt, nz = s.z + Math.cos(s.h) * sp * dt;
-    if (nx < bounds.x0 || nx > bounds.x1 || nz < bounds.z0 || nz > bounds.z1 || isBlocked(nx, nz)) {
-      s.h = Math.atan2(home[0] - s.x, home[1] - s.z) + (Math.random() - 0.5); nx = s.x; nz = s.z;
+    if (nx < bounds.x0 || nx > bounds.x1 || nz < bounds.z0 || nz > bounds.z1 || isBlocked(nx, nz) || hitsBody(nx, nz)) {
+      s.h = Math.atan2(home[0] - s.x, home[1] - s.z) + (Math.random() - 0.5) + Math.PI * 0.5; nx = s.x; nz = s.z;
     }
     s.x = nx; s.z = nz; moving.current = sp > 0.05;
+    bodies?.set(bodyKey, { x: s.x * bodyScale, z: s.z * bodyScale, r: 2 });
     if (g.current) { g.current.position.set(s.x, 0, s.z); g.current.rotation.y += (((s.h - g.current.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 8); }
   });
   return <group ref={g} scale={0.9}><ToonPixelRig inscriptionId={skin} pose="idle" movingRef={moving} fallback={null} /></group>;
