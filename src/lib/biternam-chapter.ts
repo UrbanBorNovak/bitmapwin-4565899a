@@ -86,7 +86,7 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   // Room scenes open on a short wide establishing shot so the wall gallery reads before the camera cuts in.
   const EST = 1.8;
   const est = (sc: ToonEpisode["scenes"][number]) => sc.set ? { ...sc, shot: "wide" as const, duration: sc.duration + EST,
-    lines: sc.lines.map((l) => ({ ...l, at: l.at + EST })), fx: sc.fx?.map((c) => ({ ...c, at: c.at + EST })) } : sc;
+    lines: sc.lines.map((l) => ({ ...l, at: l.at + EST })), ...(sc.fx ? { fx: sc.fx.map((c) => ({ ...c, at: c.at + EST })) } : {}) } : sc;
   const ep = {
     title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
     scenes: [
