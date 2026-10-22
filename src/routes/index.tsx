@@ -9,7 +9,6 @@ import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
-import { LoopNavigator } from "@/components/LoopNavigator";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
 import { MobileAppInstall } from "@/components/MobileAppInstall";
@@ -90,8 +89,6 @@ function Index() {
 
   return (
     <div className="pb-10">
-      <BlockChronicles />
-      <CinemaPremiere />
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="grid overflow-hidden border border-border-strong lg:min-h-[560px] lg:grid-cols-12">
           <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-4 lg:order-1 lg:col-span-3 lg:border-r lg:border-t-0 lg:p-5">
@@ -201,27 +198,31 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5"><LoopNavigator active="discover" /></section>
+      <HowItWorks />
 
-      <ActiveBuilders />
-
-      <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
-          <div>
-            <div className="label text-bitcoin">FIRST TIME HERE?</div>
-            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              Take the 60-second tour of this page, or follow the step-by-step checklist below — it saves your progress on this device.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => startGuidedTour()} className="btn-term">[ START THE TOUR ]</button>
-            <Link to="/land-101" className="btn-term-ghost">[ READ THE 2-MINUTE PRIMER ]</Link>
-          </div>
+      <section className="mx-auto max-w-[1600px] px-3 pt-10 md:px-5">
+        <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">WORLD · LAND · EXPERIENCES · IDENTITY · CREATION</h2>
+        <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
+          <Pillar n="01" name="WORLD" what="The Oasis" body="One shared map of every Bitcoin block. Walk in, no wallet needed." to="/oasis" action="ENTER" />
+          <Pillar n="02" name="LAND" what="BITMAPs" body="Each block is a place you can own, inspect or lease. Ownership is checked on Bitcoin, never self-reported." to="/marketplace" action="FIND LAND" />
+          <Pillar n="03" name="EXPERIENCES" what="Extenders" body="Games, galleries and scenes that run on a BITMAP. Browse, deploy, play." to="/extenders" action="BROWSE" />
+          <Pillar n="04" name="IDENTITY" what="Passport & Guardians" body="Your record of where you've been. Guardians take their form from their block's data." to="/passport" action="OPEN PASSPORT" />
+          <Pillar n="05" name="CREATION" what="Land Forge" body="Build in 3D on your BITMAP and write it onto Bitcoin. Every reused piece pays its maker." to="/forge" action="OPEN FORGE" />
         </div>
-        <FirstTenMinutes compact />
+        <div className="mt-6 flex flex-wrap gap-2 pb-2">
+          <Link to="/builds" className="btn-term-ghost">[ COMMUNITY BUILDS ]</Link>
+          <Link to="/parcel" className="btn-term-ghost">[ SPLIT A BITMAP INTO PARCELS ]</Link>
+          <Link to="/experiences" className="btn-term-ghost">[ LIVE EXPERIENCES ]</Link>
+        </div>
       </section>
 
-      <HowItWorks />
+      <section className="mx-auto max-w-[1600px] px-3 pt-10 md:px-5">
+        <div className="label text-signal">LIVE PROOF</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">WHAT PEOPLE ARE MAKING RIGHT NOW</h2>
+      </section>
+      <BlockChronicles />
+      <ActiveBuilders />
 
       <section className="mx-auto max-w-[1600px] px-3 pt-8 md:px-5 md:pt-10">
         <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -250,81 +251,22 @@ function Index() {
         )}
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-3 pt-10 md:px-5">
-        <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
-        <h2 className="display mt-2 text-2xl md:text-3xl">WORLD · LAND · EXPERIENCES · IDENTITY · CREATION</h2>
-        <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
-          <Pillar n="01" name="WORLD" what="The Oasis" body="The living map. Walk in and see what other people made possible." to="/oasis" action="ENTER" />
-          <Pillar n="02" name="LAND" what="Bitmaps" body="The places. Every block is land you can own, build on, or lease." to="/marketplace" action="CLAIM LAND" />
-          <Pillar n="03" name="EXPERIENCES" what="Extenders" body="The things that happen on those places. Browse, deploy, play." to="/extenders" action="BROWSE" />
-          <Pillar n="04" name="IDENTITY" what="Passport" body="Your history of where you've been and what you've done." to="/passport" action="OPEN PASSPORT" />
-          <Pillar n="05" name="CREATION" what="Land Forge" body="Build voxel structures on your BITMAP's real parcels and inscribe them onto its own sat." to="/forge" action="OPEN FORGE" />
-        </div>
-        <div className="mt-6 flex flex-wrap gap-2 pb-2">
-          <Link to="/marketplace" className="btn-term-ghost">[ GET LAND FIRST ]</Link>
-          <Link to="/extenders" className="btn-term-ghost">[ PUBLISHED EXTENDERS ]</Link>
-          <Link to="/experiences" className="btn-term-ghost">[ LIVE EXPERIENCES ]</Link>
-        </div>
-      </section>
+      <CinemaPremiere />
 
-      <section className="mx-auto max-w-[1600px] px-3 pt-10 pb-24 md:px-5">
-        <div className="grid gap-6 bg-card/60 backdrop-blur border border-bitcoin/40 p-5 md:grid-cols-[1.4fr_1fr] md:p-8">
+      <section className="mx-auto max-w-[1600px] px-3 pt-10 pb-16 md:px-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
           <div>
-            <div className="label text-bitcoin">NEW · LAND FORGE</div>
-            <h2 className="display mt-2 text-2xl md:text-4xl">BUILD ON YOUR BITMAP. INSCRIBE IT ON BITCOIN.</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Place voxel blocks on the real transaction parcels of your block, snap in pieces other builders inscribed, and
-              put your Guardian on top. The finished build is written onto your BITMAP's own sat, and the makers of every
-              piece you used are paid inside the same transaction.
+            <div className="label text-bitcoin">FIRST TIME HERE?</div>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              Take the 60-second tour of this page, or follow the step-by-step checklist below — it saves your progress on this device.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link to="/forge" className="btn-term min-h-12">LAUNCH LAND FORGE →</Link>
-              <Link to="/builds" className="btn-term-ghost min-h-12">SEE COMMUNITY BUILDS</Link>
-            </div>
           </div>
-          <ul className="grid content-start gap-px border border-border font-mono text-xs">
-            {[
-              ["01", "BLOCKS SIT ON YOUR BLOCK'S REAL PARCELS"],
-              ["02", "COMPRESSED BUILDS · ABOUT A THIRD OF THE FEE"],
-              ["03", "REUSE INSCRIBED PIECES WITHOUT PAYING TWICE"],
-              ["04", "CREATORS PAID IN THE SAME TRANSACTION"],
-            ].map(([n, t]) => (
-              <li key={n} className="flex gap-3 border-b border-border p-3 last:border-b-0">
-                <span className="text-bitcoin">{n}</span>
-                <span>{t}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-[1600px] px-3 pb-24 md:px-5">
-        <div className="grid gap-6 bg-card/60 backdrop-blur border border-signal/40 p-5 md:grid-cols-[1.4fr_1fr] md:p-8">
-          <div>
-            <div className="label text-signal">NEW · PARCEL STUDIO</div>
-            <h2 className="display mt-2 text-2xl md:text-4xl">SPLIT YOUR BITMAP INTO TRUE ON-CHAIN PARCELS.</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              See every transaction of your block as a tile, pick one or many open parcels, and inscribe them as real
-              children of your BITMAP. Fees from 1 sat/vB, and the 546-sat site fee is charged only once per creation.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link to="/parcel" className="btn-term min-h-12">OPEN PARCEL STUDIO →</Link>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => startGuidedTour()} className="btn-term">[ START THE TOUR ]</button>
+            <Link to="/land-101" className="btn-term-ghost">[ READ THE 2-MINUTE PRIMER ]</Link>
           </div>
-          <ul className="grid content-start gap-px border border-border font-mono text-xs">
-            {[
-              ["01", "ONE TILE PER BLOCK TRANSACTION"],
-              ["02", "MULTI-SELECT CART WITH TOTAL COST"],
-              ["03", "546 SATS ONCE — ONE PARCEL OR TWENTY"],
-              ["04", "FIRST INSCRIPTION OF A PARCEL WINS"],
-            ].map(([n, t]) => (
-              <li key={n} className="flex gap-3 border-b border-border p-3 last:border-b-0">
-                <span className="text-signal">{n}</span>
-                <span>{t}</span>
-              </li>
-            ))}
-          </ul>
         </div>
+        <FirstTenMinutes compact />
       </section>
     </div>
   );
