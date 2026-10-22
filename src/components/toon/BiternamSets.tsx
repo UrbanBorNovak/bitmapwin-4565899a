@@ -86,6 +86,15 @@ export function BatcaveSet({ timeRef }: { timeRef: MutableRefObject<number> }) {
   );
 }
 
+/** Street-facing signs flush on the inner face of real towers (odd towers; even ones carry neon). Derived from each tower's own size. */
+export function streetSigns(towers: { x: number; z: number; w: number; h: number }[]) {
+  return towers.filter((t, i) => i % 2 === 1 && t.z > -90 && t.h > 24).slice(0, 4).map((t) => {
+    const X = t.x > 0 ? t.x - t.w / 2 - 0.25 : t.x + t.w / 2 + 0.25, size = Math.min(9, t.w - 1.5);
+    // ry ±90° turns the frame toward the street; positions are given in that turned frame.
+    return t.x > 0 ? { p: [t.z, 16, -X] as [number, number, number], ry: -Math.PI / 2, size } : { p: [-t.z, 16, X] as [number, number, number], ry: Math.PI / 2, size };
+  });
+}
+
 export function ChinatownSet({ timeRef }: { timeRef: MutableRefObject<number> }) {
   const lanterns = useRef<Group>(null);
   useFrame(() => lanterns.current?.children.forEach((c, i) => { c.rotation.z = Math.sin(timeRef.current * 1.4 + i) * 0.12; }));
@@ -116,7 +125,7 @@ export function ChinatownSet({ timeRef }: { timeRef: MutableRefObject<number> })
       </group>
       {/* street gate */}
       <Box p={[-12, 12, -24]} s={[2, 24, 2]} c="#b22222" /><Box p={[12, 12, -24]} s={[2, 24, 2]} c="#b22222" />
-      <EcoFrames seed="chinatown" trim="#ff3a4a" places={[{ p: [0, 34, -22.2], size: 8 }, { p: [-6, 16, -13.5], ry: Math.PI / 2 }, { p: [26, 16, -13.5], ry: Math.PI / 2 }, { p: [-6, 16, -13.5], ry: -Math.PI / 2 }]} />
+      <EcoFrames seed="chinatown" trim="#ff3a4a" places={[{ p: [0, 34, -22.2], size: 8 }, ...streetSigns(towers)]} />
       <Box p={[0, 25, -24]} s={[32, 3, 3]} c="#b22222" /><Box p={[0, 28, -24]} s={[36, 1.5, 4]} c="#d9a520" m={0.5} />
     </group>
   );
