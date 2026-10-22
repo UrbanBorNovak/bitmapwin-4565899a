@@ -50,9 +50,13 @@ void main(){
 }`;
 
 /** The next room, drawn only inside the gate's stencil mask so the portal shows where it leads. */
-function DestWindow({ children }: { children: ReactNode }) {
+// Where the room must sit at the end of the crossing so the lead's last portal step (0,-22) is its first room step (-5.5,2.4).
+const DEST_START = new THREE.Vector3(0, -2, -48), DEST_END = new THREE.Vector3(5.5, 0, -24.4);
+function DestWindow({ children, kRef }: { children: ReactNode; kRef: MutableRefObject<number> }) {
   const g = useRef<THREE.Group>(null);
   useFrame(() => {
+    const k = kRef.current, e = k * k * (3 - 2 * k);
+    if (g.current) { g.current.position.lerpVectors(DEST_START, DEST_END, e); g.current.scale.setScalar(0.8 + 0.2 * e); }
     g.current?.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
       if (!m || o.userData["portal"]) return;
@@ -62,7 +66,7 @@ function DestWindow({ children }: { children: ReactNode }) {
     });
   });
   // Room sits behind the gate, scaled up so its interior fills the opening.
-  return <group ref={g} position={[0, -2, -48]} scale={0.8}>{children}</group>;
+  return <group ref={g}>{children}</group>;
 }
 
 function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableRefObject<number>; vortexOnly?: boolean }) {
@@ -114,7 +118,7 @@ export function PortalDust({ block, localRef }: { block: number; localRef: Mutab
 export function PortalSplatSet({ block, timeRef, dest, outside, onLand, localRef, duration = 4 }: { block: number; outside?: ReactNode; timeRef: MutableRefObject<number>; dest?: ReactNode; onLand?: boolean; localRef?: MutableRefObject<number>; duration?: number }) {
   const rimMat = useRef<THREE.ShaderMaterial>(null);
   const rimU = useMemo(() => ({ uTime: { value: 0 } }), []);
-  const ring = useRef<THREE.Group>(null), land = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
+  const kRef = useRef(0), ring = useRef<THREE.Group>(null), land = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
   const rocks = useMemo(() => { const r = rng(block + 101); return Array.from({ length: 22 }, () => ({
     p: [(r() - 0.5) * 140, 6 + r() * 60, -20 - r() * 110] as [number, number, number], s: 2 + r() * 7, c: r() < 0.5 ? "#3a2c22" : "#2a2f3a", ph: r() * 10 })); }, [block]);
   useFrame(() => {
@@ -122,6 +126,7 @@ export function PortalSplatSet({ block, timeRef, dest, outside, onLand, localRef
     if (rimMat.current) rimMat.current.uniforms["uTime"]!.value = t;
     // Final stretch: the tear widens until the destination world swallows the land (volumetric dissolve).
     const k = localRef ? Math.min(1, Math.max(0, (localRef.current / duration - 0.55) / 0.45)) : 0;
+    kRef.current = k;
     // Once the tear fills the view, the BITMAP land is gone so it never occludes the room.
     // Fade the land out (own material copies, so other scenes keep theirs); the lead is not in this group.
     if (land.current) {
@@ -161,7 +166,7 @@ export function PortalSplatSet({ block, timeRef, dest, outside, onLand, localRef
         {/* chromatic energy rim */}
         <mesh renderOrder={2}><planeGeometry args={[56, 56]} /><shaderMaterial ref={rimMat} uniforms={rimU} vertexShader={RIM_VERT} fragmentShader={RIM_FRAG} transparent depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} /></mesh>
       </group>
-      {dest && <DestWindow>{dest}</DestWindow>}
+      {dest && <DestWindow kRef={kRef}>{dest}</DestWindow>}
       {/* drifting bedrock voxels */}
       <group ref={shards} visible={!onLand}>{rocks.map((k, i) => (
         <mesh key={i} position={k.p}><boxGeometry args={[k.s, k.s, k.s]} /><meshStandardMaterial color={k.c} emissive="#f7931a" emissiveIntensity={0.08} roughness={0.9} /></mesh>
