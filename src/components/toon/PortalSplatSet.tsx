@@ -43,7 +43,7 @@ void main(){
   float halo = exp(-max(d, 0.0) * 9.0) * step(0.0, d) + exp(d * 40.0) * step(d, 0.0) * 0.35;
   float spark = step(0.985, h(floor(vec2(a * 40.0, r * 60.0 - uTime * 6.0)))) * exp(-abs(d) * 12.0);
   vec3 rainbow = 0.5 + 0.5 * cos(6.2831 * (a / 6.2831 + d * 3.0 + uTime * 0.15 + vec3(0.0, 0.33, 0.67)));
-  vec3 col = vec3(1.0) * core * 1.6 + mix(vec3(0.97,0.58,0.1), rainbow, 0.7) * halo * 1.3 + vec3(1.0,0.9,0.8) * spark * 2.0;
+  vec3 col = vec3(1.0) * core * 0.9 + mix(vec3(0.97,0.58,0.1), rainbow, 0.7) * halo * 0.6 + vec3(1.0,0.9,0.8) * spark * 1.2;
   float alpha = clamp(core + halo + spark, 0.0, 1.0);
   if (alpha < 0.01) discard;
   gl_FragColor = vec4(col * alpha, alpha);
@@ -80,7 +80,7 @@ function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableR
       pos[i * 3] = x;
       pos[i * 3 + 1] = vortexOnly ? 9 + Math.sin(a) * rad * 0.95 : vortex ? 18 + Math.sin(a) * rad * 0.9 : -10 + r() * 110;
       pos[i * 3 + 2] = vortexOnly ? -16.5 + (r() - 0.5) * 3 : vortex ? -50 + (r() - 0.5) * 8 : -40 - r() * 160 + (r() < 0.3 ? 120 : 0);
-      c.set(PALETTE[Math.floor(r() * (vortex ? 2 : PALETTE.length))]!).multiplyScalar(0.35 + r() * 0.5);
+      c.set(PALETTE[Math.floor(r() * (vortex ? 2 : PALETTE.length))]!).multiplyScalar(vortexOnly ? 0.18 + r() * 0.22 : 0.35 + r() * 0.5);
       col.set([c.r, c.g, c.b], i * 3);
       size[i] = vortexOnly ? 1 + r() * 2.5 : vortex ? 3 + r() * 6 : 6 + r() * 18;
       phase[i] = r() * 100;
@@ -105,16 +105,16 @@ function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableR
 export function PortalDust({ block, localRef }: { block: number; localRef: MutableRefObject<number> }) {
   const mat = useRef<THREE.PointsMaterial>(null), pts = useRef<THREE.Points>(null);
   const geo = useMemo(() => { const r = rng(block * 31 + 7), N = 500, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), c = new THREE.Color();
-    for (let i = 0; i < N; i++) { pos.set([(r() - 0.5) * 60, r() * 30, (r() - 0.5) * 40], i * 3); c.set(r() < 0.6 ? "#28e0ff" : "#f7931a"); col.set([c.r, c.g, c.b], i * 3); }
+    for (let i = 0; i < N; i++) { const x = (r() - 0.5) * 60; pos.set([Math.abs(x) < 9 ? Math.sign(x || 1) * (9 + r() * 20) : x, r() * 30, (r() - 0.5) * 40], i * 3); /* keep the lead clear */ c.set(r() < 0.6 ? "#28e0ff" : "#f7931a"); col.set([c.r, c.g, c.b], i * 3); }
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3)); return g; }, [block]);
   useFrame(() => { const t = localRef.current; if (pts.current) pts.current.position.y = -Math.min(t, 3) * 8; if (mat.current) mat.current.opacity = Math.max(0, 1 - t / 3.5); });
   return <points ref={pts} geometry={geo} frustumCulled={false}><pointsMaterial ref={mat} size={1.4} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} /></points>;
 }
 
-export function PortalSplatSet({ block, timeRef, dest, onLand, localRef, duration = 4 }: { block: number; timeRef: MutableRefObject<number>; dest?: ReactNode; onLand?: boolean; localRef?: MutableRefObject<number>; duration?: number }) {
+export function PortalSplatSet({ block, timeRef, dest, outside, onLand, localRef, duration = 4 }: { block: number; outside?: ReactNode; timeRef: MutableRefObject<number>; dest?: ReactNode; onLand?: boolean; localRef?: MutableRefObject<number>; duration?: number }) {
   const rimMat = useRef<THREE.ShaderMaterial>(null);
   const rimU = useMemo(() => ({ uTime: { value: 0 } }), []);
-  const ring = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.Group>(null), land = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
   const rocks = useMemo(() => { const r = rng(block + 101); return Array.from({ length: 22 }, () => ({
     p: [(r() - 0.5) * 140, 6 + r() * 60, -20 - r() * 110] as [number, number, number], s: 2 + r() * 7, c: r() < 0.5 ? "#3a2c22" : "#2a2f3a", ph: r() * 10 })); }, [block]);
   useFrame(() => {
@@ -122,11 +122,14 @@ export function PortalSplatSet({ block, timeRef, dest, onLand, localRef, duratio
     if (rimMat.current) rimMat.current.uniforms["uTime"]!.value = t;
     // Final stretch: the tear widens until the destination world swallows the land (volumetric dissolve).
     const k = localRef ? Math.min(1, Math.max(0, (localRef.current / duration - 0.55) / 0.45)) : 0;
+    // Once the tear fills the view, the BITMAP land is gone so it never occludes the room.
+    if (land.current) land.current.visible = k < 0.8;
     if (ring.current) ring.current.scale.setScalar((0.5 + Math.sin(t * 2.2) * 0.025) * (1 + k * k * k * 9));
     shards.current?.children.forEach((c, i) => { const k = rocks[i]!; c.position.y = k.p[1] + Math.sin(t * 0.5 + k.ph) * 2.5; c.rotation.set(t * 0.2 + k.ph, t * 0.3, 0); });
   });
   return (
     <group>
+      {outside && <group ref={land}>{outside}</group>}
       {onLand ? <pointLight position={[0, 9, -12]} intensity={600} distance={40} decay={2} color="#f7931a" /> : <>
       <ambientLight intensity={0.55} color="#b8c4ff" />
       <pointLight position={[0, 18, -46]} intensity={2600} distance={160} decay={2} color="#f7931a" />
