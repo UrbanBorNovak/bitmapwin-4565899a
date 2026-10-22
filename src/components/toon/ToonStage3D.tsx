@@ -15,7 +15,7 @@ import { OasisWorld, StudioSet } from "@/components/toon/StudioSet";
 import { ToonVFXLayer } from "@/components/toon/ToonVFXLayer";
 import { BiternamRoomSet, ROOMS, clampCamera, setBoundsFor, walkBlocked } from "@/components/toon/BiternamRooms";
 import { BatcaveSet, CafeSet, ChinatownSet, VaultSet } from "@/components/toon/BiternamSets";
-import { PortalDust, PortalSplatSet } from "@/components/toon/PortalSplatSet";
+import { PORTAL_ROOM_OFFSET, PortalDust, PortalSplatSet, portalTakeover } from "@/components/toon/PortalSplatSet";
 const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c" };
 import { loadCustomVFX, shakeAt, vfxLibrary, type ToonVFX } from "@/lib/toon-vfx";
 
@@ -296,23 +296,37 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   return [mx + px * span, h * 0.75, mz + pz * span, mx, h * 0.5, mz];
 }
 
-function Director({ scene, local, lib }: { scene: ToonScene; local: number; lib: Map<string, ToonVFX> }) {
+/** Framing a scene asks for at its local time (before smoothing/shake). */
+function scenePose(scene: ToonScene, local: number): number[] {
+  const p = Math.min(1, local / scene.duration), line = activeCut(scene, local);
+  let target = line ? cutPose(scene, line, local) : shotPose(scene.shot, p);
+  // Film sets are larger than a BITMAP plot: frame the cast where it actually stands.
+  if (!line && scene.set && scene.cast.length) {
+    let cx = 0, cz = 0; for (const a of scene.cast) { const q = actorPositionAt(a, local, scene.duration); cx += q.x; cz += q.z; }
+    cx /= scene.cast.length; cz /= scene.cast.length;
+    target = [target[0] + cx, target[1], target[2] + cz, target[3] + cx, target[4], target[5] + cz];
+  }
+  return target;
+}
+
+function Director({ scene, next, local, lib }: { scene: ToonScene; next?: ToonScene | undefined; local: number; lib: Map<string, ToonVFX> }) {
   const { camera } = useThree();
   const cur = useRef<number[] | null>(null), last = useRef(local);
   useFrame(() => {
-    const p = Math.min(1, local / scene.duration), line = activeCut(scene, local);
-    let target = line ? cutPose(scene, line, local) : shotPose(scene.shot, p);
-    // Film sets are larger than a BITMAP plot: frame the cast where it actually stands.
-    if (!line && scene.set && scene.cast.length) {
-      let cx = 0, cz = 0; for (const a of scene.cast) { const q = actorPositionAt(a, local, scene.duration); cx += q.x; cz += q.z; }
-      cx /= scene.cast.length; cz /= scene.cast.length;
-      target = [target[0] + cx, target[1], target[2] + cz, target[3] + cx, target[4], target[5] + cz];
+    const line = activeCut(scene, local);
+    let target = scenePose(scene, local);
+    // Portal end: glide into the room's exact opening view (room sits at PORTAL_ROOM_OFFSET), so the cut is invisible.
+    if (scene.set === "portal" && next?.set && !line) {
+      const k = portalTakeover(local, scene.duration), e = k * k * (3 - 2 * k);
+      const r = scenePose(next, 0); clampCamera(next.set, r);
+      const o = PORTAL_ROOM_OFFSET, room = [r[0]! + o[0], r[1]! + o[1], r[2]! + o[2], r[3]! + o[0], r[4]! + o[1], r[5]! + o[2]];
+      target = target.map((v, i) => v + (room[i]! - v) * e) as typeof target;
     }
     const jumped = Math.abs(local - last.current) > 0.5; last.current = local;
     if (!cur.current || !scene.cutBlend || jumped) cur.current = [...target];
     else for (let i = 0; i < 6; i++) cur.current[i]! += (target[i]! - cur.current[i]!) * 0.12;
     const c = cur.current;
-    clampCamera(scene.set, c);
+    if (scene.set !== "portal") clampCamera(scene.set, c);
     const sh = shakeAt(scene.fx, lib, local);
     camera.position.set(c[0]! + sh * 0.8, c[1]! + sh * 0.5, c[2]!);
     camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
@@ -363,7 +377,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={(() => { const w = setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }; return [w.x0 + (w.x1 - w.x0) * (i + 0.5) / 4, w.z0 + (w.z1 - w.z0) * (0.3 + 0.4 * (i % 2))] as [number, number]; })()} seed={i * 3.7 + 1.3} bounds={setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={(x: number, z: number) => walkBlocked(scene.set, x, z)} home={[0, -1]} /></group>)}
       {episode.scenes[index - 1]?.set === "portal" && <PortalDust key={`pd-${index}`} block={scene.block} localRef={progressRef} />}
       <ToonVFXLayer cues={scene.fx} lib={lib} scene={index} timeRef={progressRef} />
-      <Director key={index} scene={scene} local={local} lib={lib} />
+      <Director key={index} scene={scene} next={episode.scenes[index + 1]} local={local} lib={lib} />
     </SafeCanvas>
   );
 }
