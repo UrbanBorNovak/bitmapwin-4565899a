@@ -1,4 +1,4 @@
-import { useMemo, useRef, type MutableRefObject } from "react";
+import { useMemo, useRef, type MutableRefObject, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -28,6 +28,42 @@ void main() {
   if (a < 0.01) discard;
   gl_FragColor = vec4(vColor * a, a);
 }`;
+
+
+const RIM_VERT = /* glsl */ `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`;
+const RIM_FRAG = /* glsl */ `
+uniform float uTime; varying vec2 vUv;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+void main(){
+  vec2 p = (vUv - 0.5) * 2.0; float r = length(p), a = atan(p.y, p.x);
+  float edge = 0.62 + 0.07 * n(vec2(a * 3.0, uTime * 0.8)) + 0.04 * n(vec2(a * 9.0, -uTime * 1.6));
+  float d = r - edge;
+  float core = exp(-d * d * 900.0);              // white-hot tear line
+  float halo = exp(-max(d, 0.0) * 9.0) * step(0.0, d) + exp(d * 40.0) * step(d, 0.0) * 0.35;
+  float spark = step(0.985, h(floor(vec2(a * 40.0, r * 60.0 - uTime * 6.0)))) * exp(-abs(d) * 12.0);
+  vec3 rainbow = 0.5 + 0.5 * cos(6.2831 * (a / 6.2831 + d * 3.0 + uTime * 0.15 + vec3(0.0, 0.33, 0.67)));
+  vec3 col = vec3(1.0) * core * 1.6 + mix(vec3(0.97,0.58,0.1), rainbow, 0.7) * halo * 1.3 + vec3(1.0,0.9,0.8) * spark * 2.0;
+  float alpha = clamp(core + halo + spark, 0.0, 1.0);
+  if (alpha < 0.01) discard;
+  gl_FragColor = vec4(col * alpha, alpha);
+}`;
+
+/** The next room, drawn only inside the gate's stencil mask so the portal shows where it leads. */
+function DestWindow({ children }: { children: ReactNode }) {
+  const g = useRef<THREE.Group>(null);
+  useFrame(() => {
+    g.current?.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+      if (!m || o.userData["portal"]) return;
+      o.userData["portal"] = true;
+      for (const mat of Array.isArray(m) ? m : [m]) { mat.stencilWrite = true; mat.stencilRef = 1; mat.stencilFunc = THREE.EqualStencilFunc; mat.stencilZPass = THREE.KeepStencilOp; }
+      o.renderOrder = 1;
+    });
+  });
+  // Room sits behind the gate, scaled up so its interior fills the opening.
+  return <group ref={g} position={[0, -2, -48]} scale={0.8}>{children}</group>;
+}
 
 function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<number> }) {
   const mat = useRef<THREE.ShaderMaterial>(null);
@@ -65,13 +101,16 @@ function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<num
   );
 }
 
-export function PortalSplatSet({ block, timeRef }: { block: number; timeRef: MutableRefObject<number> }) {
+export function PortalSplatSet({ block, timeRef, dest }: { block: number; timeRef: MutableRefObject<number>; dest?: ReactNode }) {
+  const rimMat = useRef<THREE.ShaderMaterial>(null);
+  const rimU = useMemo(() => ({ uTime: { value: 0 } }), []);
   const ring = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
   const rocks = useMemo(() => { const r = rng(block + 101); return Array.from({ length: 22 }, () => ({
     p: [(r() - 0.5) * 140, 6 + r() * 60, -20 - r() * 110] as [number, number, number], s: 2 + r() * 7, c: r() < 0.5 ? "#3a2c22" : "#2a2f3a", ph: r() * 10 })); }, [block]);
   useFrame(() => {
     const t = timeRef.current;
-    if (ring.current) { ring.current.rotation.z = t * 0.35; ring.current.children[1]!.rotation.z = -t * 0.8; }
+    if (rimMat.current) rimMat.current.uniforms["uTime"]!.value = t;
+    if (ring.current) ring.current.scale.setScalar(0.5 + Math.sin(t * 2.2) * 0.025);
     shards.current?.children.forEach((c, i) => { const k = rocks[i]!; c.position.y = k.p[1] + Math.sin(t * 0.5 + k.ph) * 2.5; c.rotation.set(t * 0.2 + k.ph, t * 0.3, 0); });
   });
   return (
@@ -88,11 +127,14 @@ export function PortalSplatSet({ block, timeRef }: { block: number; timeRef: Mut
         </mesh>
       ))}
       {/* ring gate */}
-      <group ref={ring} position={[0, 18, -50]}>
-        <mesh><torusGeometry args={[18, 1.2, 12, 64]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={1.6} /></mesh>
-        <mesh><torusGeometry args={[16, 0.4, 8, 6]} /><meshStandardMaterial color="#28e0ff" emissive="#28e0ff" emissiveIntensity={1.4} /></mesh>
-        <mesh><circleGeometry args={[17, 48]} /><meshBasicMaterial color="#ffd9a0" transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
+      <group ref={ring} position={[0, 9, -16]}>
+        {/* stencil mask: the torn opening */}
+        <mesh renderOrder={0}><circleGeometry args={[17.5, 64]} /><meshBasicMaterial colorWrite={false} depthWrite={false} stencilWrite stencilRef={1} stencilFunc={THREE.AlwaysStencilFunc} stencilZPass={THREE.ReplaceStencilOp} /></mesh>
+        {!dest && <mesh><circleGeometry args={[17, 48]} /><meshBasicMaterial color="#ffd9a0" transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>}
+        {/* chromatic energy rim */}
+        <mesh renderOrder={2}><planeGeometry args={[56, 56]} /><shaderMaterial ref={rimMat} uniforms={rimU} vertexShader={RIM_VERT} fragmentShader={RIM_FRAG} transparent depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} /></mesh>
       </group>
+      {dest && <DestWindow>{dest}</DestWindow>}
       {/* drifting bedrock voxels */}
       <group ref={shards}>{rocks.map((k, i) => (
         <mesh key={i} position={k.p}><boxGeometry args={[k.s, k.s, k.s]} /><meshStandardMaterial color={k.c} emissive="#f7931a" emissiveIntensity={0.08} roughness={0.9} /></mesh>

@@ -339,7 +339,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
   const scene = episode.scenes[index];
   if (!scene) return null;
   return (
-    <SafeCanvas dpr={[1, 1.5]} camera={{ fov: 40, position: [40, 30, 40] }} gl={{ antialias: true, preserveDrawingBuffer: true }}>
+    <SafeCanvas dpr={[1, 1.5]} camera={{ fov: 40, position: [40, 30, 40] }} gl={{ antialias: true, preserveDrawingBuffer: true, stencil: true }}>
       {scene.set && (BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg) ? <><color attach="background" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg ?? "#000")]} /><fog attach="fog" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg ?? "#000"), 90, 260]} /></>
       : scene.set === "oasis" ? <><color attach="background" args={["#8fd3f4"]} /><fog attach="fog" args={["#8fd3f4", 80, 240]} /></> : <>
         <color attach="background" args={[scene.set === "beach" ? "#8f9aa3" : scene.set ? "#8fd3f4" : "#7fc8e8"]} />
@@ -352,7 +352,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
         : scene.set === "batcave" ? <BatcaveSet timeRef={timeRef} />
         : scene.set === "chinatown" ? <ChinatownSet timeRef={timeRef} />
         : scene.set === "vault" ? <VaultSet timeRef={timeRef} />
-        : scene.set === "portal" ? <PortalSplatSet block={scene.block} timeRef={timeRef} />
+        : scene.set === "portal" ? <PortalSplatSet block={scene.block} timeRef={timeRef} dest={(() => { const n = episode.scenes[index + 1]?.set; return n?.startsWith("b-") ? <BiternamRoomSet room={n.slice(2)} timeRef={timeRef} /> : n === "cafe" ? <CafeSet timeRef={timeRef} /> : n === "batcave" ? <BatcaveSet timeRef={timeRef} /> : n === "chinatown" ? <ChinatownSet timeRef={timeRef} /> : n === "vault" ? <VaultSet timeRef={timeRef} /> : null; })()} />
         : scene.set === "beach" ? <BeachSet timeRef={timeRef} />
         : scene.set === "studio" || scene.set === "rift" ? <StudioSet key={`set-${index}`} timeRef={timeRef} localRef={progressRef} rift={scene.set === "rift"} />
         : scene.set === "oasis" ? <group><group position-z={-30}><OasisWorld timeRef={timeRef} /></group>
