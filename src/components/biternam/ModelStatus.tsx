@@ -47,10 +47,10 @@ export function ModelSlot({ url, size, label, children, compact }: {
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
   const retry = () => { useGLTF.clear(url); setFailed(false); setAttempt((a) => a + 1); };
-  if (failed) return <StatusMarker state="unavailable" size={size} label={label} onRetry={retry} compact={compact} />;
+  if (failed) return <StatusMarker state="unavailable" size={size} label={label} onRetry={retry} {...(compact ? { compact } : {})} />;
   return (
     <Catch key={attempt} onFail={() => setFailed(true)}>
-      <Suspense fallback={<StatusMarker state="loading" size={size} label={label} compact={compact} />}>
+      <Suspense fallback={<StatusMarker state="loading" size={size} label={label} {...(compact ? { compact } : {})} />}>
         {children({ onEmpty: () => setFailed(true) })}
       </Suspense>
     </Catch>
