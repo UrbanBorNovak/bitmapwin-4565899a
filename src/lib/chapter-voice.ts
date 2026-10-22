@@ -72,10 +72,12 @@ export function speakRadio(text: string, speaker: string, maxSecs: number): () =
   squelch();
   const stopBed = radioBed(Math.max(1, maxSecs - 0.2));
   const u = new SpeechSynthesisUtterance(text);
-  const v = voiceFor(speaker), voices = synth.getVoices().filter((x) => x.lang.startsWith("en"));
+  const zh = /[\u4e00-\u9fff]/.test(text);
+  if (zh) u.lang = "zh-CN";
+  const v = voiceFor(speaker), voices = synth.getVoices().filter((x) => x.lang.startsWith(zh ? "zh" : "en"));
   if (voices.length) u.voice = voices[v.pick % voices.length] ?? null;
-  // Speed up long lines so they finish before the subtitle leaves (~2.6 words/s at rate 1).
-  const words = text.trim().split(/\s+/).length;
+  // Speed up long lines so they finish before the subtitle leaves (~2.6 words/s at rate 1; ~2 Chinese characters per word).
+  const words = zh ? Math.ceil(text.replace(/[^\u4e00-\u9fff]/g, "").length / 2) : text.trim().split(/\s+/).length;
   const fit = words / (2.6 * Math.max(0.8, maxSecs - 0.3));
   u.pitch = v.pitch; u.rate = Math.min(1.7, Math.max(v.rate, fit)); u.volume = 0.9;
   u.onend = () => { stopBed(); squelch(0.08); };

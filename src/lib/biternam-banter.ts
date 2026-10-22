@@ -199,7 +199,22 @@ const words5 = (raw: string) => {
   const out = w.join(" ");
   return out[0]!.toUpperCase() + out.slice(1) + end;
 };
-/** The video's joke: same (height, seed) → same arc. */
-export function jokeArc(h: number, s: number): string[] { return pick(JOKE_ARCS as unknown as string[], rnd(h, s, 11) as number) as unknown as string[]; }
+export type JokeLang = "en" | "zh";
+/** Chinese versions of JOKE_ARCS, same order and beat count (short, one sentence each). */
+export const JOKE_ARCS_ZH: string[][] = [
+  ["查克·诺里斯从不查区块。", "区块会自己向他汇报。", "他把创世块挖了两次。", "中本聪找他要签名。", "他用零聪做了除法。", "零聪还得给他交租。"],
+  ["查克·诺里斯不持有私钥。", "私钥紧紧抓着他。", "他弄丢过助记词。", "助记词自己找回了他。", "它用十六进制道歉。", "然后它自我托管了。"],
+  ["查克·诺里斯跳过内存池。", "内存池排队等他。", "他一瞪眼手续费就降。", "他零个区块就确认。", "矿工都叫他老大。", "难度为他调整了。"],
+  ["查克·诺里斯数过所有比特币。", "两千一百万，数了两遍。", "第二遍更快。", "他多找到一聪。", "没人敢跟他争。", "现在正好两千一百万。"],
+  ["查克·诺里斯熬过每次减半。", "减半反而怕他。", "奖励出于尊敬翻倍了。", "矿工马上不哭了。", "K线开始做俯卧撑。", "熊现在全年冬眠。"],
+  ["查克·诺里斯铭刻了这个区块。", "用的是回旋踢。", "那一聪再也没动过。", "铭文改名叫查克文。", "Rodarmor 只是慢慢点头。", "每块地都归他。"],
+  ["查克·诺里斯不运行节点。", "节点见他就跑。", "他验证了整条链。", "只用了他的胡子。", "胡子找到一个漏洞。", "漏洞申请了破产。"],
+  ["查克·诺里斯试过冷存储。", "冰箱跪地求饶。", "现在他的币很暖和。", "小偷反过来给他打赏。", "他连本带利退回去。", "利率吓坏了。"],
+];
+/** The video's joke: same (height, seed) → same arc, in the chosen language. */
+export function jokeArc(h: number, s: number, lang: JokeLang = "en"): string[] {
+  const i = JOKE_ARCS.indexOf(pick(JOKE_ARCS as unknown as string[], rnd(h, s, 11) as number) as unknown as string[]);
+  return lang === "zh" ? JOKE_ARCS_ZH[i]! : JOKE_ARCS[i]!;
+}
 /** Cap any spoken line to one sentence of at most five words. */
 export function shortLine(s: string): string { return words5(s.split(/(?<=[.!?])\s/)[0] ?? s); }

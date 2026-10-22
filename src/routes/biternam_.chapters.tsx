@@ -65,9 +65,10 @@ function ChaptersPage() {
   useEffect(() => { setTitle(existing?.title ?? defaultTitle(f, sug)); setQuote(existing?.quote ?? defaultQuote(f, sug)); setMsg(null); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, facts.data?.txCount, existing?.title, chosenSet, seed, species]);
-  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f, sug), quote || defaultQuote(f, sug), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown, seed, camera }),
+  const [jokeLang, setJokeLang] = useState<"en" | "zh">("en");
+  const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f, sug), quote || defaultQuote(f, sug), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown, seed, camera, lang: jokeLang }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown, seed, camera]);
+    [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown, seed, camera, jokeLang]);
   const INTRO = 3, OUTRO = 4;
   const body = episodeLength(episode), total = INTRO + body + OUTRO;
   const [time, setTime] = useState(0);
@@ -235,6 +236,7 @@ function ChaptersPage() {
             )}
           </div>
           <button onClick={() => setMuted((m) => !m)} aria-pressed={!muted} className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10">{muted ? "[ SOUND OFF ]" : "[ SOUND ON ]"}</button>
+          <button onClick={() => setJokeLang((l) => (l === "en" ? "zh" : "en"))} disabled={recState === "recording"} aria-label="Joke language" aria-pressed={jokeLang === "zh"} data-no-translate className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10 disabled:opacity-50">{jokeLang === "zh" ? "[ JOKES · 中文 ]" : "[ JOKES · EN ]"}</button>
           <button onClick={() => setPortrait((v) => !v)} disabled={recState === "recording"} aria-pressed={portrait} className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10 disabled:opacity-50">{portrait ? "[ ▯ 9:16 PORTRAIT ]" : "[ ▭ 16:9 WIDE ]"}</button>
           <button onClick={() => void record()} disabled={recState === "recording"} className="mt-2 mr-3 rounded border border-bitcoin px-2 py-0.5 font-mono text-[11px] text-bitcoin hover:bg-bitcoin/10 disabled:opacity-50">{recState === "recording" ? "● RECORDING…" : "[ ● RECORD CLIP ]"}</button>
           {clip && <button onClick={() => void deliverClip(clip.blob, clip.name)} className="mt-2 mr-3 rounded border border-primary bg-primary px-2 py-0.5 font-mono text-[11px] text-primary-foreground">⬇ DOWNLOAD {clip.name.split(".").pop()?.toUpperCase()} · {(clip.blob.size / 1e6).toFixed(1)} MB</button>}

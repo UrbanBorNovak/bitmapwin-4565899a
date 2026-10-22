@@ -1,5 +1,5 @@
 import { cameraPlan, pickCoStars, pickExplorer, pickExtras, type CameraPreset } from "@/lib/biternam-cast";
-import { jokeArc, loreQuote, loreTitle, shortLine } from "@/lib/biternam-banter";
+import { jokeArc, loreQuote, loreTitle, shortLine, type JokeLang } from "@/lib/biternam-banter";
 import { rng, type BiternamRoom, type Music, type ToonEpisode, type ToonSet } from "@/lib/toon-script";
 
 /** Community Chronicles: a free, deterministic Biternam chapter built only from a block's own facts.
@@ -69,7 +69,7 @@ export function autoSet(f: BlockFacts): ChapterSet { const pool = AUTO_POOL[chap
 
 /** What actually exists on this BITMAP. A Guardian is cast only when one was really awakened for the block.
  * guardianUnknown = the lookup failed or is still running: no Guardian is drawn and none is claimed absent. */
-export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet; guardianUnknown?: boolean; seed?: number; camera?: CameraPreset };
+export type ChapterCast = { guardian: { species: string } | null; hasBuild: boolean; set?: ChapterSet; guardianUnknown?: boolean; seed?: number; camera?: CameraPreset; lang?: JokeLang };
 
 export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast: ChapterCast = { guardian: null, hasBuild: false }): ToonEpisode {
   const theme = chapterTheme(f), t = THEME[theme], h = f.height, seed = cast.seed ?? 0;
@@ -80,7 +80,7 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   const hero = cast.guardian
     ? { height: h, name: `${h}.bitmap · ${cast.guardian.species}` }
     : { height: h, ...pickExplorer(h, seed) };
-  const joke = jokeArc(h, seed);
+  const zh = cast.lang === "zh", joke = jokeArc(h, seed, cast.lang);
   const landSfx = cast.hasBuild ? "BUILT!" : theme === "halving" ? "HODL!" : "WHOOSH!";
   const roomFx = theme === "crowded" ? "bitmapwin/sparks-v1" : theme === "quiet" ? "bitmapwin/smoke-v1" : "bitmapwin/embers-v1";
   const techRoom = /batcave|vault|chinatown|arcade|lab|studio|void|fortress/.test(set);
@@ -106,7 +106,7 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
         fx: [{ id: "bitmapwin/sparks-v1", at: 2.4, x: 0, y: 6, z: -16, scale: 1.4 }],
         // Gate stands at z -16: the lead crosses it at ~2.4s, still striding, then the land fades and the room fills the view, so the room follows with no blackout.
         cast: [{ ...hero, x: 0, z: 2.5, pose: "walk", to: { x: 0, z: -22 }, moveStart: 0.2, moveEnd: 3.6 }],
-        lines: [{ at: 0.6, dur: 2.6, speaker: 0, text: "Step through the block.", style: "thought", cam: "wide" }] },
+        lines: [{ at: 0.6, dur: 2.6, speaker: 0, text: zh ? "穿过这个区块。" : "Step through the block.", style: "thought", cam: "wide" }] },
       { block: h, set, duration: 9, shot: cam.shots[1], transition: "cut", extras, sfx: "SATS!",
         fx: [...roomAmbient, { id: roomFx, at: 0, x: 0, y: 1, z: -2 }, { id: "bitmapwin/sparks-v1", at: 0.6, x: 3, y: 1.6, z: 0, scale: 0.6 }],
         // The lead arrives still mid-stride from the portal (same away-from-camera heading, turning toward the co-star) during the wide opening shot.
