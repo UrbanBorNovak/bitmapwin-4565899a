@@ -1,3 +1,4 @@
+import { GuideTrail } from "@/components/GuideTrail";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
@@ -351,6 +352,7 @@ function Land101() {
           </section>
         </Reveal>
       </div>
+      <GuideTrail current="/land-101" />
     </div>
   );
 }

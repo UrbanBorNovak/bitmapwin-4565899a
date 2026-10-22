@@ -1,3 +1,4 @@
+import { GuideTrail } from "@/components/GuideTrail";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { GUARDIAN_PRICE_SATS } from "@/lib/bitmon";
@@ -183,6 +184,7 @@ function GuardiansGuidePage() {
         <Link to="/mint" search={{ tab: "mine" }} hash="guardian-tracker" className="btn-term-ghost">{c.ctaTracker}</Link>
 
       </div>
+      <GuideTrail current="/guardians-guide" />
     </div>
   );
 }
