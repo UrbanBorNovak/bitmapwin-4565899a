@@ -1074,6 +1074,7 @@ function ForgePage() {
                   if (file) loadVoxelFile(file);
                 }} />
               </label>
+              <InfoTip text="BWVX is the Bitcoin voxel format: lightweight 3D blocks small enough to store directly on Bitcoin. .VOX is the common MagicaVoxel 3D file. Both load as buildable pieces." label="What are .BWVX and .VOX?" />
               <div className="flex items-center rounded border border-border" title="Floor level (Q/E) — only needed to build in mid-air">
                 <button type="button" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">−</button>
                 <span className="px-1 text-[10px] text-muted-foreground">LVL {layer}</span>
