@@ -112,7 +112,7 @@ export function HowItWorks() {
                 <div className="label mt-3 md:mt-4 w-fit border border-signal/40 px-2 py-0.5 text-signal">{step.tag}</div>
               )}
               <div className="display mt-2 md:mt-3 text-base">{step.title}</div>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+              <p className="mt-2 flex-1 text-sm leading-normal text-muted-foreground md:leading-relaxed">{step.body}</p>
               {"to" in step && (
                 <Link to={step.to} className="label mt-3 md:mt-4 text-bitcoin opacity-80 transition-opacity group-hover:opacity-100">
                   {step.cta} →
