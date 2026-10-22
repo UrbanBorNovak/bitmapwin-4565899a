@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha2.js";
 import { describe, expect, it } from "vitest";
 import { decodeNote, encodeNote, mintNote, ownerCommit, transferNote, verifyNote } from "./shadow-notes";
 
@@ -74,5 +75,39 @@ describe("handoff signatures", () => {
     const A = "a".repeat(64);
     const n = mintNote("Old", "memo", A); n.chain[0]!.to = legacyCommit(A);
     expect(() => transferNote({ note: n, secret: A }, ownerCommit("b".repeat(64)))).toThrow(/OLDER/);
+  });
+});
+
+import { recoveryFor, reissueNote } from "./shadow-notes";
+describe("recovery of older-format notes", () => {
+  const A = "a".repeat(64), B = "b".repeat(64);
+  const H = (x: string) => Array.from(sha256(new TextEncoder().encode(x)), (v) => v.toString(16).padStart(2, "0")).join("");
+  const legacyMint = (secret: string) => {
+    const at = "2026-10-01T00:00:00.000Z", to = legacyCommit(secret);
+    const genesis = H(`bitmapwin:note:genesis|memo|Old map|${at}|${to}`);
+    return { v: 1 as const, label: "Old map", kind: "memo", genesis, chain: [{ to, prev: genesis, at, hash: H(`bitmapwin:note:link|${genesis}|${to}|${at}`) }] };
+  };
+  it("reissues a self-minted, never-handed-on note when this device proves the secret", () => {
+    const old = legacyMint(A);
+    expect(recoveryFor({ note: old, secret: A }).state).toBe("reissuable");
+    const fresh = reissueNote({ note: old, secret: A }, B);
+    expect(noteStatus(fresh.note)).toBe("intact");
+    expect(fresh.note.reissuedFrom).toBe(old.genesis);
+    expect(fresh.note.chain[0]!.to).toBe(ownerCommit(B));
+  });
+  it("marks notes received over old handoffs as stranded and refuses to reissue", () => {
+    const n = mintNote("Got it", "memo", A);
+    const held = { note: { ...n, chain: [...n.chain, { ...n.chain[0]!, to: legacyCommit(B), auth: A }] }, secret: B };
+    expect(recoveryFor(held).state).toBe("stranded");
+    expect(() => reissueNote(held)).toThrow();
+  });
+  it("refuses when the device secret doesn't match", () => {
+    const old = legacyMint(A);
+    expect(recoveryFor({ note: old, secret: B }).state).toBe("stranded");
+  });
+  it("binds the replaced note's origin into the new history", () => {
+    const n = mintNote("Old", "memo", B, undefined, "f".repeat(64));
+    expect(noteStatus(n)).toBe("intact");
+    expect(noteStatus({ ...n, reissuedFrom: "e".repeat(64) })).toBe("broken");
   });
 });

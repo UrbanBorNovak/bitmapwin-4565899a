@@ -77,6 +77,7 @@ export function RelicInspector() {
               <div className="mt-1 text-muted-foreground">
                 {res.note.chain.length - 1} handoffs · origin <span data-no-translate>{short(res.note.genesis)}</span>
               </div>
+              {res.note.reissuedFrom ? <div className="mt-1 text-muted-foreground">Reissued from older note <span data-no-translate>{short(res.note.reissuedFrom)}</span> · earlier history not carried over</div> : null}
               <ul className="mt-2 space-y-0.5 font-sans text-[12px] text-muted-foreground">
                 <li>{res.status === "intact" ? "✓ History: every link checks out and each handoff is signed by the holder before it. No secrets are inside the note." : res.status === "legacy" ? "⚠ History: links are unaltered, but it was handed on before signed handoffs, and its old sign-off exposed a past holder's secret, so anyone who saw it could rewrite it. The vault won't accept it." : "✗ History: a link was changed or a handoff lacks the holder's sign-off."}</li>
                 <li>– Ownership: not proven here. Only the device holding the latest secret can accept or pass it on.</li>
