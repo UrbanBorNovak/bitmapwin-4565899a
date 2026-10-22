@@ -21,8 +21,8 @@ const WORLD_STEPS = [
   {
     n: "03",
     title: "FORGE & ARCHITECTURE",
-    tag: "BWVX VOXELS",
-    body: "Build voxel structures in Land Forge, packed at 4 bytes per block and inscribed onto the BITMAP's own satoshi.",
+    tag: "3D BLOCKS ON BITCOIN",
+    body: "Build voxel structures in Land Forge, saved in a lightweight Bitcoin voxel format (4 bytes per block) and permanently etched onto the BITMAP's own sat.",
     to: "/forge",
     cta: "OPEN LAND FORGE",
   },

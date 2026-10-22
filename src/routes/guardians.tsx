@@ -37,11 +37,11 @@ export const Route = createFileRoute("/guardians")({
 
 const SPECS: [string, string, string][] = [
   ["SUPPLY", "1 PER BITCOIN BLOCK", "Hard ceiling set by Bitcoin itself. The first paid Guardian for a block is the only one, ever."],
-  ["PARENTS", "DUAL TAG 3", "The first-is-first <height>.bitmap, checked against the on-chain Bitmap index, plus the V6 master."],
-  ["RENDERER", "TAG 11 DELEGATE", "Every Guardian borrows one master inscription (#127,507,146). The code is inscribed once, never copied."],
+  ["PARENTS", "TWO ON-CHAIN PARENTS", "Officially linked on Bitcoin to its own <height>.bitmap (the first one, checked against the live index read from raw block data) and to the master Guardian."],
+  ["RENDERER", "ONE SHARED ENGINE", "Every Guardian borrows its drawing code from one master inscription (#127,507,146). The code is inscribed once, never copied."],
   ["DNA", "READ FROM THE BLOCK", "Hash, transaction count, size and era decide body, colours, stats and rarity. Same block, same creature."],
   ["TRIBUTE", `${TRIBUTE_SATS.toLocaleString()} SATS · PROVEN`, "The engine decodes the reveal transaction itself and only wakes if the tribute output is really there."],
-  ["SHIELDED MINT", `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS + FEE`, "Optional route into BITMAPWIN's own pool. Withdraw any time with your browser-held key."],
+  ["SHIELDED MINT", `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS + FEE`, "Optional private route: a zero-knowledge pass proves the Guardian is yours without showing your wallet history. Withdraw any time with the key kept in your browser."],
   ["METADATA", "ZERO OFF-CHAIN", "No JSON, no trait files. Every trait is computed live from Bitcoin data."],
   ["STORAGE", "100% BITCOIN L1", "No IPFS, no CDN, no servers. If ordinals.com and Bitcoin exist, the Guardian exists."],
 ];

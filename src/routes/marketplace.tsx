@@ -448,7 +448,7 @@ function Marketplace() {
 
         <dl data-tour="market-stats" className="mt-5 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
           <div className="bg-card p-3 md:p-4">
-            <dt className="label">REGISTERED</dt>
+            <dt className="label" title="Live index verified from raw Bitcoin block data">REGISTERED</dt>
             <dd className="mt-1 font-mono text-base font-bold text-signal md:text-lg" data-no-translate>
               {liveOci.data
                 ? liveOci.data.total.toLocaleString("en-US")
