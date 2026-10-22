@@ -3,12 +3,38 @@ import { useEffect, useState } from "react";
 
 const SEEN_KEY = "bitmapwin.guides.read";
 
+// Mobile names stay short so a step never wraps; full titles show from sm up.
 const STEPS = [
-  { to: "/land-101", label: "LAND 101", note: "What a BITMAP is" },
-  { to: "/guardians-guide", label: "GUARDIANS GUIDE", note: "How a block becomes a Guardian" },
-  { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls and what to do" },
-  { to: "/oasis", label: "ENTER THE OASIS", note: "Walk the world" },
+  {
+    to: "/land-101",
+    label: "LAND 101",
+    short: "LAND 101",
+    note: "What a BITMAP is",
+  },
+  {
+    to: "/guardians-guide",
+    label: "GUARDIANS GUIDE",
+    short: "GUARDIANS",
+    note: "How a block becomes a Guardian",
+  },
+  {
+    to: "/play-guide",
+    label: "PLAYER GUIDE",
+    short: "PLAYER",
+    note: "Controls and what to do",
+  },
+  { to: "/oasis", label: "ENTER THE OASIS", short: "OASIS", note: "Walk the world" },
 ] as const;
+
+/** Step title: compact on phones, full from sm up. */
+function StepName({ step }: { step: (typeof STEPS)[number] }) {
+  return (
+    <>
+      <span className="sm:hidden">{step.short}</span>
+      <span className="hidden sm:inline">{step.label}</span>
+    </>
+  );
+}
 
 type Current = "/land-101" | "/guardians-guide" | "/play-guide";
 
