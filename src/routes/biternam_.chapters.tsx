@@ -143,7 +143,7 @@ function ChaptersPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div>
-          <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-card">
+          <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-card" style={{ containerType: "inline-size" }}>
             <div className="vhs-tape absolute inset-0" style={{ filter: `${styleFilter(episode.style)} saturate(1.25) contrast(1.08) sepia(0.12)` }}>
               <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
                 <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
