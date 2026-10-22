@@ -44,6 +44,11 @@ describe("cast only what exists", () => {
     expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "b-museum" }).scenes[2]!.set).toBe("b-museum");
     expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "batcave" }).scenes[2]!.set).toBe("batcave");
   });
+  it("portal crossing into the room has no blackout", () => {
+    const sc = chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "cafe" }).scenes;
+    expect(sc[1]!.set).toBe("portal");
+    expect(sc[2]!.transition ?? "cut").toBe("cut");
+  });
 });
 import { pickCoStars } from "./biternam-cast";
 describe("random cast and cameras", () => {
