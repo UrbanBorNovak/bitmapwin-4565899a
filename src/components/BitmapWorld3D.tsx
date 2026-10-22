@@ -5054,7 +5054,7 @@ function BitmapWorld3DInner({
                     ? "CLICK / E · LAY A TRAP ON THE GROUND"
                     : "CLICK / E · FIRE · R · RELOAD"}
             </div>
-            {cameraMode === "third" ? (
+            {cameraMode !== "first" && cameraMode !== "map" ? (
               <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>
             ) : null}
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
