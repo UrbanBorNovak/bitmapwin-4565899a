@@ -14,18 +14,18 @@ function inspect(code: string): Result {
   const note = decodeNote(code);
   if (note) return { kind: "note", note, valid: verifyNote(note) };
   const pass = importPass(code);
-  if (pass) return { kind: "pass", slug: pass.slug, commitment: pass.commitment, handle: shadowHandle(pass.nullifier) };
+  if (pass && /^[a-z0-9-]{1,64}$/.test(pass.slug) && /^[0-9a-f]{128}$/.test(pass.salt + pass.nullifierSecret)) return { kind: "pass", slug: pass.slug, commitment: pass.commitment, handle: shadowHandle(pass.nullifier) };
   const recv = parseReceiveCode(code);
   if (recv) return { kind: "recv", ...recv };
   return { kind: "bad" };
 }
 
 const STEPS = [
-  ["1 · YOUR DEVICE MAKES A SECRET", "When you claim a pass or relic, your browser creates a random secret. It never leaves this device."],
-  ["2 · BITMAPWIN SEES ONLY A FINGERPRINT", "We store a one-way fingerprint (a hash) of that secret. It can't be turned back into the secret, your wallet or your account."],
+  ["1 · YOUR DEVICE MAKES A SECRET", "When you claim a pass or relic, your browser creates a random secret and keeps it on this device. The only time it is sent is a pass handoff, which uses it once to retire your old copy."],
+  ["2 · BITMAPWIN SEES ONLY A FINGERPRINT", "For passes we store a one-way fingerprint (a hash) of that secret; vault notes are not stored at all. It can't be turned back into the secret, your wallet or your account."],
   ["3 · YOU PROVE ACCESS, NOT IDENTITY", "To enter a private room, your device shows it knows the secret behind a stored fingerprint. Nobody learns which wallet you use."],
   ["4 · A PEN NAME PER ROOM", "Each room gives you a separate pen name, so your activity in one room can't be matched with another."],
-  ["5 · GIVE IT AWAY PRIVATELY", "The receiver shares a receive code. The pass moves to them and your copy stops working. No wallet transfer appears on Bitcoin."],
+  ["5 · GIVE IT AWAY PRIVATELY", "The receiver shares a receive code. A pass moves to them and BITMAPWIN stops accepting your old copy. Vault notes are checked only on devices, so a sender who kept a copy could still give the same note twice. No wallet transfer appears on Bitcoin."],
 ];
 
 /** Plain-language explainer plus an on-device checker for pasted shadow codes. */
