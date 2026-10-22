@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha2.js";
 import { describe, expect, it } from "vitest";
 import { decodeNote, encodeNote, mintNote, ownerCommit, transferNote, verifyNote } from "./shadow-notes";
 
@@ -80,18 +81,19 @@ describe("handoff signatures", () => {
 import { recoveryFor, reissueNote } from "./shadow-notes";
 describe("recovery of older-format notes", () => {
   const A = "a".repeat(64), B = "b".repeat(64);
+  const H = (x: string) => Array.from(sha256(new TextEncoder().encode(x)), (v) => v.toString(16).padStart(2, "0")).join("");
   const legacyMint = (secret: string) => {
-    // Rebuild an old-format note: sealed to sha256 commitment, genesis over it.
-    const n = mintNote("Old map", "memo", secret);
-    const fresh = structuredClone(n);
-    fresh.chain[0]!.to = legacyCommit(secret);
-    return fresh;
+    const at = "2026-10-01T00:00:00.000Z", to = legacyCommit(secret);
+    const genesis = H(`bitmapwin:note:genesis|memo|Old map|${at}|${to}`);
+    return { v: 1 as const, label: "Old map", kind: "memo", genesis, chain: [{ to, prev: genesis, at, hash: H(`bitmapwin:note:link|${genesis}|${to}|${at}`) }] };
   };
   it("reissues a self-minted, never-handed-on note when this device proves the secret", () => {
     const old = legacyMint(A);
-    // structural check uses genesis over first.to, so re-hash for a realistic legacy note
-    const r = recoveryFor({ note: old, secret: A });
-    expect(r.state === "reissuable" || r.state === "stranded").toBe(true);
+    expect(recoveryFor({ note: old, secret: A }).state).toBe("reissuable");
+    const fresh = reissueNote({ note: old, secret: A }, B);
+    expect(noteStatus(fresh.note)).toBe("intact");
+    expect(fresh.note.reissuedFrom).toBe(old.genesis);
+    expect(fresh.note.chain[0]!.to).toBe(ownerCommit(B));
   });
   it("marks notes received over old handoffs as stranded and refuses to reissue", () => {
     const n = mintNote("Got it", "memo", A);
