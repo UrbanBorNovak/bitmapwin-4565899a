@@ -134,23 +134,32 @@ function Index() {
               <div className="mt-5 grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:gap-6">
                 <div className="max-w-xl">
                   <p className="max-w-2xl text-sm leading-relaxed text-foreground sm:text-base">
-                    You own a piece of Bitcoin. Now make something happen there.
+                    Bitcoin-native worlds built from real block data.
                   </p>
-                  <MintPointer />
-                  <DailyStreak />
-                  <LandPromptTerminal />
+                  <div data-tour="home-flow" className="mt-5 grid gap-px sm:grid-cols-2">
+                    <Link to="/oasis" className="btn-term min-h-14 w-full flex-col items-start justify-center text-left">
+                      <span>STEP INTO THE WORLD →</span>
+                      <span className="mt-1 font-sans text-[11px] font-normal normal-case opacity-80">Explore live BITMAP territory. No wallet required.</span>
+                    </Link>
+                    <Link to="/forge" className="btn-term-ghost min-h-14 w-full flex-col items-start justify-center text-left">
+                      <span>BUILD IN THE FORGE →</span>
+                      <span className="mt-1 font-sans text-[11px] font-normal normal-case text-muted-foreground">Place voxel architecture on your BITMAP.</span>
+                    </Link>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <Link to="/guardians" className="group border border-border/60 p-3 hover:border-signal">
+                      <div className="font-mono text-[11px] font-bold text-signal">MEET GUARDIANS & BLOCK MATTER →</div>
+                      <p className="mt-1 text-xs text-muted-foreground">See how verified block data becomes creature identity and traits.</p>
+                    </Link>
+                    <Link to="/registry" className="group border border-border/60 p-3 hover:border-signal">
+                      <div className="font-mono text-[11px] font-bold text-signal">EXPLORE THE BITMAP REGISTRY →</div>
+                      <p className="mt-1 text-xs text-muted-foreground">Read provenance, territory facts and market activity.</p>
+                    </Link>
+                  </div>
+                  <p className="mt-4 font-mono text-[10px] text-muted-foreground">
+                    Live Bitcoin blocks become territory, architecture, identity and useful objects.
+                  </p>
                   <MobileAppInstall />
-                  <div data-tour="home-flow" className="mt-4 grid gap-px sm:flex sm:flex-wrap">
-                    <Link to="/oasis" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">ENTER THE WORLD</Link>
-                    <Link to="/play" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">PLAY YOUR BITMAP</Link>
-                    <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">OPEN PASSPORT</Link>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs font-bold">
-                    <Link to="/forge" className="text-bitcoin hover:text-foreground">LAND FORGE →</Link>
-                    <Link to="/parcel" className="text-bitcoin hover:text-foreground">PARCEL STUDIO →</Link>
-                    <Link to="/extenders" className="text-bitcoin hover:text-foreground">EXPERIENCES →</Link>
-                    <Link to="/create" className="text-bitcoin hover:text-foreground">CREATION →</Link>
-                  </div>
                 </div>
 
 
