@@ -88,7 +88,7 @@ export function GuideTrail({ current }: { current: Current }) {
                   )}
                 </div>
                 <div className={`label mt-1 ${state === "here" ? "text-bitcoin" : "text-foreground"}`}>
-                  {s.label}
+                  <StepName step={s} />
                 </div>
                 <div className={`mt-0.5 text-xs text-muted-foreground ${state === "here" ? "" : "hidden sm:block"}`}>
                   {s.note}
