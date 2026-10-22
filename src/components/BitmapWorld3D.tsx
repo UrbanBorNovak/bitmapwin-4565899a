@@ -418,7 +418,7 @@ const EMPTY_OWNERS: Map<number, string> = new Map();
 const EMPTY_MODELS: BitmapModel[] = [];
 
 type CameraMove = "mined" | "full" | "tip" | "visit";
-type CameraMode = "map" | "third" | "first" | "topdown";
+type CameraMode = "map" | "third" | "first" | "topdown" | "diorama";
 type HoveredDistrict = { height: number; x: number; y: number };
 type SelectedDistrict = { height: number; owner: string | null };
 
@@ -2384,6 +2384,13 @@ function PlayerCameraRig({
       cameraTarget.current.set(player.x, g + AVATAR_U * 42, player.z - AVATAR_U * 9);
       cameraLook.current.set(player.x, g, player.z);
     }
+    // 2.5D diorama: Biternam-style fixed tilt — a long, narrow lens from a
+    // constant south-high angle that never rotates with the avatar.
+    if (mode === "diorama" && dropCam.current < 0.5) {
+      const g = groundY(player.x, player.z) + player.y;
+      cameraTarget.current.set(player.x, g + AVATAR_U * 22, player.z - AVATAR_U * 26);
+      cameraLook.current.set(player.x, g + AVATAR_U * 0.8, player.z);
+    }
     // Landmark establishing shots: first visit to a key building detaches the
     // camera for a few seconds; any movement key skips it.
     const nowS = clock.elapsedTime;
@@ -2446,7 +2453,7 @@ function PlayerCameraRig({
     const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
     // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
-      ((mode === "first" ? 72 : mode === "topdown" ? 34 : 56) +
+      ((mode === "first" ? 72 : mode === "topdown" ? 34 : mode === "diorama" ? 26 : 56) +
         gait * (mode === "first" ? 3.5 : 4.8) -
         land.current * (mode === "first" ? 4.2 : 3.8) +
         dropCam.current * (dropState().phase === "freefall" ? 16 : 10)) *
@@ -3271,7 +3278,7 @@ const WorldScene = memo(function WorldScene({
       ) : null}
 
       {cameraMode !== "map" ? <GuardianMount unit={AVATAR_U} pose={pose} /> : null}
-      {(cameraMode === "third" || cameraMode === "topdown") && (!driving || rideIsWorn(ride.id) || ride.id === "cyberpunk-genesis-dog") ? (
+      {(cameraMode === "third" || cameraMode === "topdown" || cameraMode === "diorama") && (!driving || rideIsWorn(ride.id) || ride.id === "cyberpunk-genesis-dog") ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
@@ -3646,7 +3653,7 @@ function BitmapWorld3DInner({
       }
       // O changes perspective; C belongs to chat in the minimal HUD.
       if (key === "o") {
-        setCameraMode((current) => (current === "first" ? "third" : current === "third" ? "topdown" : "first"));
+        setCameraMode((current) => (current === "first" ? "third" : current === "third" ? "topdown" : current === "topdown" ? "diorama" : "first"));
         return;
       }
       if (key === "p") {
@@ -4963,7 +4970,7 @@ function BitmapWorld3DInner({
 
         {/* VISUAL MODS — locked looks plus brief random anomaly surges. */}
         <WorldVisualMod />
-        {cameraMode === "topdown" ? <div className="pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 font-mono text-[10px] tracking-[0.2em] text-signal">2D VIEW · O TO CYCLE</div> : null}
+        {cameraMode === "topdown" || cameraMode === "diorama" ? <div className="pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 font-mono text-[10px] tracking-[0.2em] text-signal">{cameraMode === "diorama" ? "2.5D VIEW" : "2D VIEW"} · O TO CYCLE</div> : null}
 
         {/* DAMAGE — a bite or a bullet is felt: red edges, a kick, a heartbeat. */}
         {exploring ? (
@@ -5230,6 +5237,22 @@ function BitmapWorld3DInner({
             onClick={() => setCameraMode("topdown")}
           >
             <span className="font-mono text-xs">2D</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="2.5D fixed-tilt camera"
+            aria-pressed={cameraMode === "diorama"}
+            title="2.5D fixed-tilt camera"
+            className={
+              cameraMode === "diorama"
+                ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90"
+                : "rounded-sm text-muted-foreground"
+            }
+            onClick={() => setCameraMode("diorama")}
+          >
+            <span className="font-mono text-xs">2.5D</span>
           </Button>
           <VisualModControls />
           <Button
@@ -5640,7 +5663,7 @@ function BitmapWorld3DInner({
               large
               label={cameraMode === "first" ? "First person view (O)" : "Third person view (O)"}
               icon={cameraMode === "first" ? <Eye /> : <Orbit />}
-              onClick={() => setCameraMode((current) => (current === "first" ? "third" : current === "third" ? "topdown" : "first"))}
+              onClick={() => setCameraMode((current) => (current === "first" ? "third" : current === "third" ? "topdown" : current === "topdown" ? "diorama" : "first"))}
             />
             <HudIconButton large label="Chat (C)" icon={<MessageSquare />} onClick={() => setChatOpen(true)} />
             <div className="oasis-extra-tools contents"><HudIconButton
