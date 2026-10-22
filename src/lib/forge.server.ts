@@ -72,16 +72,35 @@ export function parseForgeHtml(html: string): { archetype: string | null; data: 
 export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | null> {
   const hit = cache.get(height);
   if (hit && hit.expires > Date.now()) return hit.value;
-  const put = (value: ForgeBuild | null) => (cache.set(height, { expires: Date.now() + TTL, value }), value);
+  const put = (value: ForgeBuild | null) => (cache.set(height, { expires: Date.now() + (value ? TTL : 60_000), value }), value);
+  const live = await liveForgeBuild(height).catch(() => null);
+  return put(live ?? (await directoryForgeBuild(height)));
+}
 
+/**
+ * Fallback when the sat walk is rate-limited: re-read the inscription this
+ * BITMAP's build was last chain-verified as, straight from its on-chain content.
+ */
+async function directoryForgeBuild(height: number): Promise<ForgeBuild | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.from("bitmap_forge_builds").select("inscription_id, sat").eq("bitmap_height", height).maybeSingle();
+    if (!data?.inscription_id) return null;
+    return await firstForge([data.inscription_id], height, data.sat ?? null);
+  } catch {
+    return null;
+  }
+}
+
+async function liveForgeBuild(height: number): Promise<ForgeBuild | null> {
   let parent: string | null = null;
   try {
     const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
     parent = (await locateBitmapHolder(height)).inscriptionId;
   } catch {
-    return put(null);
+    return null;
   }
-  if (!parent) return put(null);
+  if (!parent) return null;
 
   const ids: string[] = [];
   let sat: string | null = null;
@@ -100,7 +119,7 @@ export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | 
     const all = list ? ((await list.json().catch(() => null)) as { ids?: string[] } | null) : null;
     for (const id of [...(all?.ids ?? [])].reverse()) if (id !== parent && !satIds.includes(id)) satIds.push(id);
     const hit = await firstForge(satIds.slice(0, 8), height, sat);
-    if (hit) return put(hit);
+    if (hit) return hit;
   }
   for (let page = 0; page < 4; page++) {
     const r = await ord(`/r/children/${parent}/inscriptions/${page}`);
@@ -109,7 +128,7 @@ export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | 
     for (const c of j.children ?? []) if (c?.id) ids.push(c.id);
     if (!j.more) break;
   }
-  return put(await firstForge(ids.reverse().slice(0, 12), height, null));
+  return firstForge(ids.reverse().slice(0, 12), height, null);
 }
 
 async function firstForge(ids: string[], height: number, sat: string | null): Promise<ForgeBuild | null> {
