@@ -128,7 +128,6 @@ const pos = new THREE.Vector3();
 const scl = new THREE.Vector3();
 const wq = new THREE.Quaternion();
 const weul = new THREE.Euler();
-const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
 
 function useInstanced(boxes: () => Box[], count: number) {
   const geometry = useMemo(() => bake(boxes()), [boxes]);
@@ -191,14 +190,17 @@ export const SeaLife = memo(function SeaLife({
     // swimmers orbit along a ring; heading is the ring tangent
     const swim = (mesh: THREE.InstancedMesh | null, list: Swimmer[], lift: (w: Swimmer, i: number) => [number, number]) => {
       if (!mesh) return;
+      // Only animals near the visitor are packed into the draw; far ones cost nothing.
+      let k = 0;
       list.forEach((w, i) => {
         const a = w.a + t * w.speed;
         const [x, z] = ringPoint(w.sea, a, w.r);
-        if (!near(x, z)) { mesh.setMatrixAt(i, HIDDEN); return; }
+        if (!near(x, z)) return;
         const [nx, nz] = ringPoint(w.sea, a + 0.01 * Math.sign(w.speed || 1), w.r);
         const [y, pitch] = lift(w, i);
-        place(mesh, i, x, y, z, Math.atan2(nx - x, nz - z), pitch, 0, w.size);
+        place(mesh, k++, x, y, z, Math.atan2(nx - x, nz - z), pitch, 0, w.size);
       });
+      mesh.count = k;
       mesh.instanceMatrix.needsUpdate = true;
     };
     swim(refs.d.current, dolphins, (w) => {
@@ -216,27 +218,28 @@ export const SeaLife = memo(function SeaLife({
     });
     const crabMesh = refs.c.current;
     if (crabMesh) {
-      crabs.forEach((w, i) => {
+      let k = 0;
+      crabs.forEach((w) => {
         // sideways scuttle back and forth along the coast, with pauses
         const cyc = Math.sin(t * 0.5 + w.phase);
         const a = w.a + Math.sign(cyc) * Math.min(1, Math.abs(cyc) * 1.5) * 0.004;
         const [x, z] = ringPoint(w.sea, a, w.r);
-        if (!near(x, z)) { crabMesh.setMatrixAt(i, HIDDEN); return; }
+        if (!near(x, z)) return;
         const outward = Math.atan2(x - w.sea.x, z - w.sea.z);
         const bob = Math.abs(Math.sin(t * 9 + w.phase)) * w.size * 0.05 * Math.min(1, Math.abs(cyc) * 3);
-        place(crabMesh, i, x, Math.max(surface, groundY(x, z)) + bob, z, outward + Math.PI, 0, Math.sin(t * 9 + w.phase) * 0.06, w.size);
+        place(crabMesh, k++, x, Math.max(surface, groundY(x, z)) + bob, z, outward + Math.PI, 0, Math.sin(t * 9 + w.phase) * 0.06, w.size);
       });
+      crabMesh.count = k;
       crabMesh.instanceMatrix.needsUpdate = true;
     }
     const gm = refs.g.current, gwm = refs.gw.current;
     if (gm && gwm) {
-      gulls.forEach((w, i) => {
+      let k = 0;
+      gulls.forEach((w) => {
         const a = w.a + t * w.speed;
         const [x, z] = ringPoint(w.sea, a, w.r);
-        if (!near(x, z)) {
-          gm.setMatrixAt(i, HIDDEN); gwm.setMatrixAt(i * 2, HIDDEN); gwm.setMatrixAt(i * 2 + 1, HIDDEN);
-          return;
-        }
+        if (!near(x, z)) return;
+        const i = k++;
         const [nx, nz] = ringPoint(w.sea, a + 0.01 * Math.sign(w.speed), w.r);
         const yaw = Math.atan2(nx - x, nz - z);
         const swoop = Math.pow(Math.max(0, Math.sin(t * 0.2 + w.phase)), 12);
@@ -254,6 +257,8 @@ export const SeaLife = memo(function SeaLife({
           gwm.setMatrixAt(i * 2 + side, m4.compose(pos, q, scl));
         }
       });
+      gm.count = k;
+      gwm.count = k * 2;
       gm.instanceMatrix.needsUpdate = true;
       gwm.instanceMatrix.needsUpdate = true;
     }

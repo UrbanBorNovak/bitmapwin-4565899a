@@ -1,3 +1,4 @@
+import { ModelFallback } from "@/components/game/ModelFallback";
 import { applyMountIntent } from "@/lib/guardian-mount";
 import { PeerMount } from "@/components/game/ShardRaidLayer";
 import { ShardRaidLayer } from "@/components/game/ShardRaidLayer";
@@ -1410,13 +1411,15 @@ function AvatarSkin({
 }) {
   const worn = model ?? DEFAULT_AVATAR_MODEL;
   return (
-    <Suspense fallback={<AvatarBody color={color} />}>
-      <ModelAvatar
-        inscriptionId={worn}
-        motion={motion}
-        skinTexture={rigTexture(worn, skin)}
-      />
-    </Suspense>
+    <ModelFallback key={worn} fallback={<AvatarBody color={color} />}>
+      <Suspense fallback={<AvatarBody color={color} />}>
+        <ModelAvatar
+          inscriptionId={worn}
+          motion={motion}
+          skinTexture={rigTexture(worn, skin)}
+        />
+      </Suspense>
+    </ModelFallback>
   );
 }
 
@@ -2565,12 +2568,11 @@ function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: st
         // Every BITMAP tile holds parcels; only water models off the land render.
         if (!isSea(x, z) || !allowedWaterModel) return null;
         return (
-          <Suspense
-            key={model.bitmapHeight}
-            fallback={<ModelMarker model={model} bitcoin={bitcoin} />}
-          >
-            <OnChainModel model={model} />
-          </Suspense>
+          <ModelFallback key={model.bitmapHeight} fallback={<ModelMarker model={model} bitcoin={bitcoin} />}>
+            <Suspense fallback={<ModelMarker model={model} bitcoin={bitcoin} />}>
+              <OnChainModel model={model} />
+            </Suspense>
+          </ModelFallback>
         );
       })}
     </>
