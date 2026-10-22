@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SealedVault } from "@/components/shadow/SealedVault";
 import { RelicInspector } from "@/components/shadow/RelicInspector";
 import {
-  decodeNote, encodeNote, loadNotes, recoveryFor, reissueNote, mintNote, ownerCommit, receiveSecret, rotateReceive, saveNotes, transferNote, verifyNote,
+  decodeNote, encodeNote, loadNotes, noteStatus, recoveryFor, reissueNote, mintNote, ownerCommit, receiveSecret, rotateReceive, saveNotes, transferNote, verifyNote,
   type HeldNote,
 } from "@/lib/shadow-notes";
 
@@ -100,7 +100,7 @@ function VaultPage() {
           <div key={h.note.chain.at(-1)!.hash} className="mt-2 rounded border border-border bg-card/60 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-foreground">{h.note.label}</span>
-              <span className={`text-[11px] ${verifyNote(h.note) ? "text-signal" : "text-destructive"}`}>{verifyNote(h.note) ? "✓ HISTORY INTACT" : "✗ BROKEN OR FORGED"} · {h.note.chain.length - 1} HANDOFFS · {short(h.note.genesis)}</span>
+              <span className={`text-[11px] ${{ intact: "text-signal", legacy: "text-primary", broken: "text-destructive" }[noteStatus(h.note)]}`}>{{ intact: "✓ HISTORY INTACT", legacy: "⚠ OLDER, UNSIGNED HANDOFFS", broken: "✗ BROKEN OR FORGED" }[noteStatus(h.note)]} · {h.note.chain.length - 1} HANDOFFS · {short(h.note.genesis)}</span>
             </div>
             {(() => { const r = recoveryFor(h); return r.state === "current" ? (h.note.reissuedFrom ? <p className="mt-1 text-[11px] text-muted-foreground">REISSUED FROM OLDER NOTE <span data-no-translate>{short(h.note.reissuedFrom)}</span> · EARLIER HISTORY NOT CARRIED OVER</p> : null) : r.state === "reissuable" ? (
               <div className="mt-2 rounded border border-primary/50 p-2 text-[11px]">
