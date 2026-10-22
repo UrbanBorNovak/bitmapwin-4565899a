@@ -102,7 +102,11 @@ import { DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
 import { sceneAt, actorPositionAt, activeCut, type ToonActor, type ToonEpisode, type ToonLine, type ToonScene, type Shot } from "@/lib/toon-script";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
-function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: ToonActor; slot: number; scene: number; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number>; durRef: MutableRefObject<number> }) {
+/** Live character positions (stage units): "a<slot>" = cast, "p<i>" = wandering extras. */
+const stageBodies = new Map<string, Body>();
+function Actor({ actor, slot, scene, set, timeRef, progressRef, durRef }: { actor: ToonActor; slot: number; scene: number; set?: string; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number>; durRef: MutableRefObject<number> }) {
+  const foots = useMemo(() => footprintsFor(set), [set]);
+  useEffect(() => () => { stageBodies.delete(`a${slot}`); }, [slot]);
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity, enabled: !actor.avatar });
   const ready = !!actor.avatar || !!dna.data;
@@ -158,8 +162,14 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
         unitH.current = h; unitS.current = sz;
       }
     }
+    // Characters never overlap each other or the set's voxel objects: earlier cast slots keep their mark.
+    const others: Body[] = [];
+    for (const [k, b] of stageBodies) if (k[0] === "a" && Number(k.slice(1)) < slot) others.push(b);
+    let z = pos.z;
+    [x, z] = separate(x, z, ACTOR_R, others, foots);
+    stageBodies.set(`a${slot}`, { x, z, r: ACTOR_R });
     // Apply the pose after any measurement so the renderer never sees the zeroed transform.
-    o.position.set(x, y, pos.z);
+    o.position.set(x, y, z);
     o.rotation.set(rx, ry, rz);
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
     const bodyH = (unitH.current || 1.2) * 10;
