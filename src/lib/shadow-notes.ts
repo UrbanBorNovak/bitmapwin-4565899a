@@ -65,7 +65,7 @@ function walk(n: ShadowNote, requireAuth: boolean): boolean {
   for (let i = 0; i < n.chain.length; i++) {
     const l = n.chain[i]!;
     if (!/^[0-9a-f]{64}$/.test(l.to)) return false;
-    // Every handoff must reveal the secret behind the previous holder's commitment.
+    // Every handoff must carry the previous holder's Schnorr signature over its link hash.
     if (requireAuth && i > 0 && !signedBy(l, n.chain[i - 1]!.to)) return false;
     if (l.prev !== prev || l.hash !== linkHash(l.prev, l.to, l.at)) return false;
     prev = l.hash;

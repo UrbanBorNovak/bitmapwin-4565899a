@@ -22,7 +22,7 @@ describe("shadow note validation", () => {
     const tip = n.chain.at(-1)!;
     const forged = transferNote({ note: { ...n, chain: [...n.chain.slice(0, -1), { ...tip, to: ownerCommit(X) }] }, secret: X }, ownerCommit(X));
     expect(verifyNote(forged)).toBe(false);
-    const noAuth = transferNote({ note: n, secret: B }, ownerCommit(X)); delete noAuth.chain[2]!.auth;
+    const noAuth = transferNote({ note: n, secret: B }, ownerCommit(X)); delete noAuth.chain[2]!.sig;
     expect(verifyNote(noAuth)).toBe(false);
   });
   it("rejects truncated, reordered and junk notes without throwing", () => {
@@ -40,16 +40,39 @@ describe("shadow note validation", () => {
   });
 });
 
-import { noteStatus } from "./shadow-notes";
+import { legacyCommit, noteStatus } from "./shadow-notes";
 describe("note status", () => {
   it("separates legacy unsigned handoffs from forged ones", () => {
     const A = "a".repeat(64), B = "b".repeat(64);
     const h = transferNote({ note: mintNote("Map", "memo", A), secret: A }, ownerCommit(B));
     expect(noteStatus(h)).toBe("intact");
-    const legacy = structuredClone(h); delete legacy.chain[1]!.auth;
+    const legacy = structuredClone(h); delete legacy.chain[1]!.sig; legacy.chain[1]!.auth = B;
     expect(noteStatus(legacy)).toBe("legacy");
     expect(noteStatus({ ...legacy, label: "Gold" })).toBe("broken");
-    const wrong = structuredClone(h); wrong.chain[1]!.auth = "e".repeat(64);
+    const wrong = structuredClone(h); wrong.chain[1]!.sig = "e".repeat(128);
     expect(noteStatus(wrong)).toBe("broken");
+  });
+});
+
+describe("handoff signatures", () => {
+  it("never put a holder's secret inside the note", () => {
+    const A = "a".repeat(64), B = "b".repeat(64), C = "c".repeat(64);
+    const n = transferNote({ note: transferNote({ note: mintNote("Map", "memo", A), secret: A }, ownerCommit(B)), secret: B }, ownerCommit(C));
+    const wire = JSON.stringify(n);
+    expect(wire.includes(A) || wire.includes(B) || wire.includes(C)).toBe(false);
+  });
+  it("stops a later recipient re-signing an earlier handoff to fork the history", () => {
+    const A = "a".repeat(64), B = "b".repeat(64), C = "c".repeat(64), Z = "d".repeat(64);
+    const n = transferNote({ note: transferNote({ note: mintNote("Map", "memo", A), secret: A }, ownerCommit(B)), secret: B }, ownerCommit(C));
+    // C tries to rewrite B's handoff to Z using C's own key: signature must be B's.
+    const forked = transferNote({ note: { ...n, chain: n.chain.slice(0, 2) }, secret: C }, ownerCommit(Z));
+    expect(() => forked).not.toThrow;
+    const tip = n.chain[1]!;
+    expect(() => transferNote({ note: { ...n, chain: [n.chain[0]!, { ...tip }] }, secret: C }, ownerCommit(Z))).toThrow();
+  });
+  it("refuses to hand on a note sealed to an older receive code", () => {
+    const A = "a".repeat(64);
+    const n = mintNote("Old", "memo", A); n.chain[0]!.to = legacyCommit(A);
+    expect(() => transferNote({ note: n, secret: A }, ownerCommit("b".repeat(64)))).toThrow(/OLDER/);
   });
 });
