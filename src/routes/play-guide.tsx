@@ -1,3 +1,4 @@
+import { GuideTrail } from "@/components/GuideTrail";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/play-guide")({
@@ -190,6 +191,7 @@ function PlayGuidePage() {
         <Link to="/oasis" className="btn-term">[ PLAY NOW ]</Link>
         <Link to="/sdk" className="btn-term-ghost">[ BUILD SOMETHING ]</Link>
       </div>
+      <GuideTrail current="/play-guide" />
     </div>
   );
 }
