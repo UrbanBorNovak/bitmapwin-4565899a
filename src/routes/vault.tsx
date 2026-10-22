@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SealedVault } from "@/components/shadow/SealedVault";
+import { RelicInspector } from "@/components/shadow/RelicInspector";
 import {
   decodeNote, encodeNote, loadNotes, mintNote, ownerCommit, receiveSecret, rotateReceive, saveNotes, transferNote, verifyNote,
   type HeldNote,
@@ -63,6 +64,7 @@ function VaultPage() {
       <p className="mt-3 max-w-2xl font-sans text-muted-foreground">Notes live only on this device. Each one carries its full history, and your browser checks it before accepting it. Nothing is sent to BITMAPWIN.</p>
       <p className="mt-2 max-w-2xl font-sans text-[12px] text-muted-foreground">Honest limit: notes aren't anchored to Bitcoin yet, so someone who kept a copy could give the same note twice. Back up this device's storage — clearing it loses your notes.</p>
 
+      <RelicInspector />
       <section className="mt-8 rounded border border-border bg-card/60 p-4">
         <div className="text-[11px] tracking-widest text-signal">YOUR RECEIVE CODE</div>
         <div aria-label="Receive code" className="mt-2 break-all text-foreground" data-no-translate>{recv || "…"}</div>
