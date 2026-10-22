@@ -39,7 +39,7 @@ export async function startClipCapture(el: HTMLElement): Promise<ClipSession> {
     onEnded: (cb) => { endedCb = cb; },
     cancel: () => { try { rec.stop(); } catch { /* */ } end(); },
     stop: () => new Promise<Blob>((res) => {
-      rec.onstop = () => { end(); res(new Blob(chunks, { type: type.mime.split(";")[0] })); };
+      rec.onstop = () => { end(); res(new Blob(chunks, { type: type.mime.split(";")[0] ?? type.mime })); };
       rec.stop();
     }),
   };
