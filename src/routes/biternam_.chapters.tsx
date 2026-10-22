@@ -171,12 +171,11 @@ function ChaptersPage() {
               </div>
             )}
             {line && (
-              <div key={lineKey} className="comic-bubble pointer-events-none absolute bottom-8 mx-auto w-fit max-w-[70%] px-4 py-2 text-center" style={{ [line.speaker % 2 ? "right" : "left"]: "10%" }} data-no-translate>
-                <span className="font-mono text-[10px] tracking-widest text-signal">{speaker}</span>
-                <div className="display text-lg md:text-2xl uppercase">{line.text}</div>
+              <div key={lineKey} className="comic-bubble pointer-events-none absolute top-[15%] w-fit max-w-[36%] px-3 py-1.5 text-center" style={{ [line.speaker % 2 ? "right" : "left"]: "4%" }} data-no-translate>
+                <span className="font-mono text-[9px] tracking-widest">{speaker}</span>
+                <div className="display uppercase leading-tight" style={{ fontSize: "min(2.2cqw, 1.25rem)" }}>{line.text}</div>
               </div>
             )}
-            {outroT >= POP && <div aria-hidden className="manga-halftone pointer-events-none absolute inset-0 z-10" />}
             {time < INTRO && (playing || time > 0) && (
               <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
                 <div>
@@ -187,17 +186,21 @@ function ChaptersPage() {
               </div>
             )}
             {outroT >= 0 && (
-              <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
-                <div>
-                  <div className="font-mono text-xs tracking-[0.3em] text-muted-foreground">IT WAS NEVER A GAME. IT WAS ALWAYS</div>
-                  <div className="display mt-3 whitespace-nowrap normal-case text-4xl md:text-6xl">
+              <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background px-4 text-center" data-no-translate>
+                <div className="max-w-full">
+                  <div className="font-mono tracking-[0.25em] text-muted-foreground" style={{ fontSize: "min(1.6cqw, 0.75rem)" }}>IT WAS NEVER A GAME. IT WAS ALWAYS</div>
+                  <div className="display mt-3 whitespace-nowrap normal-case" style={{ fontSize: "min(8.5cqw, 4.5rem)" }}>
                     {height}<span className={`text-bitcoin transition-all duration-300 ${outroT >= POP ? "opacity-100" : "opacity-0"}`} style={{ display: "inline-block", transform: outroT >= POP ? "scale(1)" : "scale(1.8)" }}>.bitmap</span>
                   </div>
                   <div className={`mt-4 font-mono text-xs tracking-[0.4em] text-signal transition-opacity duration-500 ${outroT >= POP + 1 ? "opacity-100" : "opacity-0"}`}>THE END</div>
                 </div>
               </div>
             )}
-            {!playing && (
+            {outroT >= POP && <div aria-hidden className="manga-halftone pointer-events-none absolute inset-0" />}
+            {!playing && time >= total ? (
+              <button aria-label="Preview chapter" onClick={() => { t0.current = 0; setPlaying(true); }}
+                className="absolute bottom-3 right-3 rounded border border-bitcoin bg-background/80 px-3 py-1 font-mono text-xs text-bitcoin hover:bg-bitcoin/10">↻ REPLAY</button>
+            ) : !playing && (
               <button aria-label="Preview chapter" onClick={() => { t0.current = time >= total ? 0 : time; setPlaying(true); }}
                 className="absolute inset-0 grid place-items-center bg-background/30 hover:bg-background/10">
                 <span className="grid size-20 place-items-center rounded-full border border-bitcoin bg-background/70 font-display text-3xl text-bitcoin">▶</span>
