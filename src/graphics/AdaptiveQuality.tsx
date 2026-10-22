@@ -9,6 +9,14 @@ export function AdaptiveQuality() {
   const setFrameloop = useThree((state) => state.setFrameloop);
   const state = useRef({ lowFor: 0, highFor: 0, changedAt: -10, lastRender: 0, firstFrames: 0, firstTime: 0, startupChecked: false, avg: 1 / 60 });
 
+  const three = { gl: useThree((s) => s.gl), scene: useThree((s) => s.scene), camera: useThree((s) => s.camera) };
+  useEffect(() => {
+    // ?debug=1 exposes the renderer for in-sandbox profiling only.
+    if (new URLSearchParams(window.location.search).has("debug")) {
+      (window as unknown as { __oasisPerf?: unknown }).__oasisPerf = { gl: three.gl, scene: three.scene, camera: three.camera };
+    }
+  }, [three.gl, three.scene, three.camera]);
+
   useEffect(() => {
     const onVisibility = () => {
       setFrameloop(document.hidden ? "never" : "always");
