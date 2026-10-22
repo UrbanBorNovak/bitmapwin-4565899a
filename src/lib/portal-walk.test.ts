@@ -18,3 +18,12 @@ describe("room arrival", () => {
     expect(actorPositionAt(arrive, 2.3, 9)).toMatchObject({ x: -3, z: 0, moving: false });
   });
 });
+describe("portal → room hand-off", () => {
+  it("the lead's last portal step is its first room step once the room sits at its hand-off spot", () => {
+    const off = [5.5, 0, -24.4];
+    const end = actorPositionAt(lead, 4, 4);
+    const roomStart = { x: -5.5, z: 2.4 };
+    expect(roomStart.x + off[0]!).toBeCloseTo(end.x, 5);
+    expect(roomStart.z + off[2]!).toBeCloseTo(end.z, 5);
+  });
+});
