@@ -9,7 +9,6 @@ import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
-import { LoopNavigator } from "@/components/LoopNavigator";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
 import { MobileAppInstall } from "@/components/MobileAppInstall";
