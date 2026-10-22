@@ -27,11 +27,22 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
+    // The site sets a CSS zoom on <html>, so rects and innerWidth/Height disagree.
+    // Work in real screen pixels, then scale the style values back up.
+    const zoom = el.offsetWidth ? r.width / el.offsetWidth || 1 : 1;
+    const left0 = r.left / zoom;
+    const top0 = r.bottom / zoom;
+    const bottom0 = r.top / zoom;
     const width = Math.min(NOTE_W, window.innerWidth - 16);
-    const left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8);
-    const below = window.innerHeight - r.bottom;
-    const up = below < 140 && r.top > below;
-    setBox({ left, top: up ? r.top - 6 : r.bottom + 6, width, up });
+    const left = Math.min(Math.max(8, left0), window.innerWidth - width - 8);
+    const below = window.innerHeight - top0;
+    const up = below < 140 && bottom0 > below;
+    setBox({
+      left: left * zoom,
+      top: (up ? bottom0 - 6 : top0 + 6) * zoom,
+      width: width * zoom,
+      up,
+    });
   }, [open]);
 
   useEffect(() => {
