@@ -19,7 +19,7 @@ type NavSection = { title: string; items: NavItem[] };
 type NavGroup = { id: string; label: string; note: string; sections: NavSection[] };
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  explore: Compass, create: Hammer, account: User,
+  world: Globe, land: MapIcon, creation: Hammer, identity: User, guides: BookOpen,
 };
 const ITEM_ICONS: Record<string, LucideIcon> = {
   "/play": Layers, "/play/extenders": Sparkles, "/oasis": Globe, "/command": Swords, "/stream": Radio,
@@ -46,45 +46,21 @@ function GroupIcon({ id }: { id: string }) {
   return <I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />;
 }
 
-// Three menus — explore, create, account — each split into labelled sections.
-// Every page appears exactly once.
+// Five menus mirroring the homepage pillars and footer. Every page appears exactly once.
 const NAV_GROUPS: NavGroup[] = [
   {
-    id: "explore",
-    label: "EXPLORE",
-    note: "The world, the land, the Guardians and the community",
+    id: "world",
+    label: "WORLD",
+    note: "Walk the Oasis, play, and see what the community is doing",
     sections: [
       {
-        title: "WORLD",
+        title: "PLAY",
         items: [
           { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
-          { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
-          { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world", match: ["/map"] },
           { to: "/biternam", label: "BITERNAM QUESTS", note: "Story chapters and quests" },
           { to: "/play", label: "LIVING CARDS", note: "The card game where the world is the deck" },
+          { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world", match: ["/map"] },
           { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
-        ],
-      },
-      {
-        title: "LAND & MARKET",
-        items: [
-          { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
-          { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
-          { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
-          { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Who holds a BITMAP on-chain" },
-          { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
-          { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
-          { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
-        ],
-      },
-      {
-        title: "GUARDIANS",
-        items: [
-          { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
-          { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helpers" },
-          { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
-          { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians, inscribe their pet" },
-          { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
         ],
       },
       {
@@ -93,8 +69,6 @@ const NAV_GROUPS: NavGroup[] = [
           { to: "/explore", label: "TRENDING", note: "Trending BITMAPs and activity" },
           { to: "/stream", label: "WORLD STREAM", note: "Verified history as it happens" },
           { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
-          { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
-          { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
           { to: "/watch", label: "TOON CINEMA", note: "Episodes and trailers" },
           { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
         ],
@@ -102,8 +76,32 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    id: "create",
-    label: "CREATE",
+    id: "land",
+    label: "LAND",
+    note: "Own, inspect and trade BITMAPs",
+    sections: [
+      {
+        title: "MARKET",
+        items: [
+          { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
+          { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
+          { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
+        ],
+      },
+      {
+        title: "RECORDS",
+        items: [
+          { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Who holds a BITMAP on-chain" },
+          { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
+          { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },
+          { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "creation",
+    label: "CREATION",
     note: "Build on your BITMAP, make media, deploy experiences",
     sections: [
       {
@@ -116,8 +114,10 @@ const NAV_GROUPS: NavGroup[] = [
         ],
       },
       {
-        title: "PACKAGES",
+        title: "SHARE",
         items: [
+          { to: "/builds", label: "COMMUNITY BUILDS", note: "Every public BITMAP build" },
+          { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
           { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
           { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
         ],
@@ -125,9 +125,9 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    id: "account",
-    label: "ACCOUNT",
-    note: "Your holdings, identity and developer resources",
+    id: "identity",
+    label: "IDENTITY",
+    note: "Your holdings, Passport and Guardians",
     sections: [
       {
         title: "MINE",
@@ -139,9 +139,34 @@ const NAV_GROUPS: NavGroup[] = [
         ],
       },
       {
+        title: "GUARDIANS",
+        items: [
+          { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
+          { to: "/colony", label: "GUARDIAN AGENTS", note: "Your Guardians as helpers" },
+          { to: "/command", label: "COMMAND CENTRE", note: "Patrols, marches and raids" },
+          { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians, inscribe their pet" },
+          { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "guides",
+    label: "GUIDES & CODE",
+    note: "Learn the world, then build on it",
+    sections: [
+      {
+        title: "GUIDES",
+        items: [
+          { to: "/land-101", label: "LAND 101", note: "What a BITMAP is and why it matters" },
+          { to: "/guardians-guide", label: "GUARDIANS GUIDE", note: "How block data becomes a Guardian" },
+          { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
+        ],
+      },
+      {
         title: "DEVELOPERS",
         items: [
-          { to: "/docs", label: "DOCS", note: "Guides, SDK and API references" },
+          { to: "/docs", label: "DOCS & SDK", note: "Guides, SDK and API references" },
           { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
         ],
       },
@@ -237,13 +262,12 @@ export function SiteHeader() {
           <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav ref={desktopNavRef} className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border xl:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => {
             const here = groupItems(group).some((i) => itemIsActive(i.to));
             return (
             <div
               key={group.id}
-              className="relative"
               onMouseEnter={() => {
                 cancelScheduledClose();
                 setOpenGroup(group.id);
@@ -258,23 +282,23 @@ export function SiteHeader() {
                   cancelScheduledClose();
                   setOpenGroup(group.id);
                 }}
-              className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
+              className={`nav-trigger label flex h-9 items-center gap-1 whitespace-nowrap px-2 py-2 xl:px-3 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 } ${here && openGroup !== group.id ? "is-here" : ""}`}
               >
-                <GroupIcon id={group.id} />
+                <span className="hidden 2xl:inline"><GroupIcon id={group.id} /></span>
                 {group.label}
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className={`nav-menu absolute left-0 top-full border border-border bg-background ${group.sections.length > 2 ? "w-[52rem]" : "w-80"}`}>
+                <div className={`nav-menu absolute top-full border border-border bg-background left-0 w-[40rem]`}>
                   <div className="border-b border-border bg-surface px-4 py-3">
                     <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
                   </div>
-                  <div className={group.sections.length > 2 ? "grid grid-cols-4 divide-x divide-border" : "divide-y divide-border"}>
+                  <div className={"grid grid-cols-2 divide-x divide-border"}>
                     {group.sections.map((section) => {
-                      const compact = group.sections.length > 2;
+                      const compact = false;
                       const sectionHere = section.items.some((i) => itemIsActive(i.to));
                       return (
                         <div key={section.title} className="p-2">
@@ -314,7 +338,7 @@ export function SiteHeader() {
             </div>
             );
           })}
-          <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
+          <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 whitespace-nowrap border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
             <Globe className="size-3.5" strokeWidth={1.75} /> ENTER OASIS
           </Link>
         </nav>
@@ -358,7 +382,7 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="relative border-t border-border lg:hidden" aria-label="Main navigation">
+      <nav className="relative border-t border-border xl:hidden" aria-label="Main navigation">
         <button
           type="button"
           aria-expanded={mobileOpen}
