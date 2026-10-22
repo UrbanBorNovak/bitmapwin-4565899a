@@ -105,7 +105,7 @@ function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableR
 export function PortalDust({ block, localRef }: { block: number; localRef: MutableRefObject<number> }) {
   const mat = useRef<THREE.PointsMaterial>(null), pts = useRef<THREE.Points>(null);
   const geo = useMemo(() => { const r = rng(block * 31 + 7), N = 500, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), c = new THREE.Color();
-    for (let i = 0; i < N; i++) { pos.set([(r() - 0.5) * 60, r() * 30, (r() - 0.5) * 40], i * 3); c.set(r() < 0.6 ? "#28e0ff" : "#f7931a"); col.set([c.r, c.g, c.b], i * 3); }
+    for (let i = 0; i < N; i++) { const x = (r() - 0.5) * 60; pos.set([Math.abs(x) < 9 ? Math.sign(x || 1) * (9 + r() * 20) : x, r() * 30, (r() - 0.5) * 40], i * 3); // keep the lead clear c.set(r() < 0.6 ? "#28e0ff" : "#f7931a"); col.set([c.r, c.g, c.b], i * 3); }
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3)); return g; }, [block]);
   useFrame(() => { const t = localRef.current; if (pts.current) pts.current.position.y = -Math.min(t, 3) * 8; if (mat.current) mat.current.opacity = Math.max(0, 1 - t / 3.5); });
   return <points ref={pts} geometry={geo} frustumCulled={false}><pointsMaterial ref={mat} size={1.4} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} /></points>;
