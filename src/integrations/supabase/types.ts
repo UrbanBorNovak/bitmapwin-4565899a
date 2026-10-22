@@ -204,6 +204,24 @@ export type Database = {
           },
         ]
       }
+      biternam_backroom_claims: {
+        Row: {
+          claimed_at: string
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          slug: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       biternam_chapters: {
         Row: {
           block_height: number
@@ -5034,6 +5052,10 @@ export type Database = {
       atlas_region_stats: {
         Args: { p_hi: number; p_lo: number }
         Returns: Json
+      }
+      biternam_claim_backroom: {
+        Args: { _commitment: string; _slug: string; _user: string }
+        Returns: string
       }
       biternam_claim_quest: {
         Args: {
