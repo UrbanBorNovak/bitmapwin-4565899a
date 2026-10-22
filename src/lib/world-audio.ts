@@ -112,14 +112,11 @@ function audio(): { ctx: AudioContext; master: GainNode; verb: GainNode } | null
     guard.release.value = 0.18;
     master.connect(guard).connect(ctx.destination);
 
-    const convolver = ctx.createConvolver();
-    convolver.buffer = buildImpulse(ctx, 2.2, 3.2);
+    // 90s retro mix: no convolution reverb (it lagged the audio thread).
+    // Reverb sends land on a silent, unconnected gain node.
+    void buildImpulse;
     const tail = ctx.createGain();
-    tail.gain.value = 0.55;
-    const dampen = ctx.createBiquadFilter();
-    dampen.type = "lowpass";
-    dampen.frequency.value = 2200;
-    tail.connect(dampen).connect(convolver).connect(master);
+    tail.gain.value = 0;
     verb = tail;
   }
   if (ctx.state === "suspended") void ctx.resume();
@@ -492,8 +489,14 @@ export function stopEngine() {
 
 
 /** Fire one of the world's sounds. Safe to call anywhere, ignored when muted. */
+const lastPlayed = new Map<Sfx, number>();
+/** Minimum gap per sound so rapid fire never stacks voices (retro, one-channel feel). */
+const SFX_GAP_MS = 90;
 export function playSfx(name: Sfx) {
   if (readMuted()) return;
+  const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (now - (lastPlayed.get(name) ?? -1e9) < SFX_GAP_MS) return;
+  lastPlayed.set(name, now);
   const rig = audio();
   if (!rig) return;
   const { ctx: context, master: out, verb } = rig;

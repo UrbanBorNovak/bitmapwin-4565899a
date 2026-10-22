@@ -449,7 +449,6 @@ export function WeaponModel({
           <cylinderGeometry args={[0.09 * u, 0.1 * u, 1.26 * u, 12]} />
           <meshBasicMaterial color={blade} toneMapped={false} transparent opacity={0.16 + swing * 0.15} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
-        <pointLight color={blade} intensity={2.5} distance={u * 6} position={[0, 0, -0.6 * u]} />
       </group>
     );
   }

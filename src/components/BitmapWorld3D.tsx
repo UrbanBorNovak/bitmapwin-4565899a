@@ -4219,18 +4219,7 @@ function BitmapWorld3DInner({
     return () => window.clearInterval(id);
   }, [exploring]);
 
-  // Unarmed left click on the world throws a punch, same as F.
-  useEffect(() => {
-    if (!exploring || weapon) return;
-    const onDown = (event: PointerEvent) => {
-      if (event.button !== 0 || (event.target as HTMLElement | null)?.tagName !== "CANVAS") return;
-      unlockAudio();
-      playSfx("hit");
-      attackNearest();
-    };
-    window.addEventListener("pointerdown", onDown);
-    return () => window.removeEventListener("pointerdown", onDown);
-  }, [attackNearest, exploring, weapon]);
+  // Unarmed clicks no longer punch — clicking the world only walks/inspects. F still attacks.
 
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
