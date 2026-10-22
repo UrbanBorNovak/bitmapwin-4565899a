@@ -15,7 +15,8 @@ import { OasisWorld, StudioSet } from "@/components/toon/StudioSet";
 import { ToonVFXLayer } from "@/components/toon/ToonVFXLayer";
 import { BiternamRoomSet, ROOMS, clampCamera, setBoundsFor, walkBlocked } from "@/components/toon/BiternamRooms";
 import { BatcaveSet, CafeSet, ChinatownSet, VaultSet } from "@/components/toon/BiternamSets";
-const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c" };
+import { PortalSplatSet } from "@/components/toon/PortalSplatSet";
+const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c", portal: "#06040f" };
 import { loadCustomVFX, shakeAt, vfxLibrary, type ToonVFX } from "@/lib/toon-vfx";
 
 /** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
@@ -351,6 +352,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
         : scene.set === "batcave" ? <BatcaveSet timeRef={timeRef} />
         : scene.set === "chinatown" ? <ChinatownSet timeRef={timeRef} />
         : scene.set === "vault" ? <VaultSet timeRef={timeRef} />
+        : scene.set === "portal" ? <PortalSplatSet block={scene.block} timeRef={timeRef} />
         : scene.set === "beach" ? <BeachSet timeRef={timeRef} />
         : scene.set === "studio" || scene.set === "rift" ? <StudioSet key={`set-${index}`} timeRef={timeRef} localRef={progressRef} rift={scene.set === "rift"} />
         : scene.set === "oasis" ? <group><group position-z={-30}><OasisWorld timeRef={timeRef} /></group>
