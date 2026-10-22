@@ -83,6 +83,12 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   const reply = heroReply(cast, h, seed);
   const landSfx = cast.hasBuild ? "BUILT!" : theme === "halving" ? "HODL!" : "WHOOSH!";
   const roomFx = theme === "crowded" ? "bitmapwin/sparks-v1" : theme === "quiet" ? "bitmapwin/smoke-v1" : "bitmapwin/embers-v1";
+  const techRoom = /batcave|vault|chinatown|arcade|lab|studio|void|fortress/.test(set);
+  const roomAmbient = [
+    { id: "bitmapwin/ground-fog-v1", at: 0, x: 0, y: 0.1, z: 0 },
+    { id: "bitmapwin/heavy-smoke-v1", at: 0.3, x: -5, y: 0, z: -3, scale: 0.7 },
+    ...(techRoom ? [{ id: "bitmapwin/cyber-sparks-v1", at: 0.5, x: 0, y: 1, z: -1, scale: 0.8 }] : [{ id: "bitmapwin/embers-v1", at: 0.5, x: 0, y: 0, z: 0, scale: 0.5 }]),
+  ];
   // Room scenes open on a short wide establishing shot so the wall gallery reads before the camera cuts in.
   const EST = 1.8;
   const est = (sc: ToonEpisode["scenes"][number]) => sc.set ? { ...sc, shot: "wide" as const, duration: sc.duration + EST,
@@ -92,11 +98,11 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
     scenes: [
       // Scene 1 is the real land: its inscribed build appears only if one is verified on chain.
       { block: h, duration: 7, shot: cam.shots[0], sfx: landSfx,
-        fx: [{ id: "bitmapwin/dust-v1", at: 0.4, x: 0, y: 0, z: 3 }, { id: "bitmapwin/dust-v1", at: 2.6, x: 0, y: 0, z: 0.5 }, ...(cast.hasBuild ? [{ id: "bitmapwin/sparks-v1", at: 3.2, x: 0, y: 3, z: -2, scale: 1.4 }] : [])],
+        fx: [{ id: "bitmapwin/ground-fog-v1", at: 0, x: 0, y: 0.1, z: 0 }, { id: "bitmapwin/dust-v1", at: 0.4, x: 0, y: 0, z: 3 }, { id: "bitmapwin/dust-v1", at: 2.6, x: 0, y: 0, z: 0.5 }, ...(cast.hasBuild ? [{ id: "bitmapwin/sparks-v1", at: 3.2, x: 0, y: 3, z: -2, scale: 1.4 }, { id: "bitmapwin/heavy-smoke-v1", at: 3.4, x: 0, y: 2, z: -2 }] : [])],
         cast: [{ ...hero, x: 0, z: 3, pose: "walk", to: { x: 0, z: 0 }, moveStart: 0, moveEnd: 3 }],
         lines: [{ at: 1, dur: 5, speaker: 0, text: quote, style: "thought", cam: cam.cams[0] }] },
       { block: h, set, duration: 9, shot: cam.shots[1], transition: cam.transitions[0], extras, sfx: "SATS!",
-        fx: [{ id: roomFx, at: 0, x: 0, y: 1, z: -2 }, { id: "bitmapwin/sparks-v1", at: 0.6, x: 3, y: 1.6, z: 0, scale: 0.6 }],
+        fx: [...roomAmbient, { id: roomFx, at: 0, x: 0, y: 1, z: -2 }, { id: "bitmapwin/sparks-v1", at: 0.6, x: 3, y: 1.6, z: 0, scale: 0.6 }],
         cast: [{ ...hero, x: -3, z: 0, pose: "talk" }, { height: h, name: a.name, x: 3, z: 0, pose: "wave", avatar: a.avatar }],
         lines: [
           { at: 0.4, dur: 2.6, speaker: 1, text: coStarIn(a.id, h, seed), style: "shout", cam: cam.cams[1] },
@@ -104,7 +110,7 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
           { at: 5.7, dur: 3.1, speaker: 0, text: reply, style: "speech", cam: cam.cams[3] },
         ] },
       { block: h, set, duration: 7, shot: cam.shots[2], transition: cam.transitions[1], extras, sfx: "BOOM!",
-        fx: [{ id: "bitmapwin/blast-v1", at: 0.6, x: 0, y: 0.5, z: -3, scale: 0.6 }, { id: "bitmapwin/sparks-v1", at: 4, x: 5, y: 2, z: 2 }, { id: "bitmapwin/embers-v1", at: 1, x: 0, y: 0, z: 0 }],
+        fx: [{ id: "bitmapwin/ground-fog-v1", at: 0, x: 0, y: 0.1, z: 0 }, { id: "bitmapwin/shockwave-v1", at: 0.6, x: 0, y: 0.4, z: -3, scale: 0.6 }, { id: "bitmapwin/blast-v1", at: 0.6, x: 0, y: 0.5, z: -3, scale: 0.6 }, { id: "bitmapwin/heavy-smoke-v1", at: 0.9, x: 0, y: 0.3, z: -3, scale: 0.8 }, { id: "bitmapwin/sparks-v1", at: 4, x: 5, y: 2, z: 2 }, { id: "bitmapwin/embers-v1", at: 1, x: 0, y: 0, z: 0 }],
         cast: [{ ...hero, x: 0, z: 0, pose: "dance", emote: "happy" }, { height: h, name: b.name, x: 5, z: 2, pose: "jump", avatar: b.avatar }],
         lines: [
           { at: 0.8, dur: 3, speaker: 0, text: finaleLine(h, seed), style: "shout", cam: "close" },
