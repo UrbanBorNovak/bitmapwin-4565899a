@@ -94,7 +94,7 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   const est = (sc: ToonEpisode["scenes"][number]) => sc.set ? { ...sc, shot: "wide" as const, duration: sc.duration + EST,
     lines: sc.lines.map((l) => ({ ...l, at: l.at + EST })), ...(sc.fx ? { fx: sc.fx.map((c) => ({ ...c, at: c.at + EST })) } : {}) } : sc;
   const ep = {
-    title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
+    title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: "chiptune" as Music, voices: true, style: "ghibli",
     scenes: [
       // Scene 1 is the real land: its inscribed build appears only if one is verified on chain.
       { block: h, duration: 7, shot: cam.shots[0], sfx: landSfx,

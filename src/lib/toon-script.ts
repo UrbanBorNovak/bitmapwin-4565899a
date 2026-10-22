@@ -54,8 +54,8 @@ export function transitionAt(ep: ToonEpisode, t: number): { kind: Transition; k:
   }
   return null;
 }
-export type Music = "none" | "chill" | "adventure" | "tension";
-export const MUSIC: Music[] = ["none", "chill", "adventure", "tension"];
+export type Music = "none" | "chill" | "adventure" | "tension" | "chiptune";
+export const MUSIC: Music[] = ["none", "chill", "adventure", "tension", "chiptune"];
 export interface ToonEpisode { title: string; aspect: "16:9" | "9:16"; scenes: ToonScene[]; music?: Music; voices?: boolean; style?: import("./toon-style").ToonStyle; }
 
 export const MAX_SCENES = 12;
