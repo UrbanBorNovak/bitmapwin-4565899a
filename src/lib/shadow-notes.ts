@@ -8,16 +8,21 @@
  * kept an old copy could hand it to two people — the vault says so plainly.
  */
 import { sha256 } from "@noble/hashes/sha2.js";
+import { schnorr } from "@noble/curves/secp256k1.js";
 import { randomSecret } from "@/lib/shadow-vault";
 
 const enc = new TextEncoder();
 const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 const h = (s: string) => hex(sha256(enc.encode(s)));
 
-export const ownerCommit = (secret: string) => h(`bitmapwin:note:owner|${secret}`);
+const unhex = (s: string) => Uint8Array.from(s.match(/../g)!, (b) => parseInt(b, 16));
+/** Receive code = x-only Schnorr public key of the device secret. The secret itself never leaves the device. */
+export const ownerCommit = (secret: string) => hex(schnorr.getPublicKey(unhex(secret)));
+/** Pre-signature receive codes (sha256 of the secret). Notes still sealed to one cannot be handed on. */
+export const legacyCommit = (secret: string) => h(`bitmapwin:note:owner|${secret}`);
 
-/** auth = the previous holder's spent secret; proves the handoff was signed off by whoever held the note. */
-export type Link = { to: string; prev: string; hash: string; at: string; auth?: string };
+/** sig = previous holder's Schnorr signature over this link hash; legacy auth = a revealed secret (forkable, no longer accepted). */
+export type Link = { to: string; prev: string; hash: string; at: string; sig?: string; auth?: string };
 export type ShadowNote = { v: 1; label: string; kind: string; genesis: string; chain: Link[] };
 export type HeldNote = { note: ShadowNote; secret: string };
 
@@ -31,9 +36,11 @@ export function mintNote(label: string, kind: string, secret: string, at = new D
 /** Moves a note to a recipient commitment. Requires the current holder's secret. */
 export function transferNote(held: HeldNote, toCommit: string, at = new Date().toISOString()): ShadowNote {
   const tip = held.note.chain.at(-1)!;
+  if (tip.to === legacyCommit(held.secret)) throw new Error("OLDER NOTE — IT CAN'T BE HANDED ON SAFELY");
   if (tip.to !== ownerCommit(held.secret)) throw new Error("YOU DO NOT HOLD THIS NOTE");
   if (!/^[0-9a-f]{64}$/.test(toCommit)) throw new Error("BAD RECEIVE CODE");
-  return { ...held.note, chain: [...held.note.chain, { to: toCommit, prev: tip.hash, at, hash: linkHash(tip.hash, toCommit, at), auth: held.secret }] };
+  const hash = linkHash(tip.hash, toCommit, at);
+  return { ...held.note, chain: [...held.note.chain, { to: toCommit, prev: tip.hash, at, hash, sig: hex(schnorr.sign(unhex(hash), unhex(held.secret))) }] };
 }
 
 /** Client-side validation: every link must hash correctly and point at the one before it. */
@@ -45,7 +52,7 @@ export function verifyNote(n: ShadowNote): boolean {
 export function noteStatus(n: ShadowNote): "intact" | "legacy" | "broken" {
   try {
     if (walk(n, true)) return "intact";
-    if (n.chain.slice(1).every((l) => l.auth === undefined) && walk(n, false)) return "legacy";
+    if (n.chain.slice(1).every((l) => l.sig === undefined) && walk(n, false)) return "legacy";
   } catch { /* junk */ }
   return "broken";
 }
@@ -58,8 +65,8 @@ function walk(n: ShadowNote, requireAuth: boolean): boolean {
   for (let i = 0; i < n.chain.length; i++) {
     const l = n.chain[i]!;
     if (!/^[0-9a-f]{64}$/.test(l.to)) return false;
-    // Every handoff must reveal the secret behind the previous holder's commitment.
-    if (requireAuth && i > 0 && (typeof l.auth !== "string" || ownerCommit(l.auth) !== n.chain[i - 1]!.to)) return false;
+    // Every handoff must carry the previous holder's Schnorr signature over its link hash.
+    if (requireAuth && i > 0 && !signedBy(l, n.chain[i - 1]!.to)) return false;
     if (l.prev !== prev || l.hash !== linkHash(l.prev, l.to, l.at)) return false;
     prev = l.hash;
   }
@@ -89,3 +96,8 @@ export function receiveSecret(): string {
 }
 /** After accepting a note the receive secret is spent into it and rotated. */
 export function rotateReceive() { localStorage.removeItem(RECV); }
+
+function signedBy(l: Link, owner: string): boolean {
+  if (typeof l.sig !== "string" || !/^[0-9a-f]{128}$/.test(l.sig)) return false;
+  try { return schnorr.verify(unhex(l.sig), unhex(l.hash), unhex(owner)); } catch { return false; }
+}
