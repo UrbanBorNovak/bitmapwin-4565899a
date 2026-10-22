@@ -1,4 +1,4 @@
-import { Group } from "three";
+import { Group, TextureLoader, type Texture } from "three";
 import { GLTFLoader } from "three-stdlib";
 
 /**
@@ -21,5 +21,23 @@ if (!proto[FLAG]) {
       void error;
       void onError;
     });
+  };
+}
+
+// Same for on-chain textures (skins): a missing PNG becomes a blank texture.
+const tproto = TextureLoader.prototype as unknown as Record<string, unknown> & {
+  load: (url: string, onLoad?: (t: Texture) => void, onProgress?: unknown, onError?: (e: unknown) => void) => Texture;
+};
+if (!tproto[FLAG]) {
+  tproto[FLAG] = true;
+  const original = tproto.load;
+  tproto.load = function (url, onLoad, onProgress, onError) {
+    let tex: Texture;
+    tex = original.call(this, url, onLoad, onProgress, () => {
+      console.warn("Texture unavailable, using blank:", url);
+      void onError;
+      onLoad?.(tex);
+    });
+    return tex;
   };
 }
