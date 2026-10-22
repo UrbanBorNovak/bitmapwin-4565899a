@@ -66,7 +66,8 @@ function ChaptersPage() {
   const episode = useMemo(() => chapterEpisode(f, title || defaultTitle(f, sug), quote || defaultQuote(f, sug), { guardian: species ? { species } : null, hasBuild, set: chosenSet, guardianUnknown, seed, camera }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, f.txCount, f.avgFeeRate, f.minedAt, title, quote, species, hasBuild, chosenSet, guardianUnknown, seed, camera]);
-  const total = episodeLength(episode);
+  const INTRO = 3, OUTRO = 4;
+  const body = episodeLength(episode), total = INTRO + body + OUTRO;
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const t0 = useRef(0);
