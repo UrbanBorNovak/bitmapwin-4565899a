@@ -57,21 +57,7 @@ const TOURS: Record<string, Tour> = {
       },
     ],
   },
-  "/oasis": {
-    id: "oasis",
-    steps: [
-      {
-        target: "map-world",
-        title: "WELCOME TO THE OASIS",
-        body: "Walk with W A S D or the touch controls. Drag to look around, then explore the BITMAP beneath your feet.",
-      },
-      {
-        target: "map-legend",
-        title: "READ THE LAND SIGNALS",
-        body: "The legend separates mined land, unmined space, your holdings, and the territories held by other explorers.",
-      },
-    ],
-  },
+  // /oasis uses its own first-visit controls card (OasisControlsHint).
   "/extend": {
     id: "extend",
     steps: [

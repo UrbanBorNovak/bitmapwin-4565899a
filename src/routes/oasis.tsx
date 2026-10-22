@@ -169,7 +169,6 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
-          <OasisControlsHint forceOpen={hintNonce} />
 
           {cinematic ? null : <div className="oasis-activities grid grid-cols-1 items-start gap-3 border-y border-border p-3 sm:grid-cols-2" hidden={!toolsOpen}><DropHud /><ShardRaidHud /><ClassSkillBar /><RacePicker /><AdrenalineBot /></div>}
           </div>
@@ -191,6 +190,7 @@ function OasisPage() {
         </Suspense>
         </OasisWorldGuard>
         )}
+        {entered ? <OasisControlsHint forceOpen={hintNonce} /> : null}
       </div>
     </div>
   );

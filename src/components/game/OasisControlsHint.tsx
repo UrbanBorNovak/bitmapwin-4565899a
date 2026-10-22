@@ -12,7 +12,16 @@ export function OasisControlsHint({ forceOpen, onClosed }: { forceOpen?: number;
 
   useEffect(() => {
     setTouch(isTouchDevice());
-    if (!window.localStorage.getItem(SEEN_KEY)) setOpen(true);
+    if (window.localStorage.getItem(SEEN_KEY)) return;
+    // Wait until the 3D world is actually on screen and has settled, so the
+    // countdown is not spent behind the loading screen.
+    let settle = 0;
+    const poll = window.setInterval(() => {
+      if (!document.querySelector(".oasis-modded canvas")) return;
+      window.clearInterval(poll);
+      settle = window.setTimeout(() => setOpen(true), 1500);
+    }, 400);
+    return () => { window.clearInterval(poll); window.clearTimeout(settle); };
   }, []);
   useEffect(() => {
     if (forceOpen) setOpen(true);
