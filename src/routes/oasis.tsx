@@ -17,6 +17,7 @@ import { RacePicker } from "@/components/game/RacePicker";
 import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 import { OasisBroadcastControl } from "@/components/game/OasisBroadcastControl";
 import { Button } from "@/components/ui/button";
+import { OasisControlsHint } from "@/components/game/OasisControlsHint";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -84,6 +85,7 @@ function OasisPage() {
   useModsHotkey(toggleMods);
   const [cinematic, setCinematic] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [hintNonce, setHintNonce] = useState(0);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -132,7 +134,10 @@ function OasisPage() {
       <h1 className="sr-only">The Oasis</h1>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-x border-t border-border px-3 py-2">
         <p className="label min-w-0 text-signal">OASIS WORLD · LIVE</p>
-        <Link to="/play-guide" className="label shrink-0 text-bitcoin hover:text-foreground">CONTROLS →</Link>
+        <span className="flex shrink-0 items-center gap-3">
+          {entered ? <button type="button" onClick={() => setHintNonce((n) => n + 1)} className="label text-signal hover:text-bitcoin">[?] CONTROLS</button> : null}
+          <Link to="/play-guide" className="label text-bitcoin hover:text-foreground">GUIDE →</Link>
+        </span>
       </div>
       <div
         ref={shellRef}
@@ -164,6 +169,8 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
+          <OasisControlsHint forceOpen={hintNonce} />
+
           {cinematic ? null : <div className="oasis-activities grid grid-cols-1 items-start gap-3 border-y border-border p-3 sm:grid-cols-2" hidden={!toolsOpen}><DropHud /><ShardRaidHud /><ClassSkillBar /><RacePicker /><AdrenalineBot /></div>}
           </div>
           <div className="mt-2 flex flex-wrap items-stretch gap-2">
