@@ -1,4 +1,6 @@
 /** Retro 2.5D BOP's Boptimization Lab: server racks, monitor arc, deploy lever, verb-bar hotspots. */
+import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group, Mesh, MeshStandardMaterial } from "three";
@@ -165,7 +167,9 @@ export function LabInterior({ onHit, onHover, hover, boptimized, deployed, steam
           <mesh position-y={1.2}><boxGeometry args={[1.2, 2.4, 0.1]} /><meshStandardMaterial color="#2a2e34" metalness={0.6} emissive={TRIM} emissiveIntensity={hover === "door" ? 0.5 : 0.08} /></mesh>
         </Hot>
         <CafeSmoke count={45} color="#d8f4ff" opacity={0.035} mist={["#14303a", "#28e0ff"]} />
+        <OnChainExhibit room="lab" position={[2.6, 0, -2.4]} size={1.8} />
       </SafeCanvas>
+      <GearLocker />
     </div>
   );
 }
