@@ -201,11 +201,12 @@ export function BlockChronicles() {
     staleTime: 10 * 60_000,
   });
   const builtSet = useMemo(() => new Set(builtList ?? []), [builtList]);
+  // Recently verified Forge builds first (newest update first), then inscribed Guardian lands.
   const guardianHeights = useMemo(
-    () => [...new Set([...(builtList ?? []), ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].filter((h) => inhabited?.has(h)).slice(0, 24),
-    [inhabited, liveHeights, builtList],
+    () => [...new Set([...(builtList ?? []), ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].slice(0, 24),
+    [inhabited, builtList],
   );
-  // Every BITMAP with an inscribed Guardian child also gets its issue, built from its real block.
+  // Every built or inhabited BITMAP gets its issue, built from its real block.
   const { data: gBlocks, isError: gError } = useQuery({
     queryKey: ["block-comic-guardians", guardianHeights],
     queryFn: () => fetchComicBlocksAt(guardianHeights),
@@ -214,7 +215,10 @@ export function BlockChronicles() {
     retry: 4,
     retryDelay: (n) => Math.min(30_000, 2_000 * 2 ** n),
   });
-  const guardianIssues = useMemo(() => (gBlocks ?? []).filter((b) => inhabited?.has(b.height)).sort((a, b) => b.height - a.height).map(buildIssue), [gBlocks, inhabited]);
+  const guardianIssues = useMemo(() => {
+    const byH = new Map((gBlocks ?? []).map((b) => [b.height, b]));
+    return guardianHeights.map((h) => byH.get(h)).filter((b): b is NonNullable<typeof b> => b != null).map(buildIssue);
+  }, [gBlocks, guardianHeights]);
   // Until Guardian issues arrive (or if they can't load), show the latest mined blocks instead of an empty strip.
   const issues = guardianIssues.length > 0 ? guardianIssues : live;
   const isError = liveError && (gError || guardianIssues.length === 0);
