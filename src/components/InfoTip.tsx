@@ -4,20 +4,22 @@ const NOTE_W = 252;
 
 /** Small "?" that reveals a plain-English note on hover, keyboard focus or tap. */
 export function InfoTip({ text, label = "What does this mean?" }: { text: string; label?: string }) {
-  const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [box, setBox] = useState<{ left: number; top: number; width: number; up: boolean } | null>(null);
   const id = useId();
   const ref = useRef<HTMLSpanElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const open = pinned || hovered;
 
-  const show = () => {
+  const enter = () => {
     if (timer.current) clearTimeout(timer.current);
-    setOpen(true);
+    setHovered(true);
   };
   // Small grace period so the pointer can cross the gap between "?" and the note.
-  const hideSoon = () => {
+  const leave = () => {
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setOpen(false), 160);
+    timer.current = setTimeout(() => setHovered(false), 160);
   };
 
   useEffect(() => {
@@ -34,7 +36,10 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
 
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
+    const close = () => {
+      setPinned(false);
+      setHovered(false);
+    };
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {
@@ -44,7 +49,7 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
   }, [open]);
 
   return (
-    <span ref={ref} className="group relative inline-flex align-middle" onMouseEnter={show} onMouseLeave={hideSoon}>
+    <span ref={ref} className="group relative inline-flex align-middle" onMouseEnter={enter} onMouseLeave={leave}>
       <button
         type="button"
         aria-label={label}
@@ -53,11 +58,11 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen((o) => !o);
+          setPinned((p) => !p);
         }}
-        onBlur={() => setOpen(false)}
+        onBlur={() => setPinned(false)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") setOpen(false);
+          if (e.key === "Escape") setPinned(false);
         }}
         className="ml-1 inline-flex size-5 items-center justify-center rounded-full border border-border font-mono text-[10px] leading-none text-muted-foreground hover:text-signal focus-visible:text-signal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-signal"
       >
