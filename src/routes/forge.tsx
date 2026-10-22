@@ -1,4 +1,5 @@
 import { isLive, type AsmPlacement } from "@/lib/forge-assembly";
+import { InfoTip } from "@/components/InfoTip";
 import { createFileRoute } from "@tanstack/react-router";
 import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1065,7 +1066,7 @@ function ForgePage() {
               <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
               <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
               <RegistryDrawer height={height} canPlace={role === "bitmap"} />
-              <label title="Import a .bwvx file (Bitcoin voxel format: lightweight 3D blocks stored on Bitcoin) or a MagicaVoxel .vox file as a piece" data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
+              <label data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
                 ⇪ IMPORT .BWVX/.VOX
                 <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -1123,7 +1124,7 @@ function ForgePage() {
                     </span>
                     <button type="button" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void navigator.clipboard.writeText(FORGE_UNPACK_JS).then(() => toast.success("Unpacker copied — thank you for building!"))}>COPY UNPACKER JS</button>
                     <button type="button" data-testid="forge-glb" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBuildGlb(parcelBlocks, `bitmap-${height}`)).then((r) => toast.success(`.GLB saved · ${r.boxes} boxes · ${(r.bytes / 1024).toFixed(1)} KB`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .GLB</button>
-                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))} title="Bitcoin voxel format: lightweight 3D blocks, ready to store on Bitcoin">DOWNLOAD .BWVX</button>
+                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .BWVX</button><InfoTip text="BWVX is the Bitcoin voxel format: lightweight 3D blocks small enough to store directly on Bitcoin." />
                   </div>
                 );
               })()}
