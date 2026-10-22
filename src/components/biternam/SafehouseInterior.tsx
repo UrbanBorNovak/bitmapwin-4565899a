@@ -1,4 +1,6 @@
 /** Retro 2.5D safehouse for Wierdamoto: fixed camera, brick walls, candles, rain window, verb-bar hotspots. */
+import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group, Mesh, MeshStandardMaterial, PointLight } from "three";
@@ -189,7 +191,9 @@ export function SafehouseInterior({ onHit, onHover, hover, hasTorch, revealed, o
         </Hot>
         <CafeSmoke count={70} color="#c8b8a8" opacity={0.06} mist={["#5a6a8a", "#ff9050"]} />
         <Patron skin={COURIER} start={[1.8, 2.2]} seed={4.4} bounds={C_BOUNDS} isBlocked={() => false} home={[1.6, 1.8]} />
+        <OnChainExhibit room="safehouse" position={[-2.6, 0, 2.4]} size={1.8} />
       </SafeCanvas>
+      <GearLocker />
     </div>
   );
 }

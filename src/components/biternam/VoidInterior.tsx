@@ -1,4 +1,6 @@
 /** The Mempool Void: fixed-camera catwalk over an abyss, drifting orphan blocks, the ghost of 1138.bitmap. */
+import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group, Mesh, MeshStandardMaterial, PointLight } from "three";
@@ -152,7 +154,9 @@ export function VoidInterior({ onHit, onHover, hover, hasBlock, confirmed, shaki
           </Hot>
           <CafeSmoke count={90} color="#9affc0" opacity={0.07} mist={["#1a5a3a", "#28e0ff"]} />
         </group>
+        <OnChainExhibit room="void" position={[2.6, 0, -2.4]} size={1.8} />
       </SafeCanvas>
+      <GearLocker />
     </div>
   );
 }

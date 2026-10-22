@@ -1,4 +1,6 @@
 /** Retro 2.5D Mempool Arcade: fixed camera, glowing CRT cabinets, neon floor, verb-bar hotspots. */
+import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group, Mesh, MeshStandardMaterial } from "three";
@@ -153,7 +155,9 @@ export function ArcadeInterior({ onHit, onHover, hover, feeWon, hashWon, prize, 
         </Hot>
         <CafeSmoke count={60} color="#c8a8ff" opacity={0.05} mist={["#28e0ff", "#ff3ea5"]} />
         {PLAYERS.map((p, i) => <Patron key={p.skin} skin={p.skin} start={p.start} seed={i * 6.1 + 2.2} bounds={P_BOUNDS} isBlocked={pBlocked} home={[1.2, 1.6]} />)}
+        <OnChainExhibit room="arcade" position={[2.6, 0, -2.4]} size={1.8} />
       </SafeCanvas>
+      <GearLocker />
     </div>
   );
 }
