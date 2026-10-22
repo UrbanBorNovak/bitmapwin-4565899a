@@ -1907,3 +1907,4 @@
 .oasis-retro .oasis-storybook { box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--bitcoin) 30%, transparent); }
 .oasis-retro .hud-panel { border-radius: 0 !important; box-shadow: 3px 3px 0 0 color-mix(in oklch, var(--background) 70%, transparent); }
 @media (prefers-reduced-motion: reduce) { .retro-stage > .floor, .retro-bar > i { animation: none; } .retro-type { animation: none; width: auto; } }
+@media (max-width: 640px) { .retro-type { white-space: normal; width: auto; animation: none; } }
