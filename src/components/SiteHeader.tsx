@@ -263,7 +263,7 @@ export function SiteHeader() {
         </Link>
 
         <nav ref={desktopNavRef} className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
-          {NAV_GROUPS.map((group) => {
+          {NAV_GROUPS.map((group, gi) => {
             const here = groupItems(group).some((i) => itemIsActive(i.to));
             return (
             <div
@@ -292,14 +292,14 @@ export function SiteHeader() {
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className={`nav-menu absolute left-0 top-full border border-border bg-background ${group.sections.length > 2 ? "w-[52rem]" : "w-80"}`}>
+                <div className={`nav-menu absolute top-full border border-border bg-background w-[40rem] ${gi >= 3 ? "right-0" : "left-0"}`}>
                   <div className="border-b border-border bg-surface px-4 py-3">
                     <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
                   </div>
-                  <div className={group.sections.length > 2 ? "grid grid-cols-4 divide-x divide-border" : "divide-y divide-border"}>
+                  <div className={"grid grid-cols-2 divide-x divide-border"}>
                     {group.sections.map((section) => {
-                      const compact = group.sections.length > 2;
+                      const compact = false;
                       const sectionHere = section.items.some((i) => itemIsActive(i.to));
                       return (
                         <div key={section.title} className="p-2">
