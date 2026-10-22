@@ -93,7 +93,7 @@ function VaultPage() {
           <div key={h.note.chain.at(-1)!.hash} className="mt-2 rounded border border-border bg-card/60 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-foreground">{h.note.label}</span>
-              <span className={`text-[11px] ${verifyNote(h.note) ? "text-signal" : "text-destructive"}`}>{verifyNote(h.note) ? "✓ HISTORY VALID" : "✗ BROKEN"} · {h.note.chain.length - 1} HANDOFFS · {short(h.note.genesis)}</span>
+              <span className={`text-[11px] ${verifyNote(h.note) ? "text-signal" : "text-destructive"}`}>{verifyNote(h.note) ? "✓ HISTORY INTACT" : "✗ BROKEN OR FORGED"} · {h.note.chain.length - 1} HANDOFFS · {short(h.note.genesis)}</span>
             </div>
             <div className="mt-2 flex gap-2">
               <input value={sendTo[i] ?? ""} onChange={(e) => setSendTo({ ...sendTo, [i]: e.target.value })} placeholder="Recipient's receive code" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[11px]" />
