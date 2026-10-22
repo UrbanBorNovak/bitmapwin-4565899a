@@ -3,6 +3,7 @@
  * (1992 adventure-game style), chunky low-res rendering, verb-bar hotspots.
  */
 import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearShelf } from "@/components/biternam/GearShelf";
 import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
@@ -209,6 +210,7 @@ export function MuseumInterior({ onHit, onHover, hover, hasLens, solved, exhibit
           <mesh position-y={1.3}><boxGeometry args={[1.5, 2.6, 0.1]} /><meshStandardMaterial color="#1b1418" emissive={GLASS} emissiveIntensity={hover === "door" ? 0.5 : 0.15} /></mesh>
           <mesh position-y={2.7}><boxGeometry args={[1.8, 0.15, 0.15]} /><meshStandardMaterial color={TRIM} /></mesh>
         </Hot>
+        <GearShelf room="museum" position={[-3.75, 2.2, 0.4]} rotation={Math.PI / 2} />
         <OnChainExhibit room="museum" position={[0.4, 0, 2.6]} size={1.8} />
       </SafeCanvas>
       <GearLocker />

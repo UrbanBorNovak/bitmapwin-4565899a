@@ -1,5 +1,6 @@
 /** Retro 2.5D Bit-Café interior: fixed high-angle camera, low-res voxel props, verb-bar hotspots. */
 import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearShelf } from "@/components/biternam/GearShelf";
 import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
@@ -156,6 +157,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         </Hot>
         <CafeSmoke />
         <CafePatrons />
+        <GearShelf room="cafe" position={[-3.75, 2.2, 0.8]} rotation={Math.PI / 2} />
         <OnChainExhibit room="cafe" position={[2.6, 0, -2.4]} size={1.8} />
       </SafeCanvas>
       <GearLocker />
