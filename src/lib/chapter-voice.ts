@@ -74,7 +74,10 @@ export function speakRadio(text: string, speaker: string, maxSecs: number): () =
   const u = new SpeechSynthesisUtterance(text);
   const v = voiceFor(speaker), voices = synth.getVoices().filter((x) => x.lang.startsWith("en"));
   if (voices.length) u.voice = voices[v.pick % voices.length] ?? null;
-  u.pitch = v.pitch; u.rate = v.rate; u.volume = 0.9;
+  // Speed up long lines so they finish before the subtitle leaves (~2.6 words/s at rate 1).
+  const words = text.trim().split(/\s+/).length;
+  const fit = words / (2.6 * Math.max(0.8, maxSecs - 0.3));
+  u.pitch = v.pitch; u.rate = Math.min(1.7, Math.max(v.rate, fit)); u.volume = 0.9;
   u.onend = () => { stopBed(); squelch(0.08); };
   synth.speak(u);
   return () => { synth.cancel(); stopBed(); };

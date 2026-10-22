@@ -90,23 +90,31 @@ function ChaptersPage() {
     void sound.current.buf.then((b) => { if (live && b) stop = playSoundtrack(b, base + (performance.now() - startedAt) / 1000); });
     return () => { live = false; stop?.(); };
   }, [playing, muted, episode]);
-  const at = sceneAt(episode, time);
+  // Story time excludes the opening title card; it is frozen during the cards.
+  const inBody = time >= INTRO && time < INTRO + body;
+  const bodyT = Math.min(Math.max(time - INTRO, 0), Math.max(0, body - 0.001));
+  const POP = 1.6; // seconds into the ending card when ".bitmap" pops in
+  const at = sceneAt(episode, bodyT);
   const scene = episode.scenes[at.index];
-  const line = scene?.lines.find((l) => at.local >= l.at && at.local < l.at + l.dur);
+  const line = inBody ? scene?.lines.find((l) => at.local >= l.at && at.local < l.at + l.dur) : undefined;
   const speaker = line ? scene?.cast[line.speaker]?.name : undefined;
   // Radio-voice dialogue + camera foley, fired once per line / cut.
   const lineKey = playing && line ? `${at.index}:${line.at}` : "";
   useEffect(() => {
     if (!lineKey || muted || !line) return;
-    const cancel = speakRadio(line.text, speaker ?? "narrator", line.dur);
-    return cancel;
+    // Let the line finish naturally; the next line or a pause cuts it.
+    speakRadio(line.text, speaker ?? "narrator", line.dur);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineKey, muted]);
-  const phase = time < INTRO ? -1 : time >= INTRO + body ? 1e6 : at.index;
+  const outroT = time - INTRO - body;
+  const phase = time < INTRO ? -1 : outroT >= POP ? 2e6 : outroT >= 0 ? 1e6 : at.index;
   const lastPhase = useRef(phase);
   useEffect(() => {
     if (!playing || muted) { lastPhase.current = phase; return; }
-    if (phase !== lastPhase.current) { if (phase === 1e6) impact(); else { whoosh(); if (phase === 0) impact(0.2); } }
+    if (phase !== lastPhase.current) {
+      if (phase === 2e6) impact();
+      else { whoosh(); if (phase === 0) impact(0.2); if (phase === 1e6) stopAllVoice(); }
+    }
     lastPhase.current = phase;
   }, [phase, playing, muted]);
   useEffect(() => { if (!playing || muted) stopAllVoice(); }, [playing, muted]);
@@ -139,7 +147,7 @@ function ChaptersPage() {
             <div className="vhs-tape absolute inset-0" style={{ filter: `${styleFilter(episode.style)} saturate(1.25) contrast(1.08) sepia(0.12)` }}>
               <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
                 <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
-                  <ToonStage3D episode={episode} time={time} />
+                  <ToonStage3D episode={episode} time={bodyT} />
                 </Suspense>
               </ClientOnly>
             </div>
@@ -157,6 +165,26 @@ function ChaptersPage() {
             {line && (
               <div className="pointer-events-none absolute inset-x-0 bottom-4 mx-auto w-fit max-w-[80%] rounded border border-border bg-background/85 px-3 py-2 text-center text-sm">
                 <span className="font-mono text-[10px] text-signal">{speaker}</span><div>{line.text}</div>
+              </div>
+            )}
+            {time < INTRO && (playing || time > 0) && (
+              <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
+                <div>
+                  <div className="font-mono text-xs tracking-[0.4em] text-signal">CHAPTER</div>
+                  <div className="display mt-2 text-4xl text-bitcoin md:text-6xl">{height.toLocaleString("en-US")}</div>
+                  <div className="display mt-3 text-lg md:text-2xl">{episode.title}</div>
+                </div>
+              </div>
+            )}
+            {outroT >= 0 && (
+              <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
+                <div>
+                  <div className="font-mono text-xs tracking-[0.3em] text-muted-foreground">IT WAS NEVER A GAME. IT WAS ALWAYS</div>
+                  <div className="display mt-3 whitespace-nowrap normal-case text-4xl md:text-6xl">
+                    {height}<span className={`text-bitcoin transition-all duration-300 ${outroT >= POP ? "opacity-100" : "opacity-0"}`} style={{ display: "inline-block", transform: outroT >= POP ? "scale(1)" : "scale(1.8)" }}>.bitmap</span>
+                  </div>
+                  <div className={`mt-4 font-mono text-xs tracking-[0.4em] text-signal transition-opacity duration-500 ${outroT >= POP + 1 ? "opacity-100" : "opacity-0"}`}>THE END</div>
+                </div>
               </div>
             )}
             {!playing && (
