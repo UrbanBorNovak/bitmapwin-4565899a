@@ -1867,3 +1867,43 @@
   animation: manga-flash 1.6s ease-out both;
 }
 @media (prefers-reduced-motion: reduce) { .comic-bubble, .manga-speed, .manga-sfx, .manga-halftone { animation-duration: 0.01s; } }
+
+/* 90s retro 2.5D shell: character creation, boot screen, Oasis */
+.retro-crt { position: relative; isolation: isolate; box-shadow: inset 0 0 80px color-mix(in oklch, var(--background) 85%, transparent), inset 0 0 2px color-mix(in oklch, var(--signal) 40%, transparent); }
+.retro-crt::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 40;
+  background:
+    repeating-linear-gradient(to bottom, color-mix(in oklch, var(--background) 30%, transparent) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 55%, color-mix(in oklch, var(--background) 80%, transparent) 100%);
+}
+.retro-px { font-family: "Space Mono", monospace; letter-spacing: 0.14em; text-transform: uppercase; -webkit-font-smoothing: none; }
+.retro-btn { border: 2px solid currentColor; box-shadow: 3px 3px 0 0 currentColor; transition: transform 60ms steps(1), box-shadow 60ms steps(1); }
+.retro-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 currentColor; }
+.retro-stage { position: absolute; inset: 0; perspective: 700px; perspective-origin: 50% 30%; overflow: hidden; pointer-events: none; }
+.retro-stage > .floor {
+  position: absolute; left: -50%; right: -50%; bottom: -30%; height: 75%;
+  transform: rotateX(62deg); transform-origin: 50% 100%;
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--bitcoin) 45%, transparent) 2px, transparent 2px),
+    linear-gradient(90deg, color-mix(in oklch, var(--bitcoin) 45%, transparent) 2px, transparent 2px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to top, black 30%, transparent 95%);
+  animation: retro-floor 4s steps(12) infinite;
+}
+.retro-stage > .plinth {
+  position: absolute; left: 50%; bottom: 8%; width: 46%; aspect-ratio: 3 / 1; translate: -50% 0;
+  background: color-mix(in oklch, var(--card) 85%, transparent);
+  border: 2px solid var(--bitcoin); box-shadow: 0 8px 0 0 color-mix(in oklch, var(--bitcoin) 50%, var(--background));
+  clip-path: polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+}
+.retro-sprite canvas { image-rendering: pixelated; }
+@keyframes retro-floor { to { background-position: 0 48px; } }
+.retro-type { overflow: hidden; white-space: nowrap; width: 0; animation: retro-type 1.2s steps(40, end) forwards; }
+@keyframes retro-type { to { width: 100%; } }
+.retro-bar > i { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--bitcoin) 0 10px, transparent 10px 13px); animation: retro-bar 3s steps(20) infinite; }
+@keyframes retro-bar { from { width: 0; } to { width: 100%; } }
+/* Oasis world: crisp pixel upscale + faint CRT lines, always on */
+.oasis-retro .oasis-storybook canvas { image-rendering: pixelated; }
+.oasis-retro .oasis-storybook { box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--bitcoin) 30%, transparent); }
+.oasis-retro .hud-panel { border-radius: 0 !important; box-shadow: 3px 3px 0 0 color-mix(in oklch, var(--background) 70%, transparent); }
+@media (prefers-reduced-motion: reduce) { .retro-stage > .floor, .retro-bar > i { animation: none; } .retro-type { animation: none; width: auto; } }
