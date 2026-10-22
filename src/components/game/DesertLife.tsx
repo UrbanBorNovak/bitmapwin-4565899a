@@ -432,118 +432,6 @@ export const DesertLife = memo(function DesertLife({
 
   return (
     <group>
-      <instancedMesh
-        ref={cactusRef}
-        args={[undefined, undefined, 400]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <cylinderGeometry args={[0.42, 0.5, 1, 9, 1]} />
-        <meshLambertMaterial color={CACTUS_GREEN} />
-      </instancedMesh>
-      <instancedMesh
-        ref={armsRef}
-        args={[undefined, undefined, 800]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <cylinderGeometry args={[0.44, 0.44, 1, 8, 1]} />
-        <meshLambertMaterial color={CACTUS_GREEN_DARK} />
-      </instancedMesh>
-      <instancedMesh
-        ref={spikeRef}
-        args={[undefined, undefined, 14000]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <coneGeometry args={[0.5, 1, 4, 1]} />
-        <meshBasicMaterial color={SPIKE} />
-      </instancedMesh>
-      <instancedMesh
-        ref={blossomRef}
-        args={[undefined, undefined, 1400]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <sphereGeometry args={[0.5, 6, 5]} />
-        <meshBasicMaterial color={BLOSSOM} />
-      </instancedMesh>
-      <instancedMesh
-        ref={rockRef}
-        args={[undefined, undefined, 1200]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <icosahedronGeometry args={[0.5, 0]} />
-        <meshLambertMaterial color={colors.muted} flatShading />
-      </instancedMesh>
-      <instancedMesh
-        ref={pebbleRef}
-        args={[undefined, undefined, 2400]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <icosahedronGeometry args={[0.5, 0]} />
-        <meshBasicMaterial color={colors.border} />
-      </instancedMesh>
-      <instancedMesh
-        ref={brushRef}
-        args={[undefined, undefined, 2400]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <coneGeometry args={[0.5, 1, 5, 1]} />
-        <meshLambertMaterial color={colors.muted} />
-      </instancedMesh>
-      <instancedMesh
-        ref={pondRef}
-        args={[undefined, undefined, 60]}
-        frustumCulled={false}
-        raycast={noRaycast}
-        // Drawn before anything standing in it, so an avatar wading at the edge
-        // is never painted over by the water sheet.
-        renderOrder={-2}
-      >
-        <circleGeometry args={[1, 48]} />
-        <WaterMaterial />
-      </instancedMesh>
-      <instancedMesh
-        ref={reedRef}
-        args={[undefined, undefined, 700]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial color={REED} />
-      </instancedMesh>
-      <instancedMesh
-        ref={palmRef}
-        args={[undefined, undefined, 240]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <cylinderGeometry args={[0.36, 0.5, 1, 7, 1]} />
-        <meshLambertMaterial color={PALM_TRUNK} />
-      </instancedMesh>
-      <instancedMesh
-        ref={frondRef}
-        args={[undefined, undefined, 1600]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial color={PALM_LEAF} />
-      </instancedMesh>
-      <instancedMesh
-        ref={oasisBushRef}
-        args={[undefined, undefined, 900]}
-        frustumCulled={false}
-        raycast={noRaycast}
-      >
-        <icosahedronGeometry args={[0.5, 0]} />
-        <meshLambertMaterial color={OASIS_BUSH} flatShading />
-      </instancedMesh>
-      <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <JadeNodes unit={unit} center={center} radius={radius} />
@@ -551,7 +439,7 @@ export const DesertLife = memo(function DesertLife({
       <OreMines unit={unit} center={center} radius={radius} />
       {/* Land stays clear for inscribed builds: no procedural houses, shrines,
           igloos, playgrounds or groves. Rare voxel trees grow only beyond the grid. */}
-      <VoxelTrees unit={unit} center={treeCenter} radius={radius} />
+      {/* Ground scatter and trees removed for frame rate; to return as vertex-animated meshes. */}
       <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />

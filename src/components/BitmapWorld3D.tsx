@@ -3145,7 +3145,7 @@ const WorldScene = memo(function WorldScene({
             onSnared={onBite}
           />
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
-          <DesertBuilds unit={AVATAR_U} pose={pose} />
+
           <BitmapMineCrew unit={AVATAR_U} pose={pose} heights={ownedHeights} />
 
           {quality.effects !== "off" ? <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} /> : null}
