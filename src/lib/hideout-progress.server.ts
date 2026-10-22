@@ -15,7 +15,7 @@ export async function backroomStepGate(room: HideoutRoom, commitment: string | u
 }
 
 /** Server rule for one hideout step: key must match the room's step; backrooms need a valid pass; the database enforces order and pacing. */
-export async function recordHideoutStep(db: SupabaseClient, userId: string, data: { room: HideoutRoom; index: number; key: string; pass?: string }) {
+export async function recordHideoutStep(db: SupabaseClient, userId: string, data: { room: HideoutRoom; index: number; key: string; pass?: string | undefined }) {
   const steps = HIDEOUT_STEPS[data.room];
   if (!steps || steps[data.index] !== data.key) return { ok: false as const, status: "invalid" };
   const gate = await backroomStepGate(data.room, data.pass, async (slug, c) => {
