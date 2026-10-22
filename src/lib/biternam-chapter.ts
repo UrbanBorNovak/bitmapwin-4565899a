@@ -83,6 +83,12 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   const reply = heroReply(cast, h, seed);
   const landSfx = cast.hasBuild ? "BUILT!" : theme === "halving" ? "HODL!" : "WHOOSH!";
   const roomFx = theme === "crowded" ? "bitmapwin/sparks-v1" : theme === "quiet" ? "bitmapwin/smoke-v1" : "bitmapwin/embers-v1";
+  const techRoom = /batcave|vault|chinatown|arcade|lab|studio|void|fortress/.test(set);
+  const roomAmbient = [
+    { id: "bitmapwin/ground-fog-v1", at: 0, x: 0, y: 0.1, z: 0 },
+    { id: "bitmapwin/heavy-smoke-v1", at: 0.3, x: -5, y: 0, z: -3, scale: 0.7 },
+    ...(techRoom ? [{ id: "bitmapwin/cyber-sparks-v1", at: 0.5, x: 0, y: 1, z: -1, scale: 0.8 }] : [{ id: "bitmapwin/embers-v1", at: 0.5, x: 0, y: 0, z: 0, scale: 0.5 }]),
+  ];
   // Room scenes open on a short wide establishing shot so the wall gallery reads before the camera cuts in.
   const EST = 1.8;
   const est = (sc: ToonEpisode["scenes"][number]) => sc.set ? { ...sc, shot: "wide" as const, duration: sc.duration + EST,
