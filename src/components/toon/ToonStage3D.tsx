@@ -100,6 +100,8 @@ import { Patron } from "@/components/biternam/CafeLife";
 import { AVATAR_SKINS, isPixelSkin } from "@/lib/toon-avatars";
 import { DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
 import { sceneAt, actorPositionAt, activeCut, type ToonActor, type ToonEpisode, type ToonLine, type ToonScene, type Shot } from "@/lib/toon-script";
+import { ACTOR_R, separate, type Body } from "@/lib/toon-collide";
+import { footprintsFor } from "@/components/toon/BiternamRooms";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
 /** Live character positions (stage units): "a<slot>" = cast, "p<i>" = wandering extras. */
@@ -177,7 +179,7 @@ function Actor({ actor, slot, scene, set, timeRef, progressRef, durRef }: { acto
     actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10));
     // Publish the head's screen position for the speech-bubble overlay.
     if (ready) {
-      head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
+      head.set(x, y + bodyH * s * sy * 0.92, z).project(camera);
       if (head.z < 1) toonHeads.set(slot, { x: (head.x + 1) / 2, y: (1 - head.y) / 2, scene });
       else toonHeads.delete(slot);
     }
@@ -383,8 +385,8 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
         : scene.set === "oasis" ? <group><group position-z={-30}><OasisWorld timeRef={timeRef} /></group>
             <mesh position={[0, -0.5, 0]}><boxGeometry args={[60, 1, 50]} /><meshStandardMaterial color="#e6d3a3" roughness={0.95} /></mesh></group>
         : <Land key={scene.block} block={scene.block} />}
-      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}-${a.avatar ? a.avatar.model + a.avatar.skin : "g"}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
-      {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={(() => { const w = setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }; return [w.x0 + (w.x1 - w.x0) * (i + 0.5) / 4, w.z0 + (w.z1 - w.z0) * (0.3 + 0.4 * (i % 2))] as [number, number]; })()} seed={i * 3.7 + 1.3} bounds={setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={(x: number, z: number) => walkBlocked(scene.set, x, z)} home={[0, -1]} /></group>)}
+      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}-${a.avatar ? a.avatar.model + a.avatar.skin : "g"}`} actor={a} slot={i} scene={index} set={scene.set} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
+      {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={(() => { const w = setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }; return [w.x0 + (w.x1 - w.x0) * (i + 0.5) / 4, w.z0 + (w.z1 - w.z0) * (0.3 + 0.4 * (i % 2))] as [number, number]; })()} seed={i * 3.7 + 1.3} bounds={setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={(x: number, z: number) => walkBlocked(scene.set, x, z)} home={[0, -1]} bodies={stageBodies} bodyKey={`p${i}`} bodyScale={10} /></group>)}
       {episode.scenes[index - 1]?.set === "portal" && <PortalDust key={`pd-${index}`} block={scene.block} localRef={progressRef} />}
       <ToonVFXLayer cues={scene.fx} lib={lib} scene={index} timeRef={progressRef} />
       <Director key={index} scene={scene} next={episode.scenes[index + 1]} local={local} lib={lib} />
