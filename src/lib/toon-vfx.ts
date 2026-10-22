@@ -59,6 +59,18 @@ export const HOUSE_VFX: ToonVFX[] = [
   { ...base, id: "bitmapwin/rain-v1", name: "Rain", shape: "spark", blend: "normal", count: 220, duration: 15, life: 1.1, emit: "stream",
     spread: [24, 0.5, 16], velocity: [-1, -18, 0], jitter: 0.5, gravity: 0, drag: 0, // spawned high, see y offset
     keys: [k(0, 0.6, "#cfe3f0", 0.55), k(1, 0.6, "#cfe3f0", 0.55)] },
+  { ...base, id: "bitmapwin/heavy-smoke-v1", name: "Billowing Smoke", shape: "quad", blend: "normal", count: 70, duration: 16, life: 4.5, emit: "stream",
+    spread: [1.2, 0.3, 1.2], velocity: [0.3, 2.2, 0], jitter: 0.7, gravity: 0.15, drag: 0.5,
+    keys: [k(0, 0.8, "#6a6460", 0), k(0.15, 1.8, "#57514d", 0.7), k(0.6, 3.4, "#7a7470", 0.4), k(1, 5, "#9a9590", 0)] },
+  { ...base, id: "bitmapwin/ground-fog-v1", name: "Ground Fog", shape: "quad", blend: "normal", count: 50, duration: 16, life: 7, emit: "stream",
+    spread: [9, 0.1, 5], velocity: [0.5, 0.12, 0.1], jitter: 0.25, gravity: 0, drag: 0.2,
+    keys: [k(0, 2.5, "#c8d4dc", 0), k(0.3, 4, "#b8c6d0", 0.32), k(1, 5.5, "#a8b6c0", 0)] },
+  { ...base, id: "bitmapwin/shockwave-v1", name: "Shockwave", shape: "cube", blend: "additive", count: 64, duration: 1, life: 0.7, emit: "burst",
+    spread: [0.1, 0.05, 0.1], velocity: [0, 0.3, 0], jitter: 14, gravity: 0, drag: 2.5, shake: 0.5,
+    keys: [k(0, 0.4, "#ffffff", 1), k(0.3, 0.3, "#ffb84a", 0.9), k(1, 0.15, "#ff6a00", 0)] },
+  { ...base, id: "bitmapwin/cyber-sparks-v1", name: "Neon Sparks", shape: "spark", blend: "additive", count: 90, duration: 14, life: 1.6, emit: "stream",
+    spread: [5, 2, 3], velocity: [0, 1, 0], jitter: 3, gravity: -4, drag: 0.8,
+    keys: [k(0, 0.3, "#d6fbff", 1), k(0.5, 0.22, "#3fe0ff", 0.9), k(1, 0.1, "#1a7aff", 0)] },
 ];
 
 const SHAPES: VfxShape[] = ["cube", "quad", "spark"];
