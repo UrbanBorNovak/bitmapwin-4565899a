@@ -147,7 +147,7 @@ export function OutpostInterior({ onHit, onHover, hover, hasSuit, suited, blasti
           <mesh position-y={1.1}><boxGeometry args={[0.9, 2, 0.08]} /><meshStandardMaterial color="#c9c2ae" emissive={BLUE} emissiveIntensity={hover === "door" ? 0.4 : 0.03} /></mesh>
         </Hot>
         <GearShelf room="outpost" position={[-3.25, 2.0, 0.2]} rotation={Math.PI / 2} />
-        <OnChainExhibit room="outpost" position={[2.2, 0, -1.2]} size={1.4} />
+        <OnChainExhibit room="outpost" position={[0.6, 0, -0.6]} size={1.4} />
       </SafeCanvas>
       <GearLocker />
     </div>
