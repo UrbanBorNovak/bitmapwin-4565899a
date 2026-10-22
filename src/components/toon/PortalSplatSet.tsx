@@ -74,15 +74,15 @@ function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableR
     for (let i = 0; i < N; i++) {
       // Two clusters: a swirling vortex around the gate and a wide nebula shell.
       const vortex = vortexOnly || i < N * 0.45;
-      const a = r() * Math.PI * 2, rad = vortex ? 14 + r() * 26 : 40 + r() * 120;
+      const a = r() * Math.PI * 2, rad = vortexOnly ? 9 + r() * 9 : vortex ? 14 + r() * 26 : 40 + r() * 120;
       let x = Math.cos(a) * rad;
       if (!vortex && Math.abs(x) < 26) x = Math.sign(x || 1) * (26 + r() * 30); // keep the walkway clear so the lead stays readable
       pos[i * 3] = x;
-      pos[i * 3 + 1] = vortex ? 18 + Math.sin(a) * rad * 0.9 : -10 + r() * 110;
-      pos[i * 3 + 2] = vortex ? -50 + (r() - 0.5) * 8 : -40 - r() * 160 + (r() < 0.3 ? 120 : 0);
+      pos[i * 3 + 1] = vortexOnly ? 9 + Math.sin(a) * rad * 0.95 : vortex ? 18 + Math.sin(a) * rad * 0.9 : -10 + r() * 110;
+      pos[i * 3 + 2] = vortexOnly ? -16.5 + (r() - 0.5) * 3 : vortex ? -50 + (r() - 0.5) * 8 : -40 - r() * 160 + (r() < 0.3 ? 120 : 0);
       c.set(PALETTE[Math.floor(r() * (vortex ? 2 : PALETTE.length))]!).multiplyScalar(0.35 + r() * 0.5);
       col.set([c.r, c.g, c.b], i * 3);
-      size[i] = vortex ? 3 + r() * 6 : 6 + r() * 18;
+      size[i] = vortexOnly ? 1 + r() * 2.5 : vortex ? 3 + r() * 6 : 6 + r() * 18;
       phase[i] = r() * 100;
     }
     const g = new THREE.BufferGeometry();
@@ -115,10 +115,12 @@ export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number
   });
   return (
     <group>
+      {onLand ? <pointLight position={[0, 9, -12]} intensity={600} distance={40} decay={2} color="#f7931a" /> : <>
       <ambientLight intensity={0.55} color="#b8c4ff" />
       <pointLight position={[0, 18, -46]} intensity={2600} distance={160} decay={2} color="#f7931a" />
-      <pointLight position={[0, 30, 20]} intensity={900} distance={120} decay={2} color="#28e0ff" />
-      <Splats seed={block} timeRef={timeRef} />
+      <pointLight position={[0, 30, 20]} intensity={900} distance={120} decay={2} color="#28e0ff" /></>}
+      <Splats seed={block} timeRef={timeRef} vortexOnly={onLand} />
+      {!onLand && <>
       {/* glass light bridge */}
       {Array.from({ length: 12 }, (_, i) => (
         <mesh key={i} position={[0, -0.5, 30 - i * 7]}>
@@ -126,6 +128,7 @@ export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number
           <meshStandardMaterial color="#9fe9ff" emissive="#28e0ff" emissiveIntensity={0.35 + (i % 2) * 0.25} transparent opacity={0.45} metalness={0.3} roughness={0.15} />
         </mesh>
       ))}
+      </>}
       {/* ring gate */}
       <group ref={ring} position={[0, 9, -16]}>
         {/* stencil mask: the torn opening */}
@@ -136,7 +139,7 @@ export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number
       </group>
       {dest && <DestWindow>{dest}</DestWindow>}
       {/* drifting bedrock voxels */}
-      <group ref={shards}>{rocks.map((k, i) => (
+      <group ref={shards} visible={!onLand}>{rocks.map((k, i) => (
         <mesh key={i} position={k.p}><boxGeometry args={[k.s, k.s, k.s]} /><meshStandardMaterial color={k.c} emissive="#f7931a" emissiveIntensity={0.08} roughness={0.9} /></mesh>
       ))}</group>
     </group>
