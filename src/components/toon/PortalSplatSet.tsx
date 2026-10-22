@@ -39,10 +39,12 @@ function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<num
       // Two clusters: a swirling vortex around the gate and a wide nebula shell.
       const vortex = i < N * 0.45;
       const a = r() * Math.PI * 2, rad = vortex ? 14 + r() * 26 : 40 + r() * 120;
-      pos[i * 3] = Math.cos(a) * rad;
-      pos[i * 3 + 1] = vortex ? 22 + Math.sin(a) * rad * 0.9 : -10 + r() * 110;
-      pos[i * 3 + 2] = vortex ? -60 + (r() - 0.5) * 10 : -40 - r() * 160 + (r() < 0.3 ? 120 : 0);
-      c.set(PALETTE[Math.floor(r() * (vortex ? 2 : PALETTE.length))]!).multiplyScalar(0.5 + r() * 0.7);
+      let x = Math.cos(a) * rad;
+      if (!vortex && Math.abs(x) < 26) x = Math.sign(x || 1) * (26 + r() * 30); // keep the walkway clear so the lead stays readable
+      pos[i * 3] = x;
+      pos[i * 3 + 1] = vortex ? 18 + Math.sin(a) * rad * 0.9 : -10 + r() * 110;
+      pos[i * 3 + 2] = vortex ? -50 + (r() - 0.5) * 8 : -40 - r() * 160 + (r() < 0.3 ? 120 : 0);
+      c.set(PALETTE[Math.floor(r() * (vortex ? 2 : PALETTE.length))]!).multiplyScalar(0.35 + r() * 0.5);
       col.set([c.r, c.g, c.b], i * 3);
       size[i] = vortex ? 3 + r() * 6 : 6 + r() * 18;
       phase[i] = r() * 100;
@@ -75,21 +77,21 @@ export function PortalSplatSet({ block, timeRef }: { block: number; timeRef: Mut
   return (
     <group>
       <ambientLight intensity={0.55} color="#b8c4ff" />
-      <pointLight position={[0, 22, -55]} intensity={2600} distance={160} decay={2} color="#f7931a" />
+      <pointLight position={[0, 18, -46]} intensity={2600} distance={160} decay={2} color="#f7931a" />
       <pointLight position={[0, 30, 20]} intensity={900} distance={120} decay={2} color="#28e0ff" />
       <Splats seed={block} timeRef={timeRef} />
       {/* glass light bridge */}
-      {Array.from({ length: 14 }, (_, i) => (
+      {Array.from({ length: 12 }, (_, i) => (
         <mesh key={i} position={[0, -0.5, 30 - i * 7]}>
           <boxGeometry args={[14, 0.6, 6.4]} />
           <meshStandardMaterial color="#9fe9ff" emissive="#28e0ff" emissiveIntensity={0.35 + (i % 2) * 0.25} transparent opacity={0.45} metalness={0.3} roughness={0.15} />
         </mesh>
       ))}
       {/* ring gate */}
-      <group ref={ring} position={[0, 22, -60]}>
-        <mesh><torusGeometry args={[20, 1.2, 12, 64]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={1.6} /></mesh>
+      <group ref={ring} position={[0, 18, -50]}>
+        <mesh><torusGeometry args={[18, 1.2, 12, 64]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={1.6} /></mesh>
         <mesh><torusGeometry args={[16, 0.4, 8, 6]} /><meshStandardMaterial color="#28e0ff" emissive="#28e0ff" emissiveIntensity={1.4} /></mesh>
-        <mesh><circleGeometry args={[19, 48]} /><meshBasicMaterial color="#ffd9a0" transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
+        <mesh><circleGeometry args={[17, 48]} /><meshBasicMaterial color="#ffd9a0" transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
       </group>
       {/* drifting bedrock voxels */}
       <group ref={shards}>{rocks.map((k, i) => (
