@@ -157,8 +157,28 @@ export function loreTitle(theme: ChapterTheme, h: number, ctx: TitleCtx) {
   return titleCase(fill(pick(TITLE_TPL, rnd(h, s, 8)).replace("{T}", base), h, ctx.set, coStar, ctx)).slice(0, 60);
 }
 export function loreQuote(_theme: ChapterTheme, h: number, ctx: TitleCtx) {
+  return jokeArc(h, ctx.seed ?? 0)[0]!;
+}
+export function loreQuoteLong(_theme: ChapterTheme, h: number, ctx: TitleCtx) {
   const s = ctx.seed ?? 0;
   const coStar = ctx.coStar.split(" ").map((w) => w[0] + w.slice(1).toLowerCase()).join(" ");
   const q = fill(pick(QUOTE_TPL, rnd(h, s, 9)), h, ctx.set, coStar, ctx);
   return (q[0]!.toUpperCase() + q.slice(1)).slice(0, 140);
 }
+
+/** One joke per video, told across six beats. Every beat is a single sentence of at most five words. */
+export const JOKE_ARCS: string[][] = [
+  ["Chuck Norris never checks blocks.", "Blocks check themselves for him.", "He once mined Genesis twice.", "Satoshi asked for his autograph.", "He divided by zero sats.", "Zero sats paid him rent."],
+  ["Chuck Norris holds no keys.", "Keys hold on to him.", "He lost a seed phrase.", "The seed phrase found him.", "It apologized in hex.", "Then it self-custodied itself."],
+  ["Chuck Norris skips the mempool.", "The mempool waits for him.", "Fees drop when he stares.", "He confirms in zero blocks.", "Miners call him sir.", "Difficulty adjusted to him."],
+  ["Chuck Norris counted all bitcoin.", "Twenty-one million, twice.", "The second time, faster.", "He found one extra sat.", "Nobody argued with him.", "Now it's twenty-one million."],
+  ["Chuck Norris survived every halving.", "Halvings fear him instead.", "Rewards doubled out of respect.", "Miners stopped crying instantly.", "Charts started doing pushups.", "Bears hibernate year round now."],
+  ["Chuck Norris inscribed this block.", "With a roundhouse kick.", "The sat never moved again.", "Ordinals renamed to Chucknals.", "Rodarmor just nodded slowly.", "Every tile belongs to him."],
+  ["Chuck Norris doesn't run nodes.", "Nodes run from him.", "He verified the whole chain.", "Using only his beard.", "The beard found a bug.", "The bug filed for bankruptcy."],
+  ["Chuck Norris tried cold storage.", "The freezer begged for mercy.", "Now his coins stay warm.", "Thieves send him tips instead.", "He returns them with interest.", "Interest rates are terrified."],
+];
+const words5 = (s: string) => { const w = s.trim().split(/\s+/); return w.length <= 5 ? s.trim() : w.slice(0, 5).join(" ").replace(/[,;:]$/, "") + "."; };
+/** The video's joke: same (height, seed) → same arc. */
+export function jokeArc(h: number, s: number): string[] { return pick(JOKE_ARCS as unknown as string[], rnd(h, s, 11) as number) as unknown as string[]; }
+/** Cap any spoken line to one sentence of at most five words. */
+export function shortLine(s: string): string { return words5(s.split(/(?<=[.!?])\s/)[0] ?? s); }
