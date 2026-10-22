@@ -96,9 +96,12 @@ export function qualitySettings(
     : resolved === "medium"
       ? { pixelRatio: 1, renderScale: 0.75, viewDistance: "short" as const, shadows: false, plotGlow: false, fpsCap: 60 as const, adaptive: true }
       : { pixelRatio: 1, renderScale: 0.9, viewDistance: "medium" as const, shadows: false, plotGlow: false, fpsCap: 60 as const, adaptive: true };
-  const viewDistance = stored.overrides.viewDistance ?? defaults.viewDistance;
+  // Phones ignore saved shadow / far-view / glow settings from older builds:
+  // a shadow pass redraws every caster a second time each frame.
+  const savedView = stored.overrides.viewDistance ?? defaults.viewDistance;
+  const viewDistance = touch && savedView === "far" ? "medium" : savedView;
   const renderScale = clampScale(adaptiveScale ?? stored.overrides.renderScale ?? defaults.renderScale);
-  const shadows = stored.overrides.shadows ?? defaults.shadows;
+  const shadows = touch ? false : stored.overrides.shadows ?? defaults.shadows;
   return {
     mode: stored.mode,
     resolved,
@@ -109,7 +112,7 @@ export function qualitySettings(
     chunkRadius: viewDistance === "short" ? 0 : viewDistance === "medium" ? 1 : 2,
     shadows,
     shadowMapSize: shadows ? (resolved === "high" ? 1024 : 512) : 0,
-    plotGlow: stored.overrides.plotGlow ?? defaults.plotGlow,
+    plotGlow: touch ? false : stored.overrides.plotGlow ?? defaults.plotGlow,
     effects: resolved === "high" ? "half" : "off",
     propDetail: resolved === "low" ? "cheap" : resolved === "medium" ? "mid" : "full",
     npcLimit: resolved === "low" ? 8 : resolved === "medium" ? 16 : 64,
