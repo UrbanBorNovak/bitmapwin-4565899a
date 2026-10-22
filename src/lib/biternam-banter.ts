@@ -177,7 +177,28 @@ export const JOKE_ARCS: string[][] = [
   ["Chuck Norris doesn't run nodes.", "Nodes run from him.", "He verified the whole chain.", "Using only his beard.", "The beard found a bug.", "The bug filed for bankruptcy."],
   ["Chuck Norris tried cold storage.", "The freezer begged for mercy.", "Now his coins stay warm.", "Thieves send him tips instead.", "He returns them with interest.", "Interest rates are terrified."],
 ];
-const words5 = (s: string) => { const w = s.trim().split(/\s+/); return w.length <= 5 ? s.trim() : w.slice(0, 5).join(" ").replace(/[,;:]$/, "") + "."; };
+// Local, rule-based rewrite (no AI): drop filler words in priority order, then end on a content word.
+const FILLER = [
+  ["really", "very", "just", "actually", "literally", "basically", "totally", "so", "quite", "pretty", "honestly", "simply", "even", "still", "ever"],
+  ["the", "a", "an", "all", "some", "every"],
+  ["is", "are", "was", "were", "been", "being", "am", "will", "would", "has", "have", "had"],
+  ["and", "then", "also", "too", "again", "now", "here", "there"],
+];
+const DANGLING = new Set(["the", "a", "an", "and", "or", "but", "to", "of", "in", "on", "at", "with", "for", "from", "that", "which", "my", "your", "his", "her", "its", "our", "their", "is", "are", "was", "were", "be", "if", "so", "as", "by", "into", "than"]);
+const bare = (w: string) => w.toLowerCase().replace(/[^a-z']/g, "");
+const words5 = (raw: string) => {
+  const t = raw.trim().replace(/\b(kind|sort) of\s/gi, ""), end = /[!?]$/.test(t) ? t.slice(-1) : ".";
+  let w = t.replace(/[.!?]+$/, "").replace(/[,;:—–-]+(\s|$)/g, " ").split(/\s+/).filter(Boolean);
+  if (w.length <= 5) return w.join(" ") + end;
+  for (const tier of FILLER) {
+    for (let i = w.length - 1; i >= 0 && w.length > 5; i--) if (tier.includes(bare(w[i]!))) w.splice(i, 1);
+    if (w.length <= 5) break;
+  }
+  w = w.slice(0, 5);
+  while (w.length > 2 && DANGLING.has(bare(w[w.length - 1]!))) w.pop();
+  const out = w.join(" ");
+  return out[0]!.toUpperCase() + out.slice(1) + end;
+};
 /** The video's joke: same (height, seed) → same arc. */
 export function jokeArc(h: number, s: number): string[] { return pick(JOKE_ARCS as unknown as string[], rnd(h, s, 11) as number) as unknown as string[]; }
 /** Cap any spoken line to one sentence of at most five words. */
