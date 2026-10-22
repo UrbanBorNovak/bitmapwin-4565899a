@@ -33,7 +33,7 @@ export function GearLocker() {
         [ GEAR · {g.inv.length} ]
       </button>
       {open ? (
-        <div className="fixed left-4 top-[17rem] z-[55] max-h-[50vh] overflow-auto w-[min(22rem,calc(100vw-2rem))] rounded border border-border bg-card/95 p-3 font-mono text-[12px]">
+        <div className="fixed left-4 top-[17rem] z-[55] max-h-[calc(100dvh-26rem)] overflow-auto w-[min(22rem,calc(100vw-2rem))] rounded border border-border bg-card/95 p-3 font-mono text-[12px]">
           <div className="flex items-center justify-between"><span className="tracking-[0.3em] text-signal">GEAR LOCKER</span><span className="text-muted-foreground">{g.salvaged.length}/{Object.keys(ROOM_EXHIBITS).length} ROOMS</span></div>
           <p className="mt-1 text-muted-foreground">Click the on-chain ride in each room to salvage a part. Pick two parts, then combine.</p>
           <div className="mt-2 grid grid-cols-2 gap-1.5">
