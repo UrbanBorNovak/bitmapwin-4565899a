@@ -262,13 +262,12 @@ export function SiteHeader() {
           <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav ref={desktopNavRef} className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
-          {NAV_GROUPS.map((group, gi) => {
+        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
+          {NAV_GROUPS.map((group) => {
             const here = groupItems(group).some((i) => itemIsActive(i.to));
             return (
             <div
               key={group.id}
-              className="relative"
               onMouseEnter={() => {
                 cancelScheduledClose();
                 setOpenGroup(group.id);
@@ -283,16 +282,16 @@ export function SiteHeader() {
                   cancelScheduledClose();
                   setOpenGroup(group.id);
                 }}
-              className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
+              className={`nav-trigger label flex h-9 items-center gap-1 whitespace-nowrap px-2 py-2 xl:px-3 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 } ${here && openGroup !== group.id ? "is-here" : ""}`}
               >
-                <GroupIcon id={group.id} />
+                <span className="hidden xl:inline"><GroupIcon id={group.id} /></span>
                 {group.label}
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className={`nav-menu absolute top-full border border-border bg-background w-[40rem] ${gi >= 3 ? "right-0" : "left-0"}`}>
+                <div className={`nav-menu absolute top-full border border-border bg-background w-[40rem] left-1/2 -translate-x-1/2`}>
                   <div className="border-b border-border bg-surface px-4 py-3">
                     <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
@@ -339,7 +338,7 @@ export function SiteHeader() {
             </div>
             );
           })}
-          <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
+          <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 whitespace-nowrap border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
             <Globe className="size-3.5" strokeWidth={1.75} /> ENTER OASIS
           </Link>
         </nav>
