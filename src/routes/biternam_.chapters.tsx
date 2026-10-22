@@ -173,7 +173,7 @@ function ChaptersPage() {
             {line && (
               <div key={lineKey} className="comic-bubble pointer-events-none absolute top-[15%] w-fit max-w-[36%] px-3 py-1.5 text-center" style={{ [line.speaker % 2 ? "right" : "left"]: "4%" }} data-no-translate>
                 <span className="font-mono text-[9px] tracking-widest">{speaker}</span>
-                <div className="display uppercase leading-tight" style={{ fontSize: "min(2.2cqw, 1.25rem)" }}>{line.text}</div>
+                <div className="display uppercase leading-tight" style={{ fontSize: "min(3.2cqw, 1.6rem)" }}>{line.text}</div>
               </div>
             )}
             {time < INTRO && (playing || time > 0) && (
