@@ -15,7 +15,7 @@ import { OasisWorld, StudioSet } from "@/components/toon/StudioSet";
 import { ToonVFXLayer } from "@/components/toon/ToonVFXLayer";
 import { BiternamRoomSet, ROOMS, clampCamera, setBoundsFor, walkBlocked } from "@/components/toon/BiternamRooms";
 import { BatcaveSet, CafeSet, ChinatownSet, VaultSet } from "@/components/toon/BiternamSets";
-import { PortalSplatSet } from "@/components/toon/PortalSplatSet";
+import { PortalDust, PortalSplatSet } from "@/components/toon/PortalSplatSet";
 const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c" };
 import { loadCustomVFX, shakeAt, vfxLibrary, type ToonVFX } from "@/lib/toon-vfx";
 
@@ -353,7 +353,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
         : scene.set === "chinatown" ? <ChinatownSet timeRef={timeRef} />
         : scene.set === "vault" ? <VaultSet timeRef={timeRef} />
         // Portal: the BITMAP land is the world around the gate; the next room is the world inside it.
-        : scene.set === "portal" ? <><Land key={`pl-${scene.block}`} block={scene.block} /><PortalSplatSet onLand block={scene.block} timeRef={timeRef} dest={(() => { const n = episode.scenes[index + 1]?.set; return n?.startsWith("b-") ? <BiternamRoomSet room={n.slice(2)} timeRef={timeRef} /> : n === "cafe" ? <CafeSet timeRef={timeRef} /> : n === "batcave" ? <BatcaveSet timeRef={timeRef} /> : n === "chinatown" ? <ChinatownSet timeRef={timeRef} /> : n === "vault" ? <VaultSet timeRef={timeRef} /> : null; })()} /></>
+        : scene.set === "portal" ? <><Land key={`pl-${scene.block}`} block={scene.block} /><PortalSplatSet onLand block={scene.block} timeRef={timeRef} localRef={progressRef} duration={scene.duration} dest={(() => { const n = episode.scenes[index + 1]?.set; return n?.startsWith("b-") ? <BiternamRoomSet room={n.slice(2)} timeRef={timeRef} /> : n === "cafe" ? <CafeSet timeRef={timeRef} /> : n === "batcave" ? <BatcaveSet timeRef={timeRef} /> : n === "chinatown" ? <ChinatownSet timeRef={timeRef} /> : n === "vault" ? <VaultSet timeRef={timeRef} /> : null; })()} /></>
         : scene.set === "beach" ? <BeachSet timeRef={timeRef} />
         : scene.set === "studio" || scene.set === "rift" ? <StudioSet key={`set-${index}`} timeRef={timeRef} localRef={progressRef} rift={scene.set === "rift"} />
         : scene.set === "oasis" ? <group><group position-z={-30}><OasisWorld timeRef={timeRef} /></group>
@@ -361,6 +361,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
         : <Land key={scene.block} block={scene.block} />}
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}-${a.avatar ? a.avatar.model + a.avatar.skin : "g"}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
       {scene.extras?.map((id, i) => <group key={`x-${index}-${id}-${i}`} scale={10}><Patron skin={id} start={(() => { const w = setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }; return [w.x0 + (w.x1 - w.x0) * (i + 0.5) / 4, w.z0 + (w.z1 - w.z0) * (0.3 + 0.4 * (i % 2))] as [number, number]; })()} seed={i * 3.7 + 1.3} bounds={setBoundsFor(scene.set)?.walk ?? { x0: -4.2, x1: 4.2, z0: -2.6, z1: 1.2 }} isBlocked={(x: number, z: number) => walkBlocked(scene.set, x, z)} home={[0, -1]} /></group>)}
+      {episode.scenes[index - 1]?.set === "portal" && <PortalDust key={`pd-${index}`} block={scene.block} localRef={progressRef} />}
       <ToonVFXLayer cues={scene.fx} lib={lib} scene={index} timeRef={progressRef} />
       <Director key={index} scene={scene} local={local} lib={lib} />
     </SafeCanvas>

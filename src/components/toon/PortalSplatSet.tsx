@@ -101,7 +101,17 @@ function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableR
   );
 }
 
-export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number; timeRef: MutableRefObject<number>; dest?: ReactNode; onLand?: boolean }) {
+/** Lingering splats that drift down and settle on the room floor after the portal crossing. */
+export function PortalDust({ block, localRef }: { block: number; localRef: MutableRefObject<number> }) {
+  const mat = useRef<THREE.PointsMaterial>(null), pts = useRef<THREE.Points>(null);
+  const geo = useMemo(() => { const r = rng(block * 31 + 7), N = 500, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), c = new THREE.Color();
+    for (let i = 0; i < N; i++) { pos.set([(r() - 0.5) * 60, r() * 30, (r() - 0.5) * 40], i * 3); c.set(r() < 0.6 ? "#28e0ff" : "#f7931a"); col.set([c.r, c.g, c.b], i * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3)); return g; }, [block]);
+  useFrame(() => { const t = localRef.current; if (pts.current) pts.current.position.y = -Math.min(t, 3) * 8; if (mat.current) mat.current.opacity = Math.max(0, 1 - t / 3.5); });
+  return <points ref={pts} geometry={geo} frustumCulled={false}><pointsMaterial ref={mat} size={1.4} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} /></points>;
+}
+
+export function PortalSplatSet({ block, timeRef, dest, onLand, localRef, duration = 4 }: { block: number; timeRef: MutableRefObject<number>; dest?: ReactNode; onLand?: boolean; localRef?: MutableRefObject<number>; duration?: number }) {
   const rimMat = useRef<THREE.ShaderMaterial>(null);
   const rimU = useMemo(() => ({ uTime: { value: 0 } }), []);
   const ring = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
@@ -110,7 +120,9 @@ export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number
   useFrame(() => {
     const t = timeRef.current;
     if (rimMat.current) rimMat.current.uniforms["uTime"]!.value = t;
-    if (ring.current) ring.current.scale.setScalar(0.5 + Math.sin(t * 2.2) * 0.025);
+    // Final stretch: the tear widens until the destination world swallows the land (volumetric dissolve).
+    const k = localRef ? Math.min(1, Math.max(0, (localRef.current / duration - 0.55) / 0.45)) : 0;
+    if (ring.current) ring.current.scale.setScalar((0.5 + Math.sin(t * 2.2) * 0.025) * (1 + k * k * k * 9));
     shards.current?.children.forEach((c, i) => { const k = rocks[i]!; c.position.y = k.p[1] + Math.sin(t * 0.5 + k.ph) * 2.5; c.rotation.set(t * 0.2 + k.ph, t * 0.3, 0); });
   });
   return (
