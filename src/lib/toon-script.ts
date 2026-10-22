@@ -28,7 +28,7 @@ export interface ToonLine { at: number; dur: number; speaker: number; text: stri
 export type LineCam = "auto" | "close" | "two" | "ots" | "establish";
 export type Transition = "cut" | "fade" | "wipe" | "iris";
 export const TRANSITION_SECONDS = 0.45;
-export type ToonSet = "beach" | "studio" | "rift" | "oasis" | "cafe" | "batcave" | "chinatown" | "vault" | `b-${BiternamRoom}`;
+export type ToonSet = "beach" | "studio" | "rift" | "oasis" | "cafe" | "batcave" | "chinatown" | "vault" | "portal" | `b-${BiternamRoom}`;
 export type BiternamRoom = "arcade" | "museum" | "lab" | "outpost" | "safehouse" | "studio" | "void" | "island" | "lair" | "basement" | "archive" | "canon" | "holders" | "receipt" | "fortress" | "handshake";
 export const TOON_SETS: ToonSet[] = ["beach", "studio", "rift", "oasis", "cafe", "batcave", "chinatown", "vault"];
 export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; /** Voxel film set instead of the BITMAP land. */ set?: ToonSet; /** Effect cues (toon-vfx, open bitmapwin.vfx/1 format). */ fx?: VfxCue[]; /** Background BITMAP Pixel inscription ids that wander the set on a fly brain (live, not timeline-bound). */ extras?: string[]; }
