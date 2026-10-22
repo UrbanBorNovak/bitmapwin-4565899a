@@ -1,4 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+
+const SEEN_KEY = "bitmapwin.guides.read";
 
 const STEPS = [
   { to: "/land-101", label: "LAND 101", note: "What a BITMAP is" },
@@ -12,6 +15,16 @@ type Current = "/land-101" | "/guardians-guide" | "/play-guide";
 /** Reading flow across the three guides, ending in the Oasis. */
 export function GuideTrail({ current }: { current: Current }) {
   const idx = STEPS.findIndex((s) => s.to === current);
+  // Guides count as read only once actually opened on this device.
+  const [seen, setSeen] = useState<string[]>([]);
+  useEffect(() => {
+    let list: string[] = [];
+    try { list = JSON.parse(window.localStorage.getItem(SEEN_KEY) ?? "[]"); } catch { list = []; }
+    if (!Array.isArray(list)) list = [];
+    if (!list.includes(current)) list = [...list, current];
+    try { window.localStorage.setItem(SEEN_KEY, JSON.stringify(list)); } catch { /* storage blocked */ }
+    setSeen(list);
+  }, [current]);
   const next = STEPS[idx + 1] ?? STEPS[3];
   const prev = idx > 0 ? STEPS[idx - 1] : undefined;
   return (
@@ -19,7 +32,7 @@ export function GuideTrail({ current }: { current: Current }) {
       <div className="label text-signal">GUIDE {idx + 1} OF 3 · READING ORDER</div>
       <ol className="mt-3 grid gap-px bg-border sm:grid-cols-4">
         {STEPS.map((s, i) => {
-          const state = i < idx ? "done" : i === idx ? "here" : "next";
+          const state = i === idx ? "here" : seen.includes(s.to) ? "done" : "next";
           return (
             <li key={s.to} className="bg-background">
               <Link
