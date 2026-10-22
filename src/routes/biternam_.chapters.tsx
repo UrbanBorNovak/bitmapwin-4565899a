@@ -165,7 +165,7 @@ function ChaptersPage() {
             {phase >= 0 && phase < 1e6 && playing && (
               <div key={`fx${phase}`} aria-hidden className="pointer-events-none absolute inset-0" data-no-translate>
                 <div className="manga-speed absolute inset-0" />
-                <div className="manga-sfx absolute left-[8%] top-[14%] display text-4xl md:text-6xl text-bitcoin" style={{ rotate: `${(phase % 2 ? 1 : -1) * 12}deg` }}>
+                <div className="manga-sfx absolute bottom-[10%] left-[5%] display text-bitcoin" style={{ rotate: `${(phase % 2 ? 1 : -1) * 10}deg`, fontSize: "min(7cqw, 3.5rem)" }}>
                   {["KA-CHING!", "WHOOSH!", "BLAM!", "ZAP!", "KRAK!", "VROOM!", "POW!", "HODL!"][(height + phase) % 8]}
                 </div>
               </div>
