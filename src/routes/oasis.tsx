@@ -19,6 +19,7 @@ import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 import { OasisBroadcastControl } from "@/components/game/OasisBroadcastControl";
 import { Button } from "@/components/ui/button";
 import { OasisControlsHint } from "@/components/game/OasisControlsHint";
+import { OasisBootScreen } from "@/components/game/OasisBootScreen";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -144,13 +145,13 @@ function OasisPage() {
         ref={shellRef}
         data-tour="map-world"
         style={modStyle(mod)}
-        className={`oasis-modded relative min-w-0 ${fullscreen ? "oasis-fs" : ""} ${fallbackFs ? "oasis-fs-fallback" : ""} ${cinematic ? "oasis-cinematic" : ""}`}
+        className={`oasis-modded oasis-retro relative min-w-0 ${fullscreen ? "oasis-fs" : ""} ${fallbackFs ? "oasis-fs-fallback" : ""} ${cinematic ? "oasis-cinematic" : ""}`}
       >
         {!entered ? (
           <OasisEntry onEnter={() => setEntered(true)} />
         ) : (
         <OasisWorldGuard>
-        <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
+        <Suspense fallback={<OasisBootScreen />}>
           <div className="relative">
             <div className="oasis-page-tools flex justify-end gap-2 border-b border-border py-2">
               <Button variant="terminalGhost" size="icon" type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (`)" : "Cinematic view (`)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-11 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
