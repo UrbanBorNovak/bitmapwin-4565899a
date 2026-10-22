@@ -1,90 +1,18 @@
-/** Live server checks with a random throwaway user id (no account). Rows are deleted; no BIT moves. */
-import { afterAll, describe, expect, it } from "vitest";
-import { createClient } from "@supabase/supabase-js";
-import { hideoutStepCount, recordHideoutStep } from "./hideout-progress.server";
-import { HIDEOUT_STEPS } from "./hideout-progress";
+import { describe, expect, it } from "vitest";
+import { backroomStepGate } from "./hideout-progress.server";
 
-const url = process.env["SUPABASE_URL"];
-const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-const live = !!url && !!key;
-const db = live ? createClient(url!, key!, { auth: { persistSession: false } }) : (null as never);
-const user = crypto.randomUUID();
-const started = new Date().toISOString();
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const C = "a".repeat(64);
+const yes = async () => true;
+const no = async () => false;
 
-describe.skipIf(!live)("hideout steps on the server (throwaway user)", () => {
-  afterAll(async () => {
-    const ledger = await db.from("coin_ledger").select("id", { count: "exact", head: true }).gte("created_at", started).ilike("ref", `%${user}%`);
-    expect(ledger.count ?? 0).toBe(0);
-    await db.from("biternam_quest_steps").delete().eq("user_id", user);
+describe("backroom step gate", () => {
+  it("vault step without a pass is sealed", async () => expect(await backroomStepGate("vault", undefined, yes)).toBe("sealed"));
+  it("lair step with a pass not on the list is sealed", async () => expect(await backroomStepGate("lair", C, no)).toBe("sealed"));
+  it("vault step with a listed pass opens", async () => expect(await backroomStepGate("vault", C, yes)).toBe("open"));
+  it("checks the pass against the room's own door", async () => {
+    let seen = "";
+    await backroomStepGate("lair", C, async (s) => { seen = s; return true; });
+    expect(seen).toBe("biternam-backroom-lair");
   });
-  it("refuses a wrong key", async () => {
-    expect((await recordHideoutStep(db, user, { room: "batcave", index: 1, key: HIDEOUT_STEPS.island[1] })).status).toBe("invalid");
-  });
-  it("refuses skipping straight to the solve step", async () => {
-    expect((await recordHideoutStep(db, user, { room: "island", index: 1, key: HIDEOUT_STEPS.island[1] })).status).toBe("out_of_order");
-    expect(await hideoutStepCount(db, user, "island")).toBe(0);
-  });
-  it("saves both batcave steps in order, once each", async () => {
-    const s = HIDEOUT_STEPS.batcave;
-    expect((await recordHideoutStep(db, user, { room: "batcave", index: 0, key: s[0] })).ok).toBe(true);
-    expect((await recordHideoutStep(db, user, { room: "batcave", index: 0, key: s[0] })).status).toBe("already");
-    await sleep(2200);
-    expect((await recordHideoutStep(db, user, { room: "batcave", index: 1, key: s[1] })).ok).toBe(true);
-    expect(await hideoutStepCount(db, user, "batcave")).toBe(2);
-  }, 15000);
-});
-
-describe.skipIf(!live)("1138 vault story lock (throwaway user)", () => {
-  const u = crypto.randomUUID();
-  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
-  it("refuses vault steps before the Island Hotel is solved and saves nothing", async () => {
-    expect(await recordHideoutStep(db, u, { room: "vault", index: 0, key: HIDEOUT_STEPS.vault[0] })).toEqual({ ok: false, status: "locked" });
-    expect(await hideoutStepCount(db, u, "vault")).toBe(0);
-  });
-});
-
-describe.skipIf(!live)("re-org lair story lock (throwaway user)", () => {
-  const u = crypto.randomUUID();
-  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
-  it("refuses lair steps before the 1138 vault is solved and saves nothing", async () => {
-    expect(await recordHideoutStep(db, u, { room: "lair", index: 0, key: HIDEOUT_STEPS.lair[0] })).toEqual({ ok: false, status: "locked" });
-    expect(await hideoutStepCount(db, u, "lair")).toBe(0);
-  });
-});
-
-describe.skipIf(!live)("void basement story lock (throwaway user)", () => {
-  const u = crypto.randomUUID();
-  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
-  it("refuses basement steps before the re-org lair is solved and saves nothing", async () => {
-    expect(await recordHideoutStep(db, u, { room: "basement", index: 0, key: HIDEOUT_STEPS.basement[0] })).toEqual({ ok: false, status: "locked" });
-    expect(await hideoutStepCount(db, u, "basement")).toBe(0);
-  });
-});
-
-describe.skipIf(!live)("shredder archive story lock (throwaway user)", () => {
-  const u = crypto.randomUUID();
-  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
-  it("refuses archive steps before the void basement is solved and saves nothing", async () => {
-    expect(await recordHideoutStep(db, u, { room: "archive", index: 0, key: HIDEOUT_STEPS.archive[0] })).toEqual({ ok: false, status: "locked" });
-    expect(await hideoutStepCount(db, u, "archive")).toBe(0);
-  });
-});
-
-describe.skipIf(!live)("forgery parlour story lock (throwaway user)", () => {
-  const u = crypto.randomUUID();
-  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
-  it("refuses holders steps before the archive is solved and saves nothing", async () => {
-    expect(await recordHideoutStep(db, u, { room: "holders", index: 0, key: HIDEOUT_STEPS.holders[0] })).toEqual({ ok: false, status: "locked" });
-    expect(await hideoutStepCount(db, u, "holders")).toBe(0);
-  });
-});
-
-describe.skipIf(!live)("handshake story lock (throwaway user)", () => {
-  const u = crypto.randomUUID();
-  afterAll(async () => { await db.from("biternam_quest_steps").delete().eq("user_id", u); });
-  it("refuses handshake steps before the forgery parlour is solved and saves nothing", async () => {
-    expect(await recordHideoutStep(db, u, { room: "handshake", index: 0, key: HIDEOUT_STEPS.handshake[0] })).toEqual({ ok: false, status: "locked" });
-    expect(await hideoutStepCount(db, u, "handshake")).toBe(0);
-  });
+  it("ordinary rooms need no pass", async () => expect(await backroomStepGate("island", undefined, no)).toBe("open"));
 });

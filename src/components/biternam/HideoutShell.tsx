@@ -15,6 +15,7 @@ import { useCutscene, CutsceneStage } from "@/components/biternam/CutsceneDirect
 import { ROOM_CUTSCENES } from "@/lib/cutscene";
 import { backroomFor } from "@/lib/biternam-backroom";
 import { BackroomGate } from "@/components/biternam/BackroomGate";
+import { getPass } from "@/lib/shadow-vault";
 
 export function HideoutShell<H extends string>(props: {
   room: HideoutRoom; storageKey: string; mood: RoomMood; kicker: string; title: string; item: string; hazardText: string;
@@ -35,8 +36,10 @@ export function HideoutShell<H extends string>(props: {
   /** Finale call waits for the cutscene so the wrist-com never covers it. */
   const [callAfterCut, setCallAfterCut] = useState(false);
   useEffect(() => { if (callAfterCut && !cut.active) { setCallAfterCut(false); setCall(Date.now()); } }, [callAfterCut, cut.active]);
-  useEffect(() => { try { setSt((s) => ({ ...s, ...JSON.parse(localStorage.getItem(props.storageKey) || "{}") })); } catch { /* fresh */ } setLoaded(true); }, [props.storageKey]);
-  useEffect(() => { if (loaded) localStorage.setItem(props.storageKey, JSON.stringify(st)); }, [loaded, st, props.storageKey]);
+  /** Backroom progress is a protected action: only the server's step count counts, never device storage. */
+  const isBackroom = !!backroomFor(props.room);
+  useEffect(() => { if (!isBackroom) { try { setSt((s) => ({ ...s, ...JSON.parse(localStorage.getItem(props.storageKey) || "{}") })); } catch { /* fresh */ } } setLoaded(true); }, [props.storageKey, isBackroom]);
+  useEffect(() => { if (loaded && !isBackroom) localStorage.setItem(props.storageKey, JSON.stringify(st)); }, [loaded, st, props.storageKey, isBackroom]);
   useEffect(() => {
     const go = () => { if (localStorage.getItem("bitmapwin:sound-muted") !== "1") startCafeMusic(props.mood); };
     window.addEventListener("pointerdown", go, { once: true });
@@ -52,13 +55,18 @@ export function HideoutShell<H extends string>(props: {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { if (data.session) { setSignedIn(true); void resync(); } });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  /** Signed in: the server must accept the step before the room changes. */
+  /** Signed in: the server must accept the step before the room changes. Backrooms also require sign-in and the door's pass. */
   const save = async (i: 0 | 1) => {
-    if (!signedIn) return true;
+    if (!signedIn) {
+      if (!isBackroom) return true;
+      setNote("PROTECTED ACTION · SIGN IN TO MAKE PROGRESS HERE");
+      return false;
+    }
     try {
-      const r = await record({ data: { room: props.room, index: i, key: HIDEOUT_STEPS[props.room][i] } });
+      const pass = backroom ? getPass(backroom.slug)?.commitment : undefined;
+      const r = await record({ data: { room: props.room, index: i, key: HIDEOUT_STEPS[props.room][i], pass } });
       if (r.ok) { setNote(null); return true; }
-      setNote(r.status === "locked" ? "SOLVE THE PREVIOUS ROOM FIRST" : r.status === "too_fast" ? "TOO FAST — TRY AGAIN" : r.status === "out_of_order" ? "OUT OF ORDER — RESYNCING" : "COULD NOT SAVE");
+      setNote(r.status === "sealed" ? "PROTECTED ACTION · VALID PASS REQUIRED" : r.status === "locked" ? "SOLVE THE PREVIOUS ROOM FIRST" : r.status === "too_fast" ? "TOO FAST — TRY AGAIN" : r.status === "out_of_order" ? "OUT OF ORDER — RESYNCING" : "COULD NOT SAVE");
       if (r.status === "out_of_order") void resync();
     } catch { setNote("COULD NOT SAVE"); }
     return false;
@@ -88,7 +96,8 @@ export function HideoutShell<H extends string>(props: {
           <div className="text-[11px] tracking-[0.3em] text-signal">{props.kicker}</div>
           <div className="font-display text-2xl text-foreground">{props.title}</div>
           <div className="mt-1 text-[11px] text-primary">{st.solved ? "● SOLVED" : st.got ? `◐ HOLDING ${props.item}` : "○ UNSOLVED"}</div>
-          <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : isBackroom ? "VIEWING ONLY · SIGN IN TO MAKE PROGRESS" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
+          {isBackroom ? <div className="mt-1 text-[11px] text-signal">LOOK · TALK = OPEN TO ALL · TAKE · USE = PROTECTED (SERVER-CHECKED PASS)</div> : null}
           {note ? <div className="mt-1 text-[11px] text-destructive">{note}</div> : null}
         </div>
         {backroom && !unsealed ? <BackroomGate room={props.room as "vault" | "lair"} backroom={backroom} signedIn={signedIn} onOpen={() => setUnsealed(true)} /> : null}

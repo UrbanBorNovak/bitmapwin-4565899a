@@ -18,7 +18,7 @@ export const hideoutStatusFn = createServerFn({ method: "POST" })
 /** Records the next hideout step; the database refuses skipped, out-of-order or too-fast steps. */
 export const recordHideoutStepFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ room: Room, index: z.number().int().min(0).max(1), key: z.string().max(40) }).parse(d))
+  .inputValidator((d: unknown) => z.object({ room: Room, index: z.number().int().min(0).max(1), key: z.string().max(40), pass: z.string().regex(/^[0-9a-f]{64}$/).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { recordHideoutStep } = await import("@/lib/hideout-progress.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
