@@ -60,9 +60,9 @@ export function HowItWorks() {
   const steps = mode === "world" ? WORLD_STEPS : TRADE_STEPS;
 
   return (
-    <section className="mx-auto max-w-[1600px] px-4 pt-10 md:px-8 md:pt-16">
+    <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-8 md:pt-16">
       <div className="border border-border-strong">
-        <header className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-end sm:justify-between md:p-6">
+        <header className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-end sm:justify-between md:p-6">
           <div>
             <div className="label text-bitcoin">NEW HERE? START WITH THIS</div>
             <h2 className="display mt-2 text-2xl md:text-3xl">
@@ -101,7 +101,7 @@ export function HowItWorks() {
           {steps.map((step, i) => (
             <li
               key={step.n}
-              className={`group relative flex flex-col border-b border-border p-5 transition-colors hover:bg-muted/20 md:border-b-0 md:p-6 ${i > 0 ? "md:border-l md:border-border" : ""}`}
+              className={`group relative flex flex-col border-b border-border p-4 md:p-6 transition-colors hover:bg-muted/20 md:border-b-0 ${i > 0 ? "md:border-l md:border-border" : ""}`}
             >
               <div className="flex items-center gap-2">
                 <span className="label text-bitcoin">{step.n}</span>
@@ -109,12 +109,12 @@ export function HowItWorks() {
                 <span className="label text-bitcoin md:hidden" aria-hidden="true">↓</span>
               </div>
               {"tag" in step && (
-                <div className="label mt-4 w-fit border border-signal/40 px-2 py-0.5 text-signal">{step.tag}</div>
+                <div className="label mt-3 md:mt-4 w-fit border border-signal/40 px-2 py-0.5 text-signal">{step.tag}</div>
               )}
-              <div className="display mt-3 text-base">{step.title}</div>
+              <div className="display mt-2 md:mt-3 text-base">{step.title}</div>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
               {"to" in step && (
-                <Link to={step.to} className="label mt-4 text-bitcoin opacity-80 transition-opacity group-hover:opacity-100">
+                <Link to={step.to} className="label mt-3 md:mt-4 text-bitcoin opacity-80 transition-opacity group-hover:opacity-100">
                   {step.cta} →
                 </Link>
               )}
