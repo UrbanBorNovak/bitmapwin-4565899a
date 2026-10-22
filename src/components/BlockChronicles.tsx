@@ -161,7 +161,7 @@ function Strip({ issue, inscribed, built }: { issue: ComicIssue; inscribed: stri
 }
 
 /** Comic cover tile — the mempool "block cube" of the Chronicles. */
-function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; isNew: boolean; onOpen: () => void; inscribed: string | null; built: boolean }) {
+function Cover({ issue, isNew, onOpen, inscribed, built, minted }: { issue: ComicIssue; isNew: boolean; onOpen: () => void; inscribed: string | null; built: boolean; minted: boolean }) {
   return (
     <button
       type="button"
@@ -169,15 +169,19 @@ function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; 
       className="chronicle-in group relative h-[200px] min-w-0 overflow-hidden sm:min-w-[150px] sm:flex-1 border border-border-strong bg-background text-left shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)] transition-all duration-300 hover:-translate-y-0.5 hover:border-bitcoin hover:shadow-[0_8px_24px_-12px_var(--bitcoin)]"
     >
       <Halftone seed={issue.height} kind={issue.height % 4} />
-      {built || inscribed ? (
-        <div className="absolute inset-x-0 top-[34px] bottom-[34px] transition-transform duration-500 group-hover:scale-105"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
+      {built || inscribed || minted ? (
+        <div className="absolute inset-x-0 top-[34px] bottom-[34px] transition-transform duration-500 group-hover:scale-105"><Guardian3D height={issue.height} guardian={!!inscribed || minted} /></div>
       ) : (<>
         <VoxelLand height={issue.height} className="absolute inset-x-0 bottom-2 h-[130px] w-full transition-transform duration-500 group-hover:scale-105" />
         <div className="absolute right-1 top-7 opacity-40 grayscale"><GuardianPortrait height={issue.height} size={48} /></div>
       </>)}
       <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-border-strong bg-background/85 px-2 py-1 font-mono text-[10px] font-bold backdrop-blur-sm">
         <span className="text-foreground">#{issue.height}</span>
-        {isNew && <span className="flex items-center gap-1 text-bitcoin"><span className="size-1.5 animate-pulse bg-bitcoin" />NEW</span>}
+        <span className="flex items-center gap-1.5">
+          {built && <span className="text-[8px] text-bitcoin">FORGE</span>}
+          {minted && <span className="text-[8px] text-signal">GUARDIAN</span>}
+          {isNew && <span className="flex items-center gap-1 text-bitcoin"><span className="size-1.5 animate-pulse bg-bitcoin" />NEW</span>}
+        </span>
       </div>
       <div className="display absolute left-2 top-7 w-[70%] text-sm leading-tight text-bitcoin drop-shadow-[0_1px_0_var(--background)]">{issue.title}</div>
       <div className="absolute inset-x-0 bottom-0 border-t border-border-strong bg-background/90 px-2 py-1 font-mono text-[9px] leading-tight backdrop-blur-sm">
@@ -195,17 +199,25 @@ export function BlockChronicles() {
   const live = useMemo(() => (data ?? []).map(buildIssue), [data]);
   // Every BITMAP with an inscribed Guardian child gets its own issue too (newest children first).
   const liveHeights = useMemo(() => new Set(live.map((i) => i.height)), [live]);
-  const { data: builtList } = useQuery({
+  const { data: builtRows } = useQuery({
     queryKey: ["block-comic-built"],
-    queryFn: async () => ((await supabase.from("bitmap_forge_builds").select("bitmap_height").order("verified_at", { ascending: false }).limit(12)).data ?? []).map((r) => r.bitmap_height as number),
+    queryFn: async () => ((await supabase.from("bitmap_forge_builds").select("bitmap_height, verified_at").order("verified_at", { ascending: false }).limit(12)).data ?? []).map((r) => ({ h: Number(r.bitmap_height), at: String(r.verified_at ?? "") })),
     staleTime: 10 * 60_000,
   });
-  const builtSet = useMemo(() => new Set(builtList ?? []), [builtList]);
-  // Recently verified Forge builds first (newest update first), then inscribed Guardian lands.
-  const guardianHeights = useMemo(
-    () => [...new Set([...(builtList ?? []), ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].slice(0, 24),
-    [inhabited, builtList],
-  );
+  // Recent Guardian mints (summoned after exact payment).
+  const { data: mintRows } = useQuery({
+    queryKey: ["block-comic-mints"],
+    queryFn: async () => ((await supabase.from("bitmon_guardians").select("block_height, created_at").order("created_at", { ascending: false }).limit(12)).data ?? []).map((r) => ({ h: Number(r.block_height), at: String(r.created_at ?? "") })),
+    staleTime: 5 * 60_000,
+  });
+  const builtList = useMemo(() => (builtRows ?? []).map((r) => r.h), [builtRows]);
+  const builtSet = useMemo(() => new Set(builtList), [builtList]);
+  const mintSet = useMemo(() => new Set((mintRows ?? []).map((r) => r.h)), [mintRows]);
+  // Forge builds and Guardian mints merged newest-first, then inscribed Guardian lands.
+  const guardianHeights = useMemo(() => {
+    const recent = [...(builtRows ?? []), ...(mintRows ?? [])].sort((a, b) => b.at.localeCompare(a.at)).map((r) => r.h);
+    return [...new Set([...recent, ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].slice(0, 24);
+  }, [inhabited, builtRows, mintRows]);
   // Every built or inhabited BITMAP gets its issue, built from its real block.
   const { data: gBlocks, isError: gError } = useQuery({
     queryKey: ["block-comic-guardians", guardianHeights],
@@ -256,7 +268,7 @@ export function BlockChronicles() {
         {shown.map((iss, i) => {
           const at = cur * ISSUES_PER_PAGE + i;
           return (
-            <Cover key={iss.hash} issue={iss} isNew={at === 0} inscribed={insOf(iss.height)} built={builtSet.has(iss.height)} onOpen={() => setOpen(at)} />
+            <Cover key={iss.hash} issue={iss} isNew={at === 0} inscribed={insOf(iss.height)} built={builtSet.has(iss.height)} minted={mintSet.has(iss.height)} onOpen={() => setOpen(at)} />
           );
         })}
         {issues.length > ISSUES_PER_PAGE && (
