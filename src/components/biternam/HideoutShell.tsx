@@ -96,7 +96,8 @@ export function HideoutShell<H extends string>(props: {
           <div className="text-[11px] tracking-[0.3em] text-signal">{props.kicker}</div>
           <div className="font-display text-2xl text-foreground">{props.title}</div>
           <div className="mt-1 text-[11px] text-primary">{st.solved ? "● SOLVED" : st.got ? `◐ HOLDING ${props.item}` : "○ UNSOLVED"}</div>
-          <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : isBackroom ? "VIEWING ONLY · SIGN IN TO MAKE PROGRESS" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
+          {isBackroom ? <div className="mt-1 text-[11px] text-signal">LOOK · TALK = OPEN TO ALL · TAKE · USE = PROTECTED (SERVER-CHECKED PASS)</div> : null}
           {note ? <div className="mt-1 text-[11px] text-destructive">{note}</div> : null}
         </div>
         {backroom && !unsealed ? <BackroomGate room={props.room as "vault" | "lair"} backroom={backroom} signedIn={signedIn} onOpen={() => setUnsealed(true)} /> : null}
