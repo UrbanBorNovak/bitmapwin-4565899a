@@ -110,11 +110,11 @@ export function qualitySettings(
     shadows,
     shadowMapSize: shadows ? (resolved === "high" ? 1024 : 512) : 0,
     plotGlow: stored.overrides.plotGlow ?? defaults.plotGlow,
-    effects: resolved === "low" ? "off" : resolved === "medium" ? "half" : "full",
+    effects: resolved === "high" ? "half" : "off",
     propDetail: resolved === "low" ? "cheap" : resolved === "medium" ? "mid" : "full",
     npcLimit: resolved === "low" ? 8 : resolved === "medium" ? 16 : 64,
     animationStride: resolved === "low" ? 3 : resolved === "medium" ? 2 : 1,
-    fpsCap: stored.overrides.fpsCap ?? defaults.fpsCap,
+    fpsCap: 60,
     adaptive: stored.overrides.adaptive ?? defaults.adaptive,
     antialias: false,
   };
