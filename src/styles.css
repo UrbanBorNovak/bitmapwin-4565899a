@@ -1843,6 +1843,7 @@
 }
 .comic-bubble > span { color: var(--color-bitcoin); }
 .comic-bubble::after {
+  top: auto;
   content: ""; position: absolute; bottom: -14px; left: 24px;
   border: 10px solid transparent; border-top: 14px solid var(--color-foreground);
 }
