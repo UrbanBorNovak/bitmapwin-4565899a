@@ -12,7 +12,7 @@ type Current = "/land-101" | "/guardians-guide" | "/play-guide";
 /** Reading flow across the three guides, ending in the Oasis. */
 export function GuideTrail({ current }: { current: Current }) {
   const idx = STEPS.findIndex((s) => s.to === current);
-  const next = STEPS[idx + 1];
+  const next = STEPS[idx + 1] ?? STEPS[3];
   return (
     <nav aria-label="Guide reading order" className="mt-12 border border-border bg-surface p-4 md:p-5">
       <div className="label text-signal">GUIDE {idx + 1} OF 3 · READING ORDER</div>
