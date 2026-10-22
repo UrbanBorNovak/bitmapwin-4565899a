@@ -180,7 +180,7 @@ function ChaptersPage() {
               <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
                 <div>
                   <div className="font-mono text-xs tracking-[0.3em] text-muted-foreground">IT WAS NEVER A GAME. IT WAS ALWAYS</div>
-                  <div className="display mt-3 text-4xl md:text-6xl">
+                  <div className="display mt-3 whitespace-nowrap normal-case text-4xl md:text-6xl">
                     {height}<span className={`text-bitcoin transition-all duration-300 ${outroT >= POP ? "opacity-100" : "opacity-0"}`} style={{ display: "inline-block", transform: outroT >= POP ? "scale(1)" : "scale(1.8)" }}>.bitmap</span>
                   </div>
                   <div className={`mt-4 font-mono text-xs tracking-[0.4em] text-signal transition-opacity duration-500 ${outroT >= POP + 1 ? "opacity-100" : "opacity-0"}`}>THE END</div>
