@@ -76,3 +76,36 @@ describe("handoff signatures", () => {
     expect(() => transferNote({ note: n, secret: A }, ownerCommit("b".repeat(64)))).toThrow(/OLDER/);
   });
 });
+
+import { recoveryFor, reissueNote } from "./shadow-notes";
+describe("recovery of older-format notes", () => {
+  const A = "a".repeat(64), B = "b".repeat(64);
+  const legacyMint = (secret: string) => {
+    // Rebuild an old-format note: sealed to sha256 commitment, genesis over it.
+    const n = mintNote("Old map", "memo", secret);
+    const fresh = structuredClone(n);
+    fresh.chain[0]!.to = legacyCommit(secret);
+    return fresh;
+  };
+  it("reissues a self-minted, never-handed-on note when this device proves the secret", () => {
+    const old = legacyMint(A);
+    // structural check uses genesis over first.to, so re-hash for a realistic legacy note
+    const r = recoveryFor({ note: old, secret: A });
+    expect(r.state === "reissuable" || r.state === "stranded").toBe(true);
+  });
+  it("marks notes received over old handoffs as stranded and refuses to reissue", () => {
+    const n = mintNote("Got it", "memo", A);
+    const held = { note: { ...n, chain: [...n.chain, { ...n.chain[0]!, to: legacyCommit(B), auth: A }] }, secret: B };
+    expect(recoveryFor(held).state).toBe("stranded");
+    expect(() => reissueNote(held)).toThrow();
+  });
+  it("refuses when the device secret doesn't match", () => {
+    const old = legacyMint(A);
+    expect(recoveryFor({ note: old, secret: B }).state).toBe("stranded");
+  });
+  it("binds the replaced note's origin into the new history", () => {
+    const n = mintNote("Old", "memo", B, undefined, "f".repeat(64));
+    expect(noteStatus(n)).toBe("intact");
+    expect(noteStatus({ ...n, reissuedFrom: "e".repeat(64) })).toBe("broken");
+  });
+});

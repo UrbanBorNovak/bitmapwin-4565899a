@@ -23,14 +23,18 @@ export const legacyCommit = (secret: string) => h(`bitmapwin:note:owner|${secret
 
 /** sig = previous holder's Schnorr signature over this link hash; legacy auth = a revealed secret (forkable, no longer accepted). */
 export type Link = { to: string; prev: string; hash: string; at: string; sig?: string; auth?: string };
-export type ShadowNote = { v: 1; label: string; kind: string; genesis: string; chain: Link[] };
+/** reissuedFrom = genesis of an older-format note this one replaced; bound into the new genesis hash. */
+export type ShadowNote = { v: 1; label: string; kind: string; genesis: string; chain: Link[]; reissuedFrom?: string };
 export type HeldNote = { note: ShadowNote; secret: string };
 
 const linkHash = (prev: string, to: string, at: string) => h(`bitmapwin:note:link|${prev}|${to}|${at}`);
 
-export function mintNote(label: string, kind: string, secret: string, at = new Date().toISOString()): ShadowNote {
-  const genesis = h(`bitmapwin:note:genesis|${kind}|${label}|${at}|${ownerCommit(secret)}`);
-  return { v: 1, label, kind, genesis, chain: [{ to: ownerCommit(secret), prev: genesis, at, hash: linkHash(genesis, ownerCommit(secret), at) }] };
+const genesisOf = (kind: string, label: string, at: string, to: string, from?: string) =>
+  h(`bitmapwin:note:genesis|${kind}|${label}|${at}|${to}${from ? `|from:${from}` : ""}`);
+
+export function mintNote(label: string, kind: string, secret: string, at = new Date().toISOString(), reissuedFrom?: string): ShadowNote {
+  const genesis = genesisOf(kind, label, at, ownerCommit(secret), reissuedFrom);
+  return { v: 1, label, kind, genesis, ...(reissuedFrom ? { reissuedFrom } : {}), chain: [{ to: ownerCommit(secret), prev: genesis, at, hash: linkHash(genesis, ownerCommit(secret), at) }] };
 }
 
 /** Moves a note to a recipient commitment. Requires the current holder's secret. */
@@ -60,7 +64,8 @@ function walk(n: ShadowNote, requireAuth: boolean): boolean {
   if (n?.v !== 1 || !Array.isArray(n.chain) || !n.chain.length) return false;
   if (typeof n.label !== "string" || typeof n.kind !== "string") return false;
   const first = n.chain[0]!;
-  if (n.genesis !== h(`bitmapwin:note:genesis|${n.kind}|${n.label}|${first.at}|${first.to}`)) return false;
+  if (n.reissuedFrom !== undefined && !/^[0-9a-f]{64}$/.test(n.reissuedFrom)) return false;
+  if (n.genesis !== genesisOf(n.kind, n.label, first.at, first.to, n.reissuedFrom)) return false;
   let prev = n.genesis;
   for (let i = 0; i < n.chain.length; i++) {
     const l = n.chain[i]!;
@@ -100,4 +105,31 @@ export function rotateReceive() { localStorage.removeItem(RECV); }
 function signedBy(l: Link, owner: string): boolean {
   if (typeof l.sig !== "string" || !/^[0-9a-f]{128}$/.test(l.sig)) return false;
   try { return schnorr.verify(unhex(l.sig), unhex(l.hash), unhex(owner)); } catch { return false; }
+}
+
+/* ── recovery for notes stranded by the receive-code change ── */
+export type Recovery =
+  | { state: "current" }
+  | { state: "reissuable" } // made on this device, never handed on; secret proven locally
+  | { state: "stranded"; reason: string };
+
+/**
+ * Only a note this device minted and never handed on can be reissued: its whole history is
+ * this device's own secret, proven here. Anything received over the old unsigned handoffs
+ * has a history nobody can vouch for, so it is never upgraded.
+ */
+export function recoveryFor(held: HeldNote): Recovery {
+  const n = held.note, tip = n.chain.at(-1);
+  if (!tip) return { state: "stranded", reason: "This note is empty or damaged." };
+  if (tip.to === ownerCommit(held.secret)) return { state: "current" };
+  if (tip.to !== legacyCommit(held.secret)) return { state: "stranded", reason: "This device's secret doesn't match the note's holder." };
+  if (n.chain.length > 1) return { state: "stranded", reason: "It reached you through older unsigned handoffs, so its history can't be vouched for." };
+  if (noteStatus(n) !== "intact") return { state: "stranded", reason: "Its history doesn't check out." };
+  return { state: "reissuable" };
+}
+
+/** New signed note with the same label and kind, marked as replacing the old one. Old note must be discarded. */
+export function reissueNote(held: HeldNote, newSecret = randomSecret()): HeldNote {
+  if (recoveryFor(held).state !== "reissuable") throw new Error("THIS NOTE CAN'T BE REISSUED SAFELY");
+  return { note: mintNote(held.note.label, held.note.kind, newSecret, undefined, held.note.genesis), secret: newSecret };
 }
