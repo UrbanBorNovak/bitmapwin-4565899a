@@ -492,6 +492,30 @@ export function stopEngine() {
 const lastPlayed = new Map<Sfx, number>();
 /** Minimum gap per sound so rapid fire never stacks voices (retro, one-channel feel). */
 const SFX_GAP_MS = 90;
+/** [startHz, endHz, seconds] — every weapon sound is a single chiptune blip. */
+const RETRO_BEEPS: Partial<Record<Sfx, [number, number, number]>> = {
+  shot: [880, 440, 0.06],
+  mosin: [660, 220, 0.08],
+  minigun: [990, 660, 0.03],
+  revolver: [740, 300, 0.07],
+  blaster: [1200, 600, 0.05],
+  ion: [520, 260, 0.1],
+  saber: [330, 440, 0.08],
+  slash: [600, 300, 0.05],
+  spell: [784, 1046, 0.08],
+  pick: [440, 330, 0.04],
+  trap: [300, 200, 0.06],
+  cannon: [220, 110, 0.12],
+  bolt: [500, 500, 0.03],
+  cock: [700, 700, 0.03],
+  reload: [523, 659, 0.06],
+  cylinder: [600, 600, 0.04],
+  empty: [200, 200, 0.03],
+  hit: [400, 200, 0.04],
+};
+/** Weapon blips share one channel: at most ~12 per second, never stacked. */
+const WEAPON_BEEP_GAP_MS = 80;
+let lastWeaponBeep = -1e9;
 export function playSfx(name: Sfx) {
   if (readMuted()) return;
   const now = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -500,6 +524,14 @@ export function playSfx(name: Sfx) {
   const rig = audio();
   if (!rig) return;
   const { ctx: context, master: out, verb } = rig;
+  // Weapons: one quiet 8-bit square blip each, no noise layers or tails.
+  const beep = RETRO_BEEPS[name];
+  if (beep) {
+    if (now - lastWeaponBeep < WEAPON_BEEP_GAP_MS) return;
+    lastWeaponBeep = now;
+    tone(context, out, { from: beep[0], to: beep[1], seconds: beep[2], gain: 0.05, type: "square" });
+    return;
+  }
   // A touch of variation so repeat shots never sound like a copy of each other.
   const vary = 0.94 + Math.random() * 0.12;
   switch (name) {

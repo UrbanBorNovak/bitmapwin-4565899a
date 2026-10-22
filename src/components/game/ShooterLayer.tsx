@@ -606,17 +606,8 @@ export function ShooterLayer({
         }
         return;
       }
-      if (event.button !== 0) return;
-      unlockAudio();
-      // The first click after drawing a weapon only focuses the game — no surprise shot.
-      if (!armedClick.current) {
-        armedClick.current = true;
-        return;
-      }
-      // a left click while the right button is still held keeps aiming
-      if (firstPerson && (event.buttons & 2) !== 0) aimState.active = true;
-      holding.current = true;
-      fire();
+      // Left clicks on the world never shoot — attacks need F or the on-screen action button.
+      if (event.button === 0) unlockAudio();
     };
     const onUp = (event: PointerEvent) => {
       if (event.button === 0) holding.current = false;
