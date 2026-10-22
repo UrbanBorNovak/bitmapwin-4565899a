@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 const NOTE_W = 252;
 
@@ -12,12 +13,12 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const open = pinned || hovered;
 
-  const enter = () => {
+  const hold = () => {
     if (timer.current) clearTimeout(timer.current);
     setHovered(true);
   };
   // Small grace period so the pointer can cross the gap between "?" and the note.
-  const leave = () => {
+  const drop = () => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setHovered(false), 160);
   };
@@ -27,22 +28,17 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    // The site sets a CSS zoom on <html>, so rects and innerWidth/Height disagree.
-    // Work in real screen pixels, then scale the style values back up.
+    // The site sets a CSS zoom on <html>, so rects report scaled pixels while the
+    // window size and a body-level fixed element use real ones.
     const zoom = el.offsetWidth ? r.width / el.offsetWidth || 1 : 1;
     const left0 = r.left / zoom;
-    const top0 = r.bottom / zoom;
-    const bottom0 = r.top / zoom;
+    const below0 = r.bottom / zoom;
+    const above0 = r.top / zoom;
     const width = Math.min(NOTE_W, window.innerWidth - 16);
     const left = Math.min(Math.max(8, left0), window.innerWidth - width - 8);
-    const below = window.innerHeight - top0;
-    const up = below < 140 && bottom0 > below;
-    setBox({
-      left: left * zoom,
-      top: (up ? bottom0 - 6 : top0 + 6) * zoom,
-      width: width * zoom,
-      up,
-    });
+    const room = window.innerHeight - below0;
+    const up = room < 140 && above0 > room;
+    setBox({ left, top: up ? above0 - 6 : below0 + 6, width, up });
   }, [open]);
 
   useEffect(() => {
@@ -60,7 +56,7 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
   }, [open]);
 
   return (
-    <span ref={ref} className="group relative inline-flex align-middle" onMouseEnter={enter} onMouseLeave={leave}>
+    <span ref={ref} className="relative inline-flex align-middle" onMouseEnter={hold} onMouseLeave={drop}>
       <button
         type="button"
         aria-label={label}
@@ -86,16 +82,21 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
       >
         ?
       </button>
-      {open && box ? (
-        <span
-          id={id}
-          role="tooltip"
-          style={{ left: box.left, top: box.top, width: box.width, transform: box.up ? "translateY(-100%)" : undefined }}
-          className="hud-panel fixed z-[80] p-2 text-left font-sans text-xs normal-case leading-normal tracking-normal text-foreground"
-        >
-          {text}
-        </span>
-      ) : null}
+      {open && box
+        ? createPortal(
+            <span
+              id={id}
+              role="tooltip"
+              onMouseEnter={hold}
+              onMouseLeave={drop}
+              style={{ left: box.left, top: box.top, width: box.width, transform: box.up ? "translateY(-100%)" : undefined }}
+              className="hud-panel fixed z-[80] p-2 text-left font-sans text-xs normal-case leading-normal tracking-normal text-foreground"
+            >
+              {text}
+            </span>,
+            document.body,
+          )
+        : null}
     </span>
   );
 }
