@@ -22,7 +22,9 @@ function Model({ inscription, size }: { inscription: string; size: number }) {
     s.position.set(-c.x * k, -box.min.y * k, -c.z * k);
     return s;
   }, [gltf.scene, size]);
-  return <primitive object={obj} />;
+  let meshes = 0;
+  obj.traverse((c) => { if ((c as THREE.Mesh).isMesh) meshes++; });
+  return meshes ? <primitive object={obj} /> : <Crate size={size} />;
 }
 
 const Crate = ({ size }: { size: number }) => (
