@@ -148,7 +148,7 @@ function Index() {
                       <div className="font-mono text-[11px] font-bold text-signal">MEET GUARDIANS & BLOCK MATTER →</div>
                       <p className="mt-1 text-xs text-muted-foreground">See how verified block data becomes creature identity and traits.</p>
                     </Link>
-                    <Link to="/registry" className="group border border-border/60 p-3 hover:border-signal">
+                    <Link to="/marketplace" className="group border border-border/60 p-3 hover:border-signal">
                       <div className="font-mono text-[11px] font-bold text-signal">EXPLORE THE BITMAP REGISTRY →</div>
                       <p className="mt-1 text-xs text-muted-foreground">Read provenance, territory facts and market activity.</p>
                     </Link>
