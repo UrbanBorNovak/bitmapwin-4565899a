@@ -92,7 +92,7 @@ export function LivingBlockShowcase() {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <Link to="/oasis" search={{ height: h } as never} className="btn-term">[ WALK THIS BLOCK IN THE OASIS ]</Link>
+        <Link to="/oasis" search={{ height: h }} className="btn-term">[ WALK THIS BLOCK IN THE OASIS ]</Link>
         <Link to="/bitmap/$block" params={{ block: String(h) }} className="btn-term-ghost">[ SEE ITS FULL RECORD ]</Link>
         <Link to="/forge" className="btn-term-ghost">[ BUILD YOUR OWN ]</Link>
       </div>
