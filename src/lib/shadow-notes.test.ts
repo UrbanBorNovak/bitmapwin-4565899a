@@ -64,11 +64,11 @@ describe("handoff signatures", () => {
   it("stops a later recipient re-signing an earlier handoff to fork the history", () => {
     const A = "a".repeat(64), B = "b".repeat(64), C = "c".repeat(64), Z = "d".repeat(64);
     const n = transferNote({ note: transferNote({ note: mintNote("Map", "memo", A), secret: A }, ownerCommit(B)), secret: B }, ownerCommit(C));
-    // C tries to rewrite B's handoff to Z using C's own key: signature must be B's.
-    const forked = transferNote({ note: { ...n, chain: n.chain.slice(0, 2) }, secret: C }, ownerCommit(Z));
-    expect(() => forked).not.toThrow;
-    const tip = n.chain[1]!;
-    expect(() => transferNote({ note: { ...n, chain: [n.chain[0]!, { ...tip }] }, secret: C }, ownerCommit(Z))).toThrow();
+    // C forges B's handoff to Z, signing with the only key C has (C's own).
+    const fake = transferNote({ note: { ...n, chain: [...n.chain.slice(0, 2), { ...n.chain[1]!, to: ownerCommit(C) }].slice(0, 2).map((l, i) => (i === 1 ? { ...l, to: ownerCommit(C) } : l)) }, secret: C }, ownerCommit(Z));
+    const forked = { ...n, chain: [...n.chain.slice(0, 2), fake.chain.at(-1)!] };
+    forked.chain[2] = { ...forked.chain[2]!, prev: n.chain[1]!.hash };
+    expect(noteStatus(forked)).toBe("broken");
   });
   it("refuses to hand on a note sealed to an older receive code", () => {
     const A = "a".repeat(64);
