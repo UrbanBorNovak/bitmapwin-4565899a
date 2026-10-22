@@ -6,7 +6,7 @@ import { BuilderAvatar } from "@/components/BuilderAvatar";
 export function ActiveBuilders() {
   const { data = [], isLoading } = useQuery(activeBuildersQuery);
   return (
-    <section className="mx-auto max-w-[1600px] px-3 pt-8 md:px-5 md:pt-10">
+    <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
       <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="label text-bitcoin">LIVE ON THE JUMBOTRON</div>
@@ -29,9 +29,9 @@ export function ActiveBuilders() {
       ) : data.length === 0 ? (
         <p className="mt-6 font-mono text-sm text-muted-foreground">&gt; NO PIECES PUBLISHED YET — BE THE FIRST BUILDER ON THE JUMBOTRON</p>
       ) : (
-        <div className="mt-4 grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-3 grid gap-px bg-border sm:grid-cols-2 md:mt-4 lg:grid-cols-4">
           {data.slice(0, 8).map((b, i) => (
-            <div key={b.address} className="flex flex-col gap-3 bg-background p-4">
+            <div key={b.address} className="flex flex-col gap-2 bg-background p-3 md:gap-3 md:p-4">
               <div className="flex items-center gap-3">
                 <BuilderAvatar address={b.address} size={44} />
                 <div className="min-w-0">

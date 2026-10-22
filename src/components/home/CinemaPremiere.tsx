@@ -10,8 +10,8 @@ export function CinemaPremiere() {
   return (
     <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
       <Link to="/watch" search={{ ep: "citadel" }}
-        className="group grid items-center gap-4 border border-border-strong bg-card p-4 transition-colors hover:border-bitcoin md:grid-cols-[auto_1fr_auto] md:p-5">
-        <span className="grid size-16 place-items-center rounded-full border border-bitcoin font-display text-2xl text-bitcoin transition-transform group-hover:scale-105" aria-hidden="true">▶</span>
+        className="group grid items-center grid-cols-[auto_minmax(0,1fr)] gap-3 border border-border-strong bg-card p-3 md:gap-4 md:p-4 transition-colors hover:border-bitcoin md:grid-cols-[auto_1fr_auto] md:p-5">
+        <span className="grid size-12 md:size-16 place-items-center rounded-full border border-bitcoin font-display text-2xl text-bitcoin transition-transform group-hover:scale-105" aria-hidden="true">▶</span>
         <div className="min-w-0">
           <div className="label flex items-center gap-2 text-bitcoin">
             <span className="size-2 animate-pulse bg-bitcoin" aria-hidden="true" />
@@ -23,7 +23,7 @@ export function CinemaPremiere() {
             <span className="px-1 py-0.5 text-signal">{secs}s · FREE TO WATCH</span>
           </div>
         </div>
-        <span className="btn-term whitespace-nowrap">[ WATCH NOW → ]</span>
+        <span className="btn-term col-span-2 whitespace-nowrap text-center md:col-span-1">[ WATCH NOW → ]</span>
       </Link>
     </section>
   );
