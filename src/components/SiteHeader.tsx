@@ -262,7 +262,7 @@ export function SiteHeader() {
           <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border xl:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => {
             const here = groupItems(group).some((i) => itemIsActive(i.to));
             return (
@@ -286,12 +286,12 @@ export function SiteHeader() {
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 } ${here && openGroup !== group.id ? "is-here" : ""}`}
               >
-                <span className="hidden xl:inline"><GroupIcon id={group.id} /></span>
+                <span className="hidden 2xl:inline"><GroupIcon id={group.id} /></span>
                 {group.label}
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className={`nav-menu absolute top-full border border-border bg-background w-[40rem] left-1/2 -translate-x-1/2`}>
+                <div className={`nav-menu absolute top-full border border-border bg-background left-0 w-[40rem]`}>
                   <div className="border-b border-border bg-surface px-4 py-3">
                     <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
@@ -382,7 +382,7 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="relative border-t border-border lg:hidden" aria-label="Main navigation">
+      <nav className="relative border-t border-border xl:hidden" aria-label="Main navigation">
         <button
           type="button"
           aria-expanded={mobileOpen}
