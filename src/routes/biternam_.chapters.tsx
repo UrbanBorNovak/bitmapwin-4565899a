@@ -215,7 +215,7 @@ function ChaptersPage() {
             {outroT >= 0 && (
               <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background px-4 text-center" data-no-translate>
                 <div className="max-w-full">
-                  <div className="font-mono tracking-[0.25em] text-muted-foreground" style={{ fontSize: "min(1.6cqw, 0.75rem)" }}>IT WAS NEVER A GAME. IT WAS ALWAYS</div>
+                  <div className="font-mono tracking-[0.25em] text-muted-foreground" style={{ fontSize: portrait ? "3.4cqw" : "min(1.6cqw, 0.75rem)" }}>IT WAS NEVER A GAME. IT WAS ALWAYS</div>
                   <div className="display mt-3 whitespace-nowrap normal-case" style={{ fontSize: "min(8.5cqw, 4.5rem)" }}>
                     {height}<span className={`text-bitcoin transition-all duration-300 ${outroT >= POP ? "opacity-100" : "opacity-0"}`} style={{ display: "inline-block", transform: outroT >= POP ? "scale(1)" : "scale(1.8)" }}>.bitmap</span>
                   </div>
