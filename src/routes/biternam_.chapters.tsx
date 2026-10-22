@@ -162,11 +162,21 @@ function ChaptersPage() {
                 <div>{["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][height % 12]} {String(1 + (height % 28)).padStart(2, "0")} 199{height % 10}</div>
               </div>
             </div>
-            {line && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-4 mx-auto w-fit max-w-[80%] rounded border border-border bg-background/85 px-3 py-2 text-center text-sm">
-                <span className="font-mono text-[10px] text-signal">{speaker}</span><div>{line.text}</div>
+            {phase >= 0 && phase < 1e6 && playing && (
+              <div key={`fx${phase}`} aria-hidden className="pointer-events-none absolute inset-0" data-no-translate>
+                <div className="manga-speed absolute inset-0" />
+                <div className="manga-sfx absolute left-[8%] top-[14%] display text-4xl md:text-6xl text-bitcoin" style={{ rotate: `${(phase % 2 ? 1 : -1) * 12}deg` }}>
+                  {["KA-CHING!", "WHOOSH!", "BLAM!", "ZAP!", "KRAK!", "VROOM!", "POW!", "HODL!"][(height + phase) % 8]}
+                </div>
               </div>
             )}
+            {line && (
+              <div key={lineKey} className="comic-bubble pointer-events-none absolute bottom-8 mx-auto w-fit max-w-[70%] px-4 py-2 text-center" style={{ [line.speaker % 2 ? "right" : "left"]: "10%" }} data-no-translate>
+                <span className="font-mono text-[10px] tracking-widest text-signal">{speaker}</span>
+                <div className="display text-lg md:text-2xl uppercase">{line.text}</div>
+              </div>
+            )}
+            {outroT >= POP && <div aria-hidden className="manga-halftone pointer-events-none absolute inset-0 z-10" />}
             {time < INTRO && (playing || time > 0) && (
               <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
                 <div>
