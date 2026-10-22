@@ -1,4 +1,3 @@
-import "@/lib/gltf-resilience";
 import { applyMountIntent } from "@/lib/guardian-mount";
 import { PeerMount } from "@/components/game/ShardRaidLayer";
 import { ShardRaidLayer } from "@/components/game/ShardRaidLayer";
