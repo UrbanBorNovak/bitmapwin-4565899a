@@ -44,6 +44,11 @@ export function Patron({ skin, start, seed, bounds = BOUNDS, isBlocked = blocked
       s.h = Math.atan2(home[0] - s.x, home[1] - s.z) + (Math.random() - 0.5) + Math.PI * 0.5; nx = s.x; nz = s.z;
     }
     s.x = nx; s.z = nz; moving.current = sp > 0.05;
+    // A cast member walking into an extra nudges it aside (eased, so it never jitters).
+    if (bodies) for (const [k, b] of bodies) if (k[0] === "a") {
+      const bx = b.x / bodyScale, bz = b.z / bodyScale, dx = s.x - bx, dz = s.z - bz, d = Math.hypot(dx, dz) || 1e-3, min = R + b.r / bodyScale;
+      if (d < min) { const k2 = Math.min(1, dt * 10); s.x += (dx / d) * (min - d) * k2; s.z += (dz / d) * (min - d) * k2; }
+    }
     bodies?.set(bodyKey, { x: s.x * bodyScale, z: s.z * bodyScale, r: 2 });
     if (g.current) { g.current.position.set(s.x, 0, s.z); g.current.rotation.y += (((s.h - g.current.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 8); }
   });
