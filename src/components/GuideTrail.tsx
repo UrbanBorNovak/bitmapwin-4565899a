@@ -103,11 +103,11 @@ export function GuideTrail({ current }: { current: Current }) {
           to={next.to}
           className="btn-term w-full !min-h-12 !text-[0.75rem] sm:w-auto sm:!min-h-0 sm:!text-[0.6875rem]"
         >
-          NEXT: {next.label} →
+          NEXT: <StepName step={next} /> →
         </Link>
         {prev && (
           <Link to={prev.to} className="btn-term-ghost w-full sm:w-auto">
-            ← BACK: {prev.label}
+            ← BACK: <StepName step={prev} />
           </Link>
         )}
       </div>
