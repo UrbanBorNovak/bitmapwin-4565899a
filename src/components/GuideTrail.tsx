@@ -28,9 +28,9 @@ export function GuideTrail({ current }: { current: Current }) {
   const next = STEPS[idx + 1] ?? STEPS[3];
   const prev = idx > 0 ? STEPS[idx - 1] : undefined;
   return (
-    <nav aria-label="Guide reading order" className="mt-12 border border-border bg-surface p-4 md:p-5">
+    <nav aria-label="Guide reading order" className="mt-10 border border-border bg-surface p-3 md:mt-12 md:p-5">
       <div className="label text-signal">GUIDE {idx + 1} OF 3 · READING ORDER</div>
-      <ol className="mt-3 grid gap-px bg-border sm:grid-cols-4">
+      <ol className="mt-2.5 grid gap-px bg-border sm:mt-3 sm:grid-cols-4">
         {STEPS.map((s, i) => {
           const state = i === idx ? "here" : seen.includes(s.to) ? "done" : "next";
           return (
@@ -38,22 +38,51 @@ export function GuideTrail({ current }: { current: Current }) {
               <Link
                 to={s.to}
                 aria-current={state === "here" ? "page" : undefined}
-                className={`block h-full border-l-2 px-3 py-2 ${state === "here" ? "border-bitcoin" : "border-transparent hover:bg-surface"}`}
+                className={`block h-full border-l-2 px-2.5 py-1.5 sm:px-3 sm:py-2 ${
+                  state === "here"
+                    ? "border-bitcoin bg-bitcoin/10"
+                    : state === "done"
+                      ? "border-signal/40 hover:bg-surface"
+                      : "border-transparent hover:bg-surface"
+                }`}
               >
-                <div className={`label text-[0.55rem] ${state === "here" ? "text-bitcoin" : "text-muted-foreground"}`}>
-                  {i < 3 ? `STEP ${i + 1}` : "FINISH"}{state === "done" ? " · READ" : state === "here" ? " · YOU ARE HERE" : ""}
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="label text-[0.55rem] text-muted-foreground">
+                    {i < 3 ? `STEP ${i + 1}` : "FINISH"}
+                  </span>
+                  {state === "here" && (
+                    <span className="label bg-bitcoin px-1 py-0.5 text-[0.55rem] text-bitcoin-foreground">
+                      YOU ARE HERE
+                    </span>
+                  )}
+                  {state === "done" && (
+                    <span className="label border border-signal/60 px-1 py-0.5 text-[0.55rem] text-signal">
+                      READ
+                    </span>
+                  )}
                 </div>
-                <div className="label mt-1 text-foreground">{s.label}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{s.note}</div>
+                <div className={`label mt-1 ${state === "here" ? "text-bitcoin" : "text-foreground"}`}>
+                  {s.label}
+                </div>
+                <div className={`mt-0.5 text-xs text-muted-foreground ${state === "here" ? "" : "hidden sm:block"}`}>
+                  {s.note}
+                </div>
               </Link>
             </li>
           );
         })}
       </ol>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Link to={next.to} className="btn-term">NEXT: {next.label} →</Link>
+      <div className="mt-3 flex flex-col gap-2 sm:mt-4 sm:flex-row sm:items-center">
+        <Link
+          to={next.to}
+          className="btn-term w-full !min-h-12 !text-[0.75rem] sm:w-auto sm:!min-h-0 sm:!text-[0.6875rem]"
+        >
+          NEXT: {next.label} →
+        </Link>
         {prev && (
-          <Link to={prev.to} className="btn-term-ghost">← BACK: {prev.label}</Link>
+          <Link to={prev.to} className="btn-term-ghost w-full sm:w-auto">
+            ← BACK: {prev.label}
+          </Link>
         )}
       </div>
     </nav>
