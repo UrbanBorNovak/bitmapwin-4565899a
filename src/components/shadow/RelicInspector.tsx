@@ -22,7 +22,7 @@ function inspect(code: string): Result {
 }
 
 const STEPS = [
-  ["1 · YOUR DEVICE MAKES A SECRET", "When you claim a pass or relic, your browser creates a random secret and keeps it on this device. The only time it is sent is a pass handoff, which uses it once to retire your old copy."],
+  ["1 · YOUR DEVICE MAKES A SECRET", "When you claim a pass or relic, your browser creates a random secret and keeps it on this device. Note handoffs use a signature, so the secret is never shared. Room passes are the one exception: handing one on sends its secret to BITMAPWIN once to retire your copy."],
   ["2 · BITMAPWIN SEES ONLY A FINGERPRINT", "For passes we store a one-way fingerprint (a hash) of that secret; vault notes are not stored at all. It can't be turned back into the secret, your wallet or your account."],
   ["3 · YOU PROVE ACCESS, NOT IDENTITY", "To enter a private room, your device shows it knows the secret behind a stored fingerprint. Nobody learns which wallet you use."],
   ["4 · A PEN NAME PER ROOM", "Each room gives you a separate pen name, so your activity in one room can't be matched with another."],
@@ -78,7 +78,7 @@ export function RelicInspector() {
                 {res.note.chain.length - 1} handoffs · origin <span data-no-translate>{short(res.note.genesis)}</span>
               </div>
               <ul className="mt-2 space-y-0.5 font-sans text-[12px] text-muted-foreground">
-                <li>{res.status === "intact" ? "✓ History: every link and every handoff sign-off checks out." : res.status === "legacy" ? "⚠ History: links are unaltered, but it was handed on before sign-offs existed, so a forged handoff can't be ruled out. The vault won't accept it." : "✗ History: a link was changed or a handoff lacks the holder's sign-off."}</li>
+                <li>{res.status === "intact" ? "✓ History: every link checks out and each handoff is signed by the holder before it. No secrets are inside the note." : res.status === "legacy" ? "⚠ History: links are unaltered, but it was handed on before signed handoffs, and its old sign-off exposed a past holder's secret, so anyone who saw it could rewrite it. The vault won't accept it." : "✗ History: a link was changed or a handoff lacks the holder's sign-off."}</li>
                 <li>– Ownership: not proven here. Only the device holding the latest secret can accept or pass it on.</li>
                 <li>– Copies: not prevented. Notes aren't recorded on Bitcoin, so a sender who kept a copy could give it twice. An intact result can't tell you whether another copy exists.</li>
               </ul>
