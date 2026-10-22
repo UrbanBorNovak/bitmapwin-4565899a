@@ -55,8 +55,8 @@ function DestWindow({ children }: { children: ReactNode }) {
   useFrame(() => {
     g.current?.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
-      if (!m || o.userData.portal) return;
-      o.userData.portal = true;
+      if (!m || o.userData["portal"]) return;
+      o.userData["portal"] = true;
       for (const mat of Array.isArray(m) ? m : [m]) { mat.stencilWrite = true; mat.stencilRef = 1; mat.stencilFunc = THREE.EqualStencilFunc; mat.stencilZPass = THREE.KeepStencilOp; }
       o.renderOrder = 1;
     });
