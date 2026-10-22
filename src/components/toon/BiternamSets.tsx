@@ -116,7 +116,7 @@ export function ChinatownSet({ timeRef }: { timeRef: MutableRefObject<number> })
       </group>
       {/* street gate */}
       <Box p={[-12, 12, -24]} s={[2, 24, 2]} c="#b22222" /><Box p={[12, 12, -24]} s={[2, 24, 2]} c="#b22222" />
-      <EcoFrames seed="chinatown" trim="#ff3a4a" places={[{ p: [0, 34, -22.2], size: 8 }, { p: [-6, 16, -13.5], ry: Math.PI / 2 }, { p: [-6, 16, 13.5], ry: -Math.PI / 2 }, { p: [24, 16, -13.5], ry: Math.PI / 2 }]} />
+      <EcoFrames seed="chinatown" trim="#ff3a4a" places={[{ p: [0, 34, -22.2], size: 8 }, { p: [-6, 16, -13.5], ry: Math.PI / 2 }, { p: [26, 16, -13.5], ry: Math.PI / 2 }, { p: [-6, 16, -13.5], ry: -Math.PI / 2 }]} />
       <Box p={[0, 25, -24]} s={[32, 3, 3]} c="#b22222" /><Box p={[0, 28, -24]} s={[36, 1.5, 4]} c="#d9a520" m={0.5} />
     </group>
   );
