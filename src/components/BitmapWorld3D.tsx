@@ -4879,6 +4879,8 @@ function BitmapWorld3DInner({
             frameloop="always"
             onCreated={({ gl, scene, camera }) => {
               glRef.current = gl;
+              // Dev-only handle for render-cost probes in tests.
+              if (import.meta.env.DEV) (window as unknown as { __oasis?: unknown }).__oasis = { gl, scene, camera };
               // Warm shaders off the main thread so the first seconds don't hitch.
               // Without parallel compile, compileAsync blocks the main thread for seconds.
               if (gl.getContext().getExtension("KHR_parallel_shader_compile")) {
