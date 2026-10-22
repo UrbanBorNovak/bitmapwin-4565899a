@@ -17,6 +17,7 @@ import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
 import { BlockChronicles } from "@/components/BlockChronicles";
+import { LivingBlockShowcase } from "@/components/LivingBlockShowcase";
 
 
 export const Route = createFileRoute("/")({
@@ -199,6 +200,7 @@ function Index() {
       </section>
 
       <HowItWorks />
+      <LivingBlockShowcase />
 
       <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
         <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
