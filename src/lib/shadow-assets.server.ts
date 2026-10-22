@@ -131,6 +131,7 @@ export async function readAllShadowGates(): Promise<ShadowGateSpot[]> {
   const { data, error } = await supabaseAdmin
     .from("shadow_events")
     .select("slug, title, territory_block, is_active")
+    .not("slug", "like", "biternam-backroom-%")
     .limit(500);
   if (error || !data) return [];
   return data.map((d) => ({ slug: d.slug, title: d.title, territoryBlock: Number(d.territory_block), isActive: d.is_active }));

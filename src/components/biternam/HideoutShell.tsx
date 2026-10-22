@@ -13,6 +13,8 @@ import { HIDEOUT_STEPS, hideoutStateFromCount, type HideoutRoom } from "@/lib/hi
 import { hideoutStatusFn, recordHideoutStepFn } from "@/lib/hideout-progress.functions";
 import { useCutscene, CutsceneStage } from "@/components/biternam/CutsceneDirector";
 import { ROOM_CUTSCENES } from "@/lib/cutscene";
+import { backroomFor } from "@/lib/biternam-backroom";
+import { BackroomGate } from "@/components/biternam/BackroomGate";
 
 export function HideoutShell<H extends string>(props: {
   room: HideoutRoom; storageKey: string; mood: RoomMood; kicker: string; title: string; item: string; hazardText: string;
@@ -44,6 +46,8 @@ export function HideoutShell<H extends string>(props: {
   const record = useServerFn(recordHideoutStepFn);
   const [signedIn, setSignedIn] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const backroom = backroomFor(props.room);
+  const [unsealed, setUnsealed] = useState(false);
   const resync = async () => { try { const r = await status({ data: { room: props.room } }); if (r.ok) setSt(hideoutStateFromCount(r.count)); } catch { /* keep local */ } };
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { if (data.session) { setSignedIn(true); void resync(); } });
@@ -87,6 +91,7 @@ export function HideoutShell<H extends string>(props: {
           <div className="mt-1 text-[11px] text-muted-foreground">{signedIn ? "✓ PROGRESS SAVED TO YOUR ACCOUNT" : "PLAYING ON THIS DEVICE · SIGN IN TO SAVE"}</div>
           {note ? <div className="mt-1 text-[11px] text-destructive">{note}</div> : null}
         </div>
+        {backroom && !unsealed ? <BackroomGate room={props.room as "vault" | "lair"} backroom={backroom} signedIn={signedIn} onOpen={() => setUnsealed(true)} /> : null}
         {hazard ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70">
             <div className="animate-bounce font-display text-5xl tracking-widest text-primary">{props.hazardText}</div>
