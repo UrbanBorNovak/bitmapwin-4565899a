@@ -39,3 +39,17 @@ describe("shadow note validation", () => {
     expect(verifyNote(toC) && verifyNote(toX)).toBe(true);
   });
 });
+
+import { noteStatus } from "./shadow-notes";
+describe("note status", () => {
+  it("separates legacy unsigned handoffs from forged ones", () => {
+    const A = "a".repeat(64), B = "b".repeat(64);
+    const h = transferNote({ note: mintNote("Map", "memo", A), secret: A }, ownerCommit(B));
+    expect(noteStatus(h)).toBe("intact");
+    const legacy = structuredClone(h); delete legacy.chain[1]!.auth;
+    expect(noteStatus(legacy)).toBe("legacy");
+    expect(noteStatus({ ...legacy, label: "Gold" })).toBe("broken");
+    const wrong = structuredClone(h); wrong.chain[1]!.auth = "e".repeat(64);
+    expect(noteStatus(wrong)).toBe("broken");
+  });
+});

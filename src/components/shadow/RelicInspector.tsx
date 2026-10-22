@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { decodeNote, verifyNote, type ShadowNote } from "@/lib/shadow-notes";
+import { decodeNote, noteStatus, type ShadowNote } from "@/lib/shadow-notes";
 import { importPass, parseReceiveCode, shadowHandle } from "@/lib/shadow-vault";
 
 type Result =
-  | { kind: "note"; note: ShadowNote; valid: boolean }
+  | { kind: "note"; note: ShadowNote; status: ReturnType<typeof noteStatus> }
   | { kind: "pass"; slug: string; commitment: string; handle: string }
   | { kind: "recv"; slug: string; commitment: string }
   | { kind: "bad" };
@@ -13,7 +13,7 @@ const short = (s: string) => `${s.slice(0, 10)}…${s.slice(-6)}`;
 function inspect(code: string): Result {
   const note = decodeNote(code);
   if (code.trim().startsWith("SHADOW-NOTE-v1.") && !note) return { kind: "bad" };
-  if (note) return { kind: "note", note, valid: verifyNote(note) };
+  if (note) return { kind: "note", note, status: noteStatus(note) };
   const pass = importPass(code);
   if (pass && /^[a-z0-9-]{1,64}$/.test(pass.slug) && /^[0-9a-f]{128}$/.test(pass.salt + pass.nullifierSecret)) return { kind: "pass", slug: pass.slug, commitment: pass.commitment, handle: shadowHandle(pass.nullifier) };
   const recv = parseReceiveCode(code);
@@ -70,17 +70,17 @@ export function RelicInspector() {
         <div className="mt-3 rounded border border-border/60 bg-background/40 p-3 text-[12px]">
           {res.kind === "note" ? (
             <>
-              <div className={res.valid ? "text-signal" : "text-destructive"}>
-                {res.valid ? "✓ HISTORY IS INTACT" : "✗ HISTORY IS BROKEN, EDITED OR FORGED"}
+              <div className={res.status === "intact" ? "text-signal" : res.status === "legacy" ? "text-primary" : "text-destructive"}>
+                {res.status === "intact" ? "✓ HISTORY IS INTACT" : res.status === "legacy" ? "⚠ OLDER NOTE — HANDOFFS UNSIGNED" : "✗ HISTORY IS BROKEN, EDITED OR FORGED"}
               </div>
               <div className="mt-1 text-foreground">{res.note.label}</div>
               <div className="mt-1 text-muted-foreground">
                 {res.note.chain.length - 1} handoffs · origin <span data-no-translate>{short(res.note.genesis)}</span>
               </div>
               <ul className="mt-2 space-y-0.5 font-sans text-[12px] text-muted-foreground">
-                <li>{res.valid ? "✓" : "✗"} History: every link and every handoff sign-off checks out.</li>
+                <li>{res.status === "intact" ? "✓ History: every link and every handoff sign-off checks out." : res.status === "legacy" ? "⚠ History: links are unaltered, but it was handed on before sign-offs existed, so a forged handoff can't be ruled out. The vault won't accept it." : "✗ History: a link was changed or a handoff lacks the holder's sign-off."}</li>
                 <li>– Ownership: not proven here. Only the device holding the latest secret can accept or pass it on.</li>
-                <li>– Copies: not prevented. Notes aren't recorded on Bitcoin, so a sender who kept a copy could give it twice.</li>
+                <li>– Copies: not prevented. Notes aren't recorded on Bitcoin, so a sender who kept a copy could give it twice. An intact result can't tell you whether another copy exists.</li>
               </ul>
               <p className="mt-1 font-sans text-muted-foreground">Shows no wallet, account or holder name — only fingerprints.</p>
             </>
