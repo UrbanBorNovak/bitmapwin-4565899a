@@ -2,6 +2,7 @@ import { useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 import { EcoGallery } from "./EcoGallery";
+import { SET_FOOTPRINTS, type Foot } from "@/lib/toon-collide";
 
 /** Every other Biternam interior as a Toon film set, voxel style matching BiternamSets. Animations read the timeline. */
 type V3 = [number, number, number];
@@ -128,10 +129,17 @@ export function setBoundsFor(set: string | undefined): SetBounds | null {
 }
 /** Furniture footprints near the floor (stage units) for a room set. */
 function solids(set: string) { return (ROOMS[set.slice(2)]?.props ?? []).filter((b) => b.p[1] - b.s[1] / 2 < 8 && b.s[1] > 1.5 && !b.anim); }
+/** Every floor-standing voxel object of a set (stage units), so characters collide with it. */
+export function footprintsFor(set: string | undefined): Foot[] {
+  if (!set) return [];
+  if (set.startsWith("b-")) return solids(set).map((b) => ({ x: b.p[0], z: b.p[2], w: b.s[0], d: b.s[2] }));
+  return SET_FOOTPRINTS[set] ?? [];
+}
 /** Extras (units ÷10) may not walk into furniture. */
 export function walkBlocked(set: string | undefined, x: number, z: number): boolean {
-  if (!set?.startsWith("b-")) return false;
+  if (!set) return false;
   const X = x * 10, Z = z * 10;
+  if (!set.startsWith("b-")) return (SET_FOOTPRINTS[set] ?? []).some((f) => Math.abs(X - f.x) < f.w / 2 + 2 && Math.abs(Z - f.z) < f.d / 2 + 2);
   return solids(set).some((b) => Math.abs(X - b.p[0]) < b.s[0] / 2 + 2 && Math.abs(Z - b.p[2]) < b.s[2] / 2 + 2);
 }
 /** Keep a camera inside the set's walls and out of its furniture. */
