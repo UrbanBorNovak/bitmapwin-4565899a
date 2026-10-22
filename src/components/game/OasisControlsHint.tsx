@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { isTouchDevice } from "@/lib/touch-input";
+import { isTouchDevice, touchPad } from "@/lib/touch-input";
 
 const SEEN_KEY = "bitmapwin:oasis-controls-hint-seen";
 const SHOW_MS = 6000;
@@ -36,14 +36,15 @@ export function OasisControlsHint({ forceOpen, onClosed }: { forceOpen?: number;
     };
     const t = window.setTimeout(close, SHOW_MS);
     const onKey = (e: KeyboardEvent) => { if (MOVE_KEYS.has(e.code)) close(); };
-    // Give the tap that opened the world a moment before touches count as movement.
-    const arm = window.setTimeout(() => window.addEventListener("touchstart", close, { passive: true }), 800);
+    // On phones only real joystick movement counts; swipes and taps leave the card open.
+    const stick = window.setInterval(() => {
+      if (Math.abs(touchPad.forward) > 0.15 || Math.abs(touchPad.turn) > 0.15) close();
+    }, 100);
     window.addEventListener("keydown", onKey);
     return () => {
       window.clearTimeout(t);
-      window.clearTimeout(arm);
+      window.clearInterval(stick);
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("touchstart", close);
     };
   }, [open, onClosed]);
 
