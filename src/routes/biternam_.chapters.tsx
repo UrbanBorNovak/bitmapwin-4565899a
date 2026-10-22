@@ -5,6 +5,7 @@ import { useAuthSession } from "@/lib/auth";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { episodeLength, sceneAt } from "@/lib/toon-script";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
+import { impact, speakRadio, stopAllVoice, whoosh } from "@/lib/chapter-voice";
 import { styleFilter } from "@/lib/toon-style";
 import { CHAPTER_SETS, QUOTE_MAX, TITLE_MAX, autoSet, chapterEpisode, chapterTheme, defaultQuote, defaultTitle, type ChapterSet } from "@/lib/biternam-chapter";
 import { supabase } from "@/integrations/supabase/client";
