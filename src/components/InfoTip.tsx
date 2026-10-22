@@ -77,7 +77,10 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
         }}
         onBlur={() => setPinned(false)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") setPinned(false);
+          if (e.key === "Escape") {
+            setPinned(false);
+            setHovered(false);
+          }
         }}
         className="ml-1 inline-flex size-5 items-center justify-center rounded-full border border-border font-mono text-[10px] leading-none text-muted-foreground hover:text-signal focus-visible:text-signal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-signal"
       >
