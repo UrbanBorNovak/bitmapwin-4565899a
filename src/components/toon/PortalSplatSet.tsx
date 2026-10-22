@@ -55,7 +55,7 @@ function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<num
     return g;
   }, [seed]);
   const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
-  useFrame(() => { if (mat.current) mat.current.uniforms.uTime!.value = timeRef.current; });
+  useFrame(() => { if (mat.current) mat.current.uniforms["uTime"]!.value = timeRef.current; });
   return (
     <points geometry={geo} frustumCulled={false}>
       <shaderMaterial ref={mat} uniforms={uniforms} vertexShader={VERT} fragmentShader={FRAG} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} />
