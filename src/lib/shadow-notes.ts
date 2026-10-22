@@ -38,9 +38,18 @@ export function transferNote(held: HeldNote, toCommit: string, at = new Date().t
 
 /** Client-side validation: every link must hash correctly and point at the one before it. */
 export function verifyNote(n: ShadowNote): boolean {
-  try { return walk(n); } catch { return false; }
+  return noteStatus(n) === "intact";
 }
-function walk(n: ShadowNote): boolean {
+
+/** intact = fully signed; legacy = links hash correctly but older handoffs carry no sign-off; broken = edited/forged. */
+export function noteStatus(n: ShadowNote): "intact" | "legacy" | "broken" {
+  try {
+    if (walk(n, true)) return "intact";
+    if (n.chain.slice(1).every((l) => l.auth === undefined) && walk(n, false)) return "legacy";
+  } catch { /* junk */ }
+  return "broken";
+}
+function walk(n: ShadowNote, requireAuth: boolean): boolean {
   if (n?.v !== 1 || !Array.isArray(n.chain) || !n.chain.length) return false;
   if (typeof n.label !== "string" || typeof n.kind !== "string") return false;
   const first = n.chain[0]!;
@@ -50,7 +59,7 @@ function walk(n: ShadowNote): boolean {
     const l = n.chain[i]!;
     if (!/^[0-9a-f]{64}$/.test(l.to)) return false;
     // Every handoff must reveal the secret behind the previous holder's commitment.
-    if (i > 0 && (typeof l.auth !== "string" || ownerCommit(l.auth) !== n.chain[i - 1]!.to)) return false;
+    if (requireAuth && i > 0 && (typeof l.auth !== "string" || ownerCommit(l.auth) !== n.chain[i - 1]!.to)) return false;
     if (l.prev !== prev || l.hash !== linkHash(l.prev, l.to, l.at)) return false;
     prev = l.hash;
   }
