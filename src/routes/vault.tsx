@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SealedVault } from "@/components/shadow/SealedVault";
 import { RelicInspector } from "@/components/shadow/RelicInspector";
 import {
-  decodeNote, encodeNote, loadNotes, mintNote, ownerCommit, receiveSecret, rotateReceive, saveNotes, transferNote, verifyNote,
+  decodeNote, encodeNote, loadNotes, recoveryFor, reissueNote, mintNote, ownerCommit, receiveSecret, rotateReceive, saveNotes, transferNote, verifyNote,
   type HeldNote,
 } from "@/lib/shadow-notes";
 
@@ -48,6 +48,13 @@ function VaultPage() {
     if (notes.some((x) => x.note.chain.at(-1)!.hash === n.chain.at(-1)!.hash)) return setMsg("ALREADY IN YOUR VAULT");
     store([...notes, { note: n, secret }]); rotateReceive(); setRecv(ownerCommit(receiveSecret()));
     setPaste(""); setMsg(`✓ RECEIVED "${n.label}" · ${n.chain.length - 1} VERIFIED HANDOFFS`);
+  }
+  function reissue(i: number) {
+    try {
+      const fresh = reissueNote(notes[i]!);
+      store(notes.map((x, k) => (k === i ? fresh : x)));
+      setMsg(`✓ "${fresh.note.label}" REISSUED AS A SIGNED NOTE. THE OLD COPY WAS DISCARDED; HISTORY STARTS FRESH.`);
+    } catch (e) { setMsg(`✗ ${(e as Error).message}`); }
   }
   function send(i: number) {
     try {
@@ -95,10 +102,18 @@ function VaultPage() {
               <span className="text-foreground">{h.note.label}</span>
               <span className={`text-[11px] ${verifyNote(h.note) ? "text-signal" : "text-destructive"}`}>{verifyNote(h.note) ? "✓ HISTORY INTACT" : "✗ BROKEN OR FORGED"} · {h.note.chain.length - 1} HANDOFFS · {short(h.note.genesis)}</span>
             </div>
-            <div className="mt-2 flex gap-2">
+            {(() => { const r = recoveryFor(h); return r.state === "current" ? (h.note.reissuedFrom ? <p className="mt-1 text-[11px] text-muted-foreground">REISSUED FROM OLDER NOTE <span data-no-translate>{short(h.note.reissuedFrom)}</span> · EARLIER HISTORY NOT CARRIED OVER</p> : null) : r.state === "reissuable" ? (
+              <div className="mt-2 rounded border border-primary/50 p-2 text-[11px]">
+                <p className="font-sans text-muted-foreground">Older format. This device made it and still holds its secret, so it can be reissued as a new signed note with the same name. The new note starts a fresh history that records which note it replaced.</p>
+                <button onClick={() => reissue(i)} className="mt-1 text-primary">[ REISSUE SAFELY ]</button>
+              </div>
+            ) : (
+              <p className="mt-2 rounded border border-destructive/50 p-2 font-sans text-[11px] text-muted-foreground"><span className="font-mono text-destructive">CANNOT BE MIGRATED SAFELY.</span> {r.reason} It stays here as a record but can't be handed on.</p>
+            ); })()}
+            {recoveryFor(h).state === "current" ? <div className="mt-2 flex gap-2">
               <input value={sendTo[i] ?? ""} onChange={(e) => setSendTo({ ...sendTo, [i]: e.target.value })} placeholder="Recipient's receive code" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[11px]" />
               <button onClick={() => send(i)} className="rounded border border-border px-3 py-1 text-[11px] hover:border-primary hover:text-primary">[ GIVE ]</button>
-            </div>
+            </div> : null}
           </div>
         ))}
       </section>
