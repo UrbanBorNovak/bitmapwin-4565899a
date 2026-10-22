@@ -16,7 +16,7 @@ import { ToonVFXLayer } from "@/components/toon/ToonVFXLayer";
 import { BiternamRoomSet, ROOMS, clampCamera, setBoundsFor, walkBlocked } from "@/components/toon/BiternamRooms";
 import { BatcaveSet, CafeSet, ChinatownSet, VaultSet } from "@/components/toon/BiternamSets";
 import { PortalSplatSet } from "@/components/toon/PortalSplatSet";
-const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c", portal: "#06040f" };
+const BITERNAM_BG: Partial<Record<string, string>> = { cafe: "#100c0a", batcave: "#05070a", chinatown: "#140f1c", vault: "#08090c" };
 import { loadCustomVFX, shakeAt, vfxLibrary, type ToonVFX } from "@/lib/toon-vfx";
 
 /** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
@@ -342,17 +342,18 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
     <SafeCanvas dpr={[1, 1.5]} camera={{ fov: 40, position: [40, 30, 40] }} gl={{ antialias: true, preserveDrawingBuffer: true, stencil: true }}>
       {scene.set && (BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg) ? <><color attach="background" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg ?? "#000")]} /><fog attach="fog" args={[(BITERNAM_BG[scene.set] ?? ROOMS[scene.set.slice(2)]?.bg ?? "#000"), 90, 260]} /></>
       : scene.set === "oasis" ? <><color attach="background" args={["#8fd3f4"]} /><fog attach="fog" args={["#8fd3f4", 80, 240]} /></> : <>
-        <color attach="background" args={[scene.set === "beach" ? "#8f9aa3" : scene.set ? "#8fd3f4" : "#7fc8e8"]} />
-        <fog attach="fog" args={scene.set === "beach" ? ["#8f9aa3", 60, 200] : scene.set ? ["#1a1714", 120, 320] : ["#7fc8e8", 90, 220]} />
-        <hemisphereLight args={scene.set === "beach" ? ["#c9d2d8", "#6b5a40", 0.8] : scene.set ? ["#8c96a3", "#2a211b", 0.55] : ["#ffffff", "#d9b77a", 0.9]} />
-        <directionalLight position={[40, 80, 30]} intensity={scene.set === "beach" ? 1.1 : scene.set ? 0.35 : 1.8} />
+        <color attach="background" args={[scene.set === "beach" ? "#8f9aa3" : scene.set && scene.set !== "portal" ? "#8fd3f4" : "#7fc8e8"]} />
+        <fog attach="fog" args={scene.set === "beach" ? ["#8f9aa3", 60, 200] : scene.set && scene.set !== "portal" ? ["#1a1714", 120, 320] : ["#7fc8e8", 90, 220]} />
+        <hemisphereLight args={scene.set === "beach" ? ["#c9d2d8", "#6b5a40", 0.8] : scene.set && scene.set !== "portal" ? ["#8c96a3", "#2a211b", 0.55] : ["#ffffff", "#d9b77a", 0.9]} />
+        <directionalLight position={[40, 80, 30]} intensity={scene.set === "beach" ? 1.1 : scene.set && scene.set !== "portal" ? 0.35 : 1.8} />
       </>}
       {scene.set?.startsWith("b-") ? <BiternamRoomSet room={scene.set.slice(2)} timeRef={timeRef} />
         : scene.set === "cafe" ? <CafeSet timeRef={timeRef} />
         : scene.set === "batcave" ? <BatcaveSet timeRef={timeRef} />
         : scene.set === "chinatown" ? <ChinatownSet timeRef={timeRef} />
         : scene.set === "vault" ? <VaultSet timeRef={timeRef} />
-        : scene.set === "portal" ? <PortalSplatSet block={scene.block} timeRef={timeRef} dest={(() => { const n = episode.scenes[index + 1]?.set; return n?.startsWith("b-") ? <BiternamRoomSet room={n.slice(2)} timeRef={timeRef} /> : n === "cafe" ? <CafeSet timeRef={timeRef} /> : n === "batcave" ? <BatcaveSet timeRef={timeRef} /> : n === "chinatown" ? <ChinatownSet timeRef={timeRef} /> : n === "vault" ? <VaultSet timeRef={timeRef} /> : null; })()} />
+        // Portal: the BITMAP land is the world around the gate; the next room is the world inside it.
+        : scene.set === "portal" ? <><Land key={`pl-${scene.block}`} block={scene.block} /><PortalSplatSet onLand block={scene.block} timeRef={timeRef} dest={(() => { const n = episode.scenes[index + 1]?.set; return n?.startsWith("b-") ? <BiternamRoomSet room={n.slice(2)} timeRef={timeRef} /> : n === "cafe" ? <CafeSet timeRef={timeRef} /> : n === "batcave" ? <BatcaveSet timeRef={timeRef} /> : n === "chinatown" ? <ChinatownSet timeRef={timeRef} /> : n === "vault" ? <VaultSet timeRef={timeRef} /> : null; })()} /></>
         : scene.set === "beach" ? <BeachSet timeRef={timeRef} />
         : scene.set === "studio" || scene.set === "rift" ? <StudioSet key={`set-${index}`} timeRef={timeRef} localRef={progressRef} rift={scene.set === "rift"} />
         : scene.set === "oasis" ? <group><group position-z={-30}><OasisWorld timeRef={timeRef} /></group>

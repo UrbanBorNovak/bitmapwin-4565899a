@@ -65,15 +65,15 @@ function DestWindow({ children }: { children: ReactNode }) {
   return <group ref={g} position={[0, -2, -48]} scale={0.8}>{children}</group>;
 }
 
-function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<number> }) {
+function Splats({ seed, timeRef, vortexOnly }: { seed: number; timeRef: MutableRefObject<number>; vortexOnly?: boolean }) {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const geo = useMemo(() => {
-    const r = rng(seed * 7919 + 13), N = 3500;
+    const r = rng(seed * 7919 + 13), N = vortexOnly ? 1500 : 3500;
     const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), size = new Float32Array(N), phase = new Float32Array(N);
     const c = new THREE.Color();
     for (let i = 0; i < N; i++) {
       // Two clusters: a swirling vortex around the gate and a wide nebula shell.
-      const vortex = i < N * 0.45;
+      const vortex = vortexOnly || i < N * 0.45;
       const a = r() * Math.PI * 2, rad = vortex ? 14 + r() * 26 : 40 + r() * 120;
       let x = Math.cos(a) * rad;
       if (!vortex && Math.abs(x) < 26) x = Math.sign(x || 1) * (26 + r() * 30); // keep the walkway clear so the lead stays readable
@@ -91,7 +91,7 @@ function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<num
     g.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
     g.setAttribute("aPhase", new THREE.BufferAttribute(phase, 1));
     return g;
-  }, [seed]);
+  }, [seed, vortexOnly]);
   const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
   useFrame(() => { if (mat.current) mat.current.uniforms["uTime"]!.value = timeRef.current; });
   return (
@@ -101,7 +101,7 @@ function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<num
   );
 }
 
-export function PortalSplatSet({ block, timeRef, dest }: { block: number; timeRef: MutableRefObject<number>; dest?: ReactNode }) {
+export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number; timeRef: MutableRefObject<number>; dest?: ReactNode; onLand?: boolean }) {
   const rimMat = useRef<THREE.ShaderMaterial>(null);
   const rimU = useMemo(() => ({ uTime: { value: 0 } }), []);
   const ring = useRef<THREE.Group>(null), shards = useRef<THREE.Group>(null);
