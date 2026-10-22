@@ -10,15 +10,12 @@ import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { LoopNavigator } from "@/components/LoopNavigator";
-import { LandPromptTerminal } from "@/components/LandPromptTerminal";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
 import { MobileAppInstall } from "@/components/MobileAppInstall";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
-import { MintPointer } from "@/components/bitmon/MintPointer";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
-import { DailyStreak } from "@/components/retention/DailyStreak";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
 import { BlockChronicles } from "@/components/BlockChronicles";
 
