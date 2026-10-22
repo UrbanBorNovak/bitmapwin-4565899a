@@ -15,6 +15,7 @@ import {
   setAvatarSkinInscription,
 } from "@/lib/map-identity";
 import { readCharacter, saveCharacter } from "@/lib/character";
+import { playSfx } from "@/lib/retro-sfx";
 
 const PROLOGUE = [
   "JANUARY 3, 2009.",
@@ -103,12 +104,12 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
 
   if (stage === "prologue") {
     return (
-      <div className="relative grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background px-6">
+      <div className="retro-crt relative grid h-[78vh] min-h-[520px] place-items-center border-2 border-border bg-background px-6">
         <div className="max-w-2xl space-y-4 text-center">
           {PROLOGUE.slice(0, line).map((text, i) => (
             <p
               key={i}
-              className={`animate-in fade-in duration-1000 font-mono text-sm tracking-widest ${
+              className={`retro-px retro-type mx-auto text-sm ${
                 i === PROLOGUE.length - 1 ? "text-bitcoin" : "text-foreground"
               }`}
             >
@@ -126,6 +127,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
   const skinCount = skins.length + 1;
   const skinIndex = skin ? skins.findIndex((s) => s.inscriptionId === skin) + 1 : 0;
   const stepSkin = (dir: number) => {
+    playSfx("hover");
     const next = (((skinIndex + dir) % skinCount) + skinCount) % skinCount;
     setSkin(next === 0 ? null : skins[next - 1]!.inscriptionId);
   };
@@ -133,7 +135,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
   const skinLabel = skinIndex === 0 ? "STOCK EXPLORER" : skins[skinIndex - 1]?.name ?? "—";
 
   return (
-    <div className="relative grid min-h-[82vh] gap-4 overflow-hidden border border-border bg-background p-4 lg:grid-cols-[240px_1fr_300px]">
+    <div className="retro-crt retro-px relative grid min-h-[82vh] gap-4 overflow-hidden border-2 border-border bg-background p-4 lg:grid-cols-[240px_1fr_300px]">
       {/* LEFT — callings + appearance */}
       <aside className="z-10 flex flex-col gap-4 border border-border bg-card/70 p-3 backdrop-blur-sm">
         <div role="radiogroup" aria-label="Class" className="space-y-1.5">
@@ -143,7 +145,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
               key={c.id}
               role="radio"
               aria-checked={pick === c.id}
-              onClick={() => setPick(c.id)}
+              onClick={() => { setPick(c.id); playSfx("verb"); }}
               className={`flex w-full items-center gap-2 border px-2 py-1.5 text-left font-mono text-xs transition-colors ${
                 pick === c.id ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:text-foreground"
               }`}
@@ -171,8 +173,9 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
 
         <Button
           variant="outline"
-          className="mt-auto"
+          className="retro-btn mt-auto rounded-none"
           onClick={() => {
+            playSfx("pickup");
             setSkin(skins.length ? skins[Math.floor(Math.random() * skins.length)]!.inscriptionId : null);
             setPick(CLASSES[Math.floor(Math.random() * CLASSES.length)]!.id);
           }}
@@ -188,10 +191,10 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
           onWheel={(e) => stepSkin(e.deltaY > 0 ? 1 : -1)}
           aria-label="Character preview — scroll to change skin"
         >
-          <div className="pointer-events-none absolute inset-x-[15%] bottom-[6%] h-10 rounded-[50%] border border-bitcoin/50 bg-bitcoin/10 shadow-[0_0_60px_-6px_hsl(var(--bitcoin,30_93%_54%))]" />
+          <div className="retro-stage" aria-hidden="true"><div className="floor" /><div className="plinth" /></div>
           {/* Absolutely placed so the 3D view can never push its own box wider —
               that feedback loop grew the canvas past what any GPU can draw. */}
-          <div className="absolute inset-0">
+          <div className="retro-sprite absolute inset-0">
             <CharacterPortrait model={OFFICIAL_RIGS[rigIndex]!.id} skin={skin} className="h-full w-full" />
           </div>
           <button
@@ -239,7 +242,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
           ))}
         </Panel>
         <div className="mt-auto flex flex-col gap-2">
-          <Button onClick={enter}>ACCEPT · ENTER 0.BITMAP →</Button>
+          <Button className="retro-btn rounded-none" onClick={() => { playSfx("door"); enter(); }}>ACCEPT · ENTER 0.BITMAP →</Button>
           <Button variant="ghost" onClick={() => { setLine(0); setStage("prologue"); }}>
             ← BACK
           </Button>
