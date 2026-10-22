@@ -22,3 +22,16 @@ describe("gallery pictures", () => {
     }
   });
 });
+
+import { streetSigns } from "./BiternamSets";
+describe("district street signs", () => {
+  it("sit flush on the street face of their tower and fit its width", () => {
+    const towers = [{ x: 30, z: 0, w: 14, h: 60 }, { x: 25, z: -10, w: 11, h: 50 }, { x: -28, z: 5, w: 12, h: 40 }, { x: -24, z: -20, w: 13, h: 80 }];
+    for (const [i, s] of streetSigns(towers).entries()) {
+      const t = towers.filter((_, k) => k % 2 === 1)[i]!;
+      const wx = s.ry! < 0 ? -s.p[2] : s.p[2], wz = s.ry! < 0 ? s.p[0] : -s.p[0];
+      expect(Math.abs(wx - t.x)).toBeCloseTo(t.w / 2 + 0.25); expect(wz).toBe(t.z);
+      expect(Math.abs(wx)).toBeLessThan(Math.abs(t.x)); expect(s.size).toBeLessThanOrEqual(t.w - 1.5);
+    }
+  });
+});
