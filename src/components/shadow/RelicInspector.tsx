@@ -12,6 +12,7 @@ const short = (s: string) => `${s.slice(0, 10)}…${s.slice(-6)}`;
 
 function inspect(code: string): Result {
   const note = decodeNote(code);
+  if (code.trim().startsWith("SHADOW-NOTE-v1.") && !note) return { kind: "bad" };
   if (note) return { kind: "note", note, valid: verifyNote(note) };
   const pass = importPass(code);
   if (pass && /^[a-z0-9-]{1,64}$/.test(pass.slug) && /^[0-9a-f]{128}$/.test(pass.salt + pass.nullifierSecret)) return { kind: "pass", slug: pass.slug, commitment: pass.commitment, handle: shadowHandle(pass.nullifier) };
@@ -70,12 +71,17 @@ export function RelicInspector() {
           {res.kind === "note" ? (
             <>
               <div className={res.valid ? "text-signal" : "text-destructive"}>
-                {res.valid ? "✓ HISTORY CHECKS OUT" : "✗ HISTORY IS BROKEN OR EDITED"}
+                {res.valid ? "✓ HISTORY IS INTACT" : "✗ HISTORY IS BROKEN, EDITED OR FORGED"}
               </div>
               <div className="mt-1 text-foreground">{res.note.label}</div>
               <div className="mt-1 text-muted-foreground">
                 {res.note.chain.length - 1} handoffs · origin <span data-no-translate>{short(res.note.genesis)}</span>
               </div>
+              <ul className="mt-2 space-y-0.5 font-sans text-[12px] text-muted-foreground">
+                <li>{res.valid ? "✓" : "✗"} History: every link and every handoff sign-off checks out.</li>
+                <li>– Ownership: not proven here. Only the device holding the latest secret can accept or pass it on.</li>
+                <li>– Copies: not prevented. Notes aren't recorded on Bitcoin, so a sender who kept a copy could give it twice.</li>
+              </ul>
               <p className="mt-1 font-sans text-muted-foreground">Shows no wallet, account or holder name — only fingerprints.</p>
             </>
           ) : res.kind === "pass" ? (

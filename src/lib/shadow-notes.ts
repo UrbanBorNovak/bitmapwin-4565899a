@@ -16,7 +16,8 @@ const h = (s: string) => hex(sha256(enc.encode(s)));
 
 export const ownerCommit = (secret: string) => h(`bitmapwin:note:owner|${secret}`);
 
-export type Link = { to: string; prev: string; hash: string; at: string };
+/** auth = the previous holder's spent secret; proves the handoff was signed off by whoever held the note. */
+export type Link = { to: string; prev: string; hash: string; at: string; auth?: string };
 export type ShadowNote = { v: 1; label: string; kind: string; genesis: string; chain: Link[] };
 export type HeldNote = { note: ShadowNote; secret: string };
 
@@ -32,16 +33,24 @@ export function transferNote(held: HeldNote, toCommit: string, at = new Date().t
   const tip = held.note.chain.at(-1)!;
   if (tip.to !== ownerCommit(held.secret)) throw new Error("YOU DO NOT HOLD THIS NOTE");
   if (!/^[0-9a-f]{64}$/.test(toCommit)) throw new Error("BAD RECEIVE CODE");
-  return { ...held.note, chain: [...held.note.chain, { to: toCommit, prev: tip.hash, at, hash: linkHash(tip.hash, toCommit, at) }] };
+  return { ...held.note, chain: [...held.note.chain, { to: toCommit, prev: tip.hash, at, hash: linkHash(tip.hash, toCommit, at), auth: held.secret }] };
 }
 
 /** Client-side validation: every link must hash correctly and point at the one before it. */
 export function verifyNote(n: ShadowNote): boolean {
+  try { return walk(n); } catch { return false; }
+}
+function walk(n: ShadowNote): boolean {
   if (n?.v !== 1 || !Array.isArray(n.chain) || !n.chain.length) return false;
+  if (typeof n.label !== "string" || typeof n.kind !== "string") return false;
   const first = n.chain[0]!;
   if (n.genesis !== h(`bitmapwin:note:genesis|${n.kind}|${n.label}|${first.at}|${first.to}`)) return false;
   let prev = n.genesis;
-  for (const l of n.chain) {
+  for (let i = 0; i < n.chain.length; i++) {
+    const l = n.chain[i]!;
+    if (!/^[0-9a-f]{64}$/.test(l.to)) return false;
+    // Every handoff must reveal the secret behind the previous holder's commitment.
+    if (i > 0 && (typeof l.auth !== "string" || ownerCommit(l.auth) !== n.chain[i - 1]!.to)) return false;
     if (l.prev !== prev || l.hash !== linkHash(l.prev, l.to, l.at)) return false;
     prev = l.hash;
   }
