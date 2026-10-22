@@ -21,7 +21,7 @@ export const ROOMS: Record<string, RoomSpec> = {
     ...row(4, (i) => ({ p: [-30 + i * 20, 3, -10], s: [6, 6, 6], c: "#e8dcc4" })),
     ...row(4, (i) => ({ p: [-30 + i * 20, 9, -10], s: [3, 3, 3], c: T, e: T, m: 0.7, anim: "spin" })),
     ...row(5, (i) => ({ p: [-36 + i * 18, 20, -28.6], s: [10, 12, 0.4], c: "#3a2a1e", e: i % 2 ? N : T })),
-    ...row(6, (i) => ({ p: [-25 + i * 10, 2, 4], s: [0.6, 4, 0.6], c: GOLD, m: 0.8 }))] },
+    ...row(6, (i) => ({ p: [-25 + i * 10, 2, 12], s: [0.6, 4, 0.6], c: GOLD, m: 0.8 }))] },
   lab: { bg: "#050a0c", floor: "#1a2228", alt: "#121a1f", wall: "#0e1418", amb: "#a0e0ff", key: N, accent: G, props: [
     ...row(8, (i) => ({ p: [-35 + i * 10, 11, -26], s: [7, 22, 6], c: "#1a1d22", m: 0.7 })),
     ...row(8, (i) => ({ p: [-35 + i * 10, 12, -22.9], s: [5, 16, 0.2], c: "#000", e: i % 3 ? G : N, anim: "pulse" })),
@@ -57,14 +57,14 @@ export const ROOMS: Record<string, RoomSpec> = {
   archive: { bg: "#0b0906", floor: "#4a3a28", alt: "#3a2c1e", wall: "#2a2018", amb: "#ffe0b0", key: "#ffd080", accent: GOLD, props: [
     ...row(6, (i) => ({ p: [-38 + i * 15, 14, -26], s: [10, 28, 5], c: "#5a3a20" })),
     ...row(18, (i) => ({ p: [-38 + (i % 6) * 15, 6 + Math.floor(i / 6) * 8, -23.4], s: [8, 1.6, 0.4], c: i % 2 ? "#e8dcc4" : GOLD })),
-    { p: [0, 4, 0], s: [14, 8, 8], c: "#3a2a1e" }] },
+    { p: [0, 4, -12], s: [14, 8, 8], c: "#3a2a1e" }] },
   canon: { bg: "#050405", floor: "#2a2628", alt: "#1e1a1c", wall: "#18141a", amb: "#c0b0ff", key: "#b080ff", accent: GOLD, props: [
     ...row(3, (i) => ({ p: [-24 + i * 24, 3, -12], s: [8, 6, 18], c: "#4a4448", m: 0.3 })),
     ...row(3, (i) => ({ p: [-24 + i * 24, 20, -28.6], s: [12, 20, 0.6], c: "#3a3438", e: "#b080ff", anim: "pulse" })),
     ...row(6, (i) => ({ p: [-30 + i * 12, 2, 12], s: [0.8, 4, 0.8], c: "#fff3d0", e: "#ffb050", anim: "pulse" }))] },
   holders: { bg: "#0c0608", floor: "#3a1a22", alt: "#2a1218", wall: "#1e0e14", amb: "#ffc0d0", key: GOLD, accent: T, props: [
     ...row(4, (i) => ({ p: [-34 + i * 22, 3, -20], s: [14, 6, 6], c: "#6b1f2f" })),
-    { p: [0, 5, -4], s: [30, 10, 6], c: "#3a2a1e" }, { p: [0, 10.4, -4], s: [31, 0.6, 7], c: GOLD, m: 0.8 },
+    { p: [0, 5, -10], s: [30, 10, 6], c: "#3a2a1e" }, { p: [0, 10.4, -10], s: [31, 0.6, 7], c: GOLD, m: 0.8 },
     { p: [0, 34, -28.6], s: [30, 4, 0.4], c: GOLD, e: GOLD, anim: "pulse" }] },
   receipt: { bg: "#080a08", floor: "#4a4a40", alt: "#3a3a32", wall: "#5a5a4a", amb: "#f0f0d0", key: "#ffffff", accent: T, props: [
     { p: [0, 5, -14], s: [50, 10, 6], c: "#6a5a40" }, { p: [0, 10.3, -14], s: [51, 0.6, 7], c: "#b08a40", m: 0.7 },
