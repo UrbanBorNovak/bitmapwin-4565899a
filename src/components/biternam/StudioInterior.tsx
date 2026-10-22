@@ -1,5 +1,6 @@
 /** Retro 2.5D Bitmap News studio: fixed camera, anchor desk, CRT wall, ON AIR neon, verb-bar hotspots. */
 import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearShelf } from "@/components/biternam/GearShelf";
 import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
@@ -170,6 +171,7 @@ export function StudioInterior({ onHit, onHover, hover, wireRead, headline, onAi
         </Hot>
         <CafeSmoke count={50} color="#e8e0ff" opacity={0.04} mist={["#1b2a44", "#f7931a"]} />
         <Patron skin={CREW} start={[2.2, 2.4]} seed={4.4} bounds={{ x0: 0.2, x1: 3.2, z0: 1.2, z1: 3.2 }} isBlocked={(x, z) => Math.hypot(x - 1, z - 2.2) < 0.6} home={[2.4, 2.6]} />
+        <GearShelf room="studio" position={[-3.75, 2.2, 0.8]} rotation={Math.PI / 2} />
         <OnChainExhibit room="studio" position={[2.6, 0, -2.4]} size={1.8} />
       </SafeCanvas>
       <GearLocker />

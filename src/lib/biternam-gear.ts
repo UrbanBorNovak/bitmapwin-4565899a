@@ -90,3 +90,15 @@ export const useGear = () => useSyncExternalStore(gearStore.subscribe, gearStore
 /** Toast channel from 3D exhibits to the DOM locker. */
 export const GEAR_EVENT = "biternam-gear";
 export const announceGear = (text: string) => { if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(GEAR_EVENT, { detail: text })); };
+
+/** Oasis wearables shown on each room's wall shelf (decor + inspect line, no loot). */
+export const ROOM_SHELVES: Record<GearRoom, { id: string; name: string; blurb: string }[]> = {
+  safehouse: [{ id: "goggles", name: "NIGHT-VISION GOGGLES", blurb: "The Marshal's stakeout pair." }, { id: "watch", name: "WATCH", blurb: "Set to block time, not clock time." }, { id: "shoes", name: "DESERT SHOES", blurb: "Two years of dust trails." }],
+  outpost: [{ id: "shoes", name: "DESERT SHOES", blurb: "Bitoshi's spare pair, still sandy." }, { id: "necklace", name: "NECKLACE", blurb: "Steadies the nerves on long drives." }, { id: "helmet", name: "FLIGHT HELMET", blurb: "For when the RV learns to fly." }],
+  museum: [{ id: "comic", name: "COMIC BOOK", blurb: "Issue #1 of the Unreasonables." }, { id: "ring", name: "RING", blurb: "Exhibit B. Do not touch. (You touched it.)" }, { id: "book", name: "MAGIC BOOK", blurb: "The Secret of Low Fees, a replica." }],
+  arcade: [{ id: "goggles", name: "NIGHT-VISION GOGGLES", blurb: "Top score prize, never claimed." }, { id: "comic", name: "COMIC BOOK", blurb: "Cheat codes on the back page." }, { id: "watch", name: "WATCH", blurb: "Counts down to the next block." }],
+  cafe: [{ id: "hat", name: "WIZARD HAT", blurb: "Left behind by a regular." }, { id: "necklace", name: "NECKLACE", blurb: "Dabber's lucky charm." }, { id: "ring", name: "RING", blurb: "Found in the tip jar." }],
+  lab: [{ id: "helmet", name: "FLIGHT HELMET", blurb: "Bop's test-pilot lid." }, { id: "goggles", name: "NIGHT-VISION GOGGLES", blurb: "Boptimized for low light." }, { id: "watch", name: "WATCH", blurb: "Measures latency in heartbeats." }],
+  studio: [{ id: "comic", name: "COMIC BOOK", blurb: "Tonight's script, in panels." }, { id: "hat", name: "WIZARD HAT", blurb: "Weather segment costume." }, { id: "shoes", name: "DESERT SHOES", blurb: "The field reporter's pair." }],
+  void: [{ id: "ghost", name: "GHOST", blurb: "What you drift as when you're down." }, { id: "book", name: "MAGIC BOOK", blurb: "Pages that rewrite themselves." }, { id: "ring", name: "RING", blurb: "It hums near orphaned blocks." }],
+};

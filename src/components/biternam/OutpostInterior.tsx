@@ -1,5 +1,6 @@
 /** Retro 2.5D RV interior for Bitoshi: fixed camera, low-res voxel props, verb-bar hotspots. */
 import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
+import { GearShelf } from "@/components/biternam/GearShelf";
 import { GearLocker } from "@/components/biternam/GearLocker";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
@@ -145,6 +146,7 @@ export function OutpostInterior({ onHit, onHover, hover, hasSuit, suited, blasti
         <Hot id="door" {...hp} position={[3.48, 0, 1.4]} rotation={[0, -Math.PI / 2, 0]}>
           <mesh position-y={1.1}><boxGeometry args={[0.9, 2, 0.08]} /><meshStandardMaterial color="#c9c2ae" emissive={BLUE} emissiveIntensity={hover === "door" ? 0.4 : 0.03} /></mesh>
         </Hot>
+        <GearShelf room="outpost" position={[-3.25, 2.0, 0.2]} rotation={Math.PI / 2} />
         <OnChainExhibit room="outpost" position={[2.2, 0, -1.2]} size={1.4} />
       </SafeCanvas>
       <GearLocker />
