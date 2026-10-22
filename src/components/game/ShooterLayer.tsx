@@ -246,6 +246,11 @@ export function ShooterLayer({
   }, []);
 
   const fireRef = useRef<() => void>(() => {});
+  /** false until the player has clicked once with this weapon drawn */
+  const armedClick = useRef(false);
+  useEffect(() => {
+    armedClick.current = false;
+  }, [weapon, active]);
 
   const reload = useCallback(() => {
     if (spec.magazine === 0) return;
@@ -603,6 +608,11 @@ export function ShooterLayer({
       }
       if (event.button !== 0) return;
       unlockAudio();
+      // The first click after drawing a weapon only focuses the game — no surprise shot.
+      if (!armedClick.current) {
+        armedClick.current = true;
+        return;
+      }
       // a left click while the right button is still held keeps aiming
       if (firstPerson && (event.buttons & 2) !== 0) aimState.active = true;
       holding.current = true;
