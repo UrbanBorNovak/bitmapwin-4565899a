@@ -31,7 +31,7 @@ export function GearShelf({ room, position, rotation = 0 }: { room: GearRoom; po
           onClick={(e: ThreeEvent<MouseEvent>) => { e.stopPropagation(); playSfx("hover"); announceGear(`${it.name} — ${it.blurb} (on-chain Oasis gear)`); }}>
           {/* invisible hit box: shelf pieces themselves skip raycasting */}
           <mesh position={[0, 0.25, 0]} visible={false}><boxGeometry args={[0.6, 0.5, 0.5]} /><meshBasicMaterial /></mesh>
-          <ModelSlot url={contentUrl(IDS[it.id]!)} size={0.45} label={it.name}>
+          <ModelSlot url={contentUrl(IDS[it.id]!)} size={0.45} label={it.name} compact>
             {({ onEmpty }) => <Piece url={contentUrl(IDS[it.id]!)} size={0.45} onEmpty={onEmpty} />}
           </ModelSlot>
         </group>
