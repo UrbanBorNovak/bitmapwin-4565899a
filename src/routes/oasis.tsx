@@ -1,3 +1,4 @@
+import "@/lib/gltf-resilience";
 import { ShardRaidHud } from "@/components/game/ShardRaidHud";
 import { SnapShare } from "@/components/game/SnapShare";
 import { DropHud } from "@/components/game/DropHud";
