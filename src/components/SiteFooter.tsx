@@ -1,59 +1,54 @@
 import { Link } from "@tanstack/react-router";
 
+// Five balanced columns: four pillars plus guides. Mirrors the homepage pillars.
 const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
   {
-    label: "PLAY",
+    label: "WORLD",
     items: [
       { to: "/oasis", label: "ENTER THE OASIS" },
       { to: "/play", label: "LIVING CARDS" },
-      { to: "/play-guide", label: "PLAYER GUIDE" },
+      { to: "/biternam", label: "BITERNAM QUESTS" },
       { to: "/cities", label: "VISIT CITIES" },
       { to: "/trading-post", label: "IN-WORLD TRADING POST" },
-      { to: "/inventory", label: "MY INVENTORY" },
     ],
   },
   {
-    label: "TRADE",
+    label: "LAND",
     items: [
       { to: "/marketplace", label: "BITMAP MARKET" },
       { to: "/leases", label: "LEASES" },
       { to: "/history", label: "SALES HISTORY" },
+      { to: "/ownership", label: "VERIFY OWNERSHIP" },
+      { to: "/traits", label: "TRAITS" },
     ],
   },
   {
-    label: "CREATE",
+    label: "CREATION",
     items: [
-      { to: "/my-world", label: "MY WORLD" },
-      { to: "/builds", label: "3D BUILDS" },
-      { to: "/extend", label: "DEPLOY" },
-      { to: "/studio", label: "STUDIO" },
-      { to: "/mint", label: "MINT GUARDIAN" },
       { to: "/forge", label: "LAND FORGE" },
-      { to: "/breed", label: "BREED PETS" },
+      { to: "/studio", label: "STUDIO" },
+      { to: "/builds", label: "COMMUNITY BUILDS" },
       { to: "/extenders", label: "EXTENDERS" },
-      { to: "/store-kit", label: "TINY STORE KIT" },
-      { to: "/tiny-studio", label: "TINY STUDIO" },
-      { to: "/co-forge", label: "CO-FORGE" },
-      { to: "/church", label: "CHURCH OF BITMAP" },
-    ],
-  },
-  {
-    label: "DISCOVER",
-    items: [
-      { to: "/explore", label: "EXPLORE" },
-      { to: "/experiences", label: "EXPERIENCES" },
       { to: "/builders", label: "BUILDERS" },
-      { to: "/world-stats", label: "WORLD STATS" },
     ],
   },
   {
-    label: "ACCOUNT",
+    label: "IDENTITY",
     items: [
-      { to: "/my-land", label: "MY BITMAPS" },
-      { to: "/ownership", label: "OWNERSHIP" },
-      { to: "/sdk", label: "SDK" },
-      { to: "/docs", label: "DOCS" },
-      { to: "/api", label: "API" },
+      { to: "/passport", label: "MY PASSPORT" },
+      { to: "/mint", label: "MINT GUARDIAN" },
+      { to: "/codex", label: "CODEX" },
+      { to: "/command", label: "COMMAND CENTRE" },
+      { to: "/breed", label: "BREEDING LAB" },
+    ],
+  },
+  {
+    label: "GUIDES & CODE",
+    items: [
+      { to: "/land-101", label: "LAND 101" },
+      { to: "/guardians-guide", label: "GUARDIANS GUIDE" },
+      { to: "/play-guide", label: "PLAYER GUIDE" },
+      { to: "/docs", label: "DOCS & SDK" },
       { to: "/dev-tools", label: "DEVELOPER TOOLS" },
     ],
   },
