@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CAMERA_PRESETS, pickCoStars, type CameraPreset } from "@/lib/biternam-cast";
 import { fromQuery, lookup, statusLabel } from "@/lib/chapter-cast";
 import { blockFactsFn, listChaptersFn, publishChapterFn } from "@/lib/biternam-chapter.functions";
+import { deliverClip, startClipCapture, type ClipSession } from "@/lib/chapter-record";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -120,6 +121,31 @@ function ChaptersPage() {
   useEffect(() => { if (!playing || muted) stopAllVoice(); }, [playing, muted]);
   useEffect(() => () => stopAllVoice(), []);
 
+  const playerRef = useRef<HTMLDivElement>(null);
+  const session = useRef<ClipSession | null>(null);
+  const [recState, setRecState] = useState<"idle" | "recording">("idle");
+  const [recMsg, setRecMsg] = useState("");
+  const [clip, setClip] = useState<{ blob: Blob; name: string } | null>(null);
+  const record = async () => {
+    if (!playerRef.current) return;
+    setClip(null); setRecMsg("Choose THIS TAB and turn on tab audio in the share dialog.");
+    try {
+      const s = await startClipCapture(playerRef.current);
+      session.current = s; setRecState("recording"); setRecMsg("Recording the full chapter…");
+      s.onEnded(() => { s.cancel(); session.current = null; setRecState("idle"); setPlaying(false); setRecMsg("Recording stopped."); });
+      await new Promise((r) => setTimeout(r, 400));
+      t0.current = 0; setTime(0); setPlaying(true);
+    } catch (e) { setRecState("idle"); setRecMsg((e as Error).name === "NotAllowedError" ? "Recording cancelled." : (e as Error).message); }
+  };
+  useEffect(() => {
+    const s = session.current;
+    if (!s || playing || recState !== "recording" || time < total) return;
+    session.current = null;
+    void (async () => { await new Promise((r) => setTimeout(r, 500)); const blob = await s.stop(); setRecState("idle");
+      setClip({ blob, name: `${height}.bitmap-chapter.${s.ext}` }); setRecMsg("Clip ready. Download and share it."); })();
+  }, [playing, time, total, recState, height]);
+  useEffect(() => () => session.current?.cancel(), []);
+
   const beyondTip = tip > 0 && height > tip;
   const choose = () => {
     const n = Number(input.replace(/[^0-9]/g, ""));
@@ -143,7 +169,7 @@ function ChaptersPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div>
-          <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-card" style={{ containerType: "inline-size" }}>
+          <div ref={playerRef} className="relative aspect-video overflow-hidden rounded-lg border border-border bg-card" style={{ containerType: "inline-size" }}>
             <div className="vhs-tape absolute inset-0" style={{ filter: `${styleFilter(episode.style)} saturate(1.25) contrast(1.08) sepia(0.12)` }}>
               <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
                 <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
@@ -208,6 +234,9 @@ function ChaptersPage() {
             )}
           </div>
           <button onClick={() => setMuted((m) => !m)} aria-pressed={!muted} className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10">{muted ? "[ SOUND OFF ]" : "[ SOUND ON ]"}</button>
+          <button onClick={() => void record()} disabled={recState === "recording"} className="mt-2 mr-3 rounded border border-bitcoin px-2 py-0.5 font-mono text-[11px] text-bitcoin hover:bg-bitcoin/10 disabled:opacity-50">{recState === "recording" ? "● RECORDING…" : "[ ● RECORD CLIP ]"}</button>
+          {clip && <button onClick={() => void deliverClip(clip.blob, clip.name)} className="mt-2 mr-3 rounded border border-primary bg-primary px-2 py-0.5 font-mono text-[11px] text-primary-foreground">⬇ DOWNLOAD {clip.name.split(".").pop()?.toUpperCase()} · {(clip.blob.size / 1e6).toFixed(1)} MB</button>}
+          {recMsg && <div className="mt-1 font-mono text-[11px] text-muted-foreground">{recMsg}</div>}
           <div className="mt-2 inline font-mono text-[11px] text-muted-foreground">{episode.title} · {Math.round(total)}s · rendered live in your browser</div>
         </div>
 
