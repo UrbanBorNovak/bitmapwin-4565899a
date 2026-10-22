@@ -1,8 +1,8 @@
 /** Wall shelf of Oasis on-chain wearables. Flattened shared geometry, so each piece is a couple of draw calls. */
-import { Suspense } from "react";
+import { useEffect } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
-import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
-import { ModelFallback } from "@/components/game/ModelFallback";
+import { useInscribedParts, contentUrl } from "@/components/game/InscribedParts";
+import { ModelSlot } from "@/components/biternam/ModelStatus";
 import { ROOM_SHELVES, announceGear, type GearRoom } from "@/lib/biternam-gear";
 import { COMIC_INSCRIPTION, GHOST_INSCRIPTION, GOGGLES_INSCRIPTION, MAGIC_BOOK_INSCRIPTION, NECKLACE_INSCRIPTION, RING_INSCRIPTION, SHOES_INSCRIPTION, WATCH_INSCRIPTION, WIZARD_HAT_INSCRIPTION } from "@/lib/world-gear";
 import { JETPACK_HELMET_INSCRIPTION } from "@/lib/world-vehicle";
@@ -14,7 +14,12 @@ const IDS: Record<string, string> = {
   hat: WIZARD_HAT_INSCRIPTION, ghost: GHOST_INSCRIPTION,
 };
 
-const Stub = () => <mesh position={[0, 0.12, 0]}><boxGeometry args={[0.24, 0.24, 0.24]} /><meshStandardMaterial color="#6a5a44" flatShading /></mesh>;
+const noRaycast = () => {};
+function Piece({ url, size, onEmpty }: { url: string; size: number; onEmpty: () => void }) {
+  const parts = useInscribedParts(url);
+  useEffect(() => { if (!parts.length) onEmpty(); }, [parts.length, onEmpty]);
+  return <group scale={size}>{parts.map((p, i) => <mesh key={i} geometry={p.geometry} material={p.material} raycast={noRaycast} />)}</group>;
+}
 
 export function GearShelf({ room, position, rotation = 0 }: { room: GearRoom; position: [number, number, number]; rotation?: number }) {
   const items = ROOM_SHELVES[room];
@@ -26,7 +31,9 @@ export function GearShelf({ room, position, rotation = 0 }: { room: GearRoom; po
           onClick={(e: ThreeEvent<MouseEvent>) => { e.stopPropagation(); playSfx("hover"); announceGear(`${it.name} — ${it.blurb} (on-chain Oasis gear)`); }}>
           {/* invisible hit box: shelf pieces themselves skip raycasting */}
           <mesh position={[0, 0.25, 0]} visible={false}><boxGeometry args={[0.6, 0.5, 0.5]} /><meshBasicMaterial /></mesh>
-          <ModelFallback fallback={<Stub />}><Suspense fallback={<Stub />}><InscribedModel url={contentUrl(IDS[it.id]!)} size={0.45} /></Suspense></ModelFallback>
+          <ModelSlot url={contentUrl(IDS[it.id]!)} size={0.45} label={it.name} compact>
+            {({ onEmpty }) => <Piece url={contentUrl(IDS[it.id]!)} size={0.45} onEmpty={onEmpty} />}
+          </ModelSlot>
         </group>
       ))}
     </group>
