@@ -110,7 +110,7 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
       { block: h, set, duration: 9, shot: cam.shots[1], transition: "iris", extras, sfx: "SATS!",
         fx: [...roomAmbient, { id: roomFx, at: 0, x: 0, y: 1, z: -2 }, { id: "bitmapwin/sparks-v1", at: 0.6, x: 3, y: 1.6, z: 0, scale: 0.6 }],
         // The lead arrives still mid-stride from the portal (same away-from-camera heading, turning toward the co-star) during the wide opening shot.
-        cast: [{ ...hero, x: -5.5, z: 2.4, pose: "walk", to: { x: -3, z: 0 }, moveStart: 0, moveEnd: 2.2 }, { height: h, name: a.name, x: 3, z: 0, pose: "wave", avatar: a.avatar }],
+        cast: [{ ...hero, x: -5.5, z: 2.4, pose: "talk", to: { x: -3, z: 0 }, moveStart: 0, moveEnd: 2.2 }, { height: h, name: a.name, x: 3, z: 0, pose: "wave", avatar: a.avatar }],
         lines: [
           { at: 0.4, dur: 2.6, speaker: 1, text: joke[1]!, style: "shout", cam: cam.cams[1] },
           { at: 3.1, dur: 2.4, speaker: 1, text: joke[2]!, style: "speech", cam: cam.cams[2] },
