@@ -303,7 +303,7 @@ function Pillar({
         <span className="display text-lg md:text-xl">{name}</span>
       </div>
       <div className="label mt-1.5 text-muted-foreground">{what}</div>
-      <p className="mt-1.5 max-w-sm text-sm leading-snug text-muted-foreground md:mt-3 md:leading-relaxed">{body}</p>
+      <p className="mt-1.5 max-w-sm text-sm leading-normal text-muted-foreground md:mt-3 md:leading-relaxed">{body}</p>
       <Link to={to} className="mt-2.5 md:mt-5 inline-flex font-mono text-[11px] font-bold text-foreground hover:text-bitcoin">{action} →</Link>
     </div>
   );
