@@ -170,10 +170,10 @@ export function loreQuoteLong(_theme: ChapterTheme, h: number, ctx: TitleCtx) {
 export const JOKE_ARCS: string[][] = [
   ["Chuck Norris never checks blocks.", "Blocks check themselves for him.", "He once mined Genesis twice.", "Satoshi asked for his autograph.", "He divided by zero sats.", "Zero sats paid him rent."],
   ["Chuck Norris holds no keys.", "Keys hold on to him.", "He lost a seed phrase.", "The seed phrase found him.", "It apologized in hex.", "Then it self-custodied itself."],
-  ["Chuck Norris skips the mempool.", "The mempool waits for him.", "Fees go down when he stares.", "He confirms in zero blocks.", "Miners call him sir.", "Difficulty adjusted to him."],
+  ["Chuck Norris skips the mempool.", "The mempool waits for him.", "Fees drop when he stares.", "He confirms in zero blocks.", "Miners call him sir.", "Difficulty adjusted to him."],
   ["Chuck Norris counted all bitcoin.", "Twenty-one million, twice.", "The second time, faster.", "He found one extra sat.", "Nobody argued with him.", "Now it's twenty-one million."],
   ["Chuck Norris survived every halving.", "Halvings fear him instead.", "Rewards doubled out of respect.", "Miners stopped crying instantly.", "Charts started doing pushups.", "Bears hibernate year round now."],
-  ["Chuck Norris inscribed this block.", "With a roundhouse kick.", "The sat never moved again.", "Ordinals renamed to Chucknals.", "Rodarmor just nodded slowly.", "One owner per tile. Him."],
+  ["Chuck Norris inscribed this block.", "With a roundhouse kick.", "The sat never moved again.", "Ordinals renamed to Chucknals.", "Rodarmor just nodded slowly.", "Every tile belongs to him."],
   ["Chuck Norris doesn't run nodes.", "Nodes run from him.", "He verified the whole chain.", "Using only his beard.", "The beard found a bug.", "The bug filed for bankruptcy."],
   ["Chuck Norris tried cold storage.", "The freezer begged for mercy.", "Now his coins stay warm.", "Thieves send him tips instead.", "He returns them with interest.", "Interest rates are terrified."],
 ];
