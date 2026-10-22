@@ -58,3 +58,13 @@ export function EcoGallery({ seed, trim, props, size = 10 }: { seed: string; tri
   const ids = useMemo(() => { const h = hash(seed); return slots.map((_, i) => GALLERY_IDS[(i % 2 ? 10 : 0) + ((h >>> i) + i * 3) % 10]!); }, [seed, slots]);
   return <group>{slots.map(([x, y], i) => <Frame key={`${i}-${ids[i]}`} id={ids[i]!} position={[x, y, -28.5]} size={size} trim={trim} />)}</group>;
 }
+
+/** Hand-placed frames for sets that aren't simple walled rooms; `ry` turns a frame to face the set's centre. */
+export type FramePlace = { p: [number, number, number]; ry?: number; size?: number };
+export function EcoFrames({ seed, trim, places }: { seed: string; trim: string; places: FramePlace[] }) {
+  const h = hash(seed);
+  return <group>{places.map((f, i) => {
+    const id = GALLERY_IDS[(i % 2 ? 10 : 0) + ((h >>> i) + i * 3) % 10]!;
+    return <group key={`${i}-${id}`} rotation-y={f.ry ?? 0}><Frame id={id} position={f.p} size={f.size ?? 9} trim={trim} /></group>;
+  })}</group>;
+}
