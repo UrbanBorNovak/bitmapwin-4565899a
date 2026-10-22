@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import { Box3, CanvasTexture, Color, Object3D, SRGBColorSpace, Vector3, type Group, type InstancedMesh, type Sprite } from "three";
+import { Box3, CanvasTexture, Color, Object3D, SRGBColorSpace, Vector3, type Group, type PerspectiveCamera, type InstancedMesh, type Sprite } from "three";
 
 /** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
 const actorHeights = new Map<number, number>();
@@ -322,9 +322,13 @@ function scenePose(scene: ToonScene, local: number): number[] {
 }
 
 function Director({ scene, next, local, lib }: { scene: ToonScene; next?: ToonScene | undefined; local: number; lib: Map<string, ToonVFX> }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const cur = useRef<number[] | null>(null), last = useRef(local);
   useFrame(() => {
+    // Narrow (portrait) frames keep the landscape's horizontal view, so the cast never leaves the sides.
+    const pc = camera as PerspectiveCamera, aspect = size.width / Math.max(1, size.height);
+    const fov = aspect < 16 / 9 ? Math.min(100, (2 * Math.atan(Math.tan((20 * Math.PI) / 180) * (16 / 9) / aspect) * 180) / Math.PI) : 40;
+    if (pc.isPerspectiveCamera && Math.abs(pc.fov - fov) > 0.01) { pc.fov = fov; pc.updateProjectionMatrix(); }
     const line = activeCut(scene, local);
     let target = scenePose(scene, local);
     // Portal end: glide into the room's exact opening view (room sits at PORTAL_ROOM_OFFSET), so the cut is invisible.

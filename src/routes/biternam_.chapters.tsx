@@ -122,6 +122,7 @@ function ChaptersPage() {
   useEffect(() => () => stopAllVoice(), []);
 
   const playerRef = useRef<HTMLDivElement>(null);
+  const [portrait, setPortrait] = useState(false);
   const session = useRef<ClipSession | null>(null);
   const [recState, setRecState] = useState<"idle" | "recording">("idle");
   const [recMsg, setRecMsg] = useState("");
@@ -142,8 +143,8 @@ function ChaptersPage() {
     if (!s || playing || recState !== "recording" || time < total) return;
     session.current = null;
     void (async () => { await new Promise((r) => setTimeout(r, 500)); const blob = await s.stop(); setRecState("idle");
-      setClip({ blob, name: `${height}.bitmap-chapter.${s.ext}` }); setRecMsg("Clip ready. Download and share it."); })();
-  }, [playing, time, total, recState, height]);
+      setClip({ blob, name: `${height}.bitmap-chapter${portrait ? "-9x16" : ""}.${s.ext}` }); setRecMsg("Clip ready. Download and share it."); })();
+  }, [playing, time, total, recState, height, portrait]);
   useEffect(() => () => session.current?.cancel(), []);
 
   const beyondTip = tip > 0 && height > tip;
@@ -169,7 +170,7 @@ function ChaptersPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div>
-          <div ref={playerRef} className="relative aspect-video overflow-hidden rounded-lg border border-border bg-card" style={{ containerType: "inline-size" }}>
+          <div ref={playerRef} className={`relative overflow-hidden rounded-lg border border-border bg-card ${portrait ? "mx-auto aspect-[9/16] h-[min(78vh,900px)]" : "aspect-video"}`} style={{ containerType: "inline-size" }}>
             <div className="vhs-tape absolute inset-0" style={{ filter: `${styleFilter(episode.style)} saturate(1.25) contrast(1.08) sepia(0.12)` }}>
               <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
                 <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING SCENE…</div>}>
@@ -197,24 +198,24 @@ function ChaptersPage() {
               </div>
             )}
             {line && (
-              <div key={lineKey} className="comic-bubble pointer-events-none absolute top-[15%] w-fit max-w-[36%] px-3 py-1.5 text-center" style={{ [line.speaker % 2 ? "right" : "left"]: "4%" }} data-no-translate>
+              <div key={lineKey} className={`comic-bubble pointer-events-none absolute w-fit px-3 py-1.5 text-center ${portrait ? "top-[9%] max-w-[78%]" : "top-[15%] max-w-[36%]"}`} style={{ [line.speaker % 2 ? "right" : "left"]: "4%" }} data-no-translate>
                 <span className="font-mono text-[9px] tracking-widest">{speaker}</span>
-                <div className="display uppercase leading-tight" style={{ fontSize: "min(3.2cqw, 1.6rem)" }}>{line.text}</div>
+                <div className="display uppercase leading-tight" style={{ fontSize: portrait ? "min(7cqw, 1.6rem)" : "min(3.2cqw, 1.6rem)" }}>{line.text}</div>
               </div>
             )}
             {time < INTRO && (playing || time > 0) && (
               <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background text-center" data-no-translate>
                 <div>
                   <div className="font-mono text-xs tracking-[0.4em] text-signal">CHAPTER</div>
-                  <div className="display mt-2 text-4xl text-bitcoin md:text-6xl">{height.toLocaleString("en-US")}</div>
-                  <div className="display mt-3 text-lg md:text-2xl">{episode.title}</div>
+                  <div className="display mt-2 text-bitcoin" style={{ fontSize: portrait ? "16cqw" : "min(8cqw, 3.75rem)" }}>{height.toLocaleString("en-US")}</div>
+                  <div className="display mt-3 px-4" style={{ fontSize: portrait ? "7cqw" : "min(3cqw, 1.5rem)" }}>{episode.title}</div>
                 </div>
               </div>
             )}
             {outroT >= 0 && (
               <div className="pointer-events-none absolute inset-0 grid place-items-center bg-background px-4 text-center" data-no-translate>
                 <div className="max-w-full">
-                  <div className="font-mono tracking-[0.25em] text-muted-foreground" style={{ fontSize: "min(1.6cqw, 0.75rem)" }}>IT WAS NEVER A GAME. IT WAS ALWAYS</div>
+                  <div className="font-mono tracking-[0.25em] text-muted-foreground" style={{ fontSize: portrait ? "3.4cqw" : "min(1.6cqw, 0.75rem)" }}>IT WAS NEVER A GAME. IT WAS ALWAYS</div>
                   <div className="display mt-3 whitespace-nowrap normal-case" style={{ fontSize: "min(8.5cqw, 4.5rem)" }}>
                     {height}<span className={`text-bitcoin transition-all duration-300 ${outroT >= POP ? "opacity-100" : "opacity-0"}`} style={{ display: "inline-block", transform: outroT >= POP ? "scale(1)" : "scale(1.8)" }}>.bitmap</span>
                   </div>
@@ -234,6 +235,7 @@ function ChaptersPage() {
             )}
           </div>
           <button onClick={() => setMuted((m) => !m)} aria-pressed={!muted} className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10">{muted ? "[ SOUND OFF ]" : "[ SOUND ON ]"}</button>
+          <button onClick={() => setPortrait((v) => !v)} disabled={recState === "recording"} aria-pressed={portrait} className="mt-2 mr-3 rounded border border-signal px-2 py-0.5 font-mono text-[11px] text-signal hover:bg-signal/10 disabled:opacity-50">{portrait ? "[ ▯ 9:16 PORTRAIT ]" : "[ ▭ 16:9 WIDE ]"}</button>
           <button onClick={() => void record()} disabled={recState === "recording"} className="mt-2 mr-3 rounded border border-bitcoin px-2 py-0.5 font-mono text-[11px] text-bitcoin hover:bg-bitcoin/10 disabled:opacity-50">{recState === "recording" ? "● RECORDING…" : "[ ● RECORD CLIP ]"}</button>
           {clip && <button onClick={() => void deliverClip(clip.blob, clip.name)} className="mt-2 mr-3 rounded border border-primary bg-primary px-2 py-0.5 font-mono text-[11px] text-primary-foreground">⬇ DOWNLOAD {clip.name.split(".").pop()?.toUpperCase()} · {(clip.blob.size / 1e6).toFixed(1)} MB</button>}
           {recMsg && <div className="mt-1 font-mono text-[11px] text-muted-foreground">{recMsg}</div>}
