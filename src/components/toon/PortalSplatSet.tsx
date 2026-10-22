@@ -62,7 +62,7 @@ function DestWindow({ children }: { children: ReactNode }) {
     });
   });
   // Room sits behind the gate, scaled up so its interior fills the opening.
-  return <group ref={g} position={[0, -6, -92]} scale={1.6}>{children}</group>;
+  return <group ref={g} position={[0, -4, -96]} scale={1.4}>{children}</group>;
 }
 
 function Splats({ seed, timeRef }: { seed: number; timeRef: MutableRefObject<number> }) {
@@ -110,7 +110,7 @@ export function PortalSplatSet({ block, timeRef, dest }: { block: number; timeRe
   useFrame(() => {
     const t = timeRef.current;
     if (rimMat.current) rimMat.current.uniforms["uTime"]!.value = t;
-    if (ring.current) ring.current.scale.setScalar(1 + Math.sin(t * 2.2) * 0.025);
+    if (ring.current) ring.current.scale.setScalar(0.72 + Math.sin(t * 2.2) * 0.025);
     shards.current?.children.forEach((c, i) => { const k = rocks[i]!; c.position.y = k.p[1] + Math.sin(t * 0.5 + k.ph) * 2.5; c.rotation.set(t * 0.2 + k.ph, t * 0.3, 0); });
   });
   return (
@@ -127,7 +127,7 @@ export function PortalSplatSet({ block, timeRef, dest }: { block: number; timeRe
         </mesh>
       ))}
       {/* ring gate */}
-      <group ref={ring} position={[0, 18, -50]}>
+      <group ref={ring} position={[0, 11, -58]}>
         {/* stencil mask: the torn opening */}
         <mesh renderOrder={0}><circleGeometry args={[17.5, 64]} /><meshBasicMaterial colorWrite={false} depthWrite={false} stencilWrite stencilRef={1} stencilFunc={THREE.AlwaysStencilFunc} stencilZPass={THREE.ReplaceStencilOp} /></mesh>
         {!dest && <mesh><circleGeometry args={[17, 48]} /><meshBasicMaterial color="#ffd9a0" transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>}
