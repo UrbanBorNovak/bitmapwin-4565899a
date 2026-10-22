@@ -60,6 +60,10 @@ export function InfoTip({ text, label = "What does this mean?" }: { text: string
           e.stopPropagation();
           setPinned((p) => !p);
         }}
+        // Keyboard users get the note on Tab; mouse focus must not fight the click toggle.
+        onFocus={(e) => {
+          if (e.currentTarget.matches(":focus-visible")) setPinned(true);
+        }}
         onBlur={() => setPinned(false)}
         onKeyDown={(e) => {
           if (e.key === "Escape") setPinned(false);
