@@ -11,3 +11,10 @@ describe("portal walk", () => {
     expect(actorPositionAt(lead, t, 4).moving).toBe(true);
   });
 });
+describe("room arrival", () => {
+  it("lead is still striding into the room at the start of the opening shot", () => {
+    const arrive = { x: -5.5, z: 2.4, pose: "talk", to: { x: -3, z: 0 }, moveStart: 0, moveEnd: 2.2 } as unknown as ToonActor;
+    expect(actorPositionAt(arrive, 0.3, 9).moving).toBe(true);
+    expect(actorPositionAt(arrive, 2.3, 9)).toMatchObject({ x: -3, z: 0, moving: false });
+  });
+});

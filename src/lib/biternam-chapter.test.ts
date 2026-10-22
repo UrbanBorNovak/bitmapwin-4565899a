@@ -41,8 +41,8 @@ describe("cast only what exists", () => {
     expect(autoSet({ height: 9, txCount: 1 })).toBe("b-archive");
     expect(autoSet({ height: 800000, txCount: 3500 })).toBe("chinatown");
     expect(autoSet({ height: 800001, txCount: 3500 })).toBe("b-arcade");
-    expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "b-museum" }).scenes[1]!.set).toBe("b-museum");
-    expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "batcave" }).scenes[1]!.set).toBe("batcave");
+    expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "b-museum" }).scenes[2]!.set).toBe("b-museum");
+    expect(chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, set: "batcave" }).scenes[2]!.set).toBe("batcave");
   });
 });
 import { pickCoStars } from "./biternam-cast";
