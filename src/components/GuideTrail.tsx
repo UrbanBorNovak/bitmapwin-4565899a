@@ -13,6 +13,7 @@ type Current = "/land-101" | "/guardians-guide" | "/play-guide";
 export function GuideTrail({ current }: { current: Current }) {
   const idx = STEPS.findIndex((s) => s.to === current);
   const next = STEPS[idx + 1] ?? STEPS[3];
+  const prev = idx > 0 ? STEPS[idx - 1] : undefined;
   return (
     <nav aria-label="Guide reading order" className="mt-12 border border-border bg-surface p-4 md:p-5">
       <div className="label text-signal">GUIDE {idx + 1} OF 3 · READING ORDER</div>
@@ -38,8 +39,8 @@ export function GuideTrail({ current }: { current: Current }) {
       </ol>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Link to={next.to} className="btn-term">NEXT: {next.label} →</Link>
-        {idx > 0 && (
-          <Link to={STEPS[idx - 1].to} className="btn-term-ghost">← BACK: {STEPS[idx - 1].label}</Link>
+        {prev && (
+          <Link to={prev.to} className="btn-term-ghost">← BACK: {prev.label}</Link>
         )}
       </div>
     </nav>
