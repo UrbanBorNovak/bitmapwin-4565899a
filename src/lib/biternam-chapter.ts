@@ -83,7 +83,11 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
   const reply = heroReply(cast, h, seed);
   const landSfx = cast.hasBuild ? "BUILT!" : theme === "halving" ? "HODL!" : "WHOOSH!";
   const roomFx = theme === "crowded" ? "bitmapwin/sparks-v1" : theme === "quiet" ? "bitmapwin/smoke-v1" : "bitmapwin/embers-v1";
-  return {
+  // Room scenes open on a short wide establishing shot so the wall gallery reads before the camera cuts in.
+  const EST = 1.8;
+  const est = (sc: ToonEpisode["scenes"][number]) => sc.set ? { ...sc, shot: "wide" as const, duration: sc.duration + EST,
+    lines: sc.lines.map((l) => ({ ...l, at: l.at + EST })), ...(sc.fx ? { fx: sc.fx.map((c) => ({ ...c, at: c.at + EST })) } : {}) } : sc;
+  const ep = {
     title: `CH.${h} · ${title.toUpperCase()}`, aspect: "16:9", music: t.music, voices: true, style: "ghibli",
     scenes: [
       // Scene 1 is the real land: its inscribed build appears only if one is verified on chain.
@@ -108,4 +112,5 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
         ] },
     ],
   } as ToonEpisode;
+  return { ...ep, scenes: ep.scenes.map(est) };
 }
