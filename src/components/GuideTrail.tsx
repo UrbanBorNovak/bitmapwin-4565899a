@@ -3,12 +3,38 @@ import { useEffect, useState } from "react";
 
 const SEEN_KEY = "bitmapwin.guides.read";
 
+// Mobile names stay short so a step never wraps; full titles show from sm up.
 const STEPS = [
-  { to: "/land-101", label: "LAND 101", note: "What a BITMAP is" },
-  { to: "/guardians-guide", label: "GUARDIANS GUIDE", note: "How a block becomes a Guardian" },
-  { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls and what to do" },
-  { to: "/oasis", label: "ENTER THE OASIS", note: "Walk the world" },
+  {
+    to: "/land-101",
+    label: "LAND 101",
+    short: "LAND 101",
+    note: "What a BITMAP is",
+  },
+  {
+    to: "/guardians-guide",
+    label: "GUARDIANS GUIDE",
+    short: "GUARDIANS",
+    note: "How a block becomes a Guardian",
+  },
+  {
+    to: "/play-guide",
+    label: "PLAYER GUIDE",
+    short: "PLAYER",
+    note: "Controls and what to do",
+  },
+  { to: "/oasis", label: "ENTER THE OASIS", short: "OASIS", note: "Walk the world" },
 ] as const;
+
+/** Step title: compact on phones, full from sm up. */
+function StepName({ step }: { step: (typeof STEPS)[number] }) {
+  return (
+    <>
+      <span className="sm:hidden">{step.short}</span>
+      <span className="hidden sm:inline">{step.label}</span>
+    </>
+  );
+}
 
 type Current = "/land-101" | "/guardians-guide" | "/play-guide";
 
@@ -62,7 +88,7 @@ export function GuideTrail({ current }: { current: Current }) {
                   )}
                 </div>
                 <div className={`label mt-1 ${state === "here" ? "text-bitcoin" : "text-foreground"}`}>
-                  {s.label}
+                  <StepName step={s} />
                 </div>
                 <div className={`mt-0.5 text-xs text-muted-foreground ${state === "here" ? "" : "hidden sm:block"}`}>
                   {s.note}
@@ -77,11 +103,11 @@ export function GuideTrail({ current }: { current: Current }) {
           to={next.to}
           className="btn-term w-full !min-h-12 !text-[0.75rem] sm:w-auto sm:!min-h-0 sm:!text-[0.6875rem]"
         >
-          NEXT: {next.label} →
+          NEXT: <StepName step={next} /> →
         </Link>
         {prev && (
           <Link to={prev.to} className="btn-term-ghost w-full sm:w-auto">
-            ← BACK: {prev.label}
+            ← BACK: <StepName step={prev} />
           </Link>
         )}
       </div>
