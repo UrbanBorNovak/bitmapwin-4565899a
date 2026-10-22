@@ -119,7 +119,7 @@ export function PortalSplatSet({ block, timeRef, dest, onLand }: { block: number
       <ambientLight intensity={0.55} color="#b8c4ff" />
       <pointLight position={[0, 18, -46]} intensity={2600} distance={160} decay={2} color="#f7931a" />
       <pointLight position={[0, 30, 20]} intensity={900} distance={120} decay={2} color="#28e0ff" /></>}
-      <Splats seed={block} timeRef={timeRef} vortexOnly={onLand} />
+      <Splats seed={block} timeRef={timeRef} vortexOnly={!!onLand} />
       {!onLand && <>
       {/* glass light bridge */}
       {Array.from({ length: 12 }, (_, i) => (
