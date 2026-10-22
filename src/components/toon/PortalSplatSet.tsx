@@ -51,7 +51,10 @@ void main(){
 
 /** The next room, drawn only inside the gate's stencil mask so the portal shows where it leads. */
 // Where the room must sit at the end of the crossing so the lead's last portal step (0,-22) is its first room step (-5.5,2.4).
-const DEST_START = new THREE.Vector3(0, -2, -48), DEST_END = new THREE.Vector3(5.5, 0, -24.4);
+export const PORTAL_ROOM_OFFSET = [5.5, 0, -24.4] as const;
+/** 0 → 1 over the last 45% of the portal scene: how far the room has taken over the view. */
+export function portalTakeover(local: number, duration: number) { return Math.min(1, Math.max(0, (local / duration - 0.55) / 0.45)); }
+const DEST_START = new THREE.Vector3(0, -2, -48), DEST_END = new THREE.Vector3(...PORTAL_ROOM_OFFSET);
 function DestWindow({ children, kRef }: { children: ReactNode; kRef: MutableRefObject<number> }) {
   const g = useRef<THREE.Group>(null);
   useFrame(() => {
@@ -125,7 +128,7 @@ export function PortalSplatSet({ block, timeRef, dest, outside, onLand, localRef
     const t = timeRef.current;
     if (rimMat.current) rimMat.current.uniforms["uTime"]!.value = t;
     // Final stretch: the tear widens until the destination world swallows the land (volumetric dissolve).
-    const k = localRef ? Math.min(1, Math.max(0, (localRef.current / duration - 0.55) / 0.45)) : 0;
+    const k = localRef ? portalTakeover(localRef.current, duration) : 0;
     kRef.current = k;
     // Once the tear fills the view, the BITMAP land is gone so it never occludes the room.
     // Fade the land out (own material copies, so other scenes keep theirs); the lead is not in this group.
