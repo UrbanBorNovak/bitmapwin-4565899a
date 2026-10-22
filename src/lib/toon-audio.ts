@@ -120,7 +120,8 @@ export async function renderSoundtrack(ep: ToonEpisode): Promise<AudioBuffer | n
   const master = ctx.createGain(); master.gain.value = 0.75; master.connect(comp);
   const verb = reverb(ctx, master);
   const music = ep.music ?? "adventure";
-  if (music !== "none") {
+  if (music === "chiptune") chiptuneScore(ctx, master, ep, total);
+  else if (music !== "none") {
     const m = SCALES[music], beat = 60 / m.bpm, r = rng(ep.title.length * 977 + ep.scenes.length);
     const bus = ctx.createGain(); bus.gain.value = 0.2; bus.connect(master); bus.connect(verb);
     const tone = ctx.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 2400; tone.connect(bus);
