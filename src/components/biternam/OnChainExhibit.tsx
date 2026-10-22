@@ -1,15 +1,15 @@
 /** An Oasis on-chain ride/gear model parked inside a Biternam room. Click to salvage its part. */
-import { Suspense, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
-import { ModelFallback } from "@/components/game/ModelFallback";
+import { ModelSlot } from "@/components/biternam/ModelStatus";
 import { rideById } from "@/lib/world-vehicle";
 import { GEAR_ITEMS, ROOM_EXHIBITS, announceGear, gearStore, salvage, type GearRoom } from "@/lib/biternam-gear";
 import { playSfx } from "@/lib/retro-sfx";
 
-function Model({ inscription, size }: { inscription: string; size: number }) {
+function Model({ inscription, size, onEmpty }: { inscription: string; size: number; onEmpty: () => void }) {
   const gltf = useGLTF(`https://ordinals.com/content/${inscription}`);
   const obj = useMemo(() => {
     const s = clone(gltf.scene);
@@ -22,14 +22,10 @@ function Model({ inscription, size }: { inscription: string; size: number }) {
     s.position.set(-c.x * k, -box.min.y * k, -c.z * k);
     return s;
   }, [gltf.scene, size]);
-  let meshes = 0;
-  obj.traverse((c) => { if ((c as THREE.Mesh).isMesh) meshes++; });
-  return meshes ? <primitive object={obj} /> : <Crate size={size} />;
+  const empty = useMemo(() => { let n = 0; obj.traverse((c) => { if ((c as THREE.Mesh).isMesh) n++; }); return n === 0; }, [obj]);
+  useEffect(() => { if (empty) onEmpty(); }, [empty, onEmpty]);
+  return empty ? null : <primitive object={obj} />;
 }
-
-const Crate = ({ size }: { size: number }) => (
-  <mesh position={[0, size * 0.3, 0]}><boxGeometry args={[size * 0.6, size * 0.6, size * 0.6]} /><meshStandardMaterial color="#8a6a3a" flatShading /></mesh>
-);
 
 export function OnChainExhibit({ room, position, size = 1.8, rotation = 0 }: { room: GearRoom; position: [number, number, number]; size?: number; rotation?: number }) {
   const ex = ROOM_EXHIBITS[room];
@@ -52,9 +48,9 @@ export function OnChainExhibit({ room, position, size = 1.8, rotation = 0 }: { r
       onPointerOut={() => { setHot(false); document.body.style.cursor = ""; }}>
       <mesh position={[0, 0.06, 0]}><cylinderGeometry args={[size * 0.62, size * 0.68, 0.12, 8]} /><meshStandardMaterial color={hot ? "#f7931a" : "#3a3a44"} flatShading /></mesh>
       <group ref={spin} position={[0, 0.12, 0]}>
-        <ModelFallback fallback={<Crate size={size} />}>
-          <Suspense fallback={<Crate size={size} />}><Model inscription={ride.inscription} size={size} /></Suspense>
-        </ModelFallback>
+        <ModelSlot url={`https://ordinals.com/content/${ride.inscription}`} size={size} label={ride.label}>
+          {({ onEmpty }) => <Model inscription={ride.inscription} size={size} onEmpty={onEmpty} />}
+        </ModelSlot>
       </group>
     </group>
   );
