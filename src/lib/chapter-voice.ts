@@ -73,7 +73,7 @@ export function speakRadio(text: string, speaker: string, maxSecs: number): () =
   const stopBed = radioBed(Math.max(1, maxSecs - 0.2));
   const u = new SpeechSynthesisUtterance(text);
   const v = voiceFor(speaker), voices = synth.getVoices().filter((x) => x.lang.startsWith("en"));
-  if (voices.length) u.voice = voices[v.pick % voices.length];
+  if (voices.length) u.voice = voices[v.pick % voices.length] ?? null;
   u.pitch = v.pitch; u.rate = v.rate; u.volume = 0.9;
   u.onend = () => { stopBed(); squelch(0.08); };
   synth.speak(u);
