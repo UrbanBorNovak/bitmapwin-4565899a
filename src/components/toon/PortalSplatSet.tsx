@@ -123,7 +123,16 @@ export function PortalSplatSet({ block, timeRef, dest, outside, onLand, localRef
     // Final stretch: the tear widens until the destination world swallows the land (volumetric dissolve).
     const k = localRef ? Math.min(1, Math.max(0, (localRef.current / duration - 0.55) / 0.45)) : 0;
     // Once the tear fills the view, the BITMAP land is gone so it never occludes the room.
-    if (land.current) land.current.visible = k < 0.8;
+    // Fade the land out (own material copies, so other scenes keep theirs); the lead is not in this group.
+    if (land.current) {
+      const o = 1 - Math.min(1, Math.max(0, (k - 0.45) / 0.45));
+      land.current.visible = o > 0.01;
+      land.current.traverse((obj) => {
+        const m = obj as THREE.Mesh; if (!m.material) return;
+        if (!obj.userData["fadeMat"]) { const own = Array.isArray(m.material) ? m.material.map((x) => x.clone()) : m.material.clone(); m.material = own; obj.userData["fadeMat"] = (Array.isArray(own) ? own : [own]).map((x) => ({ x, base: x.opacity, tr: x.transparent })); }
+        for (const f of obj.userData["fadeMat"] as { x: THREE.Material; base: number; tr: boolean }[]) { f.x.transparent = f.tr || o < 1; f.x.opacity = f.base * o; f.x.depthWrite = o > 0.5; }
+      });
+    }
     if (ring.current) ring.current.scale.setScalar((0.5 + Math.sin(t * 2.2) * 0.025) * (1 + k * k * k * 9));
     shards.current?.children.forEach((c, i) => { const k = rocks[i]!; c.position.y = k.p[1] + Math.sin(t * 0.5 + k.ph) * 2.5; c.rotation.set(t * 0.2 + k.ph, t * 0.3, 0); });
   });
