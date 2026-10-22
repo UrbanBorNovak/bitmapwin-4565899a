@@ -700,7 +700,7 @@ function ForgePage() {
 
       {guide && (
         <section className="mt-5 grid gap-3 rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground md:grid-cols-3">
-          <div><p className="mb-1 text-primary">WHY IT LASTS</p>Your finished build is reinscribed onto the same sat as your BITMAP. It lives on Bitcoin, not on our servers — the newest build on that sat shows on ordinals.com, in the Oasis and on your BITMAP's page, older builds stay as its on-chain history, and it travels with the land when it sells.</div>
+          <div><p className="mb-1 text-primary">WHY IT LASTS</p>Your finished build is permanently etched onto your BITMAP's own sat. It lives on Bitcoin, not on our servers — the newest build on that sat shows on ordinals.com, in the Oasis and on your BITMAP's page, older builds stay as its on-chain history, and it travels with the land when it sells.</div>
           <div><p className="mb-1 text-primary">HOW TO BUILD</p>Pick a piece, move over the grid, click to place. <b className="text-foreground">R</b> rotates, <b className="text-foreground">Q/E</b> change the floor level, <b className="text-foreground">Ctrl+Z</b> undoes. Start from your block's own seed, this week's blueprint, or from scratch.</div>
           <div><p className="mb-1 text-primary">WHO GETS PAID</p>Community pieces cost a small BIT fee to their maker each time you place them. When you inscribe, every maker in your build's family tree is paid in sats inside the same Bitcoin transaction. Publish your own pieces to earn too.</div>
           <button type="button" onClick={() => setGuide(false)} className="justify-self-start text-[10px] text-accent underline md:col-span-3">HIDE GUIDE</button>
@@ -987,7 +987,7 @@ function ForgePage() {
         >
           {fileOver && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center border-2 border-dashed border-accent bg-background/70 font-mono text-xs text-accent backdrop-blur-sm">
-              DROP .BWVX OR .VOX TO LOAD AS A PIECE
+              DROP A 3D BLOCK FILE (.BWVX OR .VOX) TO LOAD AS A PIECE
             </div>
           )}
           {tool === "stamp" && hover && (
@@ -1065,7 +1065,7 @@ function ForgePage() {
               <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
               <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
               <RegistryDrawer height={height} canPlace={role === "bitmap"} />
-              <label title="Import a .bwvx or MagicaVoxel .vox file as a piece" data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
+              <label title="Import a .bwvx file (Bitcoin voxel format: lightweight 3D blocks stored on Bitcoin) or a MagicaVoxel .vox file as a piece" data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
                 ⇪ IMPORT .BWVX/.VOX
                 <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -1123,7 +1123,7 @@ function ForgePage() {
                     </span>
                     <button type="button" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void navigator.clipboard.writeText(FORGE_UNPACK_JS).then(() => toast.success("Unpacker copied — thank you for building!"))}>COPY UNPACKER JS</button>
                     <button type="button" data-testid="forge-glb" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBuildGlb(parcelBlocks, `bitmap-${height}`)).then((r) => toast.success(`.GLB saved · ${r.boxes} boxes · ${(r.bytes / 1024).toFixed(1)} KB`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .GLB</button>
-                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .BWVX</button>
+                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))} title="Bitcoin voxel format: lightweight 3D blocks, ready to store on Bitcoin">DOWNLOAD .BWVX</button>
                   </div>
                 );
               })()}
@@ -1142,7 +1142,7 @@ function ForgePage() {
                 height={height}
                 index={0}
                 digest={digest}
-                artifactLabel={parcelTarget !== undefined ? `REINSCRIBE YOUR BUILD ON PARCEL #${parcelTarget}'S SAT` : focusRect ? `REINSCRIBE PARCEL #${focusRect.index} BUILD ON THE BITMAP'S SAT` : "REINSCRIBE YOUR BUILD ON THE BITMAP'S SAT"}
+                artifactLabel={parcelTarget !== undefined ? `ETCH YOUR BUILD ONTO PARCEL #${parcelTarget}'S OWN SAT` : focusRect ? `ETCH PARCEL #${focusRect.index} BUILD ONTO THE BITMAP'S OWN SAT` : "ETCH YOUR BUILD ONTO THE BITMAP'S OWN SAT"}
                 actionLabel="INSCRIBE ON BITCOIN"
                 description={parcelTarget !== undefined ? `Your wallet must hold parcel #${parcelTarget} of ${height}.bitmap. The build is stamped onto your parcel's own sat and shows on its tile on the BITMAP and in the Oasis.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}` : `Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
                 allowUpload={false}
