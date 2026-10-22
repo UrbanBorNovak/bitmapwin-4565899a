@@ -104,9 +104,9 @@ export function chapterEpisode(f: BlockFacts, title: string, quote: string, cast
       // Portal: the hero walks a light bridge through a floating splat world from the land into the build.
       { block: h, set: "portal", duration: 4, shot: "wide", sfx: "WARP!",
         fx: [{ id: "bitmapwin/sparks-v1", at: 2.6, x: 0, y: 1.5, z: -4, scale: 1.2 }],
-        cast: [{ ...hero, x: 0, z: 2.5, pose: "walk", to: { x: 0, z: -4 }, moveStart: 0, moveEnd: 4 }],
+        cast: [{ ...hero, x: 0, z: 2.5, pose: "walk", to: { x: 0, z: -4.6 }, moveStart: 0.2, moveEnd: 3.8 }],
         lines: [{ at: 0.6, dur: 2.6, speaker: 0, text: "Step through the block.", style: "thought", cam: "wide" }] },
-      { block: h, set, duration: 9, shot: cam.shots[1], transition: cam.transitions[0], extras, sfx: "SATS!",
+      { block: h, set, duration: 9, shot: cam.shots[1], transition: "iris", extras, sfx: "SATS!",
         fx: [...roomAmbient, { id: roomFx, at: 0, x: 0, y: 1, z: -2 }, { id: "bitmapwin/sparks-v1", at: 0.6, x: 3, y: 1.6, z: 0, scale: 0.6 }],
         cast: [{ ...hero, x: -3, z: 0, pose: "talk" }, { height: h, name: a.name, x: 3, z: 0, pose: "wave", avatar: a.avatar }],
         lines: [
