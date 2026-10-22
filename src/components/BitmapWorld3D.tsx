@@ -4879,6 +4879,8 @@ function BitmapWorld3DInner({
             frameloop="always"
             onCreated={({ gl, scene, camera }) => {
               glRef.current = gl;
+              // Dev-only handle for render-cost probes in tests.
+              if (import.meta.env.DEV) (window as unknown as { __oasis?: unknown }).__oasis = { gl, scene, camera };
               // Warm shaders off the main thread so the first seconds don't hitch.
               // Without parallel compile, compileAsync blocks the main thread for seconds.
               if (gl.getContext().getExtension("KHR_parallel_shader_compile")) {
@@ -5052,7 +5054,7 @@ function BitmapWorld3DInner({
                     ? "CLICK / E · LAY A TRAP ON THE GROUND"
                     : "CLICK / E · FIRE · R · RELOAD"}
             </div>
-            {cameraMode === "third" ? (
+            {cameraMode !== "first" ? (
               <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>
             ) : null}
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
