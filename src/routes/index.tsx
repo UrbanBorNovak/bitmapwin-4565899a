@@ -203,14 +203,14 @@ function Index() {
       <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
         <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
         <h2 className="display mt-2 text-2xl md:text-3xl">WORLD · LAND · EXPERIENCES · IDENTITY · CREATION</h2>
-        <div className="mt-4 md:mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
+        <div className="mt-3 md:mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
           <Pillar n="01" name="WORLD" what="The Oasis" body="One shared map of every Bitcoin block. Walk in, no wallet needed." to="/oasis" action="ENTER" />
           <Pillar n="02" name="LAND" what="BITMAPs" body="Each block is a place you can own, inspect or lease. Ownership is checked on Bitcoin, never self-reported." to="/marketplace" action="FIND LAND" />
           <Pillar n="03" name="EXPERIENCES" what="Extenders" body="Games, galleries and scenes that run on a BITMAP. Browse, deploy, play." to="/extenders" action="BROWSE" />
           <Pillar n="04" name="IDENTITY" what="Passport & Guardians" body="Your record of where you've been. Guardians take their form from their block's data." to="/passport" action="OPEN PASSPORT" />
           <Pillar n="05" name="CREATION" what="Land Forge" body="Build in 3D on your BITMAP and write it onto Bitcoin. Every reused piece pays its maker." to="/forge" action="OPEN FORGE" />
         </div>
-        <div className="mt-4 md:mt-6 flex flex-wrap gap-2 pb-2">
+        <div className="mt-3 md:mt-6 flex flex-wrap gap-2 pb-2">
           <Link to="/builds" className="btn-term-ghost">[ COMMUNITY BUILDS ]</Link>
           <Link to="/parcel" className="btn-term-ghost">[ SPLIT A BITMAP INTO PARCELS ]</Link>
           <Link to="/experiences" className="btn-term-ghost">[ LIVE EXPERIENCES ]</Link>
@@ -297,14 +297,14 @@ function Pillar({
   action: string;
 }) {
   return (
-    <div className="border-b border-border py-4 last:border-b-0 md:py-7 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
+    <div className="border-b border-border py-3 last:border-b-0 md:py-7 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
       <div className="flex items-baseline gap-2">
         <span className="label text-bitcoin">{n}</span>
-        <span className="display text-xl">{name}</span>
+        <span className="display text-lg md:text-xl">{name}</span>
       </div>
-      <div className="label mt-2 text-muted-foreground">{what}</div>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed md:mt-3 text-muted-foreground">{body}</p>
-      <Link to={to} className="mt-3 md:mt-5 inline-flex font-mono text-[11px] font-bold text-foreground hover:text-bitcoin">{action} →</Link>
+      <div className="label mt-1.5 text-muted-foreground">{what}</div>
+      <p className="mt-1.5 max-w-sm text-sm leading-snug text-muted-foreground md:mt-3 md:leading-relaxed">{body}</p>
+      <Link to={to} className="mt-2.5 md:mt-5 inline-flex font-mono text-[11px] font-bold text-foreground hover:text-bitcoin">{action} →</Link>
     </div>
   );
 }
