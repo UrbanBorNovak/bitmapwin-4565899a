@@ -5,6 +5,7 @@ import { useAuthSession } from "@/lib/auth";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { episodeLength, sceneAt } from "@/lib/toon-script";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
+import { impact, speakRadio, stopAllVoice, whoosh } from "@/lib/chapter-voice";
 import { styleFilter } from "@/lib/toon-style";
 import { CHAPTER_SETS, QUOTE_MAX, TITLE_MAX, autoSet, chapterEpisode, chapterTheme, defaultQuote, defaultTitle, type ChapterSet } from "@/lib/biternam-chapter";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +94,23 @@ function ChaptersPage() {
   const scene = episode.scenes[at.index];
   const line = scene?.lines.find((l) => at.local >= l.at && at.local < l.at + l.dur);
   const speaker = line ? scene?.cast[line.speaker]?.name : undefined;
+  // Radio-voice dialogue + camera foley, fired once per line / cut.
+  const lineKey = playing && line ? `${at.index}:${line.at}` : "";
+  useEffect(() => {
+    if (!lineKey || muted || !line) return;
+    const cancel = speakRadio(line.text, speaker ?? "narrator", line.dur);
+    return cancel;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lineKey, muted]);
+  const phase = time < INTRO ? -1 : time >= INTRO + body ? 1e6 : at.index;
+  const lastPhase = useRef(phase);
+  useEffect(() => {
+    if (!playing || muted) { lastPhase.current = phase; return; }
+    if (phase !== lastPhase.current) { if (phase === 1e6) impact(); else { whoosh(); if (phase === 0) impact(0.2); } }
+    lastPhase.current = phase;
+  }, [phase, playing, muted]);
+  useEffect(() => { if (!playing || muted) stopAllVoice(); }, [playing, muted]);
+  useEffect(() => () => stopAllVoice(), []);
 
   const beyondTip = tip > 0 && height > tip;
   const choose = () => {
@@ -125,6 +143,8 @@ function ChaptersPage() {
                 </Suspense>
               </ClientOnly>
             </div>
+            <div aria-hidden className="cine-dof pointer-events-none absolute inset-0" />
+            <div aria-hidden className="cine-grain pointer-events-none absolute inset-0" />
             <div aria-hidden className="vhs-scan pointer-events-none absolute inset-0" />
             <div aria-hidden className="pointer-events-none absolute inset-0 p-3 font-mono text-sm tracking-widest text-foreground [text-shadow:2px_0_hsl(0_90%_55%/.7),-2px_0_hsl(190_90%_55%/.7)]" data-no-translate>
               <div className="flex justify-between"><span>{playing ? "▶ PLAY" : "❚❚ PAUSE"}</span><span>SP</span></div>
