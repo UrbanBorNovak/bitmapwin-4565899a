@@ -50,7 +50,7 @@ export function CafeSet({ timeRef }: { timeRef: MutableRefObject<number> }) {
       {/* jukebox */}
       <Box p={[38, 8, -20]} s={[8, 16, 6]} c="#5a2a1f" />
       <Box p={[38, 12, -16.9]} s={[6, 5, 0.2]} c={TRIM} e={TRIM} ei={0.9} />
-      <EcoFrames seed="cafe" trim={TRIM} places={[{ p: [-40, 22, -28.7] }, { p: [38, 27, -28.7] }, { p: [-10, 22, -48.7], ry: Math.PI / 2 }, { p: [10, 22, -48.7], ry: -Math.PI / 2 }]} />
+      <EcoFrames seed="cafe" trim={TRIM} places={[{ p: [-29, 22, -28.7] }, { p: [29, 22, -28.7] }, { p: [-10, 22, -48.7], ry: Math.PI / 2 }, { p: [10, 22, -48.7], ry: -Math.PI / 2 }]} />
     </group>
   );
 }
@@ -80,7 +80,7 @@ export function BatcaveSet({ timeRef }: { timeRef: MutableRefObject<number> }) {
         {Array.from({ length: 6 }, (_, i) => <Box key={i} p={[x + 3.6, 4 + i * 3, 4]} s={[0.2, 1.8, 10]} c="#000" e={NEON} ei={0.8} />)}</group>)}
       {/* orange bedrock power cables */}
       {[0, 1, 2].map((i) => <Box key={i} p={[10 + i * 6, 0.3, -6]} s={[1, 0.6, 50]} c={TRIM} e={TRIM} ei={0.6} />)}
-      <EcoFrames seed="batcave" trim={NEON} places={[{ p: [18, 20, -29.6] }, { p: [32, 20, -29.6] }, { p: [25, 31, -29.6] }]} />
+      <EcoFrames seed="batcave" trim={NEON} places={[{ p: [14, 20, -29.6] }, { p: [26, 20, -29.6] }, { p: [20, 31, -29.6] }]} />
       <mesh rotation-x={-Math.PI / 2} position={[26, 0.2, 18]}><circleGeometry args={[11, 20]} /><meshStandardMaterial color="#06131c" metalness={0.9} roughness={0.08} emissive="#0a2a3a" emissiveIntensity={0.5} /></mesh>
     </group>
   );
@@ -125,7 +125,7 @@ export function ChinatownSet({ timeRef }: { timeRef: MutableRefObject<number> })
       </group>
       {/* street gate */}
       <Box p={[-12, 12, -24]} s={[2, 24, 2]} c="#b22222" /><Box p={[12, 12, -24]} s={[2, 24, 2]} c="#b22222" />
-      <EcoFrames seed="chinatown" trim="#ff3a4a" places={[{ p: [0, 34, -22.2], size: 8 }, ...streetSigns(towers)]} />
+      <EcoFrames seed="chinatown" trim="#ff3a4a" places={[{ p: [0, 17, -25.6], size: 9 }, ...streetSigns(towers)]} />
       <Box p={[0, 25, -24]} s={[32, 3, 3]} c="#b22222" /><Box p={[0, 28, -24]} s={[36, 1.5, 4]} c="#d9a520" m={0.5} />
     </group>
   );
@@ -149,7 +149,7 @@ export function VaultSet({ timeRef }: { timeRef: MutableRefObject<number> }) {
           <Box p={[0, 0, 0.4]} s={[14, 1.2, 1]} c="#9aa0a8" m={0.9} /><Box p={[0, 0, 0.4]} s={[1.2, 14, 1]} c="#9aa0a8" m={0.9} />
         </group>
       </group>
-      <EcoFrames seed="vault" trim={TRIM} places={[{ p: [-27, 22, -28.7] }, { p: [27, 22, -28.7] }, { p: [-41, 22, -28.7] }, { p: [41, 22, -28.7] }]} />
+      <EcoFrames seed="vault" trim={TRIM} places={[{ p: [-21, 22, -28.7] }, { p: [21, 22, -28.7] }, { p: [-33, 22, -28.7] }, { p: [33, 22, -28.7] }]} />
       {/* vitrines with floating sats */}
       {[-36, -24, 24, 36].map((x) => <group key={x}><Box p={[x, 3, -8]} s={[7, 6, 7]} c="#22242a" /><mesh position={[x, 9, -8]}><boxGeometry args={[6, 6, 6]} /><meshStandardMaterial color="#9fe6ff" transparent opacity={0.15} /></mesh>
         <pointLight position={[x, 20, -8]} intensity={160} distance={22} decay={2} color={NEON} /></group>)}

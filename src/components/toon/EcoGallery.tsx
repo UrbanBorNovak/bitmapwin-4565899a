@@ -34,7 +34,7 @@ function Frame({ id, position, size, trim }: { id: string; position: [number, nu
   return (
     <group position={position}>
       <mesh position={[0, 0, -0.1]}><boxGeometry args={[size + 1.2, size + 1.2, 0.3]} /><meshStandardMaterial color={trim} emissive={trim} emissiveIntensity={0.6} metalness={0.4} /></mesh>
-      <mesh><planeGeometry args={[size, size]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
+      <mesh position-z={0.12}><planeGeometry args={[size, size]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
       <pointLight position={[0, 0, 4]} intensity={30} distance={18} color="#fff4e0" />
     </group>
   );
