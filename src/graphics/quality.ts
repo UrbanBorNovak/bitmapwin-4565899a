@@ -88,11 +88,14 @@ export function qualitySettings(
 ): QualitySettings {
   const resolved = stored.mode === "auto" ? autoResolved : stored.mode;
   const touch = isTouchHardware();
+  // 90s-retro target: every tier aims for 60 fps; chunky pixels, no shadows,
+  // no MSAA. Higher tiers only widen view distance and detail.
+  void touch;
   const defaults = resolved === "low"
-    ? { pixelRatio: 1, renderScale: 0.65, viewDistance: "short" as const, shadows: false, plotGlow: false, fpsCap: 30 as const, adaptive: true }
+    ? { pixelRatio: 1, renderScale: 0.6, viewDistance: "short" as const, shadows: false, plotGlow: false, fpsCap: 60 as const, adaptive: true }
     : resolved === "medium"
-      ? { pixelRatio: Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, touch ? 1.25 : 1.5), renderScale: 1, viewDistance: "medium" as const, shadows: !touch, plotGlow: false, fpsCap: 60 as const, adaptive: true }
-      : { pixelRatio: Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, touch ? 1.5 : 2), renderScale: 1, viewDistance: "far" as const, shadows: !touch, plotGlow: true, fpsCap: 60 as const, adaptive: true };
+      ? { pixelRatio: 1, renderScale: 0.75, viewDistance: "short" as const, shadows: false, plotGlow: false, fpsCap: 60 as const, adaptive: true }
+      : { pixelRatio: 1, renderScale: 0.9, viewDistance: "medium" as const, shadows: false, plotGlow: false, fpsCap: 60 as const, adaptive: true };
   const viewDistance = stored.overrides.viewDistance ?? defaults.viewDistance;
   const renderScale = clampScale(adaptiveScale ?? stored.overrides.renderScale ?? defaults.renderScale);
   const shadows = stored.overrides.shadows ?? defaults.shadows;
@@ -113,6 +116,6 @@ export function qualitySettings(
     animationStride: resolved === "low" ? 3 : resolved === "medium" ? 2 : 1,
     fpsCap: stored.overrides.fpsCap ?? defaults.fpsCap,
     adaptive: stored.overrides.adaptive ?? defaults.adaptive,
-    antialias: resolved !== "low",
+    antialias: false,
   };
 }
