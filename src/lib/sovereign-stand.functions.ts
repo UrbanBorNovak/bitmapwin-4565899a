@@ -16,16 +16,35 @@ async function publicClient() {
   });
 }
 
-/** Reads the stand's inscribed config from the chain (via ordinals.com). */
-async function loadConfig(id: string): Promise<StandConfig | null> {
+/** Inscription content mirrors, tried in order. Content behind an id never changes, and every body is strictly parsed as BW-STAND-1. */
+const CONTENT_SOURCES = [
+  (id: string) => `https://ordinals.com/content/${id}`,
+  (id: string) => `https://static.unisat.io/content/${id}`,
+  (id: string) => `https://ord-mirror.magiceden.dev/content/${id}`,
+  (id: string) => `https://turbo.ordinalswallet.com/inscription/content/${id}`,
+];
+
+type Loaded = { config: StandConfig; error: null } | { config: null; error: "NOT_A_STAND" | "UNAVAILABLE" };
+
+/** Reads the stand's inscribed config from the first source that answers; a body that isn't BW-STAND-1 means not a stand. */
+async function loadConfig(id: string): Promise<Loaded> {
   const { parseStandConfig } = await import("@/lib/sovereign-stand");
-  try {
-    const r = await fetch(`https://ordinals.com/content/${id}`, { headers: { "User-Agent": "bitmapwin/1.0" } });
-    if (!r.ok) return null;
-    const text = await r.text();
-    if (text.length > 8000) return null;
-    return parseStandConfig(JSON.parse(text));
-  } catch { return null; }
+  let answered = false;
+  for (const src of CONTENT_SOURCES) {
+    try {
+      const r = await fetch(src(id), { headers: { "User-Agent": "bitmapwin/1.0" }, signal: AbortSignal.timeout(6000) });
+      if (r.status === 404) { answered = true; continue; }
+      if (!r.ok) continue;
+      const text = await r.text();
+      if (text.length > 8000) { answered = true; continue; }
+      let json: unknown;
+      try { json = JSON.parse(text); } catch { answered = true; continue; }
+      const config = parseStandConfig(json);
+      if (config) return { config, error: null };
+      answered = true;
+    } catch { /* source down — try the next */ }
+  }
+  return { config: null, error: answered ? "NOT_A_STAND" : "UNAVAILABLE" };
 }
 
 type Row = { seat_number: number; address: string; held_bitmap: number; issued_at: string; signature: string; created_at: string };
@@ -34,11 +53,11 @@ const toSeat = (r: Row): StandSeat => ({ seat: r.seat_number, address: r.address
 export const getStandFn = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ id: standIdSchema }).parse(d))
   .handler(async ({ data }) => {
-    const config = await loadConfig(data.id);
-    if (!config) return { config: null, seats: [] as StandSeat[], error: "No BW-STAND-1 config at this inscription" };
+    const { config, error } = await loadConfig(data.id);
+    if (!config) return { config: null, seats: [] as StandSeat[], error };
     const sb = await publicClient();
     const { data: rows } = await sb.from("stand_seats").select("seat_number,address,held_bitmap,issued_at,signature,created_at").eq("stand_id", data.id).order("seat_number").limit(1000);
-    return { config, seats: ((rows ?? []) as Row[]).map(toSeat), error: null as string | null };
+    return { config, seats: ((rows ?? []) as Row[]).map(toSeat), error: null as "NOT_A_STAND" | "UNAVAILABLE" | null };
   });
 
 /** Seats a wallet: fresh BIP-322 signature bound to this stand + a live BITMAP holding inside the stand's range. */
@@ -53,8 +72,8 @@ export const claimStandSeatFn = createServerFn({ method: "POST" })
     let valid = false;
     try { valid = Verifier.verifySignature(data.address, standMessage(data.id, data.address, data.issuedAt), data.signature); } catch { valid = false; }
     if (!valid) return { ok: false as const, error: "Signature does not match this address" };
-    const config = await loadConfig(data.id);
-    if (!config) return { ok: false as const, error: "No BW-STAND-1 config at this inscription" };
+    const { config, error } = await loadConfig(data.id);
+    if (!config) return { ok: false as const, error: error === "UNAVAILABLE" ? "Inscription sources are unreachable — try again" : "No BW-STAND-1 config at this inscription" };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const existing = await supabaseAdmin.from("stand_seats").select("seat_number,address,held_bitmap,issued_at,signature,created_at").eq("stand_id", data.id).ilike("address", data.address).maybeSingle();
     if (existing.data) return { ok: true as const, seat: toSeat(existing.data as Row), already: true };

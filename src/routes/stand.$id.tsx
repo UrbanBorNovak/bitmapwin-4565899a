@@ -57,7 +57,12 @@ function StandPage() {
   if (q.isLoading) return <main className="p-8 font-mono text-sm text-muted-foreground">READING THE STAND INSCRIPTION…</main>;
   if (!cfg) return (
     <main className="mx-auto max-w-xl p-8 font-mono text-sm">
-      <p className="text-muted-foreground">{q.data?.error ?? "Stand unavailable."}</p>
+      {q.data?.error === "NOT_A_STAND" ? <p className="text-muted-foreground">This inscription isn't a BW-STAND-1 stand file.</p> : (
+        <div data-testid="stand-unavailable">
+          <p className="text-muted-foreground">We couldn't reach any inscription source to read this stand. The stand is fine; the sources are busy.</p>
+          <button type="button" disabled={q.isFetching} onClick={() => q.refetch()} className="mt-3 rounded border border-signal px-3 py-1 text-signal disabled:opacity-50">{q.isFetching ? "RETRYING…" : "[ TRY AGAIN ]"}</button>
+        </div>
+      )}
       <Link to="/stand" className="mt-3 inline-block text-signal underline">How to create a stand</Link>
     </main>
   );
