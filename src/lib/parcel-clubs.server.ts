@@ -47,3 +47,20 @@ async function resolveParents(): Promise<Map<number, string>> {
   }
   return map;
 }
+
+/**
+ * Every address holding a valid parcel of one parcel club, with the parcel inscription as proof.
+ * Throws when the chain scan fails, so a failed check is never mistaken for "not a member".
+ */
+export async function clubParcelHolders(clubId: string): Promise<Map<string, string>> {
+  const club = PARCEL_CLUBS.find((c) => c.id === clubId);
+  if (!club) throw new Error("Unknown club");
+  const { scanParcels } = await import("@/lib/parcels.server");
+  const parent = (await resolveParents()).get(club.height) ?? club.parentInscription;
+  const scan = await scanParcels(club.height, parent);
+  const holders = new Map<string, string>();
+  for (const p of scan.parcels) {
+    if (p.valid && p.ownerAddress && !holders.has(p.ownerAddress.toLowerCase())) holders.set(p.ownerAddress.toLowerCase(), p.inscriptionId);
+  }
+  return holders;
+}

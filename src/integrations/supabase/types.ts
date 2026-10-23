@@ -2824,6 +2824,9 @@ export type Database = {
       launch_seats: {
         Row: {
           address: string
+          club_checked_at: string | null
+          club_hair: string | null
+          club_proof: string | null
           created_at: string
           held_bitmap: number | null
           pixel_id: string
@@ -2833,6 +2836,9 @@ export type Database = {
         }
         Insert: {
           address: string
+          club_checked_at?: string | null
+          club_hair?: string | null
+          club_proof?: string | null
           created_at?: string
           held_bitmap?: number | null
           pixel_id: string
@@ -2842,6 +2848,9 @@ export type Database = {
         }
         Update: {
           address?: string
+          club_checked_at?: string | null
+          club_hair?: string | null
+          club_proof?: string | null
           created_at?: string
           held_bitmap?: number | null
           pixel_id?: string

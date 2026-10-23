@@ -43,3 +43,28 @@ export async function seatVerifiedAddress(admin: SupabaseClient<any>, address: s
   if (ins.error) return { ok: false as const, error: "Could not take a seat — try again" };
   return { ok: true as const, seat: toSeat(ins.data as Row), already: false };
 }
+
+/**
+ * Club hair from chain proof only: a valid 715093 parcel (Marauders) or a 717328 Resident
+ * portrait/parcel (Emporium) held by this address right now. A proof is stored with the hair;
+ * when no proof is found the stored hair is left as is, so a failed lookup never strips it.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function refreshClubHair(admin: SupabaseClient<any>, seat: number, address: string) {
+  let club: "marauders" | "emporium" | null = null, proof: string | null = null;
+  try {
+    const { clubParcelHolders } = await import("@/lib/parcel-clubs.server");
+    const m = (await clubParcelHolders("marauders")).get(address.toLowerCase());
+    if (m) { club = "marauders"; proof = m; }
+  } catch { /* chain read failed: no claim either way */ }
+  if (!club) {
+    try {
+      const { verifyEmporiumResident } = await import("@/lib/emporium.server");
+      const r = await verifyEmporiumResident(address);
+      const p = r.portraits[0] ?? r.parcels[0]?.inscriptionId;
+      if (r.resident && p) { club = "emporium"; proof = p; }
+    } catch { /* chain read failed */ }
+  }
+  if (!club) return;
+  await admin.from("launch_seats").update({ club_hair: club, club_proof: proof, club_checked_at: new Date().toISOString() }).eq("seat_number", seat);
+}

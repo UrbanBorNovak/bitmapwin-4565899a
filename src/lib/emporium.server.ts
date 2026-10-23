@@ -67,3 +67,40 @@ export async function verifyEmporiumResident(address: string): Promise<EmporiumR
   }
   return { ...empty, resident: portraits.length > 0 || parcels.length > 0, portraits, parcels };
 }
+
+const STRICT_UA = "bitmapwin/1.0 (+https://bitmapwin.app)";
+async function strictJson<T>(path: string): Promise<T> {
+  for (let i = 0; i < 4; i++) {
+    try {
+      const r = await fetch(`${ORD}${path}`, { headers: { accept: "application/json", "user-agent": STRICT_UA }, signal: AbortSignal.timeout(15_000) });
+      if (r.ok) return (await r.json()) as T;
+      if (r.status !== 429 && r.status < 500) throw new Error(`HTTP ${r.status}`);
+    } catch (e) { if (i === 3) throw e; }
+    await new Promise((res) => setTimeout(res, 500 * (i + 1)));
+  }
+  throw new Error("unreachable");
+}
+
+/**
+ * Current holders of Resident portraits: image children of 717328.bitmap (Tag 3 parent),
+ * mapped address → portrait inscription id. Throws if any chain read fails, so a failed
+ * check never reads as "not a resident".
+ */
+export async function emporiumPortraitHolders(): Promise<Map<string, string>> {
+  const ids: string[] = [];
+  for (let page = 0; page < 50; page++) {
+    const j = await strictJson<{ children?: { id: string }[]; more?: boolean }>(`/r/children/${EMPORIUM_PARENT}/inscriptions/${page}`);
+    ids.push(...(j.children ?? []).map((c) => c.id));
+    if (!j.more) break;
+  }
+  const holders = new Map<string, string>();
+  for (let i = 0; i < ids.length; i += 8) {
+    const batch = ids.slice(i, i + 8);
+    const metas = await Promise.all(batch.map((id) => strictJson<{ content_type?: string | null; address?: string | null }>(`/r/inscription/${id}`)));
+    metas.forEach((m, k) => {
+      const a = m.address?.toLowerCase();
+      if (a && m.content_type?.toLowerCase().startsWith("image/") && !holders.has(a)) holders.set(a, batch[k]!);
+    });
+  }
+  return holders;
+}

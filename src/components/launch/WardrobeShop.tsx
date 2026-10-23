@@ -26,7 +26,7 @@ export function WardrobeShop({ seat }: { seat: LaunchSeat }) {
   };
   return (
     <div className="mt-2 border-t border-border pt-2">
-      <div className="text-[10px] text-signal">&gt; HAIR · {HAIR_LABEL[hairFor(seat.heldBitmap)]}</div>
+      <div className="text-[10px] text-signal">&gt; HAIR · {HAIR_LABEL[hairFor(seat.heldBitmap, seat.clubHair ?? null)]}</div>
       <div className="mt-1 text-[10px] text-signal">&gt; WARDROBE · PAY WITH BIT</div>
       <div className="mt-1 grid grid-cols-2 gap-1">
         {WEAR_SHOP.map((w) => {
