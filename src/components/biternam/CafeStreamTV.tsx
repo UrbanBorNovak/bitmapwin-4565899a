@@ -54,7 +54,12 @@ function Inscription({ id }: { id: string }) {
 
 export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { position: [number, number, number]; rotationY?: number; width?: number }) {
   const [t, setT] = useState(0);
-  useEffect(() => { const i = setInterval(() => setT((x) => x + 1), 1000); return () => clearInterval(i); }, []);
+  // Seconds since the TV came on, from the wall clock so slow or throttled ticks never stretch or skip a slide.
+  useEffect(() => {
+    const start = Date.now();
+    const i = setInterval(() => setT(Math.floor((Date.now() - start) / 1000)), 250);
+    return () => clearInterval(i);
+  }, []);
   const [sponsors, setSponsors] = useState<SponsorSlide[]>([]);
   useEffect(() => {
     let live = true;
