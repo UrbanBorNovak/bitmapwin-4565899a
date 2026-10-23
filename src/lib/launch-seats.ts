@@ -60,3 +60,12 @@ export function seatAvatarFrom(address: string, inscriptions: ScannedInscription
     heldBitmap: bitmap?.bitmapHeight ?? null,
   };
 }
+
+/** Returning Bitmapper: a successful scan replaces the avatar and flag; a failed scan (null) keeps them. Seat number never changes. */
+export function refreshedAvatar(
+  current: { pixelId: string; pixelSource: "held" | "assigned"; heldBitmap: number | null },
+  address: string,
+  scan: ScannedInscription[] | null,
+) {
+  return scan ? seatAvatarFrom(address, scan) : current;
+}
