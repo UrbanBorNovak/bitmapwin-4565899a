@@ -17,6 +17,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteTickerTape } from "@/components/SiteTickerTape";
 
 import { SiteFooter } from "@/components/SiteFooter";
+import { BitTransitBar } from "@/components/BitTransitBar";
 import { Toaster } from "@/components/ui/sonner";
 import { TransferTrackerHost } from "@/components/TransferTracker";
 import { supabase } from "@/integrations/supabase/client";
@@ -238,6 +239,7 @@ function RootComponent() {
         </div>
       </div>
       <PillarDock />
+      <BitTransitBar />
       <GuidedTour />
       <TradeCrawlerDriver />
       <BssCrawlerDriver />
