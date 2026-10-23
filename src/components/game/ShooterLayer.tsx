@@ -606,8 +606,15 @@ export function ShooterLayer({
         }
         return;
       }
-      // Left clicks on the world never shoot — attacks need F or the on-screen action button.
-      if (event.button === 0) unlockAudio();
+      if (event.button !== 0) return;
+      unlockAudio();
+      // The first click after drawing a weapon only focuses the game; later clicks fire, and holding auto-fires.
+      if (!armedClick.current) {
+        armedClick.current = true;
+        return;
+      }
+      holding.current = true;
+      fireRef.current();
     };
     const onUp = (event: PointerEvent) => {
       if (event.button === 0) holding.current = false;
