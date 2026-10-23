@@ -16,20 +16,20 @@ function seatPos(seat: number): [number, number, number, number] {
   const radius = 8 + row * STEP_D;
   const spread = (perRow * SEAT_W) / radius;
   const a = -spread / 2 + (col + 0.5) * (spread / perRow);
-  return [Math.sin(a) * radius, row * STEP_H + 0.3, -Math.cos(a) * radius + 8, a];
+  return [Math.sin(a) * radius, row * STEP_H + STEP_H / 2, Math.cos(a) * radius, a];
 }
 
 function Stands() {
   const steps = useMemo(() => Array.from({ length: ROWS }, (_, r) => r), []);
   return (
-    <group position={[0, 0, 8]}>
+    <group>
       {steps.map((r) => {
         const radius = 8 + r * STEP_D;
         const perRow = 12 + 2 * r;
         const spread = (perRow * SEAT_W) / radius;
         return (
-          <mesh key={r} position={[0, r * STEP_H, 0]} rotation-y={Math.PI - spread / 2}>
-            <cylinderGeometry args={[radius + STEP_D / 2, radius + STEP_D / 2, STEP_H, 48, 1, false, 0, spread]} />
+          <mesh key={r} position={[0, r * STEP_H / 2, 0]} rotation-y={-spread / 2 - 0.05}>
+            <cylinderGeometry args={[radius + STEP_D / 2, radius + STEP_D / 2, (r + 1) * STEP_H, 48, 1, false, 0, spread + 0.1]} />
             <meshLambertMaterial color={r % 2 ? "#4a4f5a" : "#3a3e47"} flatShading />
           </mesh>
         );
@@ -75,7 +75,7 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
     if (g.current) g.current.position.y = y + Math.max(0, Math.sin(clock.elapsedTime * 2 + phase)) * (selected ? 0.25 : 0.05);
   });
   return (
-    <group ref={g} position={[x, y, z]} rotation-y={-a} onClick={(e) => { e.stopPropagation(); onPick(seat); }}>
+    <group ref={g} position={[x, y, z]} rotation-y={a + Math.PI} onClick={(e) => { e.stopPropagation(); onPick(seat); }}>
       <mesh position-y={0.35}><boxGeometry args={[0.5, 0.55, 0.32]} /><meshLambertMaterial color={body} /></mesh>
       <mesh position-y={0.9}>
         <boxGeometry args={[0.5, 0.5, 0.5]} />
@@ -95,7 +95,7 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
 
 function Stage() {
   return (
-    <group position={[0, 0, 4]}>
+    <group position={[0, 0, 2]} rotation-y={Math.PI}>
       <mesh position-y={0.2}><boxGeometry args={[6, 0.4, 2.4]} /><meshLambertMaterial color="#2a2d34" /></mesh>
       <mesh position={[0, 1.6, -0.9]}><boxGeometry args={[5.6, 2.4, 0.2]} /><meshLambertMaterial color="#f7931a" emissive="#5a2d00" /></mesh>
       {[-2.6, 2.6].map((x) => (
@@ -108,7 +108,7 @@ function Stage() {
 function Trees() {
   const spots = useMemo(() => Array.from({ length: 22 }, (_, i) => {
     const a = (i / 22) * Math.PI * 2;
-    return [Math.sin(a) * 40, -Math.cos(a) * 40 + 12] as const;
+    return [Math.sin(a) * 45, Math.cos(a) * 45] as const;
   }), []);
   return <>{spots.map(([x, z], i) => (
     <group key={i} position={[x, 0, z]}>
@@ -122,7 +122,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   seats: LaunchSeat[]; myAddress: string | null; selected: number | null; onPick: (s: LaunchSeat) => void; focusSeat: number | null;
 }) {
   return (
-    <SafeCanvas camera={{ position: [0, 9, -10], fov: 50 }} dpr={[1, 1.5]}>
+    <SafeCanvas camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]}>
       <color attach="background" args={["#0d0f13"]} />
       <fog attach="fog" args={["#0d0f13", 30, 70]} />
       <ambientLight intensity={0.7} />
@@ -139,17 +139,17 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
 }
 
 function CameraRig({ focus }: { focus: number | null }) {
-  const target = useRef(new THREE.Vector3(0, 4, 14));
-  const eye = useRef(new THREE.Vector3(0, 9, -10));
+  const target = useRef(new THREE.Vector3(0, 5, 14));
+  const eye = useRef(new THREE.Vector3(0, 10, -6));
   useFrame(({ camera, clock }, d) => {
     if (focus) {
       const [x, y, z] = seatPos(focus);
       target.current.set(x, y + 0.8, z);
-      eye.current.set(x * 0.7, y + 3, z - 6);
+      eye.current.set(x * 0.6, y + 2.5, z - 5);
     } else {
       const t = clock.elapsedTime * 0.08;
-      target.current.set(0, 4, 14);
-      eye.current.set(Math.sin(t) * 6, 9, -10);
+      target.current.set(0, 5, 14);
+      eye.current.set(Math.sin(t) * 5, 10, -6);
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
     camera.position.lerp(eye.current, k);
