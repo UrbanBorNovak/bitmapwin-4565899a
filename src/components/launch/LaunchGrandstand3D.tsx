@@ -244,7 +244,7 @@ function Jumbotron({ seat }: { seat: LaunchSeat | null }) {
   return (
     <group position={[0, 1.6, 3.03]}>
       <mesh><planeGeometry args={[5.2, 2.6]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
-      {seat && face && <mesh position={[1.75, 0, 0.01]}><planeGeometry args={[1.3, 1.3]} /><meshBasicMaterial map={face} toneMapped={false} /></mesh>}
+      {seat && face && <mesh position={[1.95, 0.05, 0.01]}><planeGeometry args={[1.05, 1.05]} /><meshBasicMaterial map={face} toneMapped={false} /></mesh>}
     </group>
   );
 }
