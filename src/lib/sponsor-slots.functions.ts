@@ -50,11 +50,8 @@ export const bookSponsorSlotFn = createServerFn({ method: "POST" })
     const { DONATION_ADDRESS } = await import("@/lib/donations");
     if (!sponsorPaymentOk(tx, data.slot, data.payer, DONATION_ADDRESS)) return { ok: false as const, error: "That transaction does not pay this slot's price from your address" };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: last } = await supabaseAdmin.from("broadcast_sponsorships").select("ends_at").eq("slot", data.slot).gt("ends_at", new Date().toISOString()).order("ends_at", { ascending: false }).limit(1);
-    // Slots queue: a new booking starts now (rotation shares the screen), capped at 24h each.
     const start = new Date();
     const end = new Date(start.getTime() + SPONSOR_HOURS * 3600_000);
-    void last;
     const { error } = await supabaseAdmin.from("broadcast_sponsorships").insert({
       slot: data.slot, title: data.title, handle: data.handle, media_kind: media.kind, media: media.media,
       payer_address: data.payer, pay_txid: data.txid.toLowerCase(), paid_sats: tx.vout.reduce((n, o) => n + (o.scriptpubkey_address === DONATION_ADDRESS ? o.value : 0), 0),
