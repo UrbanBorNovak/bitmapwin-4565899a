@@ -83,7 +83,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }}
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
         <FixedCam />
         <color attach="background" args={["#100c0a"]} />
