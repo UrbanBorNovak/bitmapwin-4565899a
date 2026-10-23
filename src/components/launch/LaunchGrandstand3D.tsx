@@ -139,7 +139,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
 }
 
 function CameraRig({ focus }: { focus: number | null }) {
-  const target = useRef(new THREE.Vector3(0, 5, 14));
+  const target = useRef(new THREE.Vector3(0, 7, 16));
   const eye = useRef(new THREE.Vector3(0, 10, -6));
   useFrame(({ camera, clock }, d) => {
     if (focus) {
@@ -148,8 +148,8 @@ function CameraRig({ focus }: { focus: number | null }) {
       eye.current.set(x * 0.6, y + 2.5, z - 5);
     } else {
       const t = clock.elapsedTime * 0.08;
-      target.current.set(0, 5, 14);
-      eye.current.set(Math.sin(t) * 5, 10, -6);
+      target.current.set(0, 7, 16);
+      eye.current.set(Math.sin(t) * 5, 8, -8);
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
     camera.position.lerp(eye.current, k);
