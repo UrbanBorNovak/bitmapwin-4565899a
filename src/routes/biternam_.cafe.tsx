@@ -10,9 +10,8 @@ import { playSfx, setCafeMusicHot, startCafeMusic, stopCafeMusic } from "@/lib/r
 import { VERBS, type Verb } from "@/lib/museum-verbs";
 import { CAFE_HOTSPOT_NAMES, resolveCafeVerb, type CafeHotspot } from "@/lib/cafe-verbs";
 import { ZapDialog } from "@/components/lightning/ZapDialog";
-
-/** Lightning Address that receives Bit-Café tips. Empty = jar not connected yet. */
-const CAFE_TIP_ADDRESS = "inspiringupliftment32114@getalby.com";
+import { DONATION_ADDRESS } from "@/lib/donations";
+import { CAFE_TIP_ADDRESS, QUICK_TIP_SATS, celebrateTip } from "@/lib/tip-banner";
 
 export const Route = createFileRoute("/biternam_/cafe")({
   ssr: false,
@@ -127,8 +126,10 @@ function CafePage() {
           </div>
         ) : null}
         <Link to="/biternam" className="absolute right-4 top-4 rounded border border-border bg-background/70 px-3 py-1 font-mono text-[11px] hover:border-signal">[ STORY ]</Link>
-        <button onClick={() => { playSfx("verb"); setTipOpen(true); }} className="absolute right-24 top-4 rounded border border-primary/60 bg-background/70 px-3 py-1 font-mono text-[11px] text-primary hover:border-primary">[ ⚡ TIP JAR ]</button>
-        <ZapDialog open={tipOpen} onOpenChange={setTipOpen} to="THE BIT-CAFÉ" address={CAFE_TIP_ADDRESS} comment="Tip from the Bit-Café · BITMAPWIN" onPaid={(s) => setSay(`dev9: "${s} sats? The house thanks you, Blockrunner."`)} />
+        <button onClick={() => { playSfx("verb"); setTipOpen(true); }} className="absolute right-24 top-4 rounded border border-primary/60 bg-background/70 px-3 py-1 font-mono text-[11px] text-primary hover:border-primary">[ ⚡ TIP {QUICK_TIP_SATS.toLocaleString("en-US")} SATS ]</button>
+        <ZapDialog open={tipOpen} onOpenChange={setTipOpen} to="THE BIT-CAFÉ TV" address={CAFE_TIP_ADDRESS} comment="Tip from the Bit-Café · BITMAPWIN"
+          defaultSats={QUICK_TIP_SATS} presets={[1000, 2100, 5000]} onchainAddress={DONATION_ADDRESS} askName
+          onPaid={(s, who) => { celebrateTip(who, s, "cafe"); setSay(`dev9: "${s} sats? The house thanks you, Blockrunner."`); }} />
         {call ? (
           <div className="absolute right-4 top-16 z-50">
             <TracyCom key={call} voice={dev9.voice}

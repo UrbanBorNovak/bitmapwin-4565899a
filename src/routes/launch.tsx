@@ -14,6 +14,9 @@ import { slotLive } from "@/lib/sponsor-slots";
 import { SponsorBooking } from "@/components/launch/SponsorBooking";
 import { LaunchTicket } from "@/components/launch/LaunchTicket";
 import { useQuery } from "@tanstack/react-query";
+import { ZapDialog } from "@/components/lightning/ZapDialog";
+import { DONATION_ADDRESS } from "@/lib/donations";
+import { CAFE_TIP_ADDRESS, QUICK_TIP_SATS, celebrateTip, tipLine, useTipBanner } from "@/lib/tip-banner";
 import type { GrandstandView } from "@/components/launch/LaunchGrandstand3D";
 import { LAUNCH_CAPACITY, LAUNCH_TIERS, nextTier, seatMessage, type LaunchSeat } from "@/lib/launch-seats";
 
@@ -49,6 +52,8 @@ function LaunchPage() {
   const [picked, setPicked] = useState<LaunchSeat | null>(null);
   const [focus, setFocus] = useState<number | null>(null);
   const [view, setView] = useState<GrandstandView>("diorama");
+  const [tipOpen, setTipOpen] = useState(false);
+  const stageTip = useTipBanner("launch");
   const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
   const stepSeat = (dir: number) => {
@@ -151,6 +156,16 @@ function LaunchPage() {
           <div>CINDY-COM · LAUNCH FEED ● LIVE</div>
           <div className="text-muted-foreground">CAP {count}/{LAUNCH_CAPACITY} · CAM {view.toUpperCase()}</div>
         </div>
+        <button type="button" onClick={() => { blip(); setTipOpen(true); }}
+          className="glass-panel absolute right-3 top-3 rounded border border-primary/70 px-2 py-1 font-mono text-[10px] text-primary hover:border-primary">[ ⚡ TIP JUMBOTRON ]</button>
+        {stageTip ? (
+          <div data-testid="stage-tip-banner" className="pointer-events-none absolute inset-x-0 bottom-0 bg-primary px-3 py-2 text-center font-mono text-sm font-bold tracking-wider text-primary-foreground">
+            LIVE TIP · {tipLine(stageTip)}
+          </div>
+        ) : null}
+        <ZapDialog open={tipOpen} onOpenChange={setTipOpen} to="THE JUMBOTRON" address={CAFE_TIP_ADDRESS} comment="Tip from the Launch Grandstand · BITMAPWIN"
+          defaultSats={QUICK_TIP_SATS} presets={[1000, 2100, 5000]} onchainAddress={DONATION_ADDRESS} askName
+          onPaid={(s, who) => celebrateTip(who, s, "launch")} />
         <div className="absolute left-3 right-3 top-12 flex flex-wrap gap-2 font-mono text-[10px]">
           {([["diorama", "2.5D DIORAMA"], ["stage", "STAGE VIEW"], ["seat", "SIT IN MY SEAT"]] as const).map(([v, label]) => (
             <button key={v} disabled={v === "seat" && !mine}
