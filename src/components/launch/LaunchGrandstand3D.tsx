@@ -117,6 +117,22 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
         <meshLambertMaterial attach="material-4" color="#c9a27a" />
         <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
       </mesh>
+      {seat.gear?.includes("ancient") && (<>
+        <mesh position={[0, 1.02, 0.26]}><boxGeometry args={[0.52, 0.1, 0.04]} /><meshLambertMaterial color="#6b4a2a" /></mesh>
+        {[-0.12, 0.12].map((x) => <mesh key={x} position={[x, 1.02, 0.29]}><boxGeometry args={[0.13, 0.13, 0.05]} /><meshLambertMaterial color="#c08a3e" emissive="#3a2208" /></mesh>)}
+      </>)}
+      {seat.gear?.includes("founder") && (
+        <mesh position={[0, 0.92, 0.27]}><boxGeometry args={[0.46, 0.09, 0.03]} /><meshBasicMaterial color="#22d3ee" /></mesh>
+      )}
+      {seat.gear?.includes("builder") && (
+        <mesh position-y={1.2}><boxGeometry args={[0.56, 0.12, 0.56]} /><meshLambertMaterial color="#f5c518" /></mesh>
+      )}
+      {seat.gear?.includes("tamer") && (
+        <group position={[-0.4, 0.12, 0.15]}>
+          <mesh><boxGeometry args={[0.22, 0.2, 0.3]} /><meshLambertMaterial color="#8fd16a" /></mesh>
+          <mesh position={[0, 0.16, 0.12]}><boxGeometry args={[0.16, 0.16, 0.16]} /><meshLambertMaterial color="#8fd16a" /></mesh>
+        </group>
+      )}
       {seat.heldBitmap !== null && (
         <group position={[0.34, 0, 0.1]}>
           <mesh position-y={1.2}><boxGeometry args={[0.05, 1.5, 0.05]} /><meshLambertMaterial color="#d8d8d8" /></mesh>
