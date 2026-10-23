@@ -6,7 +6,7 @@ import { SafeHtml } from "@/components/game/SafeHtml";
 import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
-import { UNREASONABLES_CAST } from "@/lib/biternam-cast";
+import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
 import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 
 const ROWS = 24;
@@ -147,7 +147,9 @@ function Snack({ id }: { id: string }) {
 function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: boolean; selected: boolean; onPick: (s: LaunchSeat) => void }) {
   const face = useFace(seat.pixelId);
   const [x, y, z, a] = seatPos(seat.seat);
-  const body = useMemo(() => hue(seat.address), [seat.address]);
+  const zombie = !!seat.member;
+  const body = useMemo(() => (seat.member ? "#2f4a33" : hue(seat.address)), [seat.address, seat.member]);
+  const skin = zombie ? "#7fa36a" : "#c9a27a";
   const g = useRef<THREE.Group>(null);
   const phase = seat.seat * 0.7;
   useFrame(({ clock }) => {
@@ -156,11 +158,13 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
   return (
     <group ref={g} position={[x, y, z]} rotation-y={a + Math.PI} onClick={(e) => { e.stopPropagation(); onPick(seat); }}>
       <mesh position-y={0.35}><boxGeometry args={[0.5, 0.55, 0.32]} /><meshLambertMaterial color={body} /></mesh>
+      {zombie && <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.3, 0.42, 16]} /><meshBasicMaterial color="#4ade80" transparent opacity={0.7} /></mesh>}
+      {zombie && [-0.3, 0.3].map((dx) => <mesh key={dx} position={[dx, 0.55, 0.3]}><boxGeometry args={[0.1, 0.1, 0.45]} /><meshLambertMaterial color={skin} /></mesh>)}
       <mesh position-y={0.9}>
         <boxGeometry args={[0.5, 0.5, 0.5]} />
-        {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color="#c9a27a" />)}
-        <meshLambertMaterial attach="material-4" color="#c9a27a" />
-        <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
+        {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color={skin} />)}
+        <meshLambertMaterial attach="material-4" color={skin} />
+        <meshLambertMaterial attach="material-5" map={face} color={face ? (zombie ? "#a8e6a0" : "#ffffff") : skin} />
       </mesh>
       {seat.gear?.includes("ancient") && (<>
         <mesh position={[0, 1.02, 0.26]}><boxGeometry args={[0.52, 0.1, 0.04]} /><meshLambertMaterial color="#6b4a2a" /></mesh>
@@ -405,7 +409,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} sponsors={sponsors} />
       <StageVideo />
-      {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.avatar.skin.slice(3)} i={i} />)}
+      {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.ins} i={i} />)}
       <PopcornLayer throws={popcornThrows} fromSeat={mySeat} onHit={onPopcornHit} />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
@@ -454,8 +458,17 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
   return <instancedMesh ref={mesh} args={[undefined, undefined, N]}><boxGeometry /><meshBasicMaterial color="#ffe28a" /></instancedMesh>;
 }
 
-/** STAFF: THE UNREASONABLES patrol the floor between the stage and the stands, wearing their real Pixel faces. */
-const STAFF = UNREASONABLES_CAST.slice(0, 6);
+/** STAFF: the Biternam crew, wearing the same on-chain Pixel faces they wear in Biternam rooms. */
+const STAFF = [
+  { id: "dev9", ins: CREW_PIXEL_AVATAR["dev9"]! },
+  { id: "anchorman", ins: "11e0423355a75b615977f7da49f33f140c68c825f94caacb28762cbd7c8cec26i0" }, // OG Anchorman @BitMap_News #1
+  { id: "tornado", ins: CREW_PIXEL_AVATAR["tornado"]! },
+  { id: "bitty", ins: CREW_PIXEL_AVATAR["bitlodo"]! }, // Roaring Bitty - 9
+  { id: "bop", ins: CREW_PIXEL_AVATAR["bop"]! },
+  { id: "dabber", ins: CREW_PIXEL_AVATAR["dabber"]! },
+  { id: "mr-shiddy", ins: CREW_PIXEL_AVATAR["mr-shiddy"]! },
+  { id: "wierdamoto", ins: CREW_PIXEL_AVATAR["wierdamoto"]! },
+];
 function StaffWalker({ ins, i }: { ins: string; i: number }) {
   const face = useFace(ins);
   const g = useRef<THREE.Group>(null);
