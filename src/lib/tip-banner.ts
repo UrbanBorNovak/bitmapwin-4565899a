@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 
 export const TIP_BANNER_MS = 15_000;
 export const QUICK_TIP_SATS = 1000;
+/** Lightning Address that receives Café TV and Jumbotron tips. */
+export const CAFE_TIP_ADDRESS = "inspiringupliftment32114@getalby.com";
 
 export type TipBanner = { name: string; sats: number; screen: "cafe" | "launch"; at: number };
 
