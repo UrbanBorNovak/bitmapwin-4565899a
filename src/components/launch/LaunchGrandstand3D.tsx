@@ -81,7 +81,7 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
         <boxGeometry args={[0.5, 0.5, 0.5]} />
         {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color="#c9a27a" />)}
         <meshLambertMaterial attach="material-4" color="#c9a27a" />
-        <meshLambertMaterial attach="material-5" map={face ?? undefined} color={face ? "#ffffff" : "#c9a27a"} />
+        <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
       </mesh>
       {seat.heldBitmap !== null && (
         <mesh position={[0.32, 1.25, 0.1]}><boxGeometry args={[0.05, 0.5, 0.05]} /><meshLambertMaterial color="#f7931a" /></mesh>
