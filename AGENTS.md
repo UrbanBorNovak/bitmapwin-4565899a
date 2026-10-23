@@ -40,3 +40,4 @@
 - Clips: @bitlodo studio vendored unmodified in public/tools/clips. Why: full fidelity.
 - Marketplace ALL-tab filters use fetchRegistryScope (finite candidate sets × height ranges, checked in bitmap_index). Why: exact totals without loading the full index.
 - Every R3F canvas goes through SafeCanvas (offsetSize measuring). Why: page-size CSS zoom on <html> makes rect measuring grow canvases until WebGL fails.
+- Sovereign Grandstand (BW-STAND-1, src/lib/sovereign-stand.ts): a stand is an inscribed JSON config whose inscription id is its identity; seats in stand_seats keep the BIP-322 signature and are written only by claimStandSeatFn after signature + live BITMAP-in-range checks; Convention Badge tiers count distinct stands. Why: inscription viewers block network access, so the inscription carries identity/rules and any site can re-verify public seat proofs.
