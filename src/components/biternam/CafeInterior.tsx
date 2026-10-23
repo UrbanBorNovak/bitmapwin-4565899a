@@ -160,7 +160,8 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         <CafePatrons />
         <GearShelf room="cafe" position={[-3.75, 2.2, 0.8]} rotation={Math.PI / 2} />
         <OnChainExhibit room="cafe" position={[2.6, 0, -2.4]} size={1.8} />
-        <CafeStreamTV position={[-2.6, 2.3, -3.86]} width={1.6} />
+        {/* Booth TV on the side wall above Dabber's bench, inside the fixed camera frame */}
+        <CafeStreamTV position={[-3.86, 1.9, 1.2]} rotationY={Math.PI / 2} width={1.5} />
       </SafeCanvas>
       <GearLocker />
     </div>
