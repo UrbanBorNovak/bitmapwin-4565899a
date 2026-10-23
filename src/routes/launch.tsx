@@ -8,7 +8,6 @@ import { PixelFace } from "@/components/game/PixelFace";
 import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { claimLaunchSeatFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
-import { playSfx } from "@/lib/world-audio";
 import { startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { playArena, startCrowd, stopCrowd } from "@/lib/arena-sfx";
 import { listSponsorSlidesFn } from "@/lib/sponsor-slots.functions";
