@@ -42,7 +42,24 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
     .order("seat_number")
     .limit(1000);
   if (error) return { seats: [] as LaunchSeat[], error: "Seats unavailable" };
-  return { seats: (data as Row[]).map(toSeat), error: null as string | null };
+  const seats = (data as Row[]).map(toSeat);
+  const tamers = new Set<string>(); const builders = new Set<string>();
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const addrs = seats.map((s) => s.address);
+    for (let i = 0; i < addrs.length; i += 100) {
+      const chunk = addrs.slice(i, i + 100);
+      const [g, f] = await Promise.all([
+        supabaseAdmin.from("bitmon_guardians").select("summoned_by_address").in("summoned_by_address", chunk),
+        supabaseAdmin.from("forge_modules").select("author_address").in("author_address", chunk),
+      ]);
+      g.data?.forEach((r) => tamers.add(r.summoned_by_address));
+      f.data?.forEach((r) => builders.add(r.author_address));
+    }
+  } catch { /* gear is cosmetic; seats still load */ }
+  const { seatGear } = await import("@/lib/launch-seats");
+  for (const s of seats) s.gear = seatGear(s.seat, s.heldBitmap, tamers.has(s.address), builders.has(s.address));
+  return { seats, error: null as string | null };
 });
 
 /** Seats a wallet after verifying its signed message; scans the wallet for a held Pixel or BITMAP. */
