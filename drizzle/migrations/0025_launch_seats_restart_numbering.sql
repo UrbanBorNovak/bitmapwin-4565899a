@@ -1,0 +1,1 @@
+ALTER TABLE public.launch_seats ALTER COLUMN seat_number RESTART WITH 1;
