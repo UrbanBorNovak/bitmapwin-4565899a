@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { WalletConnect } from "@/components/WalletConnect";
 import { PixelFace } from "@/components/game/PixelFace";
 import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { claimLaunchSeatFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
 import { playSfx } from "@/lib/world-audio";
+import { startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
 import { listSponsorSlidesFn } from "@/lib/sponsor-slots.functions";
 import { slotLive } from "@/lib/sponsor-slots";
 import { SponsorBooking } from "@/components/launch/SponsorBooking";
@@ -55,6 +56,8 @@ function LaunchPage() {
   const [focus, setFocus] = useState<number | null>(null);
   const [view, setView] = useState<GrandstandView>("diorama");
   const [tipOpen, setTipOpen] = useState(false);
+  const [musicOn, setMusicOn] = useState(false);
+  useEffect(() => () => stopCafeMusic(), []);
   const stageTip = useTipBanner("launch");
   const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
@@ -180,6 +183,8 @@ function LaunchPage() {
           <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => seats.length && pickSeat(seats[Math.floor(Math.random() * seats.length)])}>[RANDOM]</button>
           <button className="glass-panel rounded border border-border px-2 py-1 text-bitcoin" onClick={() => seats[0] && pickSeat(seats.find((x) => x.seat === 1) ?? seats[0])}>[FOUNDERS #1]</button>
           {count === 0 && <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">EMPTY SEATS — BE THE FIRST BITMAPPER</span>}
+          <button className={`glass-panel rounded border px-2 py-1 ${musicOn ? "border-bitcoin text-bitcoin" : "border-border"}`}
+            onClick={() => { if (musicOn) stopCafeMusic(); else startCafeMusic("arcade"); setMusicOn(!musicOn); }}>[♪ MUSIC: {musicOn ? "ON" : "OFF"}]</button>
         </div>
         {picked && (
           <div className="glass-panel absolute bottom-3 right-3 w-60 max-w-[calc(100%-1.5rem)] rounded border border-signal/50 p-3 font-mono text-xs">
@@ -190,6 +195,12 @@ function LaunchPage() {
             </div>
             <div className="mt-2 text-signal">{picked.seat <= 100 ? "FOUNDERS ROW" : picked.seat <= 500 ? "FULL HOUSE" : "IGNITION"}</div>
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
+            {picked.pixelSource === "held" && (
+              <a href={`https://ordinals.com/inscription/${picked.pixelId}`} target="_blank" rel="noreferrer" className="mt-2 block border border-bitcoin/50 bg-background p-1">
+                <img src={`/api/public/inscription/${picked.pixelId}`} alt="BITMAP Pixel owned by this wallet" className="aspect-square w-full object-contain" style={{ imageRendering: "pixelated" }} />
+                <div className="mt-1 text-[10px] text-bitcoin">✓ OWNED BITMAP PIXEL →</div>
+              </a>
+            )}
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
             {picked.gear?.map((g) => <div key={g} className="text-muted-foreground">◆ {GEAR_LABEL[g]}</div>)}
             {mine?.seat === picked.seat ? <WardrobeShop seat={picked} /> : <div className="text-muted-foreground">◆ {HAIR_LABEL[hairFor(picked.heldBitmap, picked.clubHair ?? null)]}</div>}
