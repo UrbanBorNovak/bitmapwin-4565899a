@@ -338,11 +338,25 @@ function Jumbotron({ seat, sponsors = [] }: { seat: LaunchSeat | null; sponsors?
 
 /** Big stage video wall above the jumbotron: Elevated Dabber's live bitmap.stream channel, watched by the whole stand. */
 function StageVideo() {
-  const w = 6.4, h = w * 9 / 16;
+  const w = 6.4, h = w * 9 / 16, z = 3.05;
+  const [front, setFront] = useState(true);
+  // Only the audience side (+z) sees the stream; from backstage the DOM layer is removed.
+  useFrame(({ camera }) => {
+    const f = camera.position.z > z + 0.05;
+    if (f !== front) setFront(f);
+  });
   return (
-    <group position={[0, 3.1 + h / 2, 3.05]}>
+    <group position={[0, 3.1 + h / 2, z]}>
       <mesh position-z={-0.04}><boxGeometry args={[w + 0.16, h + 0.16, 0.06]} /><meshLambertMaterial color="#1a1410" emissive="#5a2d00" /></mesh>
-      <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={w / 640} zIndexRange={[10, 0]}>
+      {/* Rear chassis: opaque LED-wall back with ribs and cable conduits. */}
+      <mesh position-z={-0.22}><boxGeometry args={[w + 0.1, h + 0.1, 0.3]} /><meshLambertMaterial color="#202328" /></mesh>
+      {[-2.4, -0.8, 0.8, 2.4].map((x) => (
+        <mesh key={x} position={[x, 0, -0.42]}><boxGeometry args={[0.12, h + 0.3, 0.12]} /><meshLambertMaterial color="#3a3f47" /></mesh>
+      ))}
+      {[-0.6, 0.6].map((y) => (
+        <mesh key={y} position={[0, y, -0.4]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.04, 0.04, w - 0.4, 6]} /><meshLambertMaterial color="#111" /></mesh>
+      ))}
+      {front && <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={w / 640} zIndexRange={[10, 0]} style={{ backfaceVisibility: "hidden" }}>
         <div style={{ width: 640, height: 360, background: "#000", position: "relative", overflow: "hidden", font: "12px monospace" }}>
           <iframe src={G.embedUrl} title="Elevated Dabber live on bitmap.stream" width={640} height={360} style={{ border: 0, display: "block" }} allow="autoplay; fullscreen" />
           <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a", pointerEvents: "none", textShadow: "0 0 4px #000" }}>● LIVE · @{G.handle} · {G.channelHeight}.BITMAP</div>
