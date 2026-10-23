@@ -4650,6 +4650,39 @@ export type Database = {
         }
         Relationships: []
       }
+      stand_seats: {
+        Row: {
+          address: string
+          created_at: string
+          held_bitmap: number
+          id: string
+          issued_at: string
+          seat_number: number
+          signature: string
+          stand_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          held_bitmap: number
+          id?: string
+          issued_at: string
+          seat_number: number
+          signature: string
+          stand_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          held_bitmap?: number
+          id?: string
+          issued_at?: string
+          seat_number?: number
+          signature?: string
+          stand_id?: string
+        }
+        Relationships: []
+      }
       toon_libraries: {
         Row: {
           data: Json
