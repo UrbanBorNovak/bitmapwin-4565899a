@@ -57,24 +57,28 @@ function OrphanField({ confirmed }: { confirmed: boolean }) {
   );
 }
 
-/** Translucent wireframe ghost with a flicker. */
+/** Glowing spectral ghost: solid translucent body, gentle bob, never blinks out, with a generous click box. */
 function Ghost({ hot }: { hot: boolean }) {
   const g = useRef<Group>(null), l = useRef<PointLight>(null);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    if (g.current) { g.current.position.y = 0.3 + Math.sin(t * 1.3) * 0.12; g.current.visible = Math.sin(t * 9) > -0.97; }
+    if (g.current) g.current.position.y = 0.3 + Math.sin(t * 1.3) * 0.12;
     if (l.current) l.current.intensity = 6 + Math.sin(t * 5) * 2;
   });
-  const mat = <meshBasicMaterial color={hot ? "#bff8ff" : "#7fe8ff"} wireframe transparent opacity={0.8} />;
+  const mat = (o: number) => <meshStandardMaterial color={hot ? "#e6fdff" : "#9fe6ff"} emissive={NEON} emissiveIntensity={hot ? 1.3 : 0.9} transparent opacity={o} depthWrite={false} />;
   return (
-    <group ref={g}>
-      <mesh position-y={1.55}>{/* head */}<boxGeometry args={[0.42, 0.42, 0.42]} />{mat}</mesh>
-      <mesh position-y={0.95}><boxGeometry args={[0.55, 0.75, 0.3]} />{mat}</mesh>
-      {[-0.38, 0.38].map((x) => <mesh key={x} position={[x, 0.95, 0]}><boxGeometry args={[0.16, 0.7, 0.16]} />{mat}</mesh>)}
-      <mesh position-y={0.35}><coneGeometry args={[0.32, 0.6, 4]} />{mat}</mesh>
-      {[-0.1, 0.1].map((x) => <mesh key={x} position={[x, 1.6, 0.22]}><boxGeometry args={[0.07, 0.07, 0.02]} /><meshBasicMaterial color={TRIM} /></mesh>)}
-      <pointLight ref={l} position-y={1.2} distance={4} color={NEON} />
-    </group>
+    <>
+      <mesh position-y={1.2}><boxGeometry args={[1, 2.4, 0.7]} /><meshBasicMaterial transparent opacity={0} depthWrite={false} /></mesh>
+      <mesh rotation-x={-Math.PI / 2} position-y={0.03}><ringGeometry args={[0.45, 0.58, 20]} /><meshBasicMaterial color={NEON} transparent opacity={hot ? 1 : 0.45} /></mesh>
+      <group ref={g}>
+        <mesh position-y={1.55}><boxGeometry args={[0.42, 0.42, 0.42]} />{mat(0.85)}</mesh>
+        <mesh position-y={0.95}><boxGeometry args={[0.55, 0.75, 0.3]} />{mat(0.75)}</mesh>
+        {[-0.38, 0.38].map((x) => <mesh key={x} position={[x, 0.95, 0]}><boxGeometry args={[0.16, 0.7, 0.16]} />{mat(0.65)}</mesh>)}
+        <mesh position-y={0.35}><coneGeometry args={[0.32, 0.6, 4]} />{mat(0.55)}</mesh>
+        {[-0.1, 0.1].map((x) => <mesh key={x} position={[x, 1.6, 0.22]}><boxGeometry args={[0.07, 0.07, 0.02]} /><meshBasicMaterial color={TRIM} /></mesh>)}
+        <pointLight ref={l} position-y={1.2} distance={4} color={NEON} />
+      </group>
+    </>
   );
 }
 
@@ -143,7 +147,7 @@ export function VoidInterior({ onHit, onHover, hover, hasBlock, confirmed, shaki
             {Array.from({ length: 10 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.42, 0]}><boxGeometry args={[0.6, 0.05, 0.05]} /><meshStandardMaterial color={RUST} /></mesh>)}
             <mesh position-y={4.5}><boxGeometry args={[1.2, 0.1, 1.2]} /><meshBasicMaterial color="#ffd08a" /></mesh>
           </Hot>
-          <Hot id="ghost" {...hp} position={[-2.8, 0, 0.4]} rotation={[0, 0.6, 0]}><Ghost hot={hover === "ghost"} /></Hot>
+          <Hot id="ghost" {...hp} position={[-2.3, 0, 0.6]} rotation={[0, 0.6, 0]}><Ghost hot={hover === "ghost"} /></Hot>
           <Hot id="terminal" {...hp} position={[0.6, 0, -0.3]}><Terminal hot={hover === "terminal"} confirmed={confirmed} /></Hot>
           {!hasBlock && !confirmed ? (
             <Hot id="orphan" {...hp} position={[-1, 1.4, 0.6]}>

@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { listLaunchSeatsFn } from "@/lib/launch-seats.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { playSfx } from "@/lib/world-audio";
+import { streamLiveStatusFn } from "@/lib/bitmap-stream.functions";
+import { GENESIS_BROADCASTER } from "@/lib/genesis-broadcaster";
 
 /** The four stops of the Bitmapper loop, in order. */
 export const TRANSIT_STOPS = [
@@ -29,12 +31,16 @@ export function BitTransitBar() {
     queryKey: ["transit-modules"], staleTime: 300_000,
     queryFn: async () => (await supabase.from("forge_modules").select("id", { count: "exact", head: true })).count ?? null,
   });
+  const stream = useQuery({
+    queryKey: ["transit-stream", GENESIS_BROADCASTER.channelHeight], staleTime: 30_000, refetchInterval: 60_000, retry: 0,
+    queryFn: async () => (await streamLiveStatusFn({ data: { height: GENESIS_BROADCASTER.channelHeight } })).status,
+  });
   if (!isTransitPath(path)) return null;
 
   const seated = seats.data?.seats.length;
   const live: Record<string, string> = {
     "/launch": seated != null ? `${seated} SEATED` : "…",
-    "/biternam/cafe": "STREAM ON-AIR",
+    "/biternam/cafe": stream.data === "live" ? "STREAM ON-AIR" : stream.data === "offline" ? "STREAM OFFLINE" : "STREAM ?",
     "/oasis": tip.data ? `BLOCK #${compact(tip.data)}` : "LIVE MAP",
     "/forge": modules.data != null ? `MODULES ${modules.data}` : "STUDIO READY",
   };
