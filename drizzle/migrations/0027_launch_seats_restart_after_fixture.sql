@@ -1,0 +1,1 @@
+SELECT setval(pg_get_serial_sequence('public.launch_seats','seat_number'), (SELECT COALESCE(MAX(seat_number),0) FROM public.launch_seats) + 1, false);
