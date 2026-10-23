@@ -225,6 +225,13 @@
       "when": 1792722676585,
       "tag": "0031_launch_seat_wardrobe",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792722922820,
+      "tag": "0032_launch_seat_club_proof",
+      "breakpoints": true
     }
   ]
 }
