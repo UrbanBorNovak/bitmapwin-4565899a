@@ -200,6 +200,7 @@ function LaunchPage() {
               <div><div className="text-bitcoin">SEAT #{picked.seat}</div><div className="text-muted-foreground">{short(picked.address)}</div></div>
             </div>
             <div className="mt-2 text-signal">{picked.seat <= 100 ? "FOUNDERS ROW" : picked.seat <= 500 ? "FULL HOUSE" : "IGNITION"}</div>
+            {picked.member && <div className="text-signal">🧟 MEMBER · verified membership</div>}
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
             {picked.pixelSource === "held" && (
               <a href={`https://ordinals.com/inscription/${picked.pixelId}`} target="_blank" rel="noreferrer" className="mt-2 block border border-bitcoin/50 bg-background p-1">

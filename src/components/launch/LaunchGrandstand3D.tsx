@@ -6,7 +6,7 @@ import { SafeHtml } from "@/components/game/SafeHtml";
 import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
-import { UNREASONABLES_CAST } from "@/lib/biternam-cast";
+import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
 import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 
 const ROWS = 24;
@@ -409,7 +409,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} sponsors={sponsors} />
       <StageVideo />
-      {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.avatar.skin.slice(3)} i={i} />)}
+      {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.ins} i={i} />)}
       <PopcornLayer throws={popcornThrows} fromSeat={mySeat} onHit={onPopcornHit} />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
@@ -458,8 +458,17 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
   return <instancedMesh ref={mesh} args={[undefined, undefined, N]}><boxGeometry /><meshBasicMaterial color="#ffe28a" /></instancedMesh>;
 }
 
-/** STAFF: THE UNREASONABLES patrol the floor between the stage and the stands, wearing their real Pixel faces. */
-const STAFF = UNREASONABLES_CAST.slice(0, 6);
+/** STAFF: the Biternam crew, wearing the same on-chain Pixel faces they wear in Biternam rooms. */
+const STAFF = [
+  { id: "dev9", ins: CREW_PIXEL_AVATAR["dev9"]! },
+  { id: "anchorman", ins: "11e0423355a75b615977f7da49f33f140c68c825f94caacb28762cbd7c8cec26i0" }, // OG Anchorman @BitMap_News #1
+  { id: "tornado", ins: CREW_PIXEL_AVATAR["tornado"]! },
+  { id: "bitty", ins: CREW_PIXEL_AVATAR["bitlodo"]! }, // Roaring Bitty - 9
+  { id: "bop", ins: CREW_PIXEL_AVATAR["bop"]! },
+  { id: "dabber", ins: CREW_PIXEL_AVATAR["dabber"]! },
+  { id: "mr-shiddy", ins: CREW_PIXEL_AVATAR["mr-shiddy"]! },
+  { id: "wierdamoto", ins: CREW_PIXEL_AVATAR["wierdamoto"]! },
+];
 function StaffWalker({ ins, i }: { ins: string; i: number }) {
   const face = useFace(ins);
   const g = useRef<THREE.Group>(null);
