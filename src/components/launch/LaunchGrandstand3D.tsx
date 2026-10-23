@@ -189,7 +189,8 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
       <mesh position-y={0.9}>
         <boxGeometry args={[0.5, 0.5, 0.5]} />
         {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color={skin} />)}
-        <meshLambertMaterial attach="material-4" map={face} color={face ? (zombie ? "#a8e6a0" : "#ffffff") : skin} />
+        {/* Keyed so the material is rebuilt with a map: adding a map later never recompiles the shader (renders white). */}
+        <meshLambertMaterial key={face ? face.uuid : "skin"} attach="material-4" map={face} color={face ? (zombie ? "#a8e6a0" : "#ffffff") : skin} />
         <meshLambertMaterial attach="material-5" color={skin} />
       </mesh>
       {seat.gear?.includes("ancient") && (<>
