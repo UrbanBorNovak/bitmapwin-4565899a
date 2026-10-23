@@ -183,6 +183,13 @@
       "when": 1792714292804,
       "tag": "0025_launch_seats_restart_numbering",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792714746388,
+      "tag": "0026_launch_seats_restart_numbering_again",
+      "breakpoints": true
     }
   ]
 }
