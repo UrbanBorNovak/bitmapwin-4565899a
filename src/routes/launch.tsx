@@ -9,6 +9,11 @@ import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-walle
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { claimLaunchSeatFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
 import { playSfx } from "@/lib/world-audio";
+import { listSponsorSlidesFn } from "@/lib/sponsor-slots.functions";
+import { slotLive } from "@/lib/sponsor-slots";
+import { SponsorBooking } from "@/components/launch/SponsorBooking";
+import { LaunchTicket } from "@/components/launch/LaunchTicket";
+import { useQuery } from "@tanstack/react-query";
 import type { GrandstandView } from "@/components/launch/LaunchGrandstand3D";
 import { LAUNCH_CAPACITY, LAUNCH_TIERS, nextTier, seatMessage, type LaunchSeat } from "@/lib/launch-seats";
 
@@ -55,6 +60,8 @@ function LaunchPage() {
   const myAddr = active?.ordinalsAddress ?? null;
   const mine = myAddr ? seats.find((s) => s.address.toLowerCase() === myAddr.toLowerCase()) ?? null : null;
   const count = seats.length;
+  const sponsorQ = useQuery({ queryKey: ["sponsor-slides"], queryFn: () => listSponsorSlidesFn(), refetchInterval: 300_000 });
+  const stageAds = (sponsorQ.data?.slides ?? []).filter((x) => slotLive(x, "launch", Date.now()));
   const tier = nextTier(count);
 
   const takeSeat = async () => {
@@ -86,6 +93,7 @@ function LaunchPage() {
         </div>
         <div className="glass-panel w-full max-w-sm rounded border border-border p-4">
           {mine ? (
+            <>
             <div className="flex items-center gap-3">
               <PixelFace inscriptionId={mine.pixelId} label="Your avatar" className="h-14 w-14" />
               <div className="font-mono text-xs">
@@ -94,6 +102,8 @@ function LaunchPage() {
                 <button className="mt-1 text-signal hover:underline" onClick={() => pickSeat(mine)}>Find my seat →</button>
               </div>
             </div>
+            <LaunchTicket seat={mine} />
+            </>
           ) : active ? (
             <>
               <button disabled={busy || count >= LAUNCH_CAPACITY} onClick={takeSeat}
@@ -134,7 +144,7 @@ function LaunchPage() {
         <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">loading grandstand…</div>}>
           <Suspense fallback={null}>
             <Grandstand seats={seats} myAddress={myAddr} selected={picked?.seat ?? null} focusSeat={focus}
-              view={view} mySeat={mine?.seat ?? null} onPick={(s) => pickSeat(s)} />
+              view={view} mySeat={mine?.seat ?? null} sponsors={stageAds} onPick={(s) => pickSeat(s)} />
           </Suspense>
         </ClientOnly>
         <div className="pointer-events-none absolute left-3 top-3 font-mono text-[10px] text-signal">
@@ -165,9 +175,11 @@ function LaunchPage() {
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
             <div className="text-muted-foreground">Seated {new Date(picked.createdAt).toLocaleDateString()}</div>
+            {picked.ticketId && <a href={`https://ordinals.com/inscription/${picked.ticketId}`} target="_blank" rel="noreferrer" className="text-bitcoin hover:underline">★ VIP TICKET →</a>}
           </div>
         )}
       </section>
+      <SponsorBooking wallet={active} />
     </main>
   );
 }
