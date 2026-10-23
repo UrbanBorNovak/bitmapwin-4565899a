@@ -63,7 +63,7 @@ export function BatcaveScene({ onHit, onHover, hover, st, hazard }: SceneProps<B
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.4, 0.8, 0.2]} />
         <color attach="background" args={["#05070a"]} />
         <fog attach="fog" args={["#05070a", 13, 26]} />
@@ -140,7 +140,7 @@ export function IslandScene({ onHit, onHover, hover, st }: SceneProps<IslandHots
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.4, 0.8, 0.2]} />
         <color attach="background" args={["#ffb978"]} />
         <fog attach="fog" args={["#ffcf9a", 16, 34]} />
@@ -253,7 +253,7 @@ export function VaultScene({ onHit, onHover, hover, st, hazard }: SceneProps<Vau
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.4, 0.8, 0.2]} />
         <color attach="background" args={["#060509"]} />
         <fog attach="fog" args={["#060509", 13, 26]} />
@@ -329,7 +329,7 @@ export function LairScene({ onHit, onHover, hover, st, hazard }: SceneProps<Lair
   const hot = !st.solved;
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.2, 0.8, 0.2]} />
         <color attach="background" args={["#08040a"]} />
         <fog attach="fog" args={["#08040a", 13, 26]} />
@@ -409,7 +409,7 @@ export function BasementScene({ onHit, onHover, hover, st, hazard }: SceneProps<
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.2, 0.8, 0.2]} />
         <color attach="background" args={["#050608"]} />
         <fog attach="fog" args={["#050608", 12, 25]} />
@@ -478,7 +478,7 @@ export function ArchiveScene({ onHit, onHover, hover, st, hazard }: SceneProps<A
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.2, 0.8, 0.2]} />
         <color attach="background" args={["#07060a"]} />
         <fog attach="fog" args={["#07060a", 12, 25]} />
@@ -542,7 +542,7 @@ export function HoldersScene({ onHit, onHover, hover, st, hazard }: SceneProps<H
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[-0.2, 0.8, 0.2]} />
         <color attach="background" args={["#08060c"]} />
         <fog attach="fog" args={["#08060c", 12, 25]} />
@@ -608,7 +608,7 @@ export function HandshakeScene({ onHit, onHover, hover, st, hazard }: SceneProps
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[0, 0.8, 0]} />
         <color attach="background" args={["#0c0806"]} />
         <fog attach="fog" args={["#0c0806", 12, 25]} />
@@ -671,7 +671,7 @@ export function FortressScene({ onHit, onHover, hover, st, hazard }: SceneProps<
   const RED = "#ff2a4a";
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[0, 0.8, 0]} />
         <color attach="background" args={["#0a0610"]} />
         <fog attach="fog" args={["#0a0610", 12, 25]} />
@@ -740,7 +740,7 @@ export function CanonScene({ onHit, onHover, hover, st, hazard }: SceneProps<Can
   const fork = !st.solved;
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[0, 0.8, 0]} />
         <color attach="background" args={["#08080c"]} />
         <fog attach="fog" args={["#08080c", 12, 25]} />
@@ -829,7 +829,7 @@ export function ReceiptScene({ onHit, onHover, hover, st, hazard }: SceneProps<R
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.55 }} style={{ imageRendering: "pixelated" }} onPointerMissed={() => onHover(null)}>
         <FixedCam at={[0, 0.8, 0]} />
         <color attach="background" args={["#0c0906"]} />
         <fog attach="fog" args={["#0c0906", 12, 25]} />
