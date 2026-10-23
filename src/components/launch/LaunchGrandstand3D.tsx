@@ -263,7 +263,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <ambientLight intensity={0.7} />
       <directionalLight position={[6, 14, -8]} intensity={1.3} />
       <hemisphereLight args={["#9fb6ff", "#2a1a0a", 0.4]} />
-      <CameraRig focus={focusSeat} view={view} mySeat={mySeat} />
+      <CameraRig focus={focusSeat} view={view} mySeat={mySeat} showScreen={!!picked} />
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01}><planeGeometry args={[120, 120]} /><meshLambertMaterial color="#14171c" /></mesh>
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} />
@@ -274,7 +274,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   );
 }
 
-function CameraRig({ focus, view, mySeat }: { focus: number | null; view: GrandstandView; mySeat: number | null }) {
+function CameraRig({ focus, view, mySeat, showScreen }: { focus: number | null; view: GrandstandView; mySeat: number | null; showScreen: boolean }) {
   const target = useRef(new THREE.Vector3(0, 3, 13));
   const eye = useRef(new THREE.Vector3(0, 10, -6));
   useFrame(({ camera, clock }, d) => {
@@ -289,6 +289,10 @@ function CameraRig({ focus, view, mySeat }: { focus: number | null; view: Grands
       // Stand between the stage and the seat, above the stage backdrop, so nothing blocks the view.
       const pull = Math.max(0.55, 1 - 5 / Math.hypot(x, z));
       eye.current.set(x * pull, y + 6, z * pull);
+    } else if (view === "stage" && showScreen) {
+      // A Bitmapper is picked: face the jumbotron from the open floor in front of the stands.
+      const t = clock.elapsedTime * 0.2;
+      eye.current.set(Math.sin(t) * 1, 6.5, 12.5); target.current.set(0, 1.2, 3); fov = 55;
     } else if (view === "stage") {
       const t = clock.elapsedTime * 0.15;
       eye.current.set(Math.sin(t) * 3, 5, -3); target.current.set(0, 5, 16); fov = 55;
