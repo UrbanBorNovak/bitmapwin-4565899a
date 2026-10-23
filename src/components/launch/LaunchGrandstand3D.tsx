@@ -6,6 +6,7 @@ import { SafeHtml } from "@/components/game/SafeHtml";
 import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
+import { UNREASONABLES_CAST } from "@/lib/biternam-cast";
 import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 
 const ROWS = 24;
@@ -404,6 +405,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} sponsors={sponsors} />
       <StageVideo />
+      {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.avatar.skin.slice(3)} i={i} />)}
       <PopcornLayer throws={popcornThrows} fromSeat={mySeat} onHit={onPopcornHit} />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
@@ -450,6 +452,35 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
     im.instanceMatrix.needsUpdate = true;
   });
   return <instancedMesh ref={mesh} args={[undefined, undefined, N]}><boxGeometry /><meshBasicMaterial color="#ffe28a" /></instancedMesh>;
+}
+
+/** STAFF: THE UNREASONABLES patrol the floor between the stage and the stands, wearing their real Pixel faces. */
+const STAFF = UNREASONABLES_CAST.slice(0, 6);
+function StaffWalker({ ins, i }: { ins: string; i: number }) {
+  const face = useFace(ins);
+  const g = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const o = g.current; if (!o) return;
+    const t = clock.elapsedTime * 0.12 + i * 1.7;
+    const r = 5.6 + (i % 2) * 0.9, a = Math.sin(t) * 1.15;
+    const x = Math.sin(a) * r, z = 3.6 + Math.cos(a) * (r - 3.6) ;
+    const da = Math.cos(t) * 0.12;
+    const dx = Math.cos(a) * r * da, dz = -Math.sin(a) * (r - 3.6) * da;
+    o.position.set(x, Math.abs(Math.sin(clock.elapsedTime * 6 + i)) * 0.06, z);
+    if (Math.hypot(dx, dz) > 1e-4) o.rotation.y = Math.atan2(-dx, -dz);
+  });
+  return (
+    <group ref={g}>
+      <mesh position-y={0.35}><boxGeometry args={[0.5, 0.55, 0.32]} /><meshLambertMaterial color="#1b1f26" /></mesh>
+      <mesh position={[0, 0.42, -0.17]}><boxGeometry args={[0.4, 0.12, 0.01]} /><meshBasicMaterial color="#f7931a" /></mesh>
+      <mesh position-y={0.9}>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        {[0, 1, 2, 3, 4].map((k) => <meshLambertMaterial key={k} attach={`material-${k}`} color="#c9a27a" />)}
+        <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
+      </mesh>
+      <mesh position-y={1.2}><boxGeometry args={[0.54, 0.1, 0.54]} /><meshLambertMaterial color="#f7931a" /></mesh>
+    </group>
+  );
 }
 
 function CameraRig({ focus, view, mySeat, showScreen }: { focus: number | null; view: GrandstandView; mySeat: number | null; showScreen: boolean }) {
