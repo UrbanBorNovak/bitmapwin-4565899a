@@ -70,3 +70,26 @@ export function refreshedAvatar(
 ) {
   return scan ? seatAvatarFrom(address, scan) : current;
 }
+
+/** Founders Row: the first 100 seats. */
+export const FOUNDERS_ROW = 100;
+export const VIP_GLASS_MS = 10 * 60 * 1000;
+
+export function loungeMessage(address: string, issuedAt: string): string {
+  return [
+    "BITMAPWIN BACKSTAGE — OPEN THE VIP LOUNGE",
+    `ADDRESS: ${address}`,
+    `ISSUED: ${issuedAt}`,
+    "THIS SIGNATURE MOVES NO FUNDS AND COSTS NO FEE.",
+  ].join("\n");
+}
+
+/** The lounge opens only for a wallet that already holds a seat. */
+export function loungeSeat(seats: { seat: number; address: string }[], address: string) {
+  const a = address.trim().toLowerCase();
+  return seats.find((s) => s.address.toLowerCase() === a) ?? null;
+}
+
+export function foundersOf<T extends { seat: number }>(seats: T[]): T[] {
+  return seats.filter((s) => s.seat <= FOUNDERS_ROW).sort((a, b) => a.seat - b.seat);
+}
