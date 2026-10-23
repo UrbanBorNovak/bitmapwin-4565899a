@@ -47,6 +47,7 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as KennelsRouteImport } from './routes/kennels'
 import { Route as Land101RouteImport } from './routes/land-101'
+import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -357,6 +358,11 @@ const KennelsRoute = KennelsRouteImport.update({
 const Land101Route = Land101RouteImport.update({
   id: '/land-101',
   path: '/land-101',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaunchRoute = LaunchRouteImport.update({
+  id: '/launch',
+  path: '/launch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeasesRoute = LeasesRouteImport.update({
@@ -1009,6 +1015,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/kennels': typeof KennelsRoute
   '/land-101': typeof Land101Route
+  '/launch': typeof LaunchRoute
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
@@ -1168,6 +1175,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/kennels': typeof KennelsRoute
   '/land-101': typeof Land101Route
+  '/launch': typeof LaunchRoute
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
@@ -1328,6 +1336,7 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/kennels': typeof KennelsRoute
   '/land-101': typeof Land101Route
+  '/launch': typeof LaunchRoute
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
@@ -1491,6 +1500,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/kennels'
     | '/land-101'
+    | '/launch'
     | '/leases'
     | '/map'
     | '/marketplace'
@@ -1650,6 +1660,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/kennels'
     | '/land-101'
+    | '/launch'
     | '/leases'
     | '/map'
     | '/marketplace'
@@ -1809,6 +1820,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/kennels'
     | '/land-101'
+    | '/launch'
     | '/leases'
     | '/map'
     | '/marketplace'
@@ -1971,6 +1983,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   KennelsRoute: typeof KennelsRoute
   Land101Route: typeof Land101Route
+  LaunchRoute: typeof LaunchRoute
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
@@ -2314,6 +2327,13 @@ declare module '@tanstack/react-router' {
       path: '/land-101'
       fullPath: '/land-101'
       preLoaderRoute: typeof Land101RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/launch': {
+      id: '/launch'
+      path: '/launch'
+      fullPath: '/launch'
+      preLoaderRoute: typeof LaunchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leases': {
@@ -3352,6 +3372,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   KennelsRoute: KennelsRoute,
   Land101Route: Land101Route,
+  LaunchRoute: LaunchRoute,
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,

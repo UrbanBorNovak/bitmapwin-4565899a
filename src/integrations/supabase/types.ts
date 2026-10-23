@@ -2749,6 +2749,33 @@ export type Database = {
         }
         Relationships: []
       }
+      launch_seats: {
+        Row: {
+          address: string
+          created_at: string
+          held_bitmap: number | null
+          pixel_id: string
+          pixel_source: string
+          seat_number: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          held_bitmap?: number | null
+          pixel_id: string
+          pixel_source?: string
+          seat_number?: never
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          held_bitmap?: number | null
+          pixel_id?: string
+          pixel_source?: string
+          seat_number?: never
+        }
+        Relationships: []
+      }
       lease_offers: {
         Row: {
           bitmap_height: number
