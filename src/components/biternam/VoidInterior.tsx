@@ -106,7 +106,7 @@ export function VoidInterior({ onHit, onHover, hover, hasBlock, confirmed, shaki
   function Shaker() { useFrame(({ clock }) => { if (shake.current) shake.current.position.x = shaking ? Math.sin(clock.elapsedTime * 60) * 0.06 : 0; }); return null; }
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} gl={{ antialias: false }} camera={{ position: [8, 8, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }}
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} gl={{ antialias: false }} camera={{ position: [8, 8, 11], fov: 42, zoom: 1.75 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
         <FixedCam />
         <Shaker />

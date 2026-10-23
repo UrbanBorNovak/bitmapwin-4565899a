@@ -91,7 +91,7 @@ export function OutpostInterior({ onHit, onHover, hover, hasSuit, suited, blasti
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [7, 7.5, 9], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }}
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [7, 7.5, 9], fov: 42, zoom: 1.75 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
         <FixedCam />
         <color attach="background" args={["#14100c"]} />

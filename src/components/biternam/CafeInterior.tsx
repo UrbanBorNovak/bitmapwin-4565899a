@@ -34,7 +34,7 @@ const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
   },
 });
 
-function FixedCam() { useFrame(({ camera }) => camera.lookAt(-0.4, -0.4, 1.2)); return null; }
+function FixedCam() { useFrame(({ camera }) => camera.lookAt(-0.6, 0.5, 0.4)); return null; }
 
 function Person({ body, skin, hot, shades }: { body: string; skin: string; hot: boolean; shades?: boolean }) {
   return (
@@ -83,7 +83,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
   const hp = { onHit, onHover };
   return (
     <div className="relative h-full w-full">
-      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.5 }} style={{ imageRendering: "pixelated" }}
+      <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.75 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
         <FixedCam />
         <color attach="background" args={["#100c0a"]} />
