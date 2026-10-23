@@ -1094,6 +1094,51 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_sponsorships: {
+        Row: {
+          created_at: string
+          ends_at: string
+          handle: string
+          id: string
+          media: string
+          media_kind: string
+          paid_sats: number
+          pay_txid: string
+          payer_address: string
+          slot: string
+          starts_at: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          handle?: string
+          id?: string
+          media: string
+          media_kind: string
+          paid_sats: number
+          pay_txid: string
+          payer_address: string
+          slot: string
+          starts_at?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          handle?: string
+          id?: string
+          media?: string
+          media_kind?: string
+          paid_sats?: number
+          pay_txid?: string
+          payer_address?: string
+          slot?: string
+          starts_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
       bss_block_scan: {
         Row: {
           block_height: number
@@ -2757,6 +2802,7 @@ export type Database = {
           pixel_id: string
           pixel_source: string
           seat_number: number
+          ticket_inscription_id: string | null
         }
         Insert: {
           address: string
@@ -2765,6 +2811,7 @@ export type Database = {
           pixel_id: string
           pixel_source?: string
           seat_number?: never
+          ticket_inscription_id?: string | null
         }
         Update: {
           address?: string
@@ -2773,6 +2820,7 @@ export type Database = {
           pixel_id?: string
           pixel_source?: string
           seat_number?: never
+          ticket_inscription_id?: string | null
         }
         Relationships: []
       }

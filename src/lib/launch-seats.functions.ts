@@ -7,7 +7,7 @@ const addressSchema = z
   .trim()
   .regex(/^(bc1[a-z0-9]{8,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,39})$/, "Not a valid Bitcoin address");
 
-type Row = { seat_number: number; address: string; pixel_id: string; pixel_source: string; held_bitmap: number | null; created_at: string };
+type Row = { seat_number: number; address: string; pixel_id: string; pixel_source: string; held_bitmap: number | null; created_at: string; ticket_inscription_id?: string | null };
 const toSeat = (r: Row): LaunchSeat => ({
   seat: r.seat_number,
   address: r.address,
@@ -15,6 +15,7 @@ const toSeat = (r: Row): LaunchSeat => ({
   pixelSource: r.pixel_source === "held" ? "held" : "assigned",
   heldBitmap: r.held_bitmap,
   createdAt: r.created_at,
+  ticketId: r.ticket_inscription_id ?? null,
 });
 
 async function publicClient() {
@@ -37,7 +38,7 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
   const sb = await publicClient();
   const { data, error } = await sb
     .from("launch_seats")
-    .select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at")
+    .select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at,ticket_inscription_id")
     .order("seat_number")
     .limit(1000);
   if (error) return { seats: [] as LaunchSeat[], error: "Seats unavailable" };

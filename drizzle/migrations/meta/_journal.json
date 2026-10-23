@@ -204,6 +204,13 @@
       "when": 1792716000000,
       "tag": "0028_launch_seats_restart_after_jumbotron_test",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792717270346,
+      "tag": "0029_launch_tickets_and_sponsor_slots",
+      "breakpoints": true
     }
   ]
 }

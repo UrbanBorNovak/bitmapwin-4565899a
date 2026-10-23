@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { seatPlace, type LaunchSeat } from "@/lib/launch-seats";
+import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 
 const ROWS = 24;
 const STEP_H = 0.55;
@@ -219,8 +220,24 @@ function Motes() {
 }
 
 /** Stage jumbotron: CRT-style canvas showing the inspected Bitmapper. */
-function Jumbotron({ seat }: { seat: LaunchSeat | null }) {
+function useSponsorImage(slide: SponsorSlide | null): HTMLImageElement | null {
+  const [img, setImg] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    setImg(null); if (!slide) return;
+    const i = new Image(); i.crossOrigin = "anonymous";
+    i.onload = () => setImg(i);
+    i.src = slide.kind === "inscription" ? `https://ordinals.com/content/${slide.media}` : slide.media;
+    return () => { i.onload = null; };
+  }, [slide]);
+  return img;
+}
+
+function Jumbotron({ seat, sponsors = [] }: { seat: LaunchSeat | null; sponsors?: SponsorSlide[] }) {
   const face = useFace(seat?.pixelId ?? "");
+  const [tick, setTick] = useState(0);
+  useEffect(() => { if (seat || !sponsors.length) return; const t = setInterval(() => setTick((x) => x + 1), 8000); return () => clearInterval(t); }, [seat, sponsors.length]);
+  const ad = !seat && sponsors.length ? sponsors[tick % sponsors.length]! : null;
+  const adImg = useSponsorImage(ad);
   const { tex, canvas } = useMemo(() => {
     const c = document.createElement("canvas"); c.width = 512; c.height = 256;
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter;
@@ -230,6 +247,14 @@ function Jumbotron({ seat }: { seat: LaunchSeat | null }) {
     const g = canvas.getContext("2d")!;
     g.fillStyle = "#06090d"; g.fillRect(0, 0, 512, 256);
     g.fillStyle = "#22d3ee"; g.font = "bold 22px monospace"; g.fillText("BITMAPWIN · LAUNCH FEED", 20, 36);
+    if (ad) {
+      g.fillStyle = "#f7931a"; g.font = "bold 18px monospace"; g.fillText("● SPONSORED BROADCAST", 20, 64);
+      if (adImg) { try { const k = Math.min(180 / adImg.width, 180 / adImg.height); g.drawImage(adImg, 492 - adImg.width * k, 48, adImg.width * k, adImg.height * k); } catch { /* tainted */ } }
+      g.fillStyle = "#ffffff"; g.font = "bold 34px monospace"; g.fillText(ad.title.slice(0, 16), 20, 130);
+      g.fillStyle = "#22d3ee"; g.font = "20px monospace"; if (ad.handle) g.fillText(ad.handle.slice(0, 22), 20, 170);
+      g.fillStyle = "rgba(0,0,0,0.35)"; for (let y = 0; y < 256; y += 4) g.fillRect(0, y, 512, 2);
+      tex.needsUpdate = true; return;
+    }
     g.fillStyle = "#f7931a"; g.font = "bold 64px monospace";
     g.fillText(seat ? `SEAT #${seat.seat}` : "STAND BY", 20, 120);
     g.fillStyle = "#cfd6df"; g.font = "20px monospace";
@@ -240,7 +265,7 @@ function Jumbotron({ seat }: { seat: LaunchSeat | null }) {
     } else g.fillText("TAP A BITMAPPER", 20, 170);
     g.fillStyle = "rgba(0,0,0,0.35)"; for (let y = 0; y < 256; y += 4) g.fillRect(0, y, 512, 2);
     tex.needsUpdate = true;
-  }, [seat, canvas, tex]);
+  }, [seat, canvas, tex, ad, adImg]);
   return (
     <group position={[0, 1.6, 3.03]}>
       <mesh><planeGeometry args={[5.2, 2.6]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
@@ -251,9 +276,9 @@ function Jumbotron({ seat }: { seat: LaunchSeat | null }) {
 
 export type GrandstandView = "diorama" | "stage" | "seat";
 
-export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null }: {
+export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null, sponsors = [] }: {
   seats: LaunchSeat[]; myAddress: string | null; selected: number | null; onPick: (s: LaunchSeat) => void; focusSeat: number | null;
-  view?: GrandstandView; mySeat?: number | null;
+  view?: GrandstandView; mySeat?: number | null; sponsors?: SponsorSlide[];
 }) {
   const picked = seats.find((s) => s.seat === selected) ?? null;
   return (
@@ -266,7 +291,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <CameraRig focus={focusSeat} view={view} mySeat={mySeat} showScreen={!!picked} />
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01}><planeGeometry args={[120, 120]} /><meshLambertMaterial color="#14171c" /></mesh>
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
-      <Jumbotron seat={picked} />
+      <Jumbotron seat={picked} sponsors={sponsors} />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
       ))}

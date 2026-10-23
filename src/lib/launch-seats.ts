@@ -16,6 +16,7 @@ export type LaunchSeat = {
   pixelSource: "held" | "assigned";
   heldBitmap: number | null;
   createdAt: string;
+  ticketId?: string | null;
 };
 
 export function seatMessage(address: string, issuedAt: string): string {
