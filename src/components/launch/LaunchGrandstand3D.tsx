@@ -30,7 +30,7 @@ function Stands() {
         return (
           <mesh key={r} position={[0, r * STEP_H, 0]} rotation-y={Math.PI - spread / 2}>
             <cylinderGeometry args={[radius + STEP_D / 2, radius + STEP_D / 2, STEP_H, 48, 1, false, 0, spread]} />
-            <meshLambertMaterial color={r % 2 ? "#23262d" : "#1b1d22"} flatShading />
+            <meshLambertMaterial color={r % 2 ? "#4a4f5a" : "#3a3e47"} flatShading />
           </mesh>
         );
       })}
