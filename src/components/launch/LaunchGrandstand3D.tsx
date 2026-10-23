@@ -531,9 +531,10 @@ function CameraRig({ focus, view, mySeat, showScreen }: { focus: number | null; 
     } else if (focus) {
       const [x, y, z] = seatPos(focus);
       target.current.set(x, y + 0.8, z);
-      // Stand between the stage and the seat, above the stage backdrop, so nothing blocks the view.
-      const pull = Math.max(0.55, 1 - 5 / Math.hypot(x, z));
-      eye.current.set(x * pull, y + 6, z * pull);
+      // Close-up from the stage side, just above the row in front, so the Pixel face reads.
+      target.current.set(x, y + 0.9, z);
+      const pull = Math.max(0.6, 1 - 3.2 / Math.hypot(x, z));
+      eye.current.set(x * pull, y + 2.4, z * pull);
     } else if (view === "stage" && showScreen) {
       // A Bitmapper is picked: face the jumbotron from the open floor in front of the stands.
       const t = clock.elapsedTime * 0.2;
