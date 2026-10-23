@@ -71,3 +71,22 @@ export const claimLaunchSeatFn = createServerFn({ method: "POST" })
     const { seatVerifiedAddress } = await import("@/lib/launch-seats.server");
     return seatVerifiedAddress(supabaseAdmin, data.address, scanned);
   });
+
+/** Backstage door: proves the signer holds a seated wallet. Nothing is written. */
+export const enterLoungeFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ address: addressSchema, issuedAt: z.string().max(40), signature: z.string().min(8).max(2000) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { loungeMessage, SEAT_MESSAGE_TTL_MS } = await import("@/lib/launch-seats");
+    const issued = Date.parse(data.issuedAt);
+    if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > SEAT_MESSAGE_TTL_MS) return { ok: false as const, error: "Signature expired — try again" };
+    const { Verifier } = await import("bip322-js");
+    let valid = false;
+    try { valid = Verifier.verifySignature(data.address, loungeMessage(data.address, data.issuedAt), data.signature); } catch { valid = false; }
+    if (!valid) return { ok: false as const, error: "Signature does not match this address" };
+    const sb = await publicClient();
+    const { data: row } = await sb.from("launch_seats").select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at,ticket_inscription_id").ilike("address", data.address).maybeSingle();
+    if (!row) return { ok: false as const, error: "NO_SEAT" };
+    return { ok: true as const, seat: toSeat(row as Row) };
+  });
