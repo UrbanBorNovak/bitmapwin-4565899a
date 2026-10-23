@@ -59,9 +59,10 @@ function LaunchPage() {
   const [musicOn, setMusicOn] = useState(false);
   const [throws, setThrows] = useState(0);
   const [hits, setHits] = useState(0);
-  useEffect(() => () => stopCafeMusic(), []);
+  useEffect(() => () => { stopCafeMusic(); stopCrowd(); }, []);
   const stageTip = useTipBanner("launch");
-  const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
+  useEffect(() => { if (stageTip) { playArena("airhorn"); window.setTimeout(() => playArena("coin"), 700); } }, [stageTip]);
+  const blip = () => playArena("seat");
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
   const stepSeat = (dir: number) => {
     if (!seats.length) return;
