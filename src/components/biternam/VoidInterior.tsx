@@ -147,7 +147,7 @@ export function VoidInterior({ onHit, onHover, hover, hasBlock, confirmed, shaki
             {Array.from({ length: 10 }, (_, i) => <mesh key={i} position={[0, 0.3 + i * 0.42, 0]}><boxGeometry args={[0.6, 0.05, 0.05]} /><meshStandardMaterial color={RUST} /></mesh>)}
             <mesh position-y={4.5}><boxGeometry args={[1.2, 0.1, 1.2]} /><meshBasicMaterial color="#ffd08a" /></mesh>
           </Hot>
-          <Hot id="ghost" {...hp} position={[-2.8, 0, 0.4]} rotation={[0, 0.6, 0]}><Ghost hot={hover === "ghost"} /></Hot>
+          <Hot id="ghost" {...hp} position={[-2.3, 0, 0.6]} rotation={[0, 0.6, 0]}><Ghost hot={hover === "ghost"} /></Hot>
           <Hot id="terminal" {...hp} position={[0.6, 0, -0.3]}><Terminal hot={hover === "terminal"} confirmed={confirmed} /></Hot>
           {!hasBlock && !confirmed ? (
             <Hot id="orphan" {...hp} position={[-1, 1.4, 0.6]}>
