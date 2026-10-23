@@ -4,6 +4,7 @@ import { Globe, Grid3x3, Puzzle, Fingerprint, Hammer, Search, Sparkles, Swords, 
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
+import { isTransitPath } from "@/components/BitTransitBar";
 
 const PILLARS = [
   { to: "/oasis", label: "WORLD", icon: Globe },
@@ -28,7 +29,7 @@ export function PillarDock() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const immersive = path.startsWith("/oasis");
+  const immersive = path.startsWith("/oasis") || isTransitPath(path);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
