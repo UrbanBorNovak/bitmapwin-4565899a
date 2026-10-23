@@ -242,7 +242,7 @@ function Jumbotron({ seat }: { seat: LaunchSeat | null }) {
     tex.needsUpdate = true;
   }, [seat, canvas, tex]);
   return (
-    <group position={[0, 1.6, 1.0]}>
+    <group position={[0, 1.6, 3.03]}>
       <mesh><planeGeometry args={[5.2, 2.6]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
       {seat && face && <mesh position={[1.75, 0, 0.01]}><planeGeometry args={[1.3, 1.3]} /><meshBasicMaterial map={face} toneMapped={false} /></mesh>}
     </group>
@@ -266,7 +266,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <CameraRig focus={focusSeat} view={view} mySeat={mySeat} />
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01}><planeGeometry args={[120, 120]} /><meshLambertMaterial color="#14171c" /></mesh>
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
-      <group position={[0, 0, 2]} rotation-y={Math.PI}><group position={[0, 0, -0.78]} rotation-y={Math.PI}><Jumbotron seat={picked} /></group></group>
+      <Jumbotron seat={picked} />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
       ))}
