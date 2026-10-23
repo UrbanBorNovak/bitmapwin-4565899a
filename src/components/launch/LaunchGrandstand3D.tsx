@@ -282,13 +282,13 @@ function CameraRig({ focus, view, mySeat }: { focus: number | null; view: Grands
     if (view === "seat" && mySeat) {
       // Sit in my seat: eye at head height, looking at the stage.
       const [x, y, z] = seatPos(mySeat);
-      eye.current.set(x * 0.97, y + 1.0, z * 0.97); target.current.set(0, 1.6, 1.5); fov = 60;
+      eye.current.set(x * 0.94, y + 1.7, z * 0.94); target.current.set(0, 1.6, 1.5); fov = 60;
     } else if (focus) {
       const [x, y, z] = seatPos(focus);
       target.current.set(x, y + 0.8, z);
       // Stand between the stage and the seat, above the stage backdrop, so nothing blocks the view.
-      const pull = Math.max(0.2, 1 - 6 / Math.hypot(x, z));
-      eye.current.set(x * pull, y + 4.5, z * pull);
+      const pull = Math.max(0.55, 1 - 5 / Math.hypot(x, z));
+      eye.current.set(x * pull, y + 6, z * pull);
     } else if (view === "stage") {
       const t = clock.elapsedTime * 0.15;
       eye.current.set(Math.sin(t) * 3, 5, -3); target.current.set(0, 5, 16); fov = 55;
