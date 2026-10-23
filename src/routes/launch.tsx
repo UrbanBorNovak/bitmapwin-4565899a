@@ -157,21 +157,21 @@ function LaunchPage() {
               view={view} mySeat={mine?.seat ?? null} sponsors={stageAds} onPick={(s) => pickSeat(s)} />
           </Suspense>
         </ClientOnly>
-        <div className="pointer-events-none absolute left-3 top-3 font-mono text-[10px] text-signal">
+        <div className="pointer-events-none absolute left-3 top-3 z-20 font-mono text-[10px] text-signal">
           <div>CINDY-COM · LAUNCH FEED ● LIVE</div>
           <div className="text-muted-foreground">CAP {count}/{LAUNCH_CAPACITY} · CAM {view.toUpperCase()}</div>
         </div>
         <button type="button" onClick={() => { blip(); setTipOpen(true); }}
-          className="glass-panel absolute right-3 top-3 rounded border border-primary/70 px-2 py-1 font-mono text-[10px] text-primary hover:border-primary">[ ⚡ TIP JUMBOTRON ]</button>
+          className="glass-panel absolute z-20 right-3 top-3 rounded border border-primary/70 px-2 py-1 font-mono text-[10px] text-primary hover:border-primary">[ ⚡ TIP JUMBOTRON ]</button>
         {stageTip ? (
-          <div data-testid="stage-tip-banner" className="pointer-events-none absolute inset-x-0 bottom-0 bg-primary px-3 py-2 text-center font-mono text-sm font-bold tracking-wider text-primary-foreground">
+          <div data-testid="stage-tip-banner" className="pointer-events-none absolute z-20 inset-x-0 bottom-0 bg-primary px-3 py-2 text-center font-mono text-sm font-bold tracking-wider text-primary-foreground">
             LIVE TIP · {tipLine(stageTip)}
           </div>
         ) : null}
         <ZapDialog open={tipOpen} onOpenChange={setTipOpen} to="THE JUMBOTRON" address={CAFE_TIP_ADDRESS} comment="Tip from the Launch Grandstand · BITMAPWIN"
           defaultSats={QUICK_TIP_SATS} presets={[1000, 2100, 5000]} onchainAddress={DONATION_ADDRESS} askName
           onPaid={(s, who) => celebrateTip(who, s, "launch")} />
-        <div className="absolute left-3 right-3 top-12 flex flex-wrap gap-2 font-mono text-[10px]">
+        <div className="absolute z-20 left-3 right-3 top-12 flex flex-wrap gap-2 font-mono text-[10px]">
           {([["diorama", "2.5D DIORAMA"], ["stage", "STAGE VIEW"], ["seat", "SIT IN MY SEAT"]] as const).map(([v, label]) => (
             <button key={v} disabled={v === "seat" && !mine}
               className={`glass-panel rounded border px-2 py-1 disabled:opacity-40 ${view === v && !focus ? "border-signal text-signal" : "border-border"}`}
