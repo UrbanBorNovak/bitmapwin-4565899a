@@ -25,7 +25,6 @@ export const Route = createFileRoute("/biternam_/lounge")({
   component: LoungePage,
 });
 
-const PASS_KEY = "biternam.lounge.seat";
 const TRACKS: { mood: RoomMood; name: string }[] = [
   { mood: "cafe", name: "BIT-CAFÉ BLUES" }, { mood: "arcade", name: "INSERT BLOCK" }, { mood: "island", name: "OFFSHORE ATOLL" },
   { mood: "safehouse", name: "RAIN ON 1138" }, { mood: "studio", name: "BREAKING BLOCK" }, { mood: "canon", name: "FORGERY WALTZ" },
@@ -42,7 +41,6 @@ function LoungePage() {
   const [noSeat, setNoSeat] = useState(false);
   const [track, setTrack] = useState<number | null>(null);
 
-  useEffect(() => { try { const s = sessionStorage.getItem(PASS_KEY); if (s) setSeat(JSON.parse(s) as LaunchSeat); } catch { /* none */ } }, []);
   useEffect(() => () => stopCafeMusic(), []);
 
   const knock = async () => {
@@ -55,7 +53,7 @@ function LoungePage() {
       const r = await enter({ data: { address, issuedAt, signature } });
       if (!r.ok) { playSfx("deny"); if (r.error === "NO_SEAT") setNoSeat(true); else setMsg(r.error); return; }
       playSfx("pickup"); setTimeout(() => playSfx("door"), 350);
-      setSeat(r.seat); sessionStorage.setItem(PASS_KEY, JSON.stringify(r.seat));
+      setSeat(r.seat);
     } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   };
 
@@ -107,7 +105,7 @@ function LoungePage() {
           </div>
           <div className="flex gap-2 text-[11px]">
             <Link to="/biternam/cafe" className="rounded border border-border px-3 py-1 hover:border-signal">[ BIT-CAFÉ ]</Link>
-            <button type="button" onClick={() => { sessionStorage.removeItem(PASS_KEY); stopCafeMusic(); setSeat(null); }} className="rounded border border-border px-3 py-1 hover:border-signal">[ LEAVE ]</button>
+            <button type="button" onClick={() => { stopCafeMusic(); setSeat(null); }} className="rounded border border-border px-3 py-1 hover:border-signal">[ LEAVE ]</button>
           </div>
         </div>
 
