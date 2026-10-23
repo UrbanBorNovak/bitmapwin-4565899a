@@ -139,24 +139,25 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
 }
 
 function CameraRig({ focus }: { focus: number | null }) {
-  const target = useRef(new THREE.Vector3(0, 7, 16));
+  const target = useRef(new THREE.Vector3(0, 3, 13));
   const eye = useRef(new THREE.Vector3(0, 10, -6));
   useFrame(({ camera, clock }, d) => {
     if (focus) {
       const [x, y, z] = seatPos(focus);
       target.current.set(x, y + 0.8, z);
       // Stand between the stage and the seat, above the stage backdrop, so nothing blocks the view.
-      const pull = Math.max(0.45, 1 - 4.5 / Math.hypot(x, z));
-      eye.current.set(x * pull, y + 3.2, z * pull);
+      const pull = Math.max(0.2, 1 - 6 / Math.hypot(x, z));
+      eye.current.set(x * pull, y + 4.5, z * pull);
     } else {
       const t = clock.elapsedTime * 0.08;
-      target.current.set(0, 7, 16);
-      eye.current.set(Math.sin(t) * 5, 8, -8);
+      target.current.set(0, 3, 13);
+      eye.current.set(Math.sin(t) * 5, 14, -10);
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
+    const pc = camera as THREE.PerspectiveCamera;
+    if (pc.fov !== 50) { pc.fov = 50; pc.updateProjectionMatrix(); }
     camera.position.lerp(eye.current, k);
     camera.lookAt(target.current);
-    (window as unknown as { __cam?: number[] }).__cam = [camera.position.x, camera.position.y, camera.position.z, target.current.x, target.current.y, target.current.z];
   });
   return null;
 }
