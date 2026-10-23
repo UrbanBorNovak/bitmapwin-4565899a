@@ -50,7 +50,7 @@ export const claimLaunchSeatFn = createServerFn({ method: "POST" })
     z.object({ address: addressSchema, issuedAt: z.string().max(40), signature: z.string().min(8).max(2000) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const { seatMessage, SEAT_MESSAGE_TTL_MS, LAUNCH_CAPACITY } = await import("@/lib/launch-seats");
+    const { seatMessage, SEAT_MESSAGE_TTL_MS } = await import("@/lib/launch-seats");
     const issued = Date.parse(data.issuedAt);
     if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > SEAT_MESSAGE_TTL_MS) {
       return { ok: false as const, error: "Signature expired — try again" };
