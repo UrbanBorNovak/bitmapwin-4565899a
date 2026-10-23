@@ -69,6 +69,12 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
     for (const w of wear ?? []) { const k = w.address.toLowerCase(); by.set(k, [...(by.get(k) ?? []), w]); }
     for (const s of seats) { const rows = by.get(s.address.toLowerCase()) ?? []; const w = wornFrom(rows); s.hat = w.hat; s.food = w.food; s.owned = rows.map((r) => r.item); }
   } catch { /* wardrobe is cosmetic */ }
+  try {
+    const { data: badges } = await sb.from("membership_badges").select("address,active,expires_at").eq("active", true).limit(5000);
+    const now = Date.now();
+    const members = new Set((badges ?? []).filter((b) => b.expires_at && Date.parse(b.expires_at) > now).map((b) => b.address.toLowerCase()));
+    for (const s of seats) s.member = members.has(s.address.toLowerCase());
+  } catch { /* member look is cosmetic */ }
   return { seats, error: null as string | null };
 });
 

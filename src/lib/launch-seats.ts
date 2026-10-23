@@ -23,6 +23,8 @@ export type LaunchSeat = {
   owned?: string[];
   clubHair?: "marauders" | "emporium" | null;
   clubProof?: string | null;
+  /** Active MEMBER (JIGGLYPUFF holder or paid/trait member) from the public membership badge. */
+  member?: boolean;
 };
 
 /** Provenance gear: each piece is earned only by a recorded fact, never chosen. */

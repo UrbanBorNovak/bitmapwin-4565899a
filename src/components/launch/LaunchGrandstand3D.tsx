@@ -147,7 +147,9 @@ function Snack({ id }: { id: string }) {
 function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: boolean; selected: boolean; onPick: (s: LaunchSeat) => void }) {
   const face = useFace(seat.pixelId);
   const [x, y, z, a] = seatPos(seat.seat);
-  const body = useMemo(() => hue(seat.address), [seat.address]);
+  const zombie = !!seat.member;
+  const body = useMemo(() => (seat.member ? "#2f4a33" : hue(seat.address)), [seat.address, seat.member]);
+  const skin = zombie ? "#7fa36a" : "#c9a27a";
   const g = useRef<THREE.Group>(null);
   const phase = seat.seat * 0.7;
   useFrame(({ clock }) => {
@@ -156,11 +158,13 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
   return (
     <group ref={g} position={[x, y, z]} rotation-y={a + Math.PI} onClick={(e) => { e.stopPropagation(); onPick(seat); }}>
       <mesh position-y={0.35}><boxGeometry args={[0.5, 0.55, 0.32]} /><meshLambertMaterial color={body} /></mesh>
+      {zombie && <mesh rotation-x={-Math.PI / 2} position-y={0.02}><ringGeometry args={[0.3, 0.42, 16]} /><meshBasicMaterial color="#4ade80" transparent opacity={0.7} /></mesh>}
+      {zombie && [-0.3, 0.3].map((dx) => <mesh key={dx} position={[dx, 0.55, 0.3]}><boxGeometry args={[0.1, 0.1, 0.45]} /><meshLambertMaterial color={skin} /></mesh>)}
       <mesh position-y={0.9}>
         <boxGeometry args={[0.5, 0.5, 0.5]} />
-        {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color="#c9a27a" />)}
-        <meshLambertMaterial attach="material-4" color="#c9a27a" />
-        <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
+        {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color={skin} />)}
+        <meshLambertMaterial attach="material-4" color={skin} />
+        <meshLambertMaterial attach="material-5" map={face} color={face ? (zombie ? "#a8e6a0" : "#ffffff") : skin} />
       </mesh>
       {seat.gear?.includes("ancient") && (<>
         <mesh position={[0, 1.02, 0.26]}><boxGeometry args={[0.52, 0.1, 0.04]} /><meshLambertMaterial color="#6b4a2a" /></mesh>
