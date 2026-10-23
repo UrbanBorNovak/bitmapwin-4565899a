@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+import { events as r3fEvents, useFrame, type RootState } from "@react-three/fiber";
+import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
@@ -42,6 +43,16 @@ function Stands() {
     </instancedMesh>
   );
 }
+
+/** Page-size CSS zoom skews default R3F picking; map the pointer with client/rect ratios instead. */
+const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
+  ...r3fEvents(store),
+  compute(e: { clientX: number; clientY: number }, state: RootState) {
+    const r = state.gl.domElement.getBoundingClientRect();
+    state.pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    state.raycaster.setFromCamera(state.pointer, state.camera);
+  },
+});
 
 const faceCache = new Map<string, THREE.Texture>();
 function useFace(pixelId: string) {
@@ -89,7 +100,11 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
         <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
       </mesh>
       {seat.heldBitmap !== null && (
-        <mesh position={[0.32, 1.25, 0.1]}><boxGeometry args={[0.05, 0.5, 0.05]} /><meshLambertMaterial color="#f7931a" /></mesh>
+        <group position={[0.34, 0, 0.1]}>
+          <mesh position-y={1.2}><boxGeometry args={[0.05, 1.5, 0.05]} /><meshLambertMaterial color="#d8d8d8" /></mesh>
+          <mesh position={[0.36, 1.75, 0]}><boxGeometry args={[0.7, 0.36, 0.03]} /><meshLambertMaterial color="#f7931a" emissive="#4a2300" /></mesh>
+          <Text position={[0.36, 1.75, 0.02]} fontSize={0.14} color="#0d0f13" anchorX="center" anchorY="middle">{String(seat.heldBitmap)}</Text>
+        </group>
       )}
       {(mine || selected) && (
         <mesh position-y={2.4}><cylinderGeometry args={[0.04, 0.04, 2.2]} /><meshBasicMaterial color={mine ? "#22d3ee" : "#f7931a"} transparent opacity={0.8} /></mesh>
@@ -127,7 +142,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   seats: LaunchSeat[]; myAddress: string | null; selected: number | null; onPick: (s: LaunchSeat) => void; focusSeat: number | null;
 }) {
   return (
-    <SafeCanvas camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]}>
+    <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]}>
       <color attach="background" args={["#0d0f13"]} />
       <fog attach="fog" args={["#0d0f13", 30, 70]} />
       <ambientLight intensity={0.7} />
