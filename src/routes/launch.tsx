@@ -8,8 +8,8 @@ import { PixelFace } from "@/components/game/PixelFace";
 import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { claimLaunchSeatFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
-import { playSfx } from "@/lib/world-audio";
 import { startCafeMusic, stopCafeMusic } from "@/lib/retro-sfx";
+import { playArena, startCrowd, stopCrowd } from "@/lib/arena-sfx";
 import { listSponsorSlidesFn } from "@/lib/sponsor-slots.functions";
 import { slotLive } from "@/lib/sponsor-slots";
 import { SponsorBooking } from "@/components/launch/SponsorBooking";
@@ -59,9 +59,10 @@ function LaunchPage() {
   const [musicOn, setMusicOn] = useState(false);
   const [throws, setThrows] = useState(0);
   const [hits, setHits] = useState(0);
-  useEffect(() => () => stopCafeMusic(), []);
+  useEffect(() => () => { stopCafeMusic(); stopCrowd(); }, []);
   const stageTip = useTipBanner("launch");
-  const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
+  useEffect(() => { if (stageTip) { playArena("airhorn"); window.setTimeout(() => playArena("coin"), 700); } }, [stageTip]);
+  const blip = () => playArena("seat");
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
   const stepSeat = (dir: number) => {
     if (!seats.length) return;
@@ -157,7 +158,7 @@ function LaunchPage() {
           <Suspense fallback={null}>
             <Grandstand seats={seats} myAddress={myAddr} selected={picked?.seat ?? null} focusSeat={focus}
               view={view} mySeat={mine?.seat ?? null} sponsors={stageAds} onPick={(s) => pickSeat(s)}
-              popcornThrows={throws} onPopcornHit={() => { setHits((h) => h + 1); try { playSfx("pick"); } catch { /* audio locked */ } }} />
+              popcornThrows={throws} onPopcornHit={() => { setHits((h) => h + 1); playArena("splat"); }} />
           </Suspense>
         </ClientOnly>
         <div className="pointer-events-none absolute left-3 top-3 z-20 font-mono text-[10px] text-signal">
@@ -178,7 +179,7 @@ function LaunchPage() {
           {([["diorama", "2.5D DIORAMA"], ["stage", "STAGE VIEW"], ["seat", "SIT IN MY SEAT"]] as const).map(([v, label]) => (
             <button key={v} disabled={v === "seat" && !mine}
               className={`glass-panel rounded border px-2 py-1 disabled:opacity-40 ${view === v && !focus ? "border-signal text-signal" : "border-border"}`}
-              onClick={() => { blip(); setView(v); setFocus(null); }}>{label}</button>
+              onClick={() => { playArena("cam"); setView(v); setFocus(null); }}>{label}</button>
           ))}
           <span className="mx-1 self-center text-muted-foreground">|</span>
           <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => stepSeat(-1)}>[PREV]</button>
@@ -187,9 +188,10 @@ function LaunchPage() {
           <button className="glass-panel rounded border border-border px-2 py-1 text-bitcoin" onClick={() => seats[0] && pickSeat(seats.find((x) => x.seat === 1) ?? seats[0])}>[FOUNDERS #1]</button>
           {count === 0 && <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">EMPTY SEATS — BE THE FIRST BITMAPPER</span>}
           <button className={`glass-panel rounded border px-2 py-1 ${musicOn ? "border-bitcoin text-bitcoin" : "border-border"}`}
-            onClick={() => { if (musicOn) stopCafeMusic(); else startCafeMusic("arcade"); setMusicOn(!musicOn); }}>[♪ MUSIC: {musicOn ? "ON" : "OFF"}]</button>
+            onClick={() => { if (musicOn) { stopCafeMusic(); stopCrowd(); } else { startCafeMusic("arcade"); startCrowd(); playArena("cheer"); } setMusicOn(!musicOn); }}>[♪ SOUND: {musicOn ? "ON" : "OFF"}]</button>
+          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => playArena("airhorn")}>[📯 AIRHORN]</button>
           {mine?.owned?.includes("popcorn") ? (
-            <button className="glass-panel rounded border border-bitcoin px-2 py-1 text-bitcoin" onClick={() => setThrows((t) => t + 1)}>[🍿 THROW POPCORN · HITS {hits}]</button>
+            <button className="glass-panel rounded border border-bitcoin px-2 py-1 text-bitcoin" onClick={() => { playArena("whoosh"); setThrows((t) => t + 1); }}>[🍿 THROW POPCORN · HITS {hits}]</button>
           ) : mine ? <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">BUY POPCORN AT YOUR SEAT TO TOSS IT AT THE SCREEN</span> : null}
         </div>
         {picked && (
