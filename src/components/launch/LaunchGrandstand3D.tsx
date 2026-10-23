@@ -3,7 +3,7 @@ import { events as r3fEvents, useFrame, type RootState } from "@react-three/fibe
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
-import { seatPlace, type LaunchSeat } from "@/lib/launch-seats";
+import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
 import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 
 const ROWS = 24;
