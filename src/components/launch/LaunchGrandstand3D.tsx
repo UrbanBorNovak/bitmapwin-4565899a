@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { events as r3fEvents, useFrame, type RootState } from "@react-three/fiber";
-import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
@@ -81,6 +80,24 @@ function hue(address: string) {
   return new THREE.Color().setHSL(h / 360, 0.45, 0.45);
 }
 
+/** Orange banner carrying the held BITMAP number, drawn to a canvas (no font download). */
+function FlagBanner({ height }: { height: number }) {
+  const tex = useMemo(() => {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 128;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#f7931a"; g.fillRect(0, 0, 256, 128);
+    g.fillStyle = "#0d0f13"; g.font = "bold 52px monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText(String(height), 128, 56); g.font = "bold 26px monospace"; g.fillText(".bitmap", 128, 100);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }, [height]);
+  return (
+    <mesh position={[0.36, 1.75, 0]} rotation-y={Math.PI}>
+      <planeGeometry args={[0.72, 0.36]} />
+      <meshBasicMaterial map={tex} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
 function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: boolean; selected: boolean; onPick: (s: LaunchSeat) => void }) {
   const face = useFace(seat.pixelId);
   const [x, y, z, a] = seatPos(seat.seat);
@@ -102,8 +119,7 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
       {seat.heldBitmap !== null && (
         <group position={[0.34, 0, 0.1]}>
           <mesh position-y={1.2}><boxGeometry args={[0.05, 1.5, 0.05]} /><meshLambertMaterial color="#d8d8d8" /></mesh>
-          <mesh position={[0.36, 1.75, 0]}><boxGeometry args={[0.7, 0.36, 0.03]} /><meshLambertMaterial color="#f7931a" emissive="#4a2300" /></mesh>
-          <Text position={[0.36, 1.75, 0.02]} fontSize={0.14} color="#0d0f13" anchorX="center" anchorY="middle">{String(seat.heldBitmap)}</Text>
+          <FlagBanner height={seat.heldBitmap} />
         </group>
       )}
       {(mine || selected) && (
