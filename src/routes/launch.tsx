@@ -8,6 +8,8 @@ import { PixelFace } from "@/components/game/PixelFace";
 import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { claimLaunchSeatFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
+import { playSfx } from "@/lib/world-audio";
+import type { GrandstandView } from "@/components/launch/LaunchGrandstand3D";
 import { LAUNCH_CAPACITY, LAUNCH_TIERS, nextTier, seatMessage, type LaunchSeat } from "@/lib/launch-seats";
 
 const Grandstand = lazy(() => import("@/components/launch/LaunchGrandstand3D"));
@@ -41,6 +43,14 @@ function LaunchPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [picked, setPicked] = useState<LaunchSeat | null>(null);
   const [focus, setFocus] = useState<number | null>(null);
+  const [view, setView] = useState<GrandstandView>("diorama");
+  const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
+  const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
+  const stepSeat = (dir: number) => {
+    if (!seats.length) return;
+    const i = picked ? seats.findIndex((x) => x.seat === picked.seat) : -1;
+    pickSeat(seats[(i + dir + seats.length) % seats.length]);
+  };
   const active = wallet ?? session;
   const myAddr = active?.ordinalsAddress ?? null;
   const mine = myAddr ? seats.find((s) => s.address.toLowerCase() === myAddr.toLowerCase()) ?? null : null;
@@ -81,7 +91,7 @@ function LaunchPage() {
               <div className="font-mono text-xs">
                 <div className="text-bitcoin">SEAT #{mine.seat}</div>
                 <div className="text-muted-foreground">{mine.pixelSource === "held" ? "Wearing your own Pixel" : "Assigned Pixel"}{mine.heldBitmap !== null ? ` · ${mine.heldBitmap}.bitmap` : ""}</div>
-                <button className="mt-1 text-signal hover:underline" onClick={() => { setPicked(mine); setFocus(mine.seat); }}>Find my seat →</button>
+                <button className="mt-1 text-signal hover:underline" onClick={() => pickSeat(mine)}>Find my seat →</button>
               </div>
             </div>
           ) : active ? (
@@ -120,24 +130,39 @@ function LaunchPage() {
         </div>
       </section>
 
-      <section className="relative mt-6 h-[60vh] min-h-[420px] overflow-hidden rounded border border-border">
+      <section className="retro-crt relative mt-6 h-[64vh] min-h-[460px] overflow-hidden rounded border border-border">
         <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">loading grandstand…</div>}>
           <Suspense fallback={null}>
             <Grandstand seats={seats} myAddress={myAddr} selected={picked?.seat ?? null} focusSeat={focus}
-              onPick={(s) => { setPicked(s); setFocus(s.seat); }} />
+              view={view} mySeat={mine?.seat ?? null} onPick={(s) => pickSeat(s)} />
           </Suspense>
         </ClientOnly>
-        <div className="absolute bottom-3 left-3 flex gap-2 font-mono text-[10px]">
-          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => { setFocus(null); setPicked(null); }}>VIEW EVERYONE</button>
+        <div className="pointer-events-none absolute left-3 top-3 font-mono text-[10px] text-signal">
+          <div>CINDY-COM · LAUNCH FEED ● LIVE</div>
+          <div className="text-muted-foreground">CAP {count}/{LAUNCH_CAPACITY} · CAM {view.toUpperCase()}</div>
+        </div>
+        <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 font-mono text-[10px]">
+          {([["diorama", "2.5D DIORAMA"], ["stage", "STAGE VIEW"], ["seat", "SIT IN MY SEAT"]] as const).map(([v, label]) => (
+            <button key={v} disabled={v === "seat" && !mine}
+              className={`glass-panel rounded border px-2 py-1 disabled:opacity-40 ${view === v && !focus ? "border-signal text-signal" : "border-border"}`}
+              onClick={() => { blip(); setView(v); setFocus(null); }}>{label}</button>
+          ))}
+          <span className="mx-1 self-center text-muted-foreground">|</span>
+          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => stepSeat(-1)}>[PREV]</button>
+          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => stepSeat(1)}>[NEXT]</button>
+          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => seats.length && pickSeat(seats[Math.floor(Math.random() * seats.length)])}>[RANDOM]</button>
+          <button className="glass-panel rounded border border-border px-2 py-1 text-bitcoin" onClick={() => seats[0] && pickSeat(seats.find((x) => x.seat === 1) ?? seats[0])}>[FOUNDERS #1]</button>
           {count === 0 && <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">EMPTY SEATS — BE THE FIRST BITMAPPER</span>}
         </div>
         {picked && (
-          <div className="glass-panel absolute right-3 top-3 w-56 rounded border border-border p-3 font-mono text-xs">
+          <div className="glass-panel absolute right-3 top-3 w-60 rounded border border-signal/50 p-3 font-mono text-xs">
+            <div className="mb-2 flex justify-between text-[10px] text-signal"><span>&gt; INSPECT</span><button onClick={() => pickSeat(null)} aria-label="Close">[X]</button></div>
             <div className="flex items-center gap-2">
-              <PixelFace inscriptionId={picked.pixelId} label="Avatar" className="h-10 w-10" />
+              <PixelFace inscriptionId={picked.pixelId} label="Avatar" className="h-12 w-12" />
               <div><div className="text-bitcoin">SEAT #{picked.seat}</div><div className="text-muted-foreground">{short(picked.address)}</div></div>
             </div>
-            <div className="mt-2 text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
+            <div className="mt-2 text-signal">{picked.seat <= 100 ? "FOUNDERS ROW" : picked.seat <= 500 ? "FULL HOUSE" : "IGNITION"}</div>
+            <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
             <div className="text-muted-foreground">Seated {new Date(picked.createdAt).toLocaleDateString()}</div>
           </div>
