@@ -101,10 +101,17 @@ function FlagBanner({ height }: { height: number }) {
 
 const HAIR_COLOR = ["#2a1a10", "#6b3a1a", "#d9a441", "#b23a1a", "#e8e0d0", "#1a1a2a"];
 function Hair({ seat }: { seat: LaunchSeat }) {
-  const style = hairFor(seat.heldBitmap);
+  const style = hairFor(seat.heldBitmap, seat.clubHair ?? null);
   const c = style === "genesis-crown" ? "#f5c518" : HAIR_COLOR[seat.seat % HAIR_COLOR.length]!;
   const m = <meshLambertMaterial color={c} />;
   if (style === "shaved") return null;
+  if (style === "marauder-hawk") return (<>
+    {[-0.18, -0.06, 0.06, 0.18].map((z) => <mesh key={z} position={[0, 1.3 - Math.abs(z) * 0.4, z]}><boxGeometry args={[0.1, 0.26, 0.11]} /><meshLambertMaterial color="#d61f1f" emissive="#3a0000" /></mesh>)}
+  </>);
+  if (style === "emporium-bob") return (<>
+    <mesh position-y={1.19}><boxGeometry args={[0.56, 0.1, 0.56]} /><meshLambertMaterial color="#8a5cf6" /></mesh>
+    {[-0.29, 0.29].map((x) => <mesh key={x} position={[x, 0.95, 0]}><boxGeometry args={[0.07, 0.4, 0.52]} /><meshLambertMaterial color="#8a5cf6" /></mesh>)}
+  </>);
   if (style === "genesis-crown") return (<>
     <mesh position-y={1.18}><boxGeometry args={[0.52, 0.08, 0.52]} />{m}</mesh>
     {[-0.18, 0, 0.18].map((x) => <mesh key={x} position={[x, 1.3, 0]}><boxGeometry args={[0.1, 0.18, 0.1]} /><meshLambertMaterial color={c} emissive="#5a3a00" /></mesh>)}

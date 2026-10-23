@@ -13,3 +13,8 @@ describe("wardrobe", () => {
   it("newest piece per slot is worn", () =>
     expect(wornFrom([{ slot: "hat", item: "beanie" }, { slot: "food", item: "pizza" }, { slot: "hat", item: "cowboy" }])).toEqual({ hat: "beanie", food: "pizza" }));
 });
+describe("verified club hair", () => {
+  it("Marauders proof gives the red mohawk even on an old BITMAP", () => expect(hairFor(500, "marauders")).toBe("marauder-hawk"));
+  it("Emporium proof gives the violet bob", () => expect(hairFor(null, "emporium")).toBe("emporium-bob"));
+  it("no proof falls back to BITMAP range", () => expect(hairFor(500, null)).toBe("genesis-crown"));
+});

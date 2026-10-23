@@ -8,7 +8,7 @@ const addressSchema = z
   .trim()
   .regex(/^(bc1[a-z0-9]{8,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,39})$/, "Not a valid Bitcoin address");
 
-type Row = { seat_number: number; address: string; pixel_id: string; pixel_source: string; held_bitmap: number | null; created_at: string; ticket_inscription_id?: string | null };
+type Row = { seat_number: number; address: string; pixel_id: string; pixel_source: string; held_bitmap: number | null; created_at: string; ticket_inscription_id?: string | null; club_hair?: string | null; club_proof?: string | null };
 const toSeat = (r: Row): LaunchSeat => ({
   seat: r.seat_number,
   address: r.address,
@@ -17,6 +17,8 @@ const toSeat = (r: Row): LaunchSeat => ({
   heldBitmap: r.held_bitmap,
   createdAt: r.created_at,
   ticketId: r.ticket_inscription_id ?? null,
+  clubHair: r.club_hair === "marauders" || r.club_hair === "emporium" ? r.club_hair : null,
+  clubProof: r.club_proof ?? null,
 });
 
 async function publicClient() {
@@ -39,7 +41,7 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
   const sb = await publicClient();
   const { data, error } = await sb
     .from("launch_seats")
-    .select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at,ticket_inscription_id")
+    .select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at,ticket_inscription_id,club_hair,club_proof")
     .order("seat_number")
     .limit(1000);
   if (error) return { seats: [] as LaunchSeat[], error: "Seats unavailable" };
@@ -93,8 +95,10 @@ export const claimLaunchSeatFn = createServerFn({ method: "POST" })
       const snap = await fetchWallet(data.address);
       scanned = snap.utxos.flatMap((u) => u.inscriptions);
     } catch { /* scan unavailable: keep the current avatar */ }
-    const { seatVerifiedAddress } = await import("@/lib/launch-seats.server");
-    return seatVerifiedAddress(supabaseAdmin, data.address, scanned);
+    const { seatVerifiedAddress, refreshClubHair } = await import("@/lib/launch-seats.server");
+    const res = await seatVerifiedAddress(supabaseAdmin, data.address, scanned);
+    if (res.ok) await refreshClubHair(supabaseAdmin, res.seat.seat, data.address);
+    return res;
   });
 
 /** Backstage door: proves the signer holds a seated wallet. Nothing is written. */

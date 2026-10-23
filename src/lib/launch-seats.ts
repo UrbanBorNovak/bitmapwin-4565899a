@@ -21,6 +21,8 @@ export type LaunchSeat = {
   hat?: string | null;
   food?: string | null;
   owned?: string[];
+  clubHair?: "marauders" | "emporium" | null;
+  clubProof?: string | null;
 };
 
 /** Provenance gear: each piece is earned only by a recorded fact, never chosen. */
@@ -125,15 +127,20 @@ export function backchannelMessage(address: string, issuedAt: string): string {
 }
 
 /** Hair is earned from the BITMAP club of the flag a Bitmapper holds; no BITMAP = shaved. */
-export type HairStyle = "genesis-crown" | "satoshi-mullet" | "pizza-spikes" | "halving-crop" | "shaved";
+export type HairStyle = "marauder-hawk" | "emporium-bob" | "genesis-crown" | "satoshi-mullet" | "pizza-spikes" | "halving-crop" | "shaved";
 export const HAIR_LABEL: Record<HairStyle, string> = {
+  "marauder-hawk": "Marauder red mohawk · verified 715093 parcel holder",
+  "emporium-bob": "Emporium violet bob · verified 717328 Resident",
   "genesis-crown": "Golden crest · SUB 1K CLUB holder",
   "satoshi-mullet": "Satoshi mullet · SUB 10K CLUB holder",
   "pizza-spikes": "Pizza spikes · SUB 100K CLUB holder",
   "halving-crop": "Halving crop · SUB 1M CLUB holder",
   shaved: "Shaved · no BITMAP held yet",
 };
-export function hairFor(heldBitmap: number | null): HairStyle {
+/** Verified club hair (Marauders, then Emporium) wins over the BITMAP-range hair. */
+export function hairFor(heldBitmap: number | null, clubHair: "marauders" | "emporium" | null = null): HairStyle {
+  if (clubHair === "marauders") return "marauder-hawk";
+  if (clubHair === "emporium") return "emporium-bob";
   if (heldBitmap === null) return "shaved";
   if (heldBitmap < 1_000) return "genesis-crown";
   if (heldBitmap < 10_000) return "satoshi-mullet";
