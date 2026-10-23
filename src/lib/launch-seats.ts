@@ -157,6 +157,7 @@ export const WEAR_SHOP = [
   { id: "pizza", slot: "food", name: "Pizza slice", price: 25 },
   { id: "coffee", slot: "food", name: "Café coffee", price: 15 },
   { id: "donut", slot: "food", name: "Donut", price: 20 },
+  { id: "popcorn", slot: "food", name: "Popcorn (unlocks screen toss)", price: 30 },
 ] as const;
 export type WearItem = (typeof WEAR_SHOP)[number]["id"];
 export const wearById = (id: string) => WEAR_SHOP.find((w) => w.id === id) ?? null;
