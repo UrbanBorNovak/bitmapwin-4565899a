@@ -56,6 +56,8 @@ function LaunchPage() {
   const [focus, setFocus] = useState<number | null>(null);
   const [view, setView] = useState<GrandstandView>("diorama");
   const [tipOpen, setTipOpen] = useState(false);
+  const [musicOn, setMusicOn] = useState(false);
+  useEffect(() => () => stopCafeMusic(), []);
   const stageTip = useTipBanner("launch");
   const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
