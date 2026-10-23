@@ -91,9 +91,9 @@ function FlagBanner({ height }: { height: number }) {
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }, [height]);
   return (
-    <mesh position={[0.36, 1.75, 0]} rotation-y={Math.PI}>
+    <mesh position={[0.36, 1.75, 0]}>
       <planeGeometry args={[0.72, 0.36]} />
-      <meshBasicMaterial map={tex} side={THREE.DoubleSide} />
+      <meshBasicMaterial map={tex} side={THREE.FrontSide} />
     </mesh>
   );
 }
