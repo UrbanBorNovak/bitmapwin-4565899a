@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignedPixel, nextTier, seatAvatarFrom, seatPlace } from "./launch-seats";
+import { assignedPixel, nextTier, refreshedAvatar, seatAvatarFrom, seatPlace } from "./launch-seats";
 import { PIXELS } from "./bitmap-pixels-catalog";
 
 describe("launch seats", () => {
@@ -34,5 +34,14 @@ describe("launch seats", () => {
   });
   it("empty or failed scan falls back to the assigned Pixel", () => {
     expect(seatAvatarFrom(ADDR, [])).toEqual({ pixelId: assignedPixel(ADDR), pixelSource: "assigned", heldBitmap: null });
+  });
+  it("returning Bitmapper picks up held Pixel and BITMAP", () => {
+    const cur = { pixelId: assignedPixel(ADDR), pixelSource: "assigned" as const, heldBitmap: null };
+    expect(refreshedAvatar(cur, ADDR, [{ id: PIXELS[7]!.id, bitmapHeight: null }, { id: OTHER, bitmapHeight: 840000 }]))
+      .toEqual({ pixelId: PIXELS[7]!.id, pixelSource: "held", heldBitmap: 840000 });
+  });
+  it("failed rescan keeps the current avatar", () => {
+    const cur = { pixelId: PIXELS[3]!.id, pixelSource: "held" as const, heldBitmap: 208 };
+    expect(refreshedAvatar(cur, ADDR, null)).toEqual(cur);
   });
 });
