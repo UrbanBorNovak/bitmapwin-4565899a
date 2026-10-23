@@ -156,6 +156,7 @@ function CameraRig({ focus }: { focus: number | null }) {
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
     camera.position.lerp(eye.current, k);
     camera.lookAt(target.current);
+    (window as unknown as { __cam?: number[] }).__cam = [camera.position.x, camera.position.y, camera.position.z, target.current.x, target.current.y, target.current.z];
   });
   return null;
 }
