@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { listLaunchSeatsFn } from "@/lib/launch-seats.functions";
@@ -37,7 +38,9 @@ export function BitTransitBar() {
   });
   if (!isTransitPath(path)) return null;
 
-  const seated = seats.data?.seats.length;
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  const seated = hydrated ? seats.data?.seats.length : undefined;
   const live: Record<string, string> = {
     "/launch": seated != null ? `${seated} SEATED` : "…",
     "/biternam/cafe": stream.data === "live" ? "STREAM ON-AIR" : stream.data === "offline" ? "STREAM OFFLINE" : "STREAM ?",
