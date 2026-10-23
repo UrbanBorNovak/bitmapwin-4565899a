@@ -17,3 +17,12 @@ describe("Founders Row keycard", () => {
     expect(foundersKeycard(null)).toBeNull();
   });
 });
+
+import { backchannelMessage, loungeMessage, seatMessage } from "./launch-seats";
+describe("dev9 backchannel signature", () => {
+  it("can't reuse a lounge or seat signature", () => {
+    const m = backchannelMessage("bc1qx", "t");
+    expect(m).not.toBe(loungeMessage("bc1qx", "t"));
+    expect(m).not.toBe(seatMessage("bc1qx", "t"));
+  });
+});

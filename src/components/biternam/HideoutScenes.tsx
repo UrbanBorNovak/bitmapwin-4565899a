@@ -6,6 +6,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke } from "@/components/biternam/CafeLife";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+import { Dev9Backchannel } from "@/components/biternam/Dev9Backchannel";
 import { BatcaveGrandstandFeed } from "@/components/biternam/BatcaveGrandstandFeed";
 import type { BatcaveHotspot, HideoutState, IslandHotspot, LairHotspot, BasementHotspot, ArchiveHotspot, HoldersHotspot, HandshakeHotspot, FortressHotspot, CanonHotspot, ReceiptHotspot, VaultHotspot } from "@/lib/hideout-verbs";
 
@@ -110,6 +111,7 @@ export function BatcaveScene({ onHit, onHover, hover, st, hazard }: SceneProps<B
         <CafeSmoke count={40} color="#c8d8ff" opacity={0.03} mist={["#0a1420", "#28e0ff"]} />
       </SafeCanvas>
       {st.solved ? <BatcaveGrandstandFeed /> : null}
+      <Dev9Backchannel />
     </div>
   );
 }

@@ -93,3 +93,12 @@ export function loungeSeat(seats: { seat: number; address: string }[], address: 
 export function foundersOf<T extends { seat: number }>(seats: T[]): T[] {
   return seats.filter((s) => s.seat <= FOUNDERS_ROW).sort((a, b) => a.seat - b.seat);
 }
+
+export function backchannelMessage(address: string, issuedAt: string): string {
+  return [
+    "BITERNAM BATCAVE — OPEN DEV9'S BACKCHANNEL",
+    `ADDRESS: ${address}`,
+    `ISSUED: ${issuedAt}`,
+    "THIS SIGNATURE MOVES NO FUNDS AND COSTS NO FEE.",
+  ].join("\n");
+}
