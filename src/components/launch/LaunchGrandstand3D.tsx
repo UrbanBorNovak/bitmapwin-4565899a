@@ -99,6 +99,40 @@ function FlagBanner({ height }: { height: number }) {
   );
 }
 
+const HAIR_COLOR = ["#2a1a10", "#6b3a1a", "#d9a441", "#b23a1a", "#e8e0d0", "#1a1a2a"];
+function Hair({ seat }: { seat: LaunchSeat }) {
+  const style = hairFor(seat.heldBitmap);
+  const c = style === "genesis-crown" ? "#f5c518" : HAIR_COLOR[seat.seat % HAIR_COLOR.length]!;
+  const m = <meshLambertMaterial color={c} />;
+  if (style === "shaved") return null;
+  if (style === "genesis-crown") return (<>
+    <mesh position-y={1.18}><boxGeometry args={[0.52, 0.08, 0.52]} />{m}</mesh>
+    {[-0.18, 0, 0.18].map((x) => <mesh key={x} position={[x, 1.3, 0]}><boxGeometry args={[0.1, 0.18, 0.1]} /><meshLambertMaterial color={c} emissive="#5a3a00" /></mesh>)}
+  </>);
+  if (style === "satoshi-mullet") return (<>
+    <mesh position-y={1.19}><boxGeometry args={[0.54, 0.1, 0.54]} />{m}</mesh>
+    <mesh position={[0, 0.85, -0.27]}><boxGeometry args={[0.5, 0.45, 0.08]} />{m}</mesh>
+  </>);
+  if (style === "pizza-spikes") return (<>
+    {[[-0.15, -0.12], [0.15, -0.12], [0, 0.05], [-0.15, 0.15], [0.15, 0.15]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x!, 1.25, z!]}><coneGeometry args={[0.09, 0.22, 4]} />{m}</mesh>)}
+  </>);
+  return <mesh position-y={1.17}><boxGeometry args={[0.52, 0.06, 0.52]} />{m}</mesh>;
+}
+function Hat({ id }: { id: string }) {
+  if (id === "top-hat") return (<><mesh position-y={1.2}><boxGeometry args={[0.6, 0.04, 0.6]} /><meshLambertMaterial color="#111" /></mesh><mesh position-y={1.42}><boxGeometry args={[0.38, 0.4, 0.38]} /><meshLambertMaterial color="#111" /></mesh></>);
+  if (id === "cowboy") return (<><mesh position-y={1.2}><boxGeometry args={[0.75, 0.04, 0.75]} /><meshLambertMaterial color="#8a5a2a" /></mesh><mesh position-y={1.32}><boxGeometry args={[0.4, 0.2, 0.4]} /><meshLambertMaterial color="#8a5a2a" /></mesh></>);
+  if (id === "beanie") return <mesh position-y={1.22}><boxGeometry args={[0.54, 0.18, 0.54]} /><meshLambertMaterial color="#f7931a" /></mesh>;
+  if (id === "crown") return (<>{[[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x!, 1.28, z!]}><boxGeometry args={[0.1, 0.2, 0.1]} /><meshLambertMaterial color="#f5c518" emissive="#5a3a00" /></mesh>)}<mesh position-y={1.18}><boxGeometry args={[0.52, 0.06, 0.52]} /><meshLambertMaterial color="#f5c518" /></mesh></>);
+  return null;
+}
+function Snack({ id }: { id: string }) {
+  const at: [number, number, number] = [0.32, 0.45, 0.22];
+  if (id === "pizza") return <mesh position={at} rotation-x={-0.5}><coneGeometry args={[0.13, 0.25, 3]} /><meshLambertMaterial color="#f2b04a" /></mesh>;
+  if (id === "coffee") return <mesh position={at}><cylinderGeometry args={[0.07, 0.06, 0.16, 8]} /><meshLambertMaterial color="#e8e0d0" /></mesh>;
+  if (id === "donut") return <mesh position={at} rotation-x={Math.PI / 2}><torusGeometry args={[0.08, 0.04, 6, 10]} /><meshLambertMaterial color="#e86aa0" /></mesh>;
+  return null;
+}
+
 function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: boolean; selected: boolean; onPick: (s: LaunchSeat) => void }) {
   const face = useFace(seat.pixelId);
   const [x, y, z, a] = seatPos(seat.seat);
@@ -124,7 +158,10 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
       {seat.gear?.includes("founder") && (
         <mesh position={[0, 0.92, 0.27]}><boxGeometry args={[0.46, 0.09, 0.03]} /><meshBasicMaterial color="#22d3ee" /></mesh>
       )}
-      {seat.gear?.includes("builder") && (
+      {!seat.hat && !seat.gear?.includes("builder") && <Hair seat={seat} />}
+      {seat.hat && <Hat id={seat.hat} />}
+      {seat.food && <Snack id={seat.food} />}
+      {!seat.hat && seat.gear?.includes("builder") && (
         <mesh position-y={1.2}><boxGeometry args={[0.56, 0.12, 0.56]} /><meshLambertMaterial color="#f5c518" /></mesh>
       )}
       {seat.gear?.includes("tamer") && (
