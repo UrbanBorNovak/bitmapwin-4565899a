@@ -98,6 +98,7 @@ import { Route as BiternamHoldersRouteImport } from './routes/biternam_.holders'
 import { Route as BiternamIslandRouteImport } from './routes/biternam_.island'
 import { Route as BiternamLabRouteImport } from './routes/biternam_.lab'
 import { Route as BiternamLairRouteImport } from './routes/biternam_.lair'
+import { Route as BiternamLoungeRouteImport } from './routes/biternam_.lounge'
 import { Route as BiternamMuseumRouteImport } from './routes/biternam_.museum'
 import { Route as BiternamOutpostRouteImport } from './routes/biternam_.outpost'
 import { Route as BiternamPixelsRouteImport } from './routes/biternam_.pixels'
@@ -616,6 +617,11 @@ const BiternamLairRoute = BiternamLairRouteImport.update({
   path: '/biternam/lair',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiternamLoungeRoute = BiternamLoungeRouteImport.update({
+  id: '/biternam_/lounge',
+  path: '/biternam/lounge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BiternamMuseumRoute = BiternamMuseumRouteImport.update({
   id: '/biternam_/museum',
   path: '/biternam/museum',
@@ -1066,6 +1072,7 @@ export interface FileRoutesByFullPath {
   '/biternam/island': typeof BiternamIslandRoute
   '/biternam/lab': typeof BiternamLabRoute
   '/biternam/lair': typeof BiternamLairRoute
+  '/biternam/lounge': typeof BiternamLoungeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
   '/biternam/pixels': typeof BiternamPixelsRoute
@@ -1224,6 +1231,7 @@ export interface FileRoutesByTo {
   '/biternam/island': typeof BiternamIslandRoute
   '/biternam/lab': typeof BiternamLabRoute
   '/biternam/lair': typeof BiternamLairRoute
+  '/biternam/lounge': typeof BiternamLoungeRoute
   '/biternam/museum': typeof BiternamMuseumRoute
   '/biternam/outpost': typeof BiternamOutpostRoute
   '/biternam/pixels': typeof BiternamPixelsRoute
@@ -1387,6 +1395,7 @@ export interface FileRoutesById {
   '/biternam_/island': typeof BiternamIslandRoute
   '/biternam_/lab': typeof BiternamLabRoute
   '/biternam_/lair': typeof BiternamLairRoute
+  '/biternam_/lounge': typeof BiternamLoungeRoute
   '/biternam_/museum': typeof BiternamMuseumRoute
   '/biternam_/outpost': typeof BiternamOutpostRoute
   '/biternam_/pixels': typeof BiternamPixelsRoute
@@ -1551,6 +1560,7 @@ export interface FileRouteTypes {
     | '/biternam/island'
     | '/biternam/lab'
     | '/biternam/lair'
+    | '/biternam/lounge'
     | '/biternam/museum'
     | '/biternam/outpost'
     | '/biternam/pixels'
@@ -1709,6 +1719,7 @@ export interface FileRouteTypes {
     | '/biternam/island'
     | '/biternam/lab'
     | '/biternam/lair'
+    | '/biternam/lounge'
     | '/biternam/museum'
     | '/biternam/outpost'
     | '/biternam/pixels'
@@ -1871,6 +1882,7 @@ export interface FileRouteTypes {
     | '/biternam_/island'
     | '/biternam_/lab'
     | '/biternam_/lair'
+    | '/biternam_/lounge'
     | '/biternam_/museum'
     | '/biternam_/outpost'
     | '/biternam_/pixels'
@@ -2034,6 +2046,7 @@ export interface RootRouteChildren {
   BiternamIslandRoute: typeof BiternamIslandRoute
   BiternamLabRoute: typeof BiternamLabRoute
   BiternamLairRoute: typeof BiternamLairRoute
+  BiternamLoungeRoute: typeof BiternamLoungeRoute
   BiternamMuseumRoute: typeof BiternamMuseumRoute
   BiternamOutpostRoute: typeof BiternamOutpostRoute
   BiternamPixelsRoute: typeof BiternamPixelsRoute
@@ -2684,6 +2697,13 @@ declare module '@tanstack/react-router' {
       path: '/biternam/lair'
       fullPath: '/biternam/lair'
       preLoaderRoute: typeof BiternamLairRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biternam_/lounge': {
+      id: '/biternam_/lounge'
+      path: '/biternam/lounge'
+      fullPath: '/biternam/lounge'
+      preLoaderRoute: typeof BiternamLoungeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam_/museum': {
@@ -3424,6 +3444,7 @@ const rootRouteChildren: RootRouteChildren = {
   BiternamIslandRoute: BiternamIslandRoute,
   BiternamLabRoute: BiternamLabRoute,
   BiternamLairRoute: BiternamLairRoute,
+  BiternamLoungeRoute: BiternamLoungeRoute,
   BiternamMuseumRoute: BiternamMuseumRoute,
   BiternamOutpostRoute: BiternamOutpostRoute,
   BiternamPixelsRoute: BiternamPixelsRoute,
