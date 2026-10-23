@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { WalletConnect } from "@/components/WalletConnect";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
-import { useWalletSession } from "@/lib/wallet-session";
+import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { openBackchannelFn } from "@/lib/launch-seats.functions";
 import { backchannelMessage } from "@/lib/launch-seats";
 import { playSfx } from "@/lib/retro-sfx";
@@ -59,7 +59,7 @@ export function Dev9Backchannel() {
           <p className="text-muted-foreground">Founders Row keycards only. Sign once with your seated wallet. No fee, nothing moves.</p>
           {session ? (
             <button type="button" disabled={busy} onClick={swipe} className="rounded border border-bitcoin px-3 py-1 text-bitcoin disabled:opacity-50">{busy ? "READING CARD…" : "[ SWIPE KEYCARD ]"}</button>
-          ) : <WalletConnect />}
+          ) : <WalletConnect onConnect={(w) => saveWalletSession(w)} />}
           {msg ? <p className="text-destructive">{msg}</p> : null}
           <Link to="/launch" className="inline-block text-muted-foreground underline">No seat? Get one at the grandstand.</Link>
         </div>
