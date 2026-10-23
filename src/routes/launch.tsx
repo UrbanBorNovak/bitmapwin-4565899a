@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { WalletConnect } from "@/components/WalletConnect";
 import { PixelFace } from "@/components/game/PixelFace";
 import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
