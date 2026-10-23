@@ -2794,6 +2794,33 @@ export type Database = {
         }
         Relationships: []
       }
+      launch_seat_wear: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          item: string
+          price_bit: number
+          slot: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          item: string
+          price_bit: number
+          slot: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          item?: string
+          price_bit?: number
+          slot?: string
+        }
+        Relationships: []
+      }
       launch_seats: {
         Row: {
           address: string

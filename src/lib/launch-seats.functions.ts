@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { LaunchSeat } from "@/lib/launch-seats";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const addressSchema = z
   .string()
@@ -59,6 +60,13 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
   } catch { /* gear is cosmetic; seats still load */ }
   const { seatGear } = await import("@/lib/launch-seats");
   for (const s of seats) s.gear = seatGear(s.seat, s.heldBitmap, tamers.has(s.address), builders.has(s.address));
+  try {
+    const { wornFrom } = await import("@/lib/launch-seats");
+    const { data: wear } = await sb.from("launch_seat_wear").select("address,slot,item,created_at").order("created_at", { ascending: false }).limit(5000);
+    const by = new Map<string, { slot: string; item: string }[]>();
+    for (const w of wear ?? []) { const k = w.address.toLowerCase(); by.set(k, [...(by.get(k) ?? []), w]); }
+    for (const s of seats) { const rows = by.get(s.address.toLowerCase()) ?? []; const w = wornFrom(rows); s.hat = w.hat; s.food = w.food; s.owned = rows.map((r) => r.item); }
+  } catch { /* wardrobe is cosmetic */ }
   return { seats, error: null as string | null };
 });
 
@@ -127,4 +135,28 @@ export const openBackchannelFn = createServerFn({ method: "POST" })
     if ((row as { seat_number: number }).seat_number > FOUNDERS_ROW) return { ok: false as const, error: "NOT_FOUNDER" };
     const { BACKCHANNEL_LOG } = await import("@/lib/dev9-backchannel.server");
     return { ok: true as const, seat: (row as { seat_number: number }).seat_number, log: BACKCHANNEL_LOG };
+  });
+
+/** Buys a hat or snack for a seated Bitmapper with BIT from a wallet the signed-in player verified. */
+export const buyWearFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ address: addressSchema, item: z.string().max(30) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { wearById } = await import("@/lib/launch-seats");
+    const item = wearById(data.item);
+    if (!item) return { ok: false as const, error: "Unknown item" };
+    const { assertControls, bitBalance, spendBit } = await import("@/lib/coins.server");
+    try { await assertControls(context.supabase, context.userId, data.address); }
+    catch { return { ok: false as const, error: "Verify this wallet on your wallet page first" }; }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: seat } = await supabaseAdmin.from("launch_seats").select("seat_number").ilike("address", data.address).maybeSingle();
+    if (!seat) return { ok: false as const, error: "Take a seat first" };
+    const { data: had } = await supabaseAdmin.from("launch_seat_wear").select("id").eq("address", data.address).eq("item", item.id).maybeSingle();
+    if (had) return { ok: false as const, error: "You already own this" };
+    if ((await bitBalance(data.address)) < item.price) return { ok: false as const, error: `Needs ${item.price} BIT` };
+    try { await spendBit({ address: data.address, amount: item.price, reason: "grandstand_wear", ref: `wear:${data.address}:${item.id}` }); }
+    catch { return { ok: false as const, error: "Payment failed — check your BIT balance" }; }
+    const { error } = await supabaseAdmin.from("launch_seat_wear").insert({ address: data.address, slot: item.slot, item: item.id, price_bit: item.price });
+    if (error) return { ok: false as const, error: "Paid, but could not save — contact us" };
+    return { ok: true as const, error: null };
   });

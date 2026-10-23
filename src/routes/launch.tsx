@@ -12,6 +12,8 @@ import { playSfx } from "@/lib/world-audio";
 import { listSponsorSlidesFn } from "@/lib/sponsor-slots.functions";
 import { slotLive } from "@/lib/sponsor-slots";
 import { SponsorBooking } from "@/components/launch/SponsorBooking";
+import { WardrobeShop } from "@/components/launch/WardrobeShop";
+import { HAIR_LABEL, hairFor } from "@/lib/launch-seats";
 import { LaunchTicket } from "@/components/launch/LaunchTicket";
 import { useQuery } from "@tanstack/react-query";
 import { ZapDialog } from "@/components/lightning/ZapDialog";
@@ -190,6 +192,7 @@ function LaunchPage() {
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
             {picked.gear?.map((g) => <div key={g} className="text-muted-foreground">◆ {GEAR_LABEL[g]}</div>)}
+            {mine?.seat === picked.seat ? <WardrobeShop seat={picked} /> : <div className="text-muted-foreground">◆ {HAIR_LABEL[hairFor(picked.heldBitmap)]}</div>}
             <div className="text-muted-foreground">Seated {new Date(picked.createdAt).toLocaleDateString()}</div>
             {picked.ticketId && <a href={`https://ordinals.com/inscription/${picked.ticketId}`} target="_blank" rel="noreferrer" className="text-bitcoin hover:underline">★ VIP TICKET →</a>}
           </div>

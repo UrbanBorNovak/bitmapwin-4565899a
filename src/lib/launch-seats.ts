@@ -18,6 +18,9 @@ export type LaunchSeat = {
   createdAt: string;
   ticketId?: string | null;
   gear?: SeatGear[];
+  hat?: string | null;
+  food?: string | null;
+  owned?: string[];
 };
 
 /** Provenance gear: each piece is earned only by a recorded fact, never chosen. */
@@ -119,4 +122,38 @@ export function backchannelMessage(address: string, issuedAt: string): string {
     `ISSUED: ${issuedAt}`,
     "THIS SIGNATURE MOVES NO FUNDS AND COSTS NO FEE.",
   ].join("\n");
+}
+
+/** Hair is earned from the BITMAP club of the flag a Bitmapper holds; no BITMAP = shaved. */
+export type HairStyle = "genesis-crown" | "satoshi-mullet" | "pizza-spikes" | "halving-crop" | "shaved";
+export const HAIR_LABEL: Record<HairStyle, string> = {
+  "genesis-crown": "Golden crest · SUB 1K CLUB holder",
+  "satoshi-mullet": "Satoshi mullet · SUB 10K CLUB holder",
+  "pizza-spikes": "Pizza spikes · SUB 100K CLUB holder",
+  "halving-crop": "Halving crop · SUB 1M CLUB holder",
+  shaved: "Shaved · no BITMAP held yet",
+};
+export function hairFor(heldBitmap: number | null): HairStyle {
+  if (heldBitmap === null) return "shaved";
+  if (heldBitmap < 1_000) return "genesis-crown";
+  if (heldBitmap < 10_000) return "satoshi-mullet";
+  if (heldBitmap < 100_000) return "pizza-spikes";
+  return "halving-crop";
+}
+
+/** Grandstand wardrobe: bought once with BIT, the newest piece per slot is worn. */
+export const WEAR_SHOP = [
+  { id: "top-hat", slot: "hat", name: "Top hat", price: 150 },
+  { id: "cowboy", slot: "hat", name: "Cowboy hat", price: 120 },
+  { id: "beanie", slot: "hat", name: "Orange beanie", price: 60 },
+  { id: "crown", slot: "hat", name: "Block crown", price: 500 },
+  { id: "pizza", slot: "food", name: "Pizza slice", price: 25 },
+  { id: "coffee", slot: "food", name: "Café coffee", price: 15 },
+  { id: "donut", slot: "food", name: "Donut", price: 20 },
+] as const;
+export type WearItem = (typeof WEAR_SHOP)[number]["id"];
+export const wearById = (id: string) => WEAR_SHOP.find((w) => w.id === id) ?? null;
+/** Newest bought piece per slot from rows sorted newest first. */
+export function wornFrom(rows: { slot: string; item: string }[]) {
+  return { hat: rows.find((r) => r.slot === "hat")?.item ?? null, food: rows.find((r) => r.slot === "food")?.item ?? null };
 }
