@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { events as r3fEvents, useFrame, type RootState } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { SafeHtml } from "@/components/game/SafeHtml";
+import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
 import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
@@ -334,6 +336,23 @@ function Jumbotron({ seat, sponsors = [] }: { seat: LaunchSeat | null; sponsors?
   );
 }
 
+/** Big stage video wall above the jumbotron: Elevated Dabber's live bitmap.stream channel, watched by the whole stand. */
+function StageVideo() {
+  const w = 6.4, h = w * 9 / 16;
+  return (
+    <group position={[0, 3.1 + h / 2, 3.05]}>
+      <mesh position-z={-0.04}><boxGeometry args={[w + 0.16, h + 0.16, 0.06]} /><meshLambertMaterial color="#1a1410" emissive="#5a2d00" /></mesh>
+      <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={w / 640} zIndexRange={[10, 0]}>
+        <div style={{ width: 640, height: 360, background: "#000", position: "relative", overflow: "hidden", font: "12px monospace" }}>
+          <iframe src={G.embedUrl} title="Elevated Dabber live on bitmap.stream" width={640} height={360} style={{ border: 0, display: "block" }} allow="autoplay; fullscreen" />
+          <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a", pointerEvents: "none", textShadow: "0 0 4px #000" }}>● LIVE · @{G.handle} · {G.channelHeight}.BITMAP</div>
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 2px, transparent 2px 4px)" }} />
+        </div>
+      </SafeHtml>
+    </group>
+  );
+}
+
 export type GrandstandView = "diorama" | "stage" | "seat";
 
 export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null, sponsors = [] }: {
@@ -352,6 +371,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01}><planeGeometry args={[120, 120]} /><meshLambertMaterial color="#14171c" /></mesh>
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} sponsors={sponsors} />
+      <StageVideo />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
       ))}
