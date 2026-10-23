@@ -291,7 +291,7 @@ function CameraRig({ focus, view, mySeat }: { focus: number | null; view: Grands
       eye.current.set(x * pull, y + 4.5, z * pull);
     } else if (view === "stage") {
       const t = clock.elapsedTime * 0.15;
-      eye.current.set(Math.sin(t) * 2, 1.8, 3.5); target.current.set(0, 7, 18); fov = 62;
+      eye.current.set(Math.sin(t) * 3, 5, -3); target.current.set(0, 5, 16); fov = 55;
     } else {
       // Biternam 2.5D diorama: fixed high tilted angle, narrow lens.
       eye.current.set(-22, 30, -18); target.current.set(0, 4, 12); fov = 32;
