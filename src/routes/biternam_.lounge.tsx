@@ -8,6 +8,7 @@ import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { enterLoungeFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
 import { FOUNDERS_ROW, foundersOf, loungeMessage, type LaunchSeat } from "@/lib/launch-seats";
+import { foundersKeycard } from "@/lib/batcave-feed";
 import { playSfx, startCafeMusic, stopCafeMusic, type RoomMood } from "@/lib/retro-sfx";
 
 export const Route = createFileRoute("/biternam_/lounge")({
@@ -108,6 +109,21 @@ function LoungePage() {
             <button type="button" onClick={() => { stopCafeMusic(); setSeat(null); }} className="rounded border border-border px-3 py-1 hover:border-signal">[ LEAVE ]</button>
           </div>
         </div>
+
+        {foundersKeycard(seat) ? (
+          <div data-testid="founders-keycard" className="mt-4 flex flex-wrap items-center gap-4 rounded border border-primary bg-card p-4">
+            <div className="flex h-20 w-32 flex-col justify-between rounded border border-primary bg-background p-2 text-[10px]">
+              <span className="tracking-[0.3em] text-bitcoin">BIT-CAFÉ</span>
+              <span className="text-signal" data-no-translate>{foundersKeycard(seat)!.code}</span>
+              <span className="text-muted-foreground">FOUNDERS ROW</span>
+            </div>
+            <div className="text-[12px]">
+              <div className="tracking-[0.3em] text-bitcoin">FOUNDERS ROW KEYCARD GRANTED</div>
+              <p className="mt-1 text-muted-foreground">dev9 cut this one in the Batcave. It's re-checked against your seat every time you sign in. Nothing is stored on this device.</p>
+              <Link to="/biternam/batcave" className="mt-2 inline-block rounded border border-border px-3 py-1 hover:border-signal">[ SWIPE INTO THE BATCAVE ]</Link>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_2fr]">
           <section className="space-y-4">
