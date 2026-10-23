@@ -19,22 +19,27 @@ function seatPos(seat: number): [number, number, number, number] {
   return [Math.sin(a) * radius, row * STEP_H + STEP_H / 2, Math.cos(a) * radius, a];
 }
 
+/** Stepped stands: one instanced block per seat, each reaching down to the ground (no solid wedge across the stage). */
 function Stands() {
-  const steps = useMemo(() => Array.from({ length: ROWS }, (_, r) => r), []);
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const total = useMemo(() => { let n = 0; for (let r = 0; r < ROWS; r++) n += 12 + 2 * r; return n; }, []);
+  useEffect(() => {
+    const m = ref.current; if (!m) return;
+    const o = new THREE.Object3D(); const c = new THREE.Color();
+    for (let i = 0; i < total; i++) {
+      const [x, y, z, a] = seatPos(i + 1);
+      const top = y; // seat surface
+      o.position.set(x, top / 2, z); o.rotation.set(0, a, 0); o.scale.set(SEAT_W, top, STEP_D);
+      o.updateMatrix(); m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, c.set(seatPlace(i + 1).row % 2 ? "#4a4f5a" : "#3a3e47"));
+    }
+    m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [total]);
   return (
-    <group>
-      {steps.map((r) => {
-        const radius = 8 + r * STEP_D;
-        const perRow = 12 + 2 * r;
-        const spread = (perRow * SEAT_W) / radius;
-        return (
-          <mesh key={r} position={[0, r * STEP_H / 2, 0]} rotation-y={-spread / 2 - 0.05}>
-            <cylinderGeometry args={[radius + STEP_D / 2, radius + STEP_D / 2, (r + 1) * STEP_H, 48, 1, false, 0, spread + 0.1]} />
-            <meshLambertMaterial color={r % 2 ? "#4a4f5a" : "#3a3e47"} flatShading />
-          </mesh>
-        );
-      })}
-    </group>
+    <instancedMesh ref={ref} args={[undefined, undefined, total]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshLambertMaterial />
+    </instancedMesh>
   );
 }
 
@@ -139,19 +144,23 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
 }
 
 function CameraRig({ focus }: { focus: number | null }) {
-  const target = useRef(new THREE.Vector3(0, 7, 16));
+  const target = useRef(new THREE.Vector3(0, 3, 13));
   const eye = useRef(new THREE.Vector3(0, 10, -6));
   useFrame(({ camera, clock }, d) => {
     if (focus) {
       const [x, y, z] = seatPos(focus);
       target.current.set(x, y + 0.8, z);
-      eye.current.set(x * 0.6, y + 2.5, z - 5);
+      // Stand between the stage and the seat, above the stage backdrop, so nothing blocks the view.
+      const pull = Math.max(0.2, 1 - 6 / Math.hypot(x, z));
+      eye.current.set(x * pull, y + 4.5, z * pull);
     } else {
       const t = clock.elapsedTime * 0.08;
-      target.current.set(0, 7, 16);
-      eye.current.set(Math.sin(t) * 5, 8, -8);
+      target.current.set(0, 3, 13);
+      eye.current.set(Math.sin(t) * 5, 14, -10);
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
+    const pc = camera as THREE.PerspectiveCamera;
+    if (pc.fov !== 50) { pc.fov = 50; pc.updateProjectionMatrix(); }
     camera.position.lerp(eye.current, k);
     camera.lookAt(target.current);
   });
