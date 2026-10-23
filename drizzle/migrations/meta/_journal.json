@@ -232,6 +232,13 @@
       "when": 1792722922820,
       "tag": "0032_launch_seat_club_proof",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792722923820,
+      "tag": "0033_remove_popcorn_test_seat",
+      "breakpoints": true
     }
   ]
 }
