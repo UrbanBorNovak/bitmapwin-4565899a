@@ -871,7 +871,7 @@ export function ReceiptScene({ onHit, onHover, hover, st, hazard }: SceneProps<R
         </Hot>
         <Hot id="astral" {...hp} position={[-0.2, 0, 2.6]} rotation={[0, 0.4, 0]}>
           <Ring on={hover === "astral"} color={NEON} />
-          <CrewRig id="astral" color="#8a6aff" />
+          <CrewRig id="curator" color="#8a6aff" />
         </Hot>
         <Hot id="terminal" {...hp} position={[-2.6, 0, -2.4]} rotation={[0, 0.6, 0]}>
           <mesh position-y={0.45}><boxGeometry args={[1, 0.9, 0.7]} /><meshStandardMaterial color="#3a2a14" metalness={0.4} /></mesh>
