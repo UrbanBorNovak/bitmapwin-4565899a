@@ -45,7 +45,7 @@ function LaunchPage() {
   const [focus, setFocus] = useState<number | null>(null);
   const [view, setView] = useState<GrandstandView>("diorama");
   const blip = () => { try { playSfx("pick"); } catch { /* audio locked */ } };
-  const pickSeat = (s: LaunchSeat | null) => { blip(); setPicked(s); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
+  const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
   const stepSeat = (dir: number) => {
     if (!seats.length) return;
     const i = picked ? seats.findIndex((x) => x.seat === picked.seat) : -1;

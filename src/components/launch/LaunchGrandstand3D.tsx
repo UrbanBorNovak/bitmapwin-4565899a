@@ -206,7 +206,7 @@ function Motes() {
     return p;
   }, []);
   useFrame((_, d) => {
-    const a = ref.current?.geometry.attributes.position as THREE.BufferAttribute | undefined; if (!a) return;
+    const a = ref.current?.geometry.attributes["position"] as THREE.BufferAttribute | undefined; if (!a) return;
     for (let i = 0; i < 300; i++) { let y = a.getY(i) + d * 0.6; if (y > 16) y = 0; a.setY(i, y); }
     a.needsUpdate = true;
   });
