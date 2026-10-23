@@ -7,6 +7,7 @@ import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
+import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 
 const ROWS = 24;
@@ -163,8 +164,8 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
       <mesh position-y={0.9}>
         <boxGeometry args={[0.5, 0.5, 0.5]} />
         {[0, 1, 2, 3].map((i) => <meshLambertMaterial key={i} attach={`material-${i}`} color={skin} />)}
-        <meshLambertMaterial attach="material-4" color={skin} />
-        <meshLambertMaterial attach="material-5" map={face} color={face ? (zombie ? "#a8e6a0" : "#ffffff") : skin} />
+        <meshLambertMaterial attach="material-4" map={face} color={face ? (zombie ? "#a8e6a0" : "#ffffff") : skin} />
+        <meshLambertMaterial attach="material-5" color={skin} />
       </mesh>
       {seat.gear?.includes("ancient") && (<>
         <mesh position={[0, 1.02, 0.26]}><boxGeometry args={[0.52, 0.1, 0.04]} /><meshLambertMaterial color="#6b4a2a" /></mesh>
@@ -470,28 +471,25 @@ const STAFF = [
   { id: "wierdamoto", ins: CREW_PIXEL_AVATAR["wierdamoto"]! },
 ];
 function StaffWalker({ ins, i }: { ins: string; i: number }) {
-  const face = useFace(ins);
   const g = useRef<THREE.Group>(null);
+  const moving = useRef(true);
   useFrame(({ clock }) => {
     const o = g.current; if (!o) return;
     const t = clock.elapsedTime * 0.12 + i * 1.7;
     const r = 5.6 + (i % 2) * 0.9, a = Math.sin(t) * 1.15;
-    const x = Math.sin(a) * r, z = 3.6 + Math.cos(a) * (r - 3.6) ;
+    const x = Math.sin(a) * r, z = 3.6 + Math.cos(a) * (r - 3.6);
     const da = Math.cos(t) * 0.12;
     const dx = Math.cos(a) * r * da, dz = -Math.sin(a) * (r - 3.6) * da;
-    o.position.set(x, Math.abs(Math.sin(clock.elapsedTime * 6 + i)) * 0.06, z);
-    if (Math.hypot(dx, dz) > 1e-4) o.rotation.y = Math.atan2(-dx, -dz);
+    o.position.set(x, 0, z);
+    moving.current = Math.hypot(dx, dz) > 0.02;
+    if (Math.hypot(dx, dz) > 1e-4) o.rotation.y = Math.atan2(dx, dz);
   });
+  const fallback = <mesh position-y={0.6}><boxGeometry args={[0.45, 1.2, 0.3]} /><meshLambertMaterial color="#1b1f26" /></mesh>;
   return (
     <group ref={g}>
-      <mesh position-y={0.35}><boxGeometry args={[0.5, 0.55, 0.32]} /><meshLambertMaterial color="#1b1f26" /></mesh>
-      <mesh position={[0, 0.42, -0.17]}><boxGeometry args={[0.4, 0.12, 0.01]} /><meshBasicMaterial color="#f7931a" /></mesh>
-      <mesh position-y={0.9}>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        {[0, 1, 2, 3, 4].map((k) => <meshLambertMaterial key={k} attach={`material-${k}`} color="#c9a27a" />)}
-        <meshLambertMaterial attach="material-5" map={face} color={face ? "#ffffff" : "#c9a27a"} />
-      </mesh>
-      <mesh position-y={1.2}><boxGeometry args={[0.54, 0.1, 0.54]} /><meshLambertMaterial color="#f7931a" /></mesh>
+      {/* The inscribed on-chain avatar rig wearing this crew member's BITMAP Pixel skin, as in Biternam. */}
+      <ToonPixelRig inscriptionId={ins} pose="idle" movingRef={moving} fallback={fallback} />
+      <mesh position-y={1.38}><boxGeometry args={[0.42, 0.08, 0.42]} /><meshLambertMaterial color="#f7931a" /></mesh>
     </group>
   );
 }
