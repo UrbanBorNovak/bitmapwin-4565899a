@@ -356,7 +356,7 @@ function StageVideo() {
       {[-0.6, 0.6].map((y) => (
         <mesh key={y} position={[0, y, -0.4]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.04, 0.04, w - 0.4, 6]} /><meshLambertMaterial color="#111" /></mesh>
       ))}
-      {front && <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={w / 640} zIndexRange={[10, 0]} style={{ backfaceVisibility: "hidden" }}>
+      {front && <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={w / 640} zIndexRange={[1, 0]} style={{ backfaceVisibility: "hidden" }}>
         <div style={{ width: 640, height: 360, background: "#000", position: "relative", overflow: "hidden", font: "12px monospace" }}>
           <iframe src={G.embedUrl} title="Elevated Dabber live on bitmap.stream" width={640} height={360} style={{ border: 0, display: "block" }} allow="autoplay; fullscreen" />
           <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a", pointerEvents: "none", textShadow: "0 0 4px #000" }}>● LIVE · @{G.handle} · {G.channelHeight}.BITMAP</div>
