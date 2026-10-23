@@ -2,6 +2,7 @@
 import { OnChainExhibit } from "@/components/biternam/OnChainExhibit";
 import { GearShelf } from "@/components/biternam/GearShelf";
 import { GearLocker } from "@/components/biternam/GearLocker";
+import { CafeStreamTV } from "@/components/biternam/CafeStreamTV";
 import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group } from "three";
@@ -159,6 +160,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
         <CafePatrons />
         <GearShelf room="cafe" position={[-3.75, 2.2, 0.8]} rotation={Math.PI / 2} />
         <OnChainExhibit room="cafe" position={[2.6, 0, -2.4]} size={1.8} />
+        <CafeStreamTV position={[-2.6, 2.3, -3.86]} width={1.6} />
       </SafeCanvas>
       <GearLocker />
     </div>
