@@ -218,6 +218,13 @@
       "when": 1792720817617,
       "tag": "0030_sovereign_stand_seats",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792722676585,
+      "tag": "0031_launch_seat_wardrobe",
+      "breakpoints": true
     }
   ]
 }
