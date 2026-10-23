@@ -52,7 +52,7 @@ function Inscription({ id }: { id: string }) {
     onError={() => (src.startsWith("https://ordinals") ? setSrc(`/api/public/inscription/${id}`) : setFrame(true))} />;
 }
 
-export function CafeStreamTV({ position, width = 1.5 }: { position: [number, number, number]; width?: number }) {
+export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { position: [number, number, number]; rotationY?: number; width?: number }) {
   const [t, setT] = useState(0);
   useEffect(() => { const i = setInterval(() => setT((x) => x + 1), 1000); return () => clearInterval(i); }, []);
   const [sponsors, setSponsors] = useState<SponsorSlide[]>([]);
@@ -70,7 +70,7 @@ export function CafeStreamTV({ position, width = 1.5 }: { position: [number, num
   const slide = onBreak ? slides[Math.floor((inCycle - STREAM_SECONDS) / SLIDE_SECONDS)]! : null;
   const h = width * 9 / 16;
   return (
-    <group position={position}>
+    <group position={position} rotation-y={rotationY}>
       <mesh position-z={-0.03}><boxGeometry args={[width + 0.12, h + 0.12, 0.06]} /><meshStandardMaterial color="#1a1410" emissive="#f7931a" emissiveIntensity={0.15} /></mesh>
       <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={width / 640} zIndexRange={[10, 0]}>
         <div style={{ width: 640, height: 360, background: "#000", position: "relative", overflow: "hidden", font: "12px monospace" }}>
