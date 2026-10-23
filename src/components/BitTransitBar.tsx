@@ -51,11 +51,11 @@ export function BitTransitBar() {
             <Link to={s.to} onClick={() => { try { playSfx("pick"); } catch { /* audio locked */ } }}
               aria-current={active ? "page" : undefined}
               className={`flex flex-col rounded px-2 py-1 leading-tight transition-colors md:px-3 ${active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-              <span className="flex items-center gap-1 text-[10px] tracking-widest">
+              <span className="flex items-center gap-1 whitespace-nowrap text-[10px] tracking-widest">
                 <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-primary" : "bg-accent"}`} />
                 {s.no} <span className="hidden sm:inline">{s.hub} ·</span> {s.place}
               </span>
-              <span className="text-[9px] text-accent" data-no-translate>{live[s.to]}</span>
+              <span className="text-[9px] whitespace-nowrap text-accent" data-no-translate>{live[s.to]}</span>
             </Link>
           </div>
         );
