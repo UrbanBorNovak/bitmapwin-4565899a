@@ -19,22 +19,27 @@ function seatPos(seat: number): [number, number, number, number] {
   return [Math.sin(a) * radius, row * STEP_H + STEP_H / 2, Math.cos(a) * radius, a];
 }
 
+/** Stepped stands: one instanced block per seat, each reaching down to the ground (no solid wedge across the stage). */
 function Stands() {
-  const steps = useMemo(() => Array.from({ length: ROWS }, (_, r) => r), []);
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const total = useMemo(() => { let n = 0; for (let r = 0; r < ROWS; r++) n += 12 + 2 * r; return n; }, []);
+  useEffect(() => {
+    const m = ref.current; if (!m) return;
+    const o = new THREE.Object3D(); const c = new THREE.Color();
+    for (let i = 0; i < total; i++) {
+      const [x, y, z, a] = seatPos(i + 1);
+      const top = y; // seat surface
+      o.position.set(x, top / 2, z); o.rotation.set(0, a, 0); o.scale.set(SEAT_W, top, STEP_D);
+      o.updateMatrix(); m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, c.set(seatPlace(i + 1).row % 2 ? "#4a4f5a" : "#3a3e47"));
+    }
+    m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [total]);
   return (
-    <group>
-      {steps.map((r) => {
-        const radius = 8 + r * STEP_D;
-        const perRow = 12 + 2 * r;
-        const spread = (perRow * SEAT_W) / radius;
-        return (
-          <mesh key={r} position={[0, r * STEP_H / 2, 0]} rotation-y={-spread / 2 - 0.05}>
-            <cylinderGeometry args={[radius + STEP_D / 2, radius + STEP_D / 2, (r + 1) * STEP_H, 48, 1, false, 0, spread + 0.1]} />
-            <meshLambertMaterial color={r % 2 ? "#4a4f5a" : "#3a3e47"} flatShading />
-          </mesh>
-        );
-      })}
-    </group>
+    <instancedMesh ref={ref} args={[undefined, undefined, total]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshLambertMaterial />
+    </instancedMesh>
   );
 }
 
