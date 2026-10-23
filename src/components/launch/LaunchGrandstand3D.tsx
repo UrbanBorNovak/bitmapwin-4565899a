@@ -414,7 +414,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
 
 type Kernel = { p: THREE.Vector3; v: THREE.Vector3; t: number; hit: boolean };
 /** Popcorn throws: kernels arc from the thrower's seat to the stage screen; hits splat and report back. */
-function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: number | null; onHit?: () => void }) {
+function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: number | null; onHit?: (() => void) | undefined }) {
   const N = 40;
   const mesh = useRef<THREE.InstancedMesh>(null);
   const ks = useRef<Kernel[]>([]);
