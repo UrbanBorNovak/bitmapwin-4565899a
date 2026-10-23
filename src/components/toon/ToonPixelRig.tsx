@@ -8,7 +8,7 @@ import { Primitive } from "@/components/game/Primitive";
 import { DEFAULT_AVATAR_MODEL } from "@/lib/map-identity";
 import { rigClipFor, rigGesture } from "@/lib/toon-avatars";
 
-const MODEL_URL = `https://ordinals.com/content/${DEFAULT_AVATAR_MODEL}`;
+const MODEL_URL = `/api/public/inscription/${DEFAULT_AVATAR_MODEL}`;
 /** Same body height as the voxel avatars, so framing and bubbles stay put. */
 const RIG_HEIGHT = 1.25;
 const skinUrl = (id: string, attempt: number) => `/api/public/inscription/${id}${attempt ? `?retry=${attempt}` : ""}`;

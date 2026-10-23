@@ -58,22 +58,47 @@ const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
   },
 });
 
-const faceCache = new Map<string, THREE.Texture>();
+/** Throttle skin fetches so a full grandstand doesn't burst the relay. */
+let active = 0;
+const queue: (() => void)[] = [];
+function limited<T>(job: () => Promise<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const run = () => { active++; job().then(resolve, reject).finally(() => { active--; queue.shift()?.(); }); };
+    if (active < 6) run(); else queue.push(run);
+  });
+}
+
+/** Front face of a 64×64 Pixel skin: base tile (8,8) with its overlay tile (40,8) on top. */
+async function loadFace(id: string): Promise<THREE.Texture | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(`/api/public/inscription/${id}${attempt ? `?retry=${attempt}` : ""}`);
+      if (!r.ok) throw new Error(String(r.status));
+      const bmp = await createImageBitmap(await r.blob());
+      const c = document.createElement("canvas"); c.width = 8; c.height = 8;
+      const g = c.getContext("2d")!; g.imageSmoothingEnabled = false;
+      const k = bmp.width / 64;
+      g.drawImage(bmp, 8 * k, 8 * k, 8 * k, 8 * k, 0, 0, 8, 8);
+      if (bmp.height >= bmp.width) g.drawImage(bmp, 40 * k, 8 * k, 8 * k, 8 * k, 0, 0, 8, 8);
+      const t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+      t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    } catch { await new Promise((res) => setTimeout(res, 800 * (attempt + 1))); }
+  }
+  return null;
+}
+
+const faceCache = new Map<string, Promise<THREE.Texture | null>>();
 function useFace(pixelId: string) {
   const [tex, setTex] = useState<THREE.Texture | null>(null);
   useEffect(() => {
     let live = true;
-    resolvePixelTexture(pixelId).then((id) => {
+    limited(() => resolvePixelTexture(pixelId)).then((id) => {
       if (!live || !id) return;
-      let t = faceCache.get(id);
-      if (!t) {
-        t = new THREE.TextureLoader().load(`/api/public/inscription/${id}`);
-        t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
-        t.colorSpace = THREE.SRGBColorSpace;
-        t.repeat.set(1 / 8, 1 / 8); t.offset.set(1 / 8, 1 - 2 / 8); // face front tile (1,1)
-        faceCache.set(id, t);
-      }
-      setTex(t);
+      let p = faceCache.get(id);
+      if (!p) { p = limited(() => loadFace(id)); faceCache.set(id, p); }
+      p.then((t) => { if (live && t) setTex(t); else if (!t) faceCache.delete(id); });
     });
     return () => { live = false; };
   }, [pixelId]);

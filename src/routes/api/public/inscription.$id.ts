@@ -33,10 +33,17 @@ export const Route = createFileRoute("/api/public/inscription/$id")({
           await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
         }
         if (!upstream) {
-          // Still busy: send the browser straight to the source (it allows cross-origin use).
-          return new Response(null, {
-            status: 302,
-            headers: { Location: source, "Cache-Control": "no-store" },
+          // ordinals.com busy: try the UniSat mirror (same immutable bytes) before giving up.
+          try {
+            const res = await fetch(`https://static.unisat.io/content/${id}`, { headers: { "User-Agent": "bitmapwin/1.0" } });
+            if (res.ok && res.body) upstream = res;
+          } catch { /* fall through */ }
+        }
+        if (!upstream) {
+          // Never redirect cross-origin: browsers block those bytes for WebGL. Let the client retry.
+          return new Response("Upstream busy", {
+            status: 503,
+            headers: { "Cache-Control": "no-store", "Retry-After": "2", "Access-Control-Allow-Origin": "*" },
           });
         }
         const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
