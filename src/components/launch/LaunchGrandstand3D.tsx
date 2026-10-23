@@ -362,7 +362,7 @@ function StageVideo() {
           <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a", pointerEvents: "none", textShadow: "0 0 4px #000" }}>● LIVE · @{G.handle} · {G.channelHeight}.BITMAP</div>
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 2px, transparent 2px 4px)" }} />
         </div>
-      </SafeHtml>
+      </SafeHtml>}
     </group>
   );
 }
