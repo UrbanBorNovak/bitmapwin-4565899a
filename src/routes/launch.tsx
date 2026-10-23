@@ -141,7 +141,7 @@ function LaunchPage() {
           <div>CINDY-COM · LAUNCH FEED ● LIVE</div>
           <div className="text-muted-foreground">CAP {count}/{LAUNCH_CAPACITY} · CAM {view.toUpperCase()}</div>
         </div>
-        <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 font-mono text-[10px]">
+        <div className="absolute left-3 right-3 top-12 flex flex-wrap gap-2 font-mono text-[10px]">
           {([["diorama", "2.5D DIORAMA"], ["stage", "STAGE VIEW"], ["seat", "SIT IN MY SEAT"]] as const).map(([v, label]) => (
             <button key={v} disabled={v === "seat" && !mine}
               className={`glass-panel rounded border px-2 py-1 disabled:opacity-40 ${view === v && !focus ? "border-signal text-signal" : "border-border"}`}
@@ -155,7 +155,7 @@ function LaunchPage() {
           {count === 0 && <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">EMPTY SEATS — BE THE FIRST BITMAPPER</span>}
         </div>
         {picked && (
-          <div className="glass-panel absolute right-3 top-3 w-60 rounded border border-signal/50 p-3 font-mono text-xs">
+          <div className="glass-panel absolute bottom-3 right-3 w-60 max-w-[calc(100%-1.5rem)] rounded border border-signal/50 p-3 font-mono text-xs">
             <div className="mb-2 flex justify-between text-[10px] text-signal"><span>&gt; INSPECT</span><button onClick={() => pickSeat(null)} aria-label="Close">[X]</button></div>
             <div className="flex items-center gap-2">
               <PixelFace inscriptionId={picked.pixelId} label="Avatar" className="h-12 w-12" />
