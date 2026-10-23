@@ -18,7 +18,7 @@ import { ZapDialog } from "@/components/lightning/ZapDialog";
 import { DONATION_ADDRESS } from "@/lib/donations";
 import { CAFE_TIP_ADDRESS, QUICK_TIP_SATS, celebrateTip, tipLine, useTipBanner } from "@/lib/tip-banner";
 import type { GrandstandView } from "@/components/launch/LaunchGrandstand3D";
-import { LAUNCH_CAPACITY, LAUNCH_TIERS, nextTier, seatMessage, type LaunchSeat } from "@/lib/launch-seats";
+import { GEAR_LABEL, LAUNCH_CAPACITY, LAUNCH_TIERS, nextTier, seatMessage, type LaunchSeat } from "@/lib/launch-seats";
 
 const Grandstand = lazy(() => import("@/components/launch/LaunchGrandstand3D"));
 
@@ -189,6 +189,7 @@ function LaunchPage() {
             <div className="mt-2 text-signal">{picked.seat <= 100 ? "FOUNDERS ROW" : picked.seat <= 500 ? "FULL HOUSE" : "IGNITION"}</div>
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
+            {picked.gear?.map((g) => <div key={g} className="text-muted-foreground">◆ {GEAR_LABEL[g]}</div>)}
             <div className="text-muted-foreground">Seated {new Date(picked.createdAt).toLocaleDateString()}</div>
             {picked.ticketId && <a href={`https://ordinals.com/inscription/${picked.ticketId}`} target="_blank" rel="noreferrer" className="text-bitcoin hover:underline">★ VIP TICKET →</a>}
           </div>

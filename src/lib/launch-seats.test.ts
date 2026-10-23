@@ -45,3 +45,15 @@ describe("launch seats", () => {
     expect(refreshedAvatar(cur, ADDR, null)).toEqual(cur);
   });
 });
+
+import { seatGear } from "./launch-seats";
+describe("provenance gear", () => {
+  it("goggles only below block 100,000", () => {
+    expect(seatGear(200, 99_999, false, false)).toEqual(["ancient"]);
+    expect(seatGear(200, 100_000, false, false)).toEqual([]);
+  });
+  it("visor only for seats 1–100", () => {
+    expect(seatGear(100, null, false, false)).toEqual(["founder"]);
+    expect(seatGear(101, null, false, false)).toEqual([]);
+  });
+});
