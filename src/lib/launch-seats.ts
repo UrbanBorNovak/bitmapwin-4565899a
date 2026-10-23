@@ -17,7 +17,25 @@ export type LaunchSeat = {
   heldBitmap: number | null;
   createdAt: string;
   ticketId?: string | null;
+  gear?: SeatGear[];
 };
+
+/** Provenance gear: each piece is earned only by a recorded fact, never chosen. */
+export type SeatGear = "ancient" | "founder" | "tamer" | "builder";
+export const GEAR_LABEL: Record<SeatGear, string> = {
+  ancient: "Explorer goggles · holds a BITMAP under block 100,000",
+  founder: "Marauder visor · Founders Row seat 1–100",
+  tamer: "Guardian companion · summoned a Guardian",
+  builder: "Hard hat · published a Forge piece",
+};
+export function seatGear(seat: number, heldBitmap: number | null, tamer: boolean, builder: boolean): SeatGear[] {
+  const g: SeatGear[] = [];
+  if (heldBitmap !== null && heldBitmap < 100_000) g.push("ancient");
+  if (seat >= 1 && seat <= 100) g.push("founder");
+  if (tamer) g.push("tamer");
+  if (builder) g.push("builder");
+  return g;
+}
 
 export function seatMessage(address: string, issuedAt: string): string {
   return [
