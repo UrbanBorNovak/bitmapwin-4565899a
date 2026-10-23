@@ -50,7 +50,7 @@ export const claimLaunchSeatFn = createServerFn({ method: "POST" })
     z.object({ address: addressSchema, issuedAt: z.string().max(40), signature: z.string().min(8).max(2000) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const { seatMessage, SEAT_MESSAGE_TTL_MS, assignedPixel, LAUNCH_CAPACITY } = await import("@/lib/launch-seats");
+    const { seatMessage, SEAT_MESSAGE_TTL_MS, LAUNCH_CAPACITY } = await import("@/lib/launch-seats");
     const issued = Date.parse(data.issuedAt);
     if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > SEAT_MESSAGE_TTL_MS) {
       return { ok: false as const, error: "Signature expired — try again" };
@@ -66,19 +66,14 @@ export const claimLaunchSeatFn = createServerFn({ method: "POST" })
     const { count } = await supabaseAdmin.from("launch_seats").select("seat_number", { count: "exact", head: true });
     if ((count ?? 0) >= LAUNCH_CAPACITY) return { ok: false as const, error: "The grandstand is full" };
 
-    let pixelId = assignedPixel(data.address);
-    let pixelSource = "assigned";
-    let heldBitmap: number | null = null;
+    const { seatAvatarFrom } = await import("@/lib/launch-seats");
+    let scanned: { id: string; bitmapHeight: number | null }[] = [];
     try {
       const { fetchWallet } = await import("@/lib/wallet.server");
-      const { PIXELS } = await import("@/lib/bitmap-pixels-catalog");
-      const pixelIds = new Set(PIXELS.map((p) => p.id));
       const snap = await fetchWallet(data.address);
-      for (const u of snap.utxos) for (const i of u.inscriptions) {
-        if (pixelSource === "assigned" && pixelIds.has(i.id)) { pixelId = i.id; pixelSource = "held"; }
-        if (heldBitmap === null && i.bitmapHeight !== null) heldBitmap = i.bitmapHeight;
-      }
-    } catch { /* scan unavailable: keep the assigned Pixel */ }
+      scanned = snap.utxos.flatMap((u) => u.inscriptions);
+    } catch { /* scan unavailable: fall back to the assigned Pixel */ }
+    const { pixelId, pixelSource, heldBitmap } = seatAvatarFrom(data.address, scanned);
 
     const ins = await supabaseAdmin
       .from("launch_seats")

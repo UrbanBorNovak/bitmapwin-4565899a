@@ -46,3 +46,17 @@ export function seatPlace(seat: number): { row: number; col: number; perRow: num
   while (n >= 12 + 2 * row) { n -= 12 + 2 * row; row++; }
   return { row, col: n, perRow: 12 + 2 * row };
 }
+
+type ScannedInscription = { id: string; bitmapHeight: number | null };
+
+/** Avatar for a seat from a wallet scan: the first held BITMAP Pixel wins, else the address's assigned Pixel; the first held BITMAP is raised as a flag. */
+export function seatAvatarFrom(address: string, inscriptions: ScannedInscription[]) {
+  const pixelIds = new Set(PIXELS.map((p) => p.id));
+  const pixel = inscriptions.find((i) => pixelIds.has(i.id));
+  const bitmap = inscriptions.find((i) => i.bitmapHeight !== null);
+  return {
+    pixelId: pixel?.id ?? assignedPixel(address),
+    pixelSource: (pixel ? "held" : "assigned") as "held" | "assigned",
+    heldBitmap: bitmap?.bitmapHeight ?? null,
+  };
+}
