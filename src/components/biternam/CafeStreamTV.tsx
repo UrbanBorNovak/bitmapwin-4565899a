@@ -43,6 +43,13 @@ export function withSponsors(slides: Slide[], sponsors: SponsorSlide[], n: numbe
   return out;
 }
 
+/** Where the TV is at `t` seconds: live stream, or which break slide and seconds left in the break. */
+export function tvState(t: number): { n: number; slide: number | null; left: number } {
+  const cycle = STREAM_SECONDS + 4 * SLIDE_SECONDS;
+  const n = Math.floor(t / cycle), inCycle = t % cycle;
+  return { n, slide: inCycle >= STREAM_SECONDS ? Math.floor((inCycle - STREAM_SECONDS) / SLIDE_SECONDS) : null, left: cycle - inCycle };
+}
+
 function Inscription({ id }: { id: string }) {
   const [src, setSrc] = useState(`https://ordinals.com/content/${id}`);
   const [frame, setFrame] = useState(false);
@@ -67,12 +74,10 @@ export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { positio
     void load(); const i = setInterval(load, 300_000);
     return () => { live = false; clearInterval(i); };
   }, []);
-  const cycle = STREAM_SECONDS + 4 * SLIDE_SECONDS;
-  const n = Math.floor(t / cycle), inCycle = t % cycle;
-  const onBreak = inCycle >= STREAM_SECONDS;
+  const { n, slide: at, left } = tvState(t);
   const now = Date.now();
   const slides = withSponsors(breakSlides(n), sponsors.filter((x) => slotLive(x, "cafe", now)), n);
-  const slide = onBreak ? slides[Math.floor((inCycle - STREAM_SECONDS) / SLIDE_SECONDS)]! : null;
+  const slide = at === null ? null : slides[at]!;
   const h = width * 9 / 16;
   return (
     <group position={position} rotation-y={rotationY}>
@@ -84,7 +89,7 @@ export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { positio
             <div style={{ position: "absolute", inset: 0, background: "#06090d" }}>
               <div style={{ position: "absolute", inset: "28px 0 28px 0" }}>{slide.image ? <img src={slide.image} alt="" referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <Inscription id={slide.id} />}</div>
               <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a" }}>● COMMERCIAL BREAK · {slide.tag}</div>
-              <div style={{ position: "absolute", bottom: 6, left: 10, color: "#7fe7ff" }}>BACK TO @{G.handle} IN {cycle - inCycle}s</div>
+              <div style={{ position: "absolute", bottom: 6, left: 10, color: "#7fe7ff" }}>BACK TO @{G.handle} IN {left}s</div>
               <div style={{ position: "absolute", bottom: 6, right: 10, color: "#9aa4ad" }}>SPONSOR THIS SCREEN · BITMAPWIN.APP/LAUNCH</div>
             </div>
           ) : (
