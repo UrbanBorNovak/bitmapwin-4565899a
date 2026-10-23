@@ -10,9 +10,9 @@ export const STAND_ID = /^[0-9a-f]{64}i\d+$/;
 export type StandConfig = {
   p: typeof STAND_PROTOCOL;
   name: string;
-  host?: string;
-  bitmap?: { min?: number; max?: number };
-  jumbotron?: string[];
+  host?: string | undefined;
+  bitmap?: { min?: number | undefined; max?: number | undefined } | undefined;
+  jumbotron?: string[] | undefined;
 };
 
 /** Strictly parses a BW-STAND-1 inscription body; anything else is not a stand. */

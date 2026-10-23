@@ -142,6 +142,8 @@ import { Route as RanksClansRouteImport } from './routes/ranks.clans'
 import { Route as RanksPvpRouteImport } from './routes/ranks.pvp'
 import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
 import { Route as RanksWalkersRouteImport } from './routes/ranks.walkers'
+import { Route as StandIndexRouteImport } from './routes/stand.index'
+import { Route as StandIdRouteImport } from './routes/stand.$id'
 import { Route as TraitsIndexRouteImport } from './routes/traits.index'
 import { Route as TraitsTraitRouteImport } from './routes/traits.$trait'
 import { Route as TraitsRanksRouteImport } from './routes/traits.ranks'
@@ -837,6 +839,16 @@ const RanksWalkersRoute = RanksWalkersRouteImport.update({
   path: '/walkers',
   getParentRoute: () => RanksRoute,
 } as any)
+const StandIndexRoute = StandIndexRouteImport.update({
+  id: '/stand/',
+  path: '/stand/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StandIdRoute = StandIdRouteImport.update({
+  id: '/stand/$id',
+  path: '/stand/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TraitsIndexRoute = TraitsIndexRouteImport.update({
   id: '/traits/',
   path: '/traits/',
@@ -1111,6 +1123,7 @@ export interface FileRoutesByFullPath {
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
+  '/stand/$id': typeof StandIdRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/traits/ranks': typeof TraitsRanksRoute
   '/codex/': typeof CodexIndexRoute
@@ -1118,6 +1131,7 @@ export interface FileRoutesByFullPath {
   '/extenders/': typeof ExtendersIndexRoute
   '/play/': typeof PlayIndexRoute
   '/ranks/': typeof RanksIndexRoute
+  '/stand/': typeof StandIndexRoute
   '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
@@ -1270,6 +1284,7 @@ export interface FileRoutesByTo {
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
+  '/stand/$id': typeof StandIdRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/traits/ranks': typeof TraitsRanksRoute
   '/codex': typeof CodexIndexRoute
@@ -1277,6 +1292,7 @@ export interface FileRoutesByTo {
   '/extenders': typeof ExtendersIndexRoute
   '/play': typeof PlayIndexRoute
   '/ranks': typeof RanksIndexRoute
+  '/stand': typeof StandIndexRoute
   '/traits': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
@@ -1434,6 +1450,7 @@ export interface FileRoutesById {
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
+  '/stand/$id': typeof StandIdRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/traits/ranks': typeof TraitsRanksRoute
   '/codex/': typeof CodexIndexRoute
@@ -1441,6 +1458,7 @@ export interface FileRoutesById {
   '/extenders/': typeof ExtendersIndexRoute
   '/play/': typeof PlayIndexRoute
   '/ranks/': typeof RanksIndexRoute
+  '/stand/': typeof StandIndexRoute
   '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
@@ -1599,6 +1617,7 @@ export interface FileRouteTypes {
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/ranks/walkers'
+    | '/stand/$id'
     | '/traits/$trait'
     | '/traits/ranks'
     | '/codex/'
@@ -1606,6 +1625,7 @@ export interface FileRouteTypes {
     | '/extenders/'
     | '/play/'
     | '/ranks/'
+    | '/stand/'
     | '/traits/'
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
@@ -1758,6 +1778,7 @@ export interface FileRouteTypes {
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/ranks/walkers'
+    | '/stand/$id'
     | '/traits/$trait'
     | '/traits/ranks'
     | '/codex'
@@ -1765,6 +1786,7 @@ export interface FileRouteTypes {
     | '/extenders'
     | '/play'
     | '/ranks'
+    | '/stand'
     | '/traits'
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
@@ -1921,6 +1943,7 @@ export interface FileRouteTypes {
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/ranks/walkers'
+    | '/stand/$id'
     | '/traits/$trait'
     | '/traits/ranks'
     | '/codex/'
@@ -1928,6 +1951,7 @@ export interface FileRouteTypes {
     | '/extenders/'
     | '/play/'
     | '/ranks/'
+    | '/stand/'
     | '/traits/'
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
@@ -2064,9 +2088,11 @@ export interface RootRouteChildren {
   MapBlockRoute: typeof MapBlockRoute
   PetIdRoute: typeof PetIdRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  StandIdRoute: typeof StandIdRoute
   TraitsTraitRoute: typeof TraitsTraitRoute
   TraitsRanksRoute: typeof TraitsRanksRoute
   CodexIndexRoute: typeof CodexIndexRoute
+  StandIndexRoute: typeof StandIndexRoute
   TraitsIndexRoute: typeof TraitsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   EmbedBitmapBlockRoute: typeof EmbedBitmapBlockRoute
@@ -3007,6 +3033,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RanksWalkersRouteImport
       parentRoute: typeof RanksRoute
     }
+    '/stand/': {
+      id: '/stand/'
+      path: '/stand'
+      fullPath: '/stand/'
+      preLoaderRoute: typeof StandIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stand/$id': {
+      id: '/stand/$id'
+      path: '/stand/$id'
+      fullPath: '/stand/$id'
+      preLoaderRoute: typeof StandIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/traits/': {
       id: '/traits/'
       path: '/traits'
@@ -3462,9 +3502,11 @@ const rootRouteChildren: RootRouteChildren = {
   MapBlockRoute: MapBlockRoute,
   PetIdRoute: PetIdRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  StandIdRoute: StandIdRoute,
   TraitsTraitRoute: TraitsTraitRoute,
   TraitsRanksRoute: TraitsRanksRoute,
   CodexIndexRoute: CodexIndexRoute,
+  StandIndexRoute: StandIndexRoute,
   TraitsIndexRoute: TraitsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   EmbedBitmapBlockRoute: EmbedBitmapBlockRoute,
