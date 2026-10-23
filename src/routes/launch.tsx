@@ -215,7 +215,12 @@ function LaunchPage() {
             {mine?.seat === picked.seat ? <WardrobeShop seat={picked} /> : <div className="text-muted-foreground">◆ {HAIR_LABEL[hairFor(picked.heldBitmap, picked.clubHair ?? null)]}</div>}
             {picked.clubProof && <a href={`https://ordinals.com/inscription/${picked.clubProof}`} target="_blank" rel="noreferrer" className="text-signal hover:underline">✓ CLUB PROOF →</a>}
             <div className="text-muted-foreground">Seated {new Date(picked.createdAt).toLocaleDateString()}</div>
-            {picked.ticketId && <a href={`https://ordinals.com/inscription/${picked.ticketId}`} target="_blank" rel="noreferrer" className="text-bitcoin hover:underline">★ VIP TICKET →</a>}
+            {picked.ticketId && (
+              <a href={`https://ordinals.com/inscription/${picked.ticketId}`} target="_blank" rel="noreferrer" className="mt-2 block border border-bitcoin bg-bitcoin/10 p-2 text-bitcoin hover:bg-bitcoin/20">
+                <div className="font-bold">★ VIP TICKET HOLDER</div>
+                <div className="text-[10px] text-muted-foreground">Seat #{picked.seat} pass inscribed on Bitcoin · view inscription →</div>
+              </a>
+            )}
           </div>
         )}
       </section>

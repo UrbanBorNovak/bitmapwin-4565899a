@@ -218,6 +218,13 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
           <FlagBanner height={seat.heldBitmap} />
         </group>
       )}
+      {seat.ticketId && (<>
+        {/* VIP ticket holder: gold seat aura + lanyard pass on the chest. */}
+        <mesh rotation-x={-Math.PI / 2} position-y={0.03}><ringGeometry args={[0.44, 0.58, 20]} /><meshBasicMaterial color="#fbbf24" transparent opacity={0.85} /></mesh>
+        <mesh position={[0, 0.62, 0.165]}><boxGeometry args={[0.36, 0.04, 0.02]} /><meshBasicMaterial color="#f59e0b" /></mesh>
+        <mesh position={[0, 0.42, 0.175]}><boxGeometry args={[0.18, 0.22, 0.02]} /><meshBasicMaterial color="#fbbf24" /></mesh>
+        <mesh position={[0, 0.42, 0.188]}><boxGeometry args={[0.12, 0.04, 0.01]} /><meshBasicMaterial color="#0d0f13" /></mesh>
+      </>)}
       {(mine || selected) && (
         <mesh position-y={2.4}><cylinderGeometry args={[0.04, 0.04, 2.2]} /><meshBasicMaterial color={mine ? "#22d3ee" : "#f7931a"} transparent opacity={0.8} /></mesh>
       )}
