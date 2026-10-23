@@ -61,40 +61,12 @@ export const claimLaunchSeatFn = createServerFn({ method: "POST" })
     if (!valid) return { ok: false as const, error: "Signature does not match this address" };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { seatAvatarFrom, refreshedAvatar } = await import("@/lib/launch-seats");
     let scanned: { id: string; bitmapHeight: number | null }[] | null = null;
     try {
       const { fetchWallet } = await import("@/lib/wallet.server");
       const snap = await fetchWallet(data.address);
       scanned = snap.utxos.flatMap((u) => u.inscriptions);
-    } catch { /* scan unavailable */ }
-
-    const existing = await supabaseAdmin.from("launch_seats").select("*").ilike("address", data.address).maybeSingle();
-    if (existing.data) {
-      const row = existing.data as Row;
-      const cur = toSeat(row);
-      const next = refreshedAvatar(cur, data.address, scanned);
-      if (next.pixelId === cur.pixelId && next.pixelSource === cur.pixelSource && next.heldBitmap === cur.heldBitmap) {
-        return { ok: true as const, seat: cur, already: true };
-      }
-      const upd = await supabaseAdmin
-        .from("launch_seats")
-        .update({ pixel_id: next.pixelId, pixel_source: next.pixelSource, held_bitmap: next.heldBitmap })
-        .eq("seat_number", row.seat_number)
-        .select("*")
-        .single();
-      return { ok: true as const, seat: upd.error ? cur : toSeat(upd.data as Row), already: true };
-    }
-    const { count } = await supabaseAdmin.from("launch_seats").select("seat_number", { count: "exact", head: true });
-    if ((count ?? 0) >= LAUNCH_CAPACITY) return { ok: false as const, error: "The grandstand is full" };
-
-    const { pixelId, pixelSource, heldBitmap } = seatAvatarFrom(data.address, scanned ?? []);
-
-    const ins = await supabaseAdmin
-      .from("launch_seats")
-      .insert({ address: data.address, pixel_id: pixelId, pixel_source: pixelSource, held_bitmap: heldBitmap })
-      .select("*")
-      .single();
-    if (ins.error) return { ok: false as const, error: "Could not take a seat — try again" };
-    return { ok: true as const, seat: toSeat(ins.data as Row), already: false };
+    } catch { /* scan unavailable: keep the current avatar */ }
+    const { seatVerifiedAddress } = await import("@/lib/launch-seats.server");
+    return seatVerifiedAddress(supabaseAdmin, data.address, scanned);
   });
