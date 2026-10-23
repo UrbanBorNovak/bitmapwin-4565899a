@@ -145,7 +145,9 @@ function CameraRig({ focus }: { focus: number | null }) {
     if (focus) {
       const [x, y, z] = seatPos(focus);
       target.current.set(x, y + 0.8, z);
-      eye.current.set(x * 0.6, y + 2.5, z - 5);
+      // Stand between the stage and the seat, above the stage backdrop, so nothing blocks the view.
+      const pull = Math.max(0.45, 1 - 4.5 / Math.hypot(x, z));
+      eye.current.set(x * pull, y + 3.2, z * pull);
     } else {
       const t = clock.elapsedTime * 0.08;
       target.current.set(0, 7, 16);
