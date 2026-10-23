@@ -90,3 +90,24 @@ export const enterLoungeFn = createServerFn({ method: "POST" })
     if (!row) return { ok: false as const, error: "NO_SEAT" };
     return { ok: true as const, seat: toSeat(row as Row) };
   });
+
+/** dev9's backchannel: verified on the server for a fresh signature from a Founders Row seat (1–100). */
+export const openBackchannelFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ address: addressSchema, issuedAt: z.string().max(40), signature: z.string().min(8).max(2000) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { backchannelMessage, SEAT_MESSAGE_TTL_MS, FOUNDERS_ROW } = await import("@/lib/launch-seats");
+    const issued = Date.parse(data.issuedAt);
+    if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > SEAT_MESSAGE_TTL_MS) return { ok: false as const, error: "Signature expired — try again" };
+    const { Verifier } = await import("bip322-js");
+    let valid = false;
+    try { valid = Verifier.verifySignature(data.address, backchannelMessage(data.address, data.issuedAt), data.signature); } catch { valid = false; }
+    if (!valid) return { ok: false as const, error: "Signature does not match this address" };
+    const sb = await publicClient();
+    const { data: row } = await sb.from("launch_seats").select("seat_number").ilike("address", data.address).maybeSingle();
+    if (!row) return { ok: false as const, error: "NO_SEAT" };
+    if ((row as { seat_number: number }).seat_number > FOUNDERS_ROW) return { ok: false as const, error: "NOT_FOUNDER" };
+    const { BACKCHANNEL_LOG } = await import("@/lib/dev9-backchannel.server");
+    return { ok: true as const, seat: (row as { seat_number: number }).seat_number, log: BACKCHANNEL_LOG };
+  });
