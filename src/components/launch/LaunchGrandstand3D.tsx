@@ -464,7 +464,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <ambientLight intensity={0.7} />
       <directionalLight position={[6, 14, -8]} intensity={1.3} />
       <hemisphereLight args={["#9fb6ff", "#2a1a0a", 0.4]} />
-      <CameraRig focus={focusSeat} view={view} mySeat={mySeat} showScreen={!!picked} />
+      <CameraRig focus={focusSeat} view={view} mySeat={mySeat} showScreen={!!picked} vipFocus={!!seats.find((s) => s.seat === focusSeat)?.ticketId} />
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01}><planeGeometry args={[120, 120]} /><meshLambertMaterial color="#14171c" /></mesh>
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} sponsors={sponsors} vips={vips} />
@@ -553,7 +553,7 @@ function StaffWalker({ ins, i }: { ins: string; i: number }) {
   );
 }
 
-function CameraRig({ focus, view, mySeat, showScreen }: { focus: number | null; view: GrandstandView; mySeat: number | null; showScreen: boolean }) {
+function CameraRig({ focus, view, mySeat, showScreen, vipFocus = false }: { focus: number | null; view: GrandstandView; mySeat: number | null; showScreen: boolean; vipFocus?: boolean }) {
   const target = useRef(new THREE.Vector3(0, 3, 13));
   const eye = useRef(new THREE.Vector3(0, 10, -6));
   useFrame(({ camera, clock }, d) => {
@@ -564,11 +564,17 @@ function CameraRig({ focus, view, mySeat, showScreen }: { focus: number | null; 
       eye.current.set(x * 0.94, y + 1.7, z * 0.94); target.current.set(0, 3.2, 3); fov = 60;
     } else if (focus) {
       const [x, y, z] = seatPos(focus);
-      target.current.set(x, y + 0.8, z);
-      // Close-up from the stage side, just above the row in front, so the Pixel face reads.
-      target.current.set(x, y + 0.9, z);
-      const pull = Math.max(0.6, 1 - 3.2 / Math.hypot(x, z));
-      eye.current.set(x * pull, y + 2.4, z * pull);
+      if (vipFocus) {
+        // VIP photo shot: a touch wider so the gold ring, lanyard pass and Pixel face all fit.
+        target.current.set(x, y + 0.7, z);
+        const pull = Math.max(0.5, 1 - 4.2 / Math.hypot(x, z));
+        eye.current.set(x * pull, y + 2.1, z * pull); fov = 44;
+      } else {
+        // Close-up from the stage side, just above the row in front, so the Pixel face reads.
+        target.current.set(x, y + 0.9, z);
+        const pull = Math.max(0.6, 1 - 3.2 / Math.hypot(x, z));
+        eye.current.set(x * pull, y + 2.4, z * pull);
+      }
     } else if (view === "stage" && showScreen) {
       // A Bitmapper is picked: face the jumbotron from the open floor in front of the stands.
       const t = clock.elapsedTime * 0.2;
