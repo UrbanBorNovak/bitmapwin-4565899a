@@ -11,6 +11,7 @@ import { GALLERY_IDS } from "@/components/toon/EcoGallery";
 import { listSponsorSlidesFn, type SponsorSlide } from "@/lib/sponsor-slots.functions";
 import { slotLive } from "@/lib/sponsor-slots";
 import { tipLine, useTipBanner } from "@/lib/tip-banner";
+import { listLaunchSeatsFn } from "@/lib/launch-seats.functions";
 
 export const STREAM_LOGOS = [
   "c47f5b4c6ef7351465f4ae4d88641fe77cab3303b0996fd4a0b7e9e5c645941fi0",
@@ -76,6 +77,12 @@ export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { positio
     return () => { live = false; clearInterval(i); };
   }, []);
   const tip = useTipBanner("cafe");
+  const [vips, setVips] = useState<number[]>([]);
+  useEffect(() => {
+    let live = true;
+    listLaunchSeatsFn().then((r) => live && setVips(r.seats.filter((s) => s.ticketId).map((s) => s.seat))).catch(() => {});
+    return () => { live = false; };
+  }, []);
   const { n, slide: at, left } = tvState(t);
   const now = Date.now();
   const slides = withSponsors(breakSlides(n), sponsors.filter((x) => slotLive(x, "cafe", now)), n);
@@ -100,6 +107,10 @@ export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { positio
           {tip ? (
             <div data-testid="tv-tip-banner" style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "6px 10px", background: "#f7931a", color: "#06090d", fontWeight: 700, fontSize: 16, letterSpacing: 1 }}>
               {tipLine(tip)} · THE HOUSE SALUTES YOU
+            </div>
+          ) : vips.length && !slide ? (
+            <div data-testid="tv-vip-banner" style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "5px 10px", background: "#fbbf24", color: "#06090d", fontWeight: 700, fontSize: 14, letterSpacing: 1, whiteSpace: "nowrap" }}>
+              ★ NEW VIP PASS MINTED · SEAT #{vips[Math.floor(t / 6) % vips.length]} · GOLD RING ACTIVATED ★
             </div>
           ) : null}
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0 2px, transparent 2px 4px)" }} />

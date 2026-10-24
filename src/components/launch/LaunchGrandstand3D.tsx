@@ -351,12 +351,21 @@ function useSponsorImage(slide: SponsorSlide | null): HTMLImageElement | null {
   return img;
 }
 
-function Jumbotron({ seat, sponsors = [] }: { seat: LaunchSeat | null; sponsors?: SponsorSlide[] }) {
+/** Ticker line celebrating a VIP ticket minter. */
+export const vipLine = (seat: number) => `★ NEW VIP PASS MINTED · SEAT #${seat} · GOLD RING ACTIVATED ★`;
+
+function Jumbotron({ seat, sponsors = [], vips = [] }: { seat: LaunchSeat | null; sponsors?: SponsorSlide[]; vips?: LaunchSeat[] }) {
   const face = useFace(seat?.pixelId ?? "");
   const [tick, setTick] = useState(0);
-  useEffect(() => { if (seat || !sponsors.length) return; const t = setInterval(() => setTick((x) => x + 1), 8000); return () => clearInterval(t); }, [seat, sponsors.length]);
-  const ad = !seat && sponsors.length ? sponsors[tick % sponsors.length]! : null;
+  const rotation = seat ? 0 : sponsors.length + vips.length;
+  useEffect(() => { if (seat || !rotation) return; const t = setInterval(() => setTick((x) => x + 1), 8000); return () => clearInterval(t); }, [seat, rotation]);
+  // Idle rotation: VIP celebrity cards first, then sponsors.
+  const slot = !seat && rotation ? tick % rotation : -1;
+  const vipCard = slot >= 0 && slot < vips.length ? vips[slot]! : null;
+  const ad = slot >= vips.length ? sponsors[slot - vips.length]! : null;
   const adImg = useSponsorImage(ad);
+  const [scroll, setScroll] = useState(0);
+  useEffect(() => { if (!vips.length) return; const t = setInterval(() => setScroll((x) => x + 1), 120); return () => clearInterval(t); }, [vips.length]);
   const { tex, canvas } = useMemo(() => {
     const c = document.createElement("canvas"); c.width = 512; c.height = 256;
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter;
@@ -364,27 +373,43 @@ function Jumbotron({ seat, sponsors = [] }: { seat: LaunchSeat | null; sponsors?
   }, []);
   useEffect(() => {
     const g = canvas.getContext("2d")!;
+    const strip = () => {
+      if (!vips.length) return;
+      g.fillStyle = "#fbbf24"; g.fillRect(0, 230, 512, 26);
+      g.fillStyle = "#06090d"; g.font = "bold 15px monospace";
+      const text = vips.map((v) => vipLine(v.seat)).join("   ") + "   ";
+      const w = g.measureText(text).width, x = -((scroll * 4) % w);
+      g.fillText(text, x, 248); g.fillText(text, x + w, 248);
+    };
+    const scan = () => { g.fillStyle = "rgba(0,0,0,0.35)"; for (let y = 0; y < 256; y += 4) g.fillRect(0, y, 512, 2); tex.needsUpdate = true; };
     g.fillStyle = "#06090d"; g.fillRect(0, 0, 512, 256);
     g.fillStyle = "#22d3ee"; g.font = "bold 22px monospace"; g.fillText("BITMAPWIN · LAUNCH FEED", 20, 36);
+    if (vipCard) {
+      g.strokeStyle = "#fbbf24"; g.lineWidth = 4; g.strokeRect(6, 6, 500, 220);
+      g.fillStyle = "#fbbf24"; g.font = "bold 22px monospace"; g.fillText("★ NEW VIP PASS MINTED ★", 20, 72);
+      g.font = "bold 64px monospace"; g.fillText(`SEAT #${vipCard.seat}`, 20, 140);
+      g.fillStyle = "#cfd6df"; g.font = "20px monospace"; g.fillText(`${vipCard.address.slice(0, 10)}…${vipCard.address.slice(-6)}`, 20, 176);
+      g.fillStyle = "#fbbf24"; g.fillText("GOLD RING ACTIVATED · ON BITCOIN", 20, 206);
+      strip(); scan(); return;
+    }
     if (ad) {
       g.fillStyle = "#f7931a"; g.font = "bold 18px monospace"; g.fillText("● SPONSORED BROADCAST", 20, 64);
       if (adImg) { try { const k = Math.min(180 / adImg.width, 180 / adImg.height); g.drawImage(adImg, 492 - adImg.width * k, 48, adImg.width * k, adImg.height * k); } catch { /* tainted */ } }
       g.fillStyle = "#ffffff"; g.font = "bold 34px monospace"; g.fillText(ad.title.slice(0, 16), 20, 130);
       g.fillStyle = "#22d3ee"; g.font = "20px monospace"; if (ad.handle) g.fillText(ad.handle.slice(0, 22), 20, 170);
-      g.fillStyle = "rgba(0,0,0,0.35)"; for (let y = 0; y < 256; y += 4) g.fillRect(0, y, 512, 2);
-      tex.needsUpdate = true; return;
+      strip(); scan(); return;
     }
-    g.fillStyle = "#f7931a"; g.font = "bold 64px monospace";
+    if (seat?.ticketId) { g.fillStyle = "#fbbf24"; g.font = "bold 16px monospace"; g.fillText("★ VIP PASS HOLDER · ON-CHAIN ORDINAL ★", 20, 62); }
+    g.fillStyle = seat?.ticketId ? "#fbbf24" : "#f7931a"; g.font = "bold 64px monospace";
     g.fillText(seat ? `SEAT #${seat.seat}` : "STAND BY", 20, 120);
     g.fillStyle = "#cfd6df"; g.font = "20px monospace";
     if (seat) {
       g.fillText(`${seat.address.slice(0, 10)}…${seat.address.slice(-6)}`, 20, 160);
       g.fillText(seat.seat <= 100 ? "FOUNDERS ROW" : seat.seat <= 500 ? "FULL HOUSE" : "IGNITION", 20, 192);
-      if (seat.heldBitmap !== null) { g.fillStyle = "#f7931a"; g.fillText(`FLAG ${seat.heldBitmap}.bitmap`, 20, 224); }
+      if (seat.heldBitmap !== null) { g.fillStyle = "#f7931a"; g.fillText(`FLAG ${seat.heldBitmap}.bitmap`, 20, 220); }
     } else g.fillText("TAP A BITMAPPER", 20, 170);
-    g.fillStyle = "rgba(0,0,0,0.35)"; for (let y = 0; y < 256; y += 4) g.fillRect(0, y, 512, 2);
-    tex.needsUpdate = true;
-  }, [seat, canvas, tex, ad, adImg]);
+    strip(); scan();
+  }, [seat, canvas, tex, ad, adImg, vipCard, vips, scroll]);
   return (
     <group position={[0, 0.82, 3.26]} scale={0.46}>
       <mesh><planeGeometry args={[5.2, 2.6]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
@@ -431,6 +456,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   view?: GrandstandView; mySeat?: number | null; sponsors?: SponsorSlide[]; popcornThrows?: number; onPopcornHit?: () => void;
 }) {
   const picked = seats.find((s) => s.seat === selected) ?? null;
+  const vips = useMemo(() => seats.filter((s) => s.ticketId), [seats]);
   return (
     <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]}>
       <color attach="background" args={["#07090d"]} />
@@ -441,7 +467,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <CameraRig focus={focusSeat} view={view} mySeat={mySeat} showScreen={!!picked} />
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01}><planeGeometry args={[120, 120]} /><meshLambertMaterial color="#14171c" /></mesh>
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
-      <Jumbotron seat={picked} sponsors={sponsors} />
+      <Jumbotron seat={picked} sponsors={sponsors} vips={vips} />
       <StageVideo />
       {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.ins} i={i} />)}
       <PopcornLayer throws={popcornThrows} fromSeat={mySeat} onHit={onPopcornHit} />
