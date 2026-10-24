@@ -35,7 +35,8 @@ export async function sweepLaunchTickets(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   let n = 0;
   for (const t of candidates) {
-    const seatAddr = t.vout[0].scriptpubkey_address!;
+    const seatAddr = t.vout[0]?.scriptpubkey_address;
+    if (!seatAddr) continue;
     if (!ticketRevealOk(t.vout, seatAddr, DONATION_ADDRESS)) continue;
     const { data } = await supabaseAdmin.from("launch_seats")
       .update({ ticket_inscription_id: `${t.txid.toLowerCase()}i0` })
