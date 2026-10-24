@@ -153,7 +153,19 @@ function LaunchPage() {
         </div>
       </section>
 
-      <section className="retro-crt relative mt-6 h-[64vh] min-h-[460px] overflow-hidden rounded border border-border">
+      {seats.some((s) => s.ticketId) && (
+        <div data-testid="vip-ticker" className="mt-6 flex items-center gap-2 overflow-x-auto rounded border border-bitcoin bg-bitcoin/10 px-3 py-2 font-mono text-[11px]">
+          <span className="shrink-0 font-bold text-bitcoin">★ VIP PASSES MINTED · TAP TO FRAME</span>
+          {seats.filter((s) => s.ticketId).map((s) => (
+            <button key={s.seat} type="button" aria-label={`Frame VIP seat ${s.seat}`}
+              onClick={() => { playArena("cam"); pickSeat(s); }}
+              className={`shrink-0 rounded border px-2 py-0.5 ${picked?.seat === s.seat ? "border-bitcoin bg-bitcoin text-primary-foreground" : "border-bitcoin/60 text-bitcoin hover:bg-bitcoin/20"}`}>
+              ★ SEAT #{s.seat} · GOLD RING
+            </button>
+          ))}
+        </div>
+      )}
+      <section className={`retro-crt relative ${seats.some((s) => s.ticketId) ? "mt-2" : "mt-6"} h-[64vh] min-h-[460px] overflow-hidden rounded border border-border`}>
         <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">loading grandstand…</div>}>
           <Suspense fallback={null}>
             <Grandstand seats={seats} myAddress={myAddr} selected={picked?.seat ?? null} focusSeat={focus}
