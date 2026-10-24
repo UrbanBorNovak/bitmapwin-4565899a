@@ -38,6 +38,10 @@ async function publicClient() {
 }
 
 export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { sweepLaunchTickets } = await import("@/lib/launch-tickets.server");
+    await sweepLaunchTickets();
+  } catch { /* chain sweep is best-effort; recorded tickets still load */ }
   const sb = await publicClient();
   const { data, error } = await sb
     .from("launch_seats")
