@@ -36,10 +36,9 @@ export function BitTransitBar() {
     queryKey: ["transit-stream", GENESIS_BROADCASTER.channelHeight], staleTime: 30_000, refetchInterval: 60_000, retry: 0,
     queryFn: async () => (await streamLiveStatusFn({ data: { height: GENESIS_BROADCASTER.channelHeight } })).status,
   });
-  if (!isTransitPath(path)) return null;
-
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
+  if (!isTransitPath(path)) return null;
   const seated = hydrated ? seats.data?.seats.length : undefined;
   const live: Record<string, string> = {
     "/launch": seated != null ? `${seated} SEATED` : "…",
