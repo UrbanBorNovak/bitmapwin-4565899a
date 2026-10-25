@@ -540,6 +540,7 @@ function ForgePage() {
 
   const undo = () => setHistory((h) => { const last = h[h.length - 1]; if (last) setWorld(last); return h.slice(0, -1); });
 
+  const hoverNow = hover;
   const place = async (target?: [number, number, number] | null): Promise<void> => {
     const hover = target ?? hoverNow;
     if (!hover) return;
