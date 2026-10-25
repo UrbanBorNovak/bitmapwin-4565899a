@@ -1,6 +1,7 @@
 import "@/lib/gltf-resilience";
 import { ShardRaidHud } from "@/components/game/ShardRaidHud";
 import { SnapShare } from "@/components/game/SnapShare";
+import { ClipRecorder } from "@/components/game/ClipRecorder";
 import { DropHud } from "@/components/game/DropHud";
 import { AdrenalineBot } from "@/components/game/AdrenalineBot";
 import { GuardianRadar } from "@/components/game/GuardianRadar";
@@ -158,6 +159,7 @@ function OasisPage() {
                 {cinematic ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
               </Button>
               <SnapShare height={height ?? 0} />
+              <ClipRecorder label="oasis" />
               <Button variant="terminalGhost" size="icon" type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel hud-keep grid size-11 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
                 <Palette className="size-4" />
               </Button>

@@ -17,6 +17,7 @@ import { WardrobeShop } from "@/components/launch/WardrobeShop";
 import { HAIR_LABEL, hairFor } from "@/lib/launch-seats";
 import { LaunchTicket } from "@/components/launch/LaunchTicket";
 import { ShareSeatButton } from "@/components/launch/ShareSeatButton";
+import { ClipRecorder } from "@/components/game/ClipRecorder";
 import { useQuery } from "@tanstack/react-query";
 import { ZapDialog } from "@/components/lightning/ZapDialog";
 import { DONATION_ADDRESS } from "@/lib/donations";
@@ -97,6 +98,7 @@ function LaunchPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
+      <ClipRecorder label="launch" floating />
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div className="max-w-xl">
           <p className="font-mono text-xs text-signal">LAUNCH PHOTO · LIVE</p>
