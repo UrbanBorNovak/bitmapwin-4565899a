@@ -151,7 +151,7 @@ function TerrainMass({ mass, height }: { mass: LandMass; height: number }) {
   );
 }
 
-function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void; onSurface: (cell: [number, number, number] | null) => void; onPlace: () => void }) {
+function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void; onSurface: (cell: [number, number, number] | null) => void; onPlace: (cell?: [number, number, number]) => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   // Right-sized capacity in 4,096 buckets: a remount only happens when the
   // build crosses a bucket, and the GPU never holds a 200k-instance buffer.
@@ -197,8 +197,11 @@ function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlo
       onClick={(e) => {
         if (e.instanceId == null) return;
         e.stopPropagation();
-        if (erase) { const b = blocks[e.instanceId]; if (b) onErase(b); return; }
-        onPlace();
+        const b = blocks[e.instanceId];
+        if (erase) { if (b) onErase(b); return; }
+        const n = e.face?.normal;
+        // Use the exact cell under this click, not the last hover state.
+        onPlace(b && n ? [b.dx + Math.round(n.x), Math.max(0, b.dy + Math.round(n.y)), b.dz + Math.round(n.z)] : undefined);
       }}
     >
       <boxGeometry args={[0.96, 0.96, 0.96]} />
@@ -320,7 +323,9 @@ function ForgePage() {
   const [paint, setPaint] = useState<BlockId>("stone");
   const [turns, setTurns] = useState(0);
   const [layer, setLayer] = useState(0);
-  const [hover, setHover] = useState<[number, number, number] | null>(null);
+  const [hover, setHoverRaw] = useState<[number, number, number] | null>(null);
+  // Skip re-renders while the cursor stays on the same cell.
+  const setHover = useCallback((c: [number, number, number] | null) => setHoverRaw((p) => (p && c && p[0] === c[0] && p[1] === c[1] && p[2] === c[2]) || (!p && !c) ? p : c), []);
   const [guide, setGuide] = useState(false);
   const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
   const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
@@ -535,8 +540,10 @@ function ForgePage() {
 
   const undo = () => setHistory((h) => { const last = h[h.length - 1]; if (last) setWorld(last); return h.slice(0, -1); });
 
-  const place = async (): Promise<void> => {
+  const place = async (target?: [number, number, number] | null): Promise<void> => {
+    const hover = target ?? hoverNow;
     if (!hover) return;
+    if (target) setHover(target);
     if (tool === "parcel") { const p = parcelAt(rects, hover[0], hover[2]); setFocus(p ? p.index : null); return; }
     if (tool === "erase") return;
     if (tool === "perch") {
@@ -619,15 +626,16 @@ function ForgePage() {
     for (const b of world.values()) { const k = `${b.dx},${b.dz}`; t.set(k, Math.max(t.get(k) ?? 0, b.dy + 1)); }
     return t;
   }, [world]);
-  const onGround = (e: ThreeEvent<PointerEvent>) => {
+  const groundCell = (e: ThreeEvent<PointerEvent | MouseEvent>): [number, number, number] | null => {
     const x = Math.floor(e.point.x + half()), z = Math.floor(e.point.z + half());
-    if (x < 0 || z < 0 || x >= SPAN || z >= SPAN) return setHover(null);
+    if (x < 0 || z < 0 || x >= SPAN || z >= SPAN) return null;
     let y = layer;
     if (tool === "perch") y = Math.max(y, tops.get(`${x},${z}`) ?? 0);
     else if (tool !== "erase" && !(tool === "box" && boxStart)) for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
     else if (tool === "box" && boxStart) y = Math.max(layer, boxStart[1]);
-    setHover([x, Math.min(SPAN - 1, y), z]);
+    return [x, Math.min(SPAN - 1, y), z];
   };
+  const onGround = (e: ThreeEvent<PointerEvent>) => setHover(groundCell(e));
   const autoPerch = () => {
     let best: [number, number, number] | null = null;
     for (const [k, t] of tops) { const [x, z] = k.split(",").map(Number); if (!best || t > best[1]) best = [x!, t, z!]; }
@@ -999,7 +1007,7 @@ function ForgePage() {
           <SafeCanvas key={SPAN} shadows camera={{ position: xl ? [80, 76, 80] : [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
-            <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
+            <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={(c) => void place(c)} />
             {hover && ghost.length > 0 && boxGhost.length === 0 && <><Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} /><GhostBounds blocks={ghost} at={hover} bad={overLimit || ghostOut} /></>}
             {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={ownCount + boxGhost.length > FORGE_MAX_BLOCKS} />}
             {perch && dnaQ.data && (
@@ -1012,7 +1020,7 @@ function ForgePage() {
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             {testing && liveBehaviors.map((lb) => <KitBehaviorPreview key={lb.b.card} behavior={lb.b} blocks={lb.blocks} />)}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={(e) => { const c = groundCell(e); if (c) void place(c); }} receiveShadow>
               <planeGeometry args={[SPAN, SPAN]} />
               <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />
             </mesh>
