@@ -79,7 +79,7 @@ export function ClipRecorder({ label = "bitmapwin", floating = false }: { label?
     mr.onstop = () => {
       stream.getTracks().forEach((t) => t.stop());
       setRec(false);
-      const blob = new Blob(chunks, { type: mime.split(";")[0] });
+      const blob = new Blob(chunks, { type: mime.split(";")[0] ?? mime });
       if (!blob.size) { setErr("Nothing was captured — try again."); return; }
       setClip({ url: URL.createObjectURL(blob), ext: mime.includes("mp4") ? "mp4" : "webm" });
     };
