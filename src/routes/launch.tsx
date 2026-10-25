@@ -115,6 +115,7 @@ function LaunchPage() {
                 <button className="mt-1 text-signal hover:underline" onClick={() => pickSeat(mine)}>Find my seat →</button>
               </div>
             </div>
+            <ShareSeatButton seat={mine} own />
             <LaunchTicket seat={mine} />
             </>
           ) : active ? (
@@ -233,6 +234,7 @@ function LaunchPage() {
                 <div className="text-[10px] text-muted-foreground">Seat #{picked.seat} pass inscribed on Bitcoin · view inscription →</div>
               </a>
             )}
+            <ShareSeatButton seat={picked} own={mine?.seat === picked.seat} />
           </div>
         )}
       </section>
