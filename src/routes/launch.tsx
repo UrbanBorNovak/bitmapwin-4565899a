@@ -16,6 +16,7 @@ import { SponsorBooking } from "@/components/launch/SponsorBooking";
 import { WardrobeShop } from "@/components/launch/WardrobeShop";
 import { HAIR_LABEL, hairFor } from "@/lib/launch-seats";
 import { LaunchTicket } from "@/components/launch/LaunchTicket";
+import { ShareSeatButton } from "@/components/launch/ShareSeatButton";
 import { useQuery } from "@tanstack/react-query";
 import { ZapDialog } from "@/components/lightning/ZapDialog";
 import { DONATION_ADDRESS } from "@/lib/donations";
