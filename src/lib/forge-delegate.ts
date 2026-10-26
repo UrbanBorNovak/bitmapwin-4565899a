@@ -13,12 +13,14 @@ import { FORGE_FORMAT } from "@/lib/voxel-populate";
 import type { TplBlock } from "@/lib/voxel-templates";
 
 /** The master renderer's inscription id (inscribed once; every delegated build points at it). */
-// V2 master: reads BWVX1 and BWVX2 (greedy boxes) and draws a base plate. V1 was adc48ccd…c827i0.
-export const FORGE_MASTER_DELEGATE_ID = "d05d29638539d0ba8241b1e459de732011ffe0e16bbd7439a91b473b74ef7fe1i0";
-/** True for any known Land Forge master renderer (V2 id, or the original V1 master adc48ccd…c827i0). */
+// V3 master (block 973,155): decodes BWVX1 and BWVX2 from Tag 5 metadata. V2 was d05d2963…7fe1i0, V1 adc48ccd…c827i0.
+export const FORGE_MASTER_DELEGATE_ID = "ab5a20f799095d0b700bc8efc2164d7900e2a092a3c537c75ec51e4999f829b8i0";
+/** Earlier masters still on chain; builds that delegate to them stay valid. */
+export const FORGE_PREVIOUS_MASTER_IDS: readonly string[] = ["d05d29638539d0ba8241b1e459de732011ffe0e16bbd7439a91b473b74ef7fe1i0"];
+/** True for any known Land Forge master renderer (V3, V2, or the original V1 master adc48ccd…c827i0). */
 export function isForgeMasterDelegate(id: string | null | undefined): boolean {
   if (!id) return false;
-  if (id === FORGE_MASTER_DELEGATE_ID) return true;
+  if (id === FORGE_MASTER_DELEGATE_ID || FORGE_PREVIOUS_MASTER_IDS.includes(id)) return true;
   return /^adc48ccd[0-9a-f]{52}c827i0$/.test(id);
 }
 
