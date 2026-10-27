@@ -1043,7 +1043,7 @@ function ForgePage() {
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
             </div>
           )}
-          <SafeCanvas key={SPAN} shadows camera={{ position: xl ? [80, 76, 80] : [40, 38, 40], fov: 45 }}>
+          <SafeCanvas key={SPAN} shadows>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={(c) => void place(c)} />
@@ -1064,10 +1064,22 @@ function ForgePage() {
               <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />
             </mesh>
             <gridHelper args={[SPAN, SPAN, "#2c3440", "#222831"]} position={[0, layer + 0.01, 0]} />
-            <OrbitControls enablePan={false} makeDefault maxPolarAngle={Math.PI / 2.1} />
+            <ForgeCamera proj={proj} view={view} span={SPAN} />
+            <OrbitControls key={proj} enablePan={full} makeDefault maxPolarAngle={view.id === "top" ? Math.PI / 2 : Math.PI / 2.1} />
           </SafeCanvas>
           <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
             {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
+          </div>
+          <div data-testid="forge-view-bar" className="absolute left-3 top-11 z-10 flex flex-wrap items-center gap-1 rounded border border-border bg-background/80 p-1 text-[10px] backdrop-blur">
+            {(["persp", "ortho"] as const).map((p) => (
+              <button key={p} type="button" title={p === "persp" ? "Perspective projection" : "Orthographic projection (no distortion)"} onClick={() => setProj(p)} className={`rounded px-2 py-0.5 ${proj === p ? "bg-accent/20 text-accent ring-1 ring-accent" : "text-muted-foreground hover:text-foreground"}`}>{p === "persp" ? "PERSP" : "ORTHO"}</button>
+            ))}
+            <span className="mx-0.5 h-4 w-px bg-border" />
+            {VIEW_LABELS.map(([id, label]) => (
+              <button key={id} type="button" onClick={() => pickView(id)} className={`rounded px-2 py-0.5 ${view.id === id ? "text-foreground ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
+            ))}
+            <span className="mx-0.5 h-4 w-px bg-border" />
+            <button type="button" title={full ? "Exit fullscreen (Esc)" : "Fullscreen builder"} onClick={() => setFull((f) => !f)} className="rounded px-2 py-0.5 text-primary hover:bg-muted">{full ? "✕ EXIT" : "⛶ FULLSCREEN"}</button>
           </div>
           <div className="pointer-events-none absolute right-3 top-3 w-36 rounded border border-border bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
             <div className="flex justify-between"><span>BLOCKS</span><span data-testid="forge-own-count" className={ownCount > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{ownCount}/{FORGE_MAX_BLOCKS}</span></div>
