@@ -7,8 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import * as THREE from "three";
-import { OrbitControls } from "@react-three/drei";
-import type { ThreeEvent } from "@react-three/fiber";
+import { OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { PlacedModel } from "@/components/forge/PlacedModel";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
@@ -261,6 +261,32 @@ async function sha(s: string) {
 
 type ModuleRow = { id: string; name: string; author_address: string; blocks: TplBlock[]; bit_cost: number; tribute_sats: number; lineage: Contributor[]; uses: number };
 
+type ViewId = "iso" | "top" | "front" | "side";
+const VIEW_LABELS: [ViewId, string][] = [["iso", "ISO"], ["top", "TOP"], ["front", "FRONT"], ["side", "SIDE"]];
+
+/** Projection + view presets: swaps the default camera and frames the canvas from a fixed angle. */
+function ForgeCamera({ proj, view, span }: { proj: "persp" | "ortho"; view: { id: ViewId; n: number }; span: number }) {
+  const { camera, controls, size } = useThree();
+  useEffect(() => {
+    const d = span * 1.4;
+    const pos: Record<ViewId, [number, number, number]> = {
+      iso: [d * 0.72, d * 0.68, d * 0.72], top: [0, d * 1.3, 0.001], front: [0, span * 0.3, d * 1.2], side: [d * 1.2, span * 0.3, 0],
+    };
+    camera.position.set(...pos[view.id]);
+    camera.up.set(0, 1, 0);
+    camera.lookAt(0, 0, 0);
+    if (camera instanceof THREE.OrthographicCamera) {
+      camera.zoom = Math.min(size.width, size.height) / (span * 1.5);
+      camera.updateProjectionMatrix();
+    }
+    const c = controls as unknown as { target?: THREE.Vector3; update?: () => void } | null;
+    c?.target?.set(0, 0, 0); c?.update?.();
+  }, [camera, controls, view.id, view.n, proj, span]); // eslint-disable-line react-hooks/exhaustive-deps
+  return proj === "ortho"
+    ? <OrthographicCamera makeDefault near={-1000} far={4000} position={[span, span, span]} />
+    : <PerspectiveCamera makeDefault fov={45} near={0.1} far={4000} position={[span * 0.62, span * 0.6, span * 0.62]} />;
+}
+
 function useCommunityModules() {
   return useQuery({
     queryKey: ["forge-modules"],
@@ -327,6 +353,18 @@ function ForgePage() {
   // Skip re-renders while the cursor stays on the same cell.
   const setHover = useCallback((c: [number, number, number] | null) => setHoverRaw((p) => (p && c && p[0] === c[0] && p[1] === c[1] && p[2] === c[2]) || (!p && !c) ? p : c), []);
   const [guide, setGuide] = useState(false);
+  const [full, setFull] = useState(false);
+  const [proj, setProj] = useState<"persp" | "ortho">("persp");
+  const [view, setView] = useState<{ id: ViewId; n: number }>({ id: "iso", n: 0 });
+  const pickView = (id: ViewId) => setView((v) => ({ id, n: v.n + 1 }));
+  useEffect(() => {
+    if (!full) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFull(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [full]);
   const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
   const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
   const [leftOpen, setLeftOpen] = useState(false);
