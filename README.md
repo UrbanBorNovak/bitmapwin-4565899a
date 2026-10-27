@@ -1,236 +1,211 @@
-# BITMAPWIN (bitmapwin.app)
+<div align="center">
 
-> **Bitcoin-Native Worlds · Infinite 3D Blockchain Expanse · L1 Inscribed Architecture**
+# 🟧 BITMAPWIN
 
-[![Bitcoin](https://img.shields.io/badge/Blockchain-Bitcoin%20L1-F7931A?logo=bitcoin&logoColor=white)](https://bitcoin.org)
-[![Ordinals](https://img.shields.io/badge/Ordinals-Inscribed%20Worlds-black)](https://ordinals.com)
-[![Stack](https://img.shields.io/badge/Stack-TanStack%20Start%20%7C%20React%2019%20%7C%20Three.js-00e5ff)](https://bitmapwin.app)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+### Bitcoin-native worlds, built from real blocks
 
-**BITMAPWIN** is an on-chain world engine and digital land protocol built directly on the Bitcoin blockchain. Every block mined since Genesis is a persistent 3D territory; every transaction is an unforgeable parcel with sovereign air rights.
+**Every Bitcoin block is land. Every transaction is a BITMAP parcel. Every build is proven on-chain.**
 
-No centralized servers dictate the terrain—geometry, pedigree, and ownership are deterministically derived from live Bitcoin L1 facts and Inscribed Ordinals standards.
+[![Bitcoin L1](https://img.shields.io/badge/Bitcoin-L1-F7931A?logo=bitcoin&logoColor=white)](https://mempool.space)
+[![Ordinals](https://img.shields.io/badge/Ordinals-Inscribed-111111)](https://ordinals.com)
+[![TanStack Start](https://img.shields.io/badge/TanStack_Start-v1-00E5FF)](https://tanstack.com/start)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Three.js](https://img.shields.io/badge/Three.js-WebGL-000000?logo=threedotjs&logoColor=white)](https://threejs.org)
+
+[**Website**](https://bitmapwin.app) · [**Enter the Oasis**](https://bitmapwin.app/oasis) · [**Launch Grandstand**](https://bitmapwin.app/launch) · [**Land Forge**](https://bitmapwin.app/forge) · [**X / Twitter**](https://x.com/bitmapwin)
+
+</div>
+
+---
+
+## 📖 Table of Contents
+
+- [What is BITMAPWIN?](#-what-is-bitmapwin)
+- [The Five Pillars](#-the-five-pillars)
+- [On-Chain Milestones](#-on-chain-milestones)
+- [Launch Grandstand](#-launch-grandstand)
+- [Protocols & Standards](#-protocols--standards)
+- [Technology Stack](#-technology-stack)
+- [Getting Started](#-getting-started)
+- [Repository Structure](#-repository-structure)
+- [Design Principles](#-design-principles)
+- [Security](#-security)
+
+---
+
+## 🌍 What is BITMAPWIN?
+
+BITMAPWIN turns Bitcoin history into a world you can walk through. Every block mined since Genesis becomes a 3D territory. Every transaction inside it becomes a BITMAP parcel with its own footprint and full-height air rights.
+
+Nothing is invented. Terrain, ownership, pedigree and builds are derived from **live Bitcoin facts**, **Ordinals inscriptions** and **wallet signatures**. If it isn't proven on-chain, it doesn't exist in the world.
+
+```text
+  Bitcoin block  ──►  BITMAP land  ──►  Oasis world  ──►  Forge builds  ──►  Inscribed on L1
+   (height, txs)      (parcels)         (walk & meet)     (voxel BWVX)       (Tag 11 delegate)
+```
 
 ---
 
 ## 🏛️ The Five Pillars
 
-BITMAPWIN is structured around five core pillars:
-
-
-       ┌────────────────────────────────────────────────────────┐
-       │                       BITMAPWIN                        │
-       └───────────────────────────┬────────────────────────────┘
-                                   │
-      ┌──────────────┬─────────────┼──────────────┬──────────────┐
-      ▼              ▼             ▼              ▼              ▼
-  1. WORLD        2. LAND     3. EXPERIENCES  4. IDENTITY    5. CREATION
-  (The Oasis)    (Bitmaps)     (Biternam &     (Passport &   (Land Forge
-                                Extenders)      Guardians)    & BWVX)
-
-
-1. WORLD · The Oasis (/oasis)
-
-
-
-
-Infinite Procedural Terrain: An expansive 3D world where one BITMAP spans exactly 10 avatar strides across.
-
-
-Deterministic Biomes: Ground textures, topography, and wild voxel entities spawn deterministically based on Bitcoin block entropy (wildBiomeAt).
-
-
-Performance-First Retro Engine: Optimized 60 FPS Three.js rendering pipeline featuring retro aesthetics, 2.5D diorama camera modes, and zero bloat.
-
-
-
-
-2. LAND · On-Chain Bitmaps (/marketplace, /bitmap/$height)
-
-
-
-
-1:1 Block Representation: Over 900,000+ indexed Bitcoin blocks rendered as physical voxel archipelagos.
-
-
-Parcel Floor Metric: Strictly enforces Mondrian coverage—each transaction within a block defines an exclusive parcel with full ceiling air rights.
-
-
-Live Provenance: Traced directly via Bitcoin satpoint movements and unspent outputs (UTXO).
-
-
-
-
-3. EXPERIENCES · Extenders & Biternam (/biternam/*, /launch)
-
-
-
-
-Biternam Interiors: Fixed-camera 2.5D cinematic rooms (Bit-Café, Museum, Outpost, Vault, Lair, Batcave) with dynamic cutscene directors and inventory logic.
-
-
-Launch Grandstand (/launch): A live 3D spectator stadium featuring permanent seats for 480+ Bitmapper wallets, live L1 VIP tickets, and real-time community mechanics.
-
-
-Sovereign Grandstands (BW-STAND-1): Inscribed JSON configs enabling permissionless, self-hosted stadiums verified via BIP-322 wallet signatures.
-
-
-
-
-4. IDENTITY · Passport & Guardians (/guardians, /passport)
-
-
-
-
-BIP-322 Sovereign Auth: Zero custodial logins. Ownership and seat access are verified strictly via Bitcoin message signatures.
-
-
-Morph-from-DNA Guardians: Procedural voxel companions generated deterministically from block headers and transaction hashes (morphFromDna).
-
-
-On-Chain Pixel Avatars: Live-rendered portraits composited directly from inscribed tile layers on ordinals.com.
-
-
-
-
-5. CREATION · Land Forge & BWVX (/forge)
-
-
-
-
-Tag 11 Master Delegate: Self-contained voxel renderers inscribed on Bitcoin (BWVX1 raw / BWVX2 greedy box compression).
-
-
-Lean Inscriptions: Creators publish rich 3D structures by inscribing only lightweight CBOR metadata (Tag 5) delegating to the on-chain master renderer.
-
-
-Recursive Assemblies: Multi-piece modular prefabs referencing independent inscription IDs, flattened dynamically into the Oasis.
-
-
-
-
-
-
-🛠️ Technology Stack
-
-
-Layer	Technology
-Framework	TanStack Start v1 (Full-stack React 19, SSR/SSG, Vite 7)
-3D Rendering	Three.js / React Three Fiber (@react-three/drei)
-Styling & Design System	Tailwind CSS v4, Semantic CSS tokens, Glass instrument panels
-Typography	Space Grotesk (display), DM Sans (body), Space Mono (data)
-Bitcoin Protocols	BIP-322, Ordinals Tag 11 / Tag 5 CBOR, Taproot single-use seals
-Confidential Proofs	Client-side Poseidon SNARKs / Groth16 (SHORD engine)
-
-
-
-
-🚀 Getting Started
-
-
-Prerequisites
-
-
-
-
-Node.js (v20+ recommended) or Bun
-
-
-Modern browser with WebGL2 support
-
-
-
-
-Installation
-
-
-# Clone the repository
+```text
+                         ┌──────────────────────┐
+                         │      BITMAPWIN       │
+                         └──────────┬───────────┘
+      ┌──────────────┬──────────────┼──────────────┬──────────────┐
+      ▼              ▼              ▼              ▼              ▼
+   WORLD           LAND        EXPERIENCES     IDENTITY       CREATION
+  The Oasis       BITMAPs       Biternam &     Passport &    Land Forge
+                               Grandstands     Guardians      & BWVX
+```
+
+| Pillar | Where | What it does |
+|---|---|---|
+| 🌐 **WORLD** | [`/oasis`](https://bitmapwin.app/oasis) | A shared 3D map of Bitcoin blocks on a Hilbert-curve atlas. One BITMAP is 10 avatar strides across. Biomes and wildlife follow the ground. Retro 60 FPS engine with a 2.5D diorama camera. |
+| 🧱 **LAND** | [`/marketplace`](https://bitmapwin.app/marketplace) | 900,000+ indexed BITMAPs. Parcels follow the Mondrian layout of each block. Ownership and holding time come from live satpoint and UTXO data. |
+| 🎬 **EXPERIENCES** | [`/biternam`](https://bitmapwin.app/biternam), [`/launch`](https://bitmapwin.app/launch) | Biternam: fixed-camera 2.5D rooms (Bit-Café, Museum, Outpost, Vault, Lair, Batcave, VIP Lounge) with puzzles, cutscenes and inventory. Extenders let holders host live experiences on their land. |
+| 🪪 **IDENTITY** | [`/guardians`](https://bitmapwin.app/guardians-guide) | BIP-322 sign-in with no custody. Guardians are voxel creatures generated from block DNA. Pixel avatars are built from inscribed tiles. |
+| 🛠️ **CREATION** | [`/forge`](https://bitmapwin.app/forge) | Land Forge voxel studio. Builds are packed as BWVX and inscribed directly onto the BITMAP's own sat. Community modules pay creator royalties in the Bitcoin transaction itself. |
+
+---
+
+## ⛓️ On-Chain Milestones
+
+### Land Forge Master Renderer (Tag 11 Delegate)
+
+The self-rendering voxel viewer is inscribed on Bitcoin. Lean builds point to it and only carry their voxel data.
+
+| Field | Value |
+|---|---|
+| Inscription | [`ab5a20f7…29b8i0`](https://ordinals.com/inscription/ab5a20f799095d0b700bc8efc2164d7900e2a092a3c537c75ec51e4999f829b8i0) |
+| Confirmed | Block **973,155** |
+| Formats | **BWVX1** (raw voxels, 4 bytes/block) · **BWVX2** (greedy box compression) |
+| Payload | Tag 5 CBOR metadata `{ f, h, d, p }` |
+| Runtime | Zero external requests, mouse and touch orbit controls |
+
+Builds made with earlier renderers keep loading and stay recognised.
+
+---
+
+## 🏟️ Launch Grandstand
+
+[`/launch`](https://bitmapwin.app/launch) is a live 3D stadium counting toward launch.
+
+- **480+ Bitmappers seated** — every wallet that used BITMAPWIN holds a permanent seat
+- **Founders Row** — seats #1–100
+- **Pixel faces** — your own held BITMAP Pixel, or a deterministic one assigned to you
+- **BITMAP flags & club hair** — set only from a live wallet scan, never guessed
+- **Gold VIP tickets** — an optional seat ticket inscribed on Bitcoin; minters get a gold ring and a spot on the jumbotron ticker
+- **Live stage** — a one-sided stage screen, sponsor slots, Lightning tips, popcorn throwing, arena sound
+- **Share My Seat** — one tap posts your seat to X
+
+Seat claims are a message signature only: **no transaction, no fee**.
+
+---
+
+## 📜 Protocols & Standards
+
+| Standard | Purpose |
+|---|---|
+| **BWVX1 / BWVX2** | Compact voxel encoding for Land Forge builds |
+| **BWVX_ASM** | Recursive assemblies that reference inscribed pieces by inscription id |
+| **BW-STAND-1** | Sovereign Grandstand: an inscribed JSON config whose inscription id is the stand's identity |
+| **Parcel Floor Metric** | One owner per cell from Mondrian coverage; builds clip to their own rect |
+| **BIP-322** | Wallet-signed proof for seats, lounges, backrooms and trading API writes |
+| **SHORD / Shadow Utility** | Poseidon commitments and one-time nullifiers for private relics and passes |
+
+---
+
+## 🧰 Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | TanStack Start v1 · React 19 · Vite |
+| 3D | Three.js · React Three Fiber · Drei |
+| Styling | Tailwind CSS v4 with semantic design tokens |
+| Typography | Space Grotesk · DM Sans · Space Mono |
+| Bitcoin | `@scure/btc-signer`, `micro-ordinals`, `bip322-js`, `sats-connect` |
+| Cryptography | `@noble/*`, `poseidon-lite`, `snarkjs` (Groth16) |
+| Data | Ordinals.com, mempool.space, and a hosted Postgres backend with row-level security |
+| Runtime | Edge workers (Cloudflare Workers compatible) |
+
+---
+
+## 🚀 Getting Started
+
+**Requirements:** Node.js 20+ or Bun, and a browser with WebGL2.
+
+```bash
+# Clone
 git clone https://github.com/<your-username>/bitmapwin.git
 cd bitmapwin
 
-# Install dependencies
-bun install
-# or
-npm install
+# Install
+bun install        # or: npm install
 
-# Start the local development server
-bun dev
-# or
-npm run dev
+# Run
+bun dev            # or: npm run dev
+```
 
+Open **http://localhost:8080**.
 
+> Backend features (seats, BIT, marketplace) need the project's environment variables. Never commit private keys or secrets.
 
+---
 
-The application will be running at http://localhost:8080.
+## 📁 Repository Structure
 
+```text
+src/
+├── routes/                  File-based pages
+│   ├── index.tsx            Homepage
+│   ├── oasis.tsx            Shared 3D world
+│   ├── launch.tsx           Launch Grandstand
+│   ├── forge.tsx            Land Forge studio
+│   ├── marketplace.tsx      BITMAP marketplace
+│   ├── biternam_.*.tsx      2.5D Biternam rooms
+│   └── api/public/          Public API (trading, agent schema, inscriptions)
+├── components/
+│   ├── biternam/            Room props, rigs, CRT screens
+│   ├── launch/              Grandstand, tickets, wardrobe, sponsors
+│   ├── game/                Avatars, recorder, voxel renderers
+│   └── ui/                  Glass instrument controls
+├── lib/                     Bitcoin, voxel and world logic
+│   ├── forge-delegate.ts    Master renderer + CBOR payloads
+│   ├── forge-parcels.ts     Parcel Floor Metric
+│   ├── creature-morph.ts    Guardian DNA → voxel design
+│   ├── sovereign-stand.ts   BW-STAND-1
+│   └── shord/               Private notes and proofs
+public/                      Static assets and WASM circuits
+supabase/migrations/         Database schema
+```
 
+---
 
+## 🎨 Design Principles
 
+- **Only real on-chain facts** — no mock data, no browser-held ownership claims
+- **Server-judged rewards** — anything worth BIT or access is re-checked on the server
+- **Two accents** — Bitcoin orange `#F7931A` for ownership and actions, signal cyan `#00E5FF` for live data
+- **Glass instrument panels** — dark terminal UI inspired by ord.net and mempool.space
+- **Retro by choice** — 90s-style rendering that holds 60 FPS on phones
 
-📁 Repository Structure
+---
 
+## 🔐 Security
 
-├── src/
-│   ├── routes/               # TanStack file-based routes
-│   │   ├── index.tsx         # Homepage & First 60s interactive hero
-│   │   ├── oasis.tsx         # Infinite 3D procedural world
-│   │   ├── launch.tsx        # Live 3D Launch Grandstand & spectator arena
-│   │   ├── forge.tsx         # Land Forge 3D voxel builder
-│   │   ├── biternam/         # 2.5D fixed-camera interior rooms
-│   │   └── marketplace.tsx   # Verified Bitcoin digital land registry
-│   ├── components/           # UI components, 3D canvases, and HUD overlays
-│   │   ├── biternam/         # Stage rigs, room props, and CRT monitors
-│   │   ├── game/             # Character controllers and voxel renderers
-│   │   └── ui/               # Terminal-style glass instrument controls
-│   ├── lib/                  # Bitcoin, cryptographic, and procedural algorithms
-│   │   ├── forge-delegate.ts # Master renderer & CBOR payload packers
-│   │   ├── creature-morph.ts # Morph-from-DNA Guardian generator
-│   │   ├── sovereign-stand.ts# BW-STAND-1 specification & verification
-│   │   └── onchain-engine.ts # Deterministic coordinate & block math
-└── public/                   # Static assets and WebAssembly circuits
+This repository contains application source only. No wallet keys, seed phrases or passwords are stored here. Circuit files in `public/wasm/` are public proving and verification parameters.
 
+Found a vulnerability? Please contact the team privately via [X](https://x.com/bitmapwin) rather than opening a public issue.
 
+---
 
+<div align="center">
 
+```text
+[ BITMAPWIN · BITCOIN-NATIVE WORLDS · 2026 ]
+```
 
-🔐 Design Principles & Conventions
+**[bitmapwin.app](https://bitmapwin.app)**
 
-
-
-
-Only Real On-Chain Facts: No synthetic or mock claims. If an asset isn't proven by a Bitcoin transaction, inscription, or BIP-322 signature, it does not exist in the world.
-
-
-Terminal Cypherpunk Aesthetic: High-contrast dark UI inspired by ord.net and mempool.space. Two primary signals:
-
-
-
-Bitcoin Orange (#F7931A): Ownership, verified state, actions.
-
-
-Signal Cyan (#00E5FF): Live block data, telemetry, active transmitters.
-
-
-
-
-
-
-Sovereignty First: All progressive game unlocks, private backroom passes, and notes reside client-side in browser storage or encrypted device vaults.
-
-
-
-
-
-
-🌐 Official Links
-
-
-
-
-Website: bitmapwin.app
-
-
-X / Twitter: @bitmapwin
-
-
-Explorer & Ordinals: ordinals.com
+</div>
