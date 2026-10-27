@@ -7,8 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import * as THREE from "three";
-import { OrbitControls } from "@react-three/drei";
-import type { ThreeEvent } from "@react-three/fiber";
+import { OrbitControls, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { PlacedModel } from "@/components/forge/PlacedModel";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
@@ -261,6 +261,32 @@ async function sha(s: string) {
 
 type ModuleRow = { id: string; name: string; author_address: string; blocks: TplBlock[]; bit_cost: number; tribute_sats: number; lineage: Contributor[]; uses: number };
 
+type ViewId = "iso" | "top" | "front" | "side";
+const VIEW_LABELS: [ViewId, string][] = [["iso", "ISO"], ["top", "TOP"], ["front", "FRONT"], ["side", "SIDE"]];
+
+/** Projection + view presets: swaps the default camera and frames the canvas from a fixed angle. */
+function ForgeCamera({ proj, view, span }: { proj: "persp" | "ortho"; view: { id: ViewId; n: number }; span: number }) {
+  const { camera, controls, size } = useThree();
+  useEffect(() => {
+    const d = span * 1.4;
+    const pos: Record<ViewId, [number, number, number]> = {
+      iso: [d * 0.72, d * 0.68, d * 0.72], top: [0, d * 1.3, 0.001], front: [0, span * 0.3, d * 1.2], side: [d * 1.2, span * 0.3, 0],
+    };
+    camera.position.set(...pos[view.id]);
+    camera.up.set(0, 1, 0);
+    camera.lookAt(0, 0, 0);
+    if (camera instanceof THREE.OrthographicCamera) {
+      camera.zoom = Math.min(size.width, size.height) / (span * 1.5);
+      camera.updateProjectionMatrix();
+    }
+    const c = controls as unknown as { target?: THREE.Vector3; update?: () => void } | null;
+    c?.target?.set(0, 0, 0); c?.update?.();
+  }, [camera, controls, view.id, view.n, proj, span]); // eslint-disable-line react-hooks/exhaustive-deps
+  return proj === "ortho"
+    ? <OrthographicCamera makeDefault near={-1000} far={4000} position={[span, span, span]} />
+    : <PerspectiveCamera makeDefault fov={45} near={0.1} far={4000} position={[span * 0.62, span * 0.6, span * 0.62]} />;
+}
+
 function useCommunityModules() {
   return useQuery({
     queryKey: ["forge-modules"],
@@ -327,6 +353,18 @@ function ForgePage() {
   // Skip re-renders while the cursor stays on the same cell.
   const setHover = useCallback((c: [number, number, number] | null) => setHoverRaw((p) => (p && c && p[0] === c[0] && p[1] === c[1] && p[2] === c[2]) || (!p && !c) ? p : c), []);
   const [guide, setGuide] = useState(false);
+  const [full, setFull] = useState(false);
+  const [proj, setProj] = useState<"persp" | "ortho">("persp");
+  const [view, setView] = useState<{ id: ViewId; n: number }>({ id: "iso", n: 0 });
+  const pickView = (id: ViewId) => setView((v) => ({ id, n: v.n + 1 }));
+  useEffect(() => {
+    if (!full) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFull(false); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [full]);
   const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
   const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
   const [leftOpen, setLeftOpen] = useState(false);
@@ -1005,7 +1043,7 @@ function ForgePage() {
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
             </div>
           )}
-          <SafeCanvas key={SPAN} shadows camera={{ position: xl ? [80, 76, 80] : [40, 38, 40], fov: 45 }}>
+          <SafeCanvas key={SPAN} shadows>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={(c) => void place(c)} />
@@ -1026,10 +1064,22 @@ function ForgePage() {
               <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />
             </mesh>
             <gridHelper args={[SPAN, SPAN, "#2c3440", "#222831"]} position={[0, layer + 0.01, 0]} />
-            <OrbitControls enablePan={false} makeDefault maxPolarAngle={Math.PI / 2.1} />
+            <ForgeCamera proj={proj} view={view} span={SPAN} />
+            <OrbitControls key={proj} enablePan={full} makeDefault maxPolarAngle={view.id === "top" ? Math.PI / 2 : Math.PI / 2.1} />
           </SafeCanvas>
           <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
             {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
+          </div>
+          <div data-testid="forge-view-bar" className="absolute left-3 top-11 z-10 flex flex-wrap items-center gap-1 rounded border border-border bg-background/80 p-1 text-[10px] backdrop-blur">
+            {(["persp", "ortho"] as const).map((p) => (
+              <button key={p} type="button" title={p === "persp" ? "Perspective projection" : "Orthographic projection (no distortion)"} onClick={() => setProj(p)} className={`rounded px-2 py-0.5 ${proj === p ? "bg-accent/20 text-accent ring-1 ring-accent" : "text-muted-foreground hover:text-foreground"}`}>{p === "persp" ? "PERSP" : "ORTHO"}</button>
+            ))}
+            <span className="mx-0.5 h-4 w-px bg-border" />
+            {VIEW_LABELS.map(([id, label]) => (
+              <button key={id} type="button" onClick={() => pickView(id)} className={`rounded px-2 py-0.5 ${view.id === id ? "text-foreground ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
+            ))}
+            <span className="mx-0.5 h-4 w-px bg-border" />
+            <button type="button" title={full ? "Exit fullscreen (Esc)" : "Fullscreen builder"} onClick={() => setFull((f) => !f)} className="rounded px-2 py-0.5 text-primary hover:bg-muted">{full ? "✕ EXIT" : "⛶ FULLSCREEN"}</button>
           </div>
           <div className="pointer-events-none absolute right-3 top-3 w-36 rounded border border-border bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
             <div className="flex justify-between"><span>BLOCKS</span><span data-testid="forge-own-count" className={ownCount > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{ownCount}/{FORGE_MAX_BLOCKS}</span></div>
