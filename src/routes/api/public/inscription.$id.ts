@@ -13,7 +13,7 @@ const ID = /^[0-9a-f]{64}i\d+$/;
 export const Route = createFileRoute("/api/public/inscription/$id")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
         const id = String(params.id ?? "").toLowerCase();
         if (!ID.test(id)) return new Response("Bad inscription id", { status: 400 });
         const source = `https://ordinals.com/content/${id}`;
@@ -40,7 +40,15 @@ export const Route = createFileRoute("/api/public/inscription/$id")({
           } catch { /* fall through */ }
         }
         if (!upstream) {
-          // Never redirect cross-origin: browsers block those bytes for WebGL. Let the client retry.
+          // Plain <img>/CSS loads (no-cors) can display cross-origin bytes, so redirect them.
+          // CORS/WebGL loads must never be redirected cross-origin: return 503 and let them retry.
+          const mode = request.headers.get("sec-fetch-mode");
+          if (mode === "no-cors" || mode === "navigate") {
+            return new Response(null, {
+              status: 302,
+              headers: { Location: source, "Cache-Control": "no-store" },
+            });
+          }
           return new Response("Upstream busy", {
             status: 503,
             headers: { "Cache-Control": "no-store", "Retry-After": "2", "Access-Control-Allow-Origin": "*" },
