@@ -42,10 +42,7 @@ export function EpisodeMachine({ onEpisode, disabled, initialPitch = "" }: { onE
           <button key={c} type="button" onClick={() => setPitch(c)} className="border border-border px-2 py-0.5 text-left font-mono text-[10px] text-muted-foreground hover:text-foreground">{c}</button>
         ))}
       </div>
-      <button className="btn-term mt-3 w-full" disabled={busy || disabled || pitch.trim().length < 8} onClick={() => void go()}>
-        {busy ? "[ WRITERS' ROOM IS TYPING… ]" : "[ GREENLIGHT EPISODE ]"}
-      </button>
-      <button type="button" className="mt-2 w-full border border-signal px-2 py-1 font-mono text-[11px] text-signal hover:bg-signal/10 disabled:opacity-50" disabled={busy || disabled || pitch.trim().length < 8} onClick={free}>
+      <button type="button" className="mt-3 w-full border border-signal px-2 py-1 font-mono text-[11px] text-signal hover:bg-signal/10 disabled:opacity-50" disabled={busy || disabled || pitch.trim().length < 8} onClick={free}>
         [ FREE SCRIPT · NO AI ]
       </button>
       {err && <p className="mt-2 font-mono text-[11px] text-destructive">&gt; {err}</p>}
