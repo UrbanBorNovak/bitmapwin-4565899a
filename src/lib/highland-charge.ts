@@ -49,6 +49,8 @@ export const CAV_START = 9.5; // local time the cavalry breaks out of the wall
 export const CAV_SPEED = 12;
 export const SHIELD_WINDOW = 0.7; // seconds a raised shield protects
 export const SHIELD_COOLDOWN = 1.2;
+export const SPEAR_WINDOW = 0.45; // seconds a thrust is deadly
+export const SPEAR_COOLDOWN = 1.2;
 
 export function localTime(t: number): number {
   return ((t % CHARGE_CYCLE) + CHARGE_CYCLE) % CHARGE_CYCLE;
@@ -61,9 +63,10 @@ export function armyFront(local: number): number {
 }
 /** Cavalry z: gallops from the enemy wall until it meets the army's front rank. */
 export function cavalryZ(local: number): number {
-  const z = FIELD_GAP / 2 - 2 - Math.max(0, local - CAV_START) * CAV_SPEED;
-  return Math.max(z, armyFront(local) + 1);
+  return FIELD_GAP / 2 - 2 - Math.max(0, local - CAV_START) * CAV_SPEED;
 }
+/** Where the cavalry stops galloping and leaves the field (well behind the last rank). */
+export const CAV_EXIT_Z = -FIELD_GAP / 2 - 30;
 /** First local time the cavalry hits the front rank. */
 export const CAV_CONTACT = (() => {
   for (let l = CAV_START; l < CHARGE_CYCLE; l += 0.01) if (cavalryZ(l) <= armyFront(l) + 1.001) return l;
@@ -99,7 +102,12 @@ export type BattleGame = {
   cycle: number; resolved: number; // threats resolved this cycle
   heroDownAt: number | null; // local time the followed soldier fell this cycle
   blocks: number; streak: number; best: number;
-  last: "" | "BLOCKED" | "HIT" | "RALLY" | "BREAKOUT";
+  last: "" | "BLOCKED" | "HIT" | "SPEARED" | "RALLY" | "BREAKOUT";
+  thrust: boolean; // HUD asks for a spear thrust
+  spearUntil: number; spearCooldownUntil: number; spearReady: boolean;
+  /** What the commander did to the rider charging at them this cycle: galloped past, stopped, or unseated. */
+  rider: "charging" | "stopped" | "speared" | "through";
+  kills: number;
   casualties: number; standing: number;
   next: { kind: "arrows" | "cavalry"; in: number } | null;
   shieldReady: boolean;
@@ -110,7 +118,7 @@ export type BattleGame = {
   breakouts: number; glory: number; lastGlory: number;
 };
 export function newBattleGame(best = 0): BattleGame {
-  return { raise: false, shieldUntil: -1, cooldownUntil: -1, cycle: -1, resolved: 0, heroDownAt: null, blocks: 0, streak: 0, best, last: "", casualties: 0, standing: 0, next: null, shieldReady: true, vip: false, mount: false, rallyAt: null, rallyReady: false, breakouts: 0, glory: 0, lastGlory: 0 };
+  return { raise: false, shieldUntil: -1, cooldownUntil: -1, cycle: -1, resolved: 0, heroDownAt: null, blocks: 0, streak: 0, best, last: "", casualties: 0, standing: 0, next: null, shieldReady: true, vip: false, mount: false, rallyAt: null, rallyReady: false, breakouts: 0, glory: 0, lastGlory: 0, thrust: false, spearUntil: -1, spearCooldownUntil: -1, spearReady: true, rider: "charging", kills: 0 };
 }
 
 /** One step of the commander rules; t = scene clock seconds. Pure apart from mutating g. */
@@ -118,8 +126,13 @@ export function stepBattle(g: BattleGame, t: number, playing: boolean): void {
   const local = localTime(t), c = cycleOf(t);
   if (c !== g.cycle) {
     if (g.cycle >= 0 && playing && g.heroDownAt == null) { g.streak++; g.best = Math.max(g.best, g.streak); }
-    g.cycle = c; g.resolved = 0; g.heroDownAt = null; g.last = ""; g.rallyAt = null; g.mount = false;
+    g.cycle = c; g.resolved = 0; g.heroDownAt = null; g.last = ""; g.rallyAt = null; g.mount = false; g.rider = "charging";
   }
+  if (g.thrust) {
+    g.thrust = false;
+    if (t >= g.spearCooldownUntil && g.heroDownAt == null) { g.spearUntil = t + SPEAR_WINDOW; g.spearCooldownUntil = t + SPEAR_COOLDOWN; }
+  }
+  g.spearReady = t >= g.spearCooldownUntil;
   if (g.raise) {
     g.raise = false;
     if (t >= g.cooldownUntil && g.heroDownAt == null) { g.shieldUntil = t + SHIELD_WINDOW; g.cooldownUntil = t + SHIELD_COOLDOWN; }
@@ -127,12 +140,15 @@ export function stepBattle(g: BattleGame, t: number, playing: boolean): void {
   g.shieldReady = t >= g.cooldownUntil;
   while (g.resolved < THREATS.length && local >= THREATS[g.resolved]!.at) {
     g.resolved++;
-    if (!playing || g.heroDownAt != null) continue;
-    if (t <= g.shieldUntil) { g.blocks++; g.last = "BLOCKED"; }
-    else { g.heroDownAt = local; g.last = "HIT"; g.streak = 0; }
+    const cav = THREATS[g.resolved - 1]!.kind === "cavalry";
+    if (!playing || g.heroDownAt != null) { if (cav) g.rider = "through"; continue; }
+    // A spear only helps against the rider; arrows still need the shield.
+    if (cav && t <= g.spearUntil) { g.kills++; g.last = "SPEARED"; g.rider = "speared"; }
+    else if (t <= g.shieldUntil) { g.blocks++; g.last = "BLOCKED"; if (cav) g.rider = "stopped"; }
+    else { g.heroDownAt = local; g.last = "HIT"; g.streak = 0; if (cav) g.rider = "through"; }
   }
-  // King Richard: a surviving VIP mounts after the cavalry hits and leads the remaining army through the wall.
-  g.rallyReady = playing && g.vip && g.heroDownAt == null && g.rallyAt == null && local >= CAV_CONTACT && local < CAV_CONTACT + RALLY_WINDOW;
+  // King Richard: only a verified VIP who speared the rider takes the riderless horse and leads the army through the wall.
+  g.rallyReady = playing && g.vip && g.rider === "speared" && g.heroDownAt == null && g.rallyAt == null && local >= CAV_CONTACT && local < CAV_CONTACT + RALLY_WINDOW;
   if (g.mount) { g.mount = false; if (g.rallyReady) { g.rallyAt = local; g.last = "RALLY"; } }
   if (g.rallyAt != null && g.last === "RALLY" && local >= g.rallyAt + BREAKOUT_AFTER) {
     g.breakouts++; g.lastGlory = gloryFor(g.standing, g.streak + 1); g.glory += g.lastGlory; g.last = "BREAKOUT";

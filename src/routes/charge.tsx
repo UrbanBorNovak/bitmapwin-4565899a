@@ -66,6 +66,7 @@ function ChargePage() {
     }, 150);
     const key = (e: KeyboardEvent) => {
       if (e.code === "Space" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.raise = true; }
+      if (e.code === "KeyF" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.thrust = true; }
       if (e.code === "KeyE" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.mount = true; }
     };
     window.addEventListener("keydown", key);
@@ -103,7 +104,7 @@ function ChargePage() {
                 {hud.heroDownAt != null ? "YOU FELL — RISE NEXT CHARGE" : hud.next ? `${hud.next.kind === "arrows" ? "ARROWS" : "CAVALRY"} IN ${Math.max(0, hud.next.in).toFixed(1)}s` : "HOLD THE LINE"}
               </span>
               {vip && <span className="font-bold text-primary">♛ KING · GLORY {hud.glory}</span>}
-              {hud.last && <span className={hud.last === "HIT" ? "text-destructive" : "text-accent"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : `${hud.last}!`}</span>}
+              {hud.last && <span className={hud.last === "HIT" ? "text-destructive" : "text-accent"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : hud.last === "SPEARED" ? (hud.vip ? "RIDER UNSEATED! TAKE THE HORSE [E]" : "RIDER UNSEATED!") : hud.last === "BLOCKED" && hud.rider === "stopped" ? "HORSE STOPPED!" : `${hud.last}!`}</span>}
               {vip && (
                 <button
                   onPointerDown={(e) => { e.preventDefault(); game.mount = true; }}
@@ -116,9 +117,14 @@ function ChargePage() {
                 disabled={!hud.shieldReady || hud.heroDownAt != null}
                 className="ml-auto rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-40"
               >[SPACE] SHIELD</button>
+              <button
+                onPointerDown={(e) => { e.preventDefault(); game.thrust = true; }}
+                disabled={!hud.spearReady || hud.heroDownAt != null}
+                className="rounded border border-primary px-4 py-2 text-primary disabled:opacity-40"
+              >[F] SPEAR</button>
             </>
           ) : (
-            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land and the cavalry hits. VIP pass holders and Founders Row press PROVE VIP to sign with their wallet, survive the cavalry, then mount the warhorse and lead the army through the wall.</span>
+            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land, then shield to stop the rider charging at you or spear to unseat him. Unblocked riders gallop straight through. VIP pass holders and Founders Row press PROVE VIP to sign with their wallet, spear their rider, then take his horse and lead the army through the wall.</span>
           )}
         </div>
       </div>
