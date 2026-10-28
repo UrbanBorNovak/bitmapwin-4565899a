@@ -88,9 +88,9 @@ function Army({ soldiers, focus }: { soldiers: Soldier[]; focus: number | null }
 
 /** The followed soldier at full detail: torso, kilt, head, swinging arms and legs, sword, flag. */
 class AvatarBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+  override render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
 /** Resolves the seat's Pixel (BRC-420 pointer → GLB + PNG skin); null while loading or if it has no model. */
@@ -106,7 +106,7 @@ function usePixelAsset(id: string | undefined) {
   return a;
 }
 
-function Hero({ s, pixelId }: { s: Soldier; pixelId?: string }) {
+function Hero({ s, pixelId }: { s: Soldier; pixelId?: string | undefined }) {
   const asset = usePixelAsset(pixelId);
   if (!asset?.model) return <BlockHero s={s} />;
   const fallback = <BlockHero s={s} />;
