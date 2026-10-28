@@ -71,6 +71,7 @@ const REFERENCES = [
   { to: "/play-guide" as const, title: "PLAYER GUIDE", body: "Controls on desktop and phone, what lives in the Oasis, graphics quality presets, BIT, parties, clans and streaming." },
   { to: "/sdk" as const, title: "SDK REFERENCE", body: "Land, build, player, world, economy, social and AI primitives with call signatures and runtime limits." },
   { to: "/api" as const, title: "PUBLIC API", body: "HTTP endpoints for block metadata, offers and the trade crawler — usable from anything." },
+  { to: "/docs/agents" as const, title: "CONNECT GROK & AGENTS", body: "Point Grok or any MCP agent at your land: read parcels and floors, propose builds your wallet approves." },
   { to: "/dev-tools" as const, title: "DEVELOPER TOOLS", body: "SDK playground, MCP endpoint and the AI package builder." },
   { to: "/land-101" as const, title: "BITCOIN LAND 101", body: "Animated explainer: inscriptions, first-is-first validation and parcels." },
   { to: "/ownership" as const, title: "OWNERSHIP RULES", body: "How deeds, parcels, grants and leases relate to each other." },
