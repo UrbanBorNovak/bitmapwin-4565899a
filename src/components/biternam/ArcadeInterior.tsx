@@ -6,6 +6,7 @@ import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group, Mesh, MeshStandardMaterial } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { DioramaCam, DustMotes } from "@/components/biternam/RoomAtmosphere";
 import type { ArcadeHotspot } from "@/lib/arcade-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CafeSmoke, Patron } from "@/components/biternam/CafeLife";
@@ -118,7 +119,8 @@ export function ArcadeInterior({ onHit, onHover, hover, feeWon, hashWon, prize, 
     <div className="relative h-full w-full">
       <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
-        <FixedCam />
+        <DioramaCam home={[8, 9, 11]} at={[-0.4, 0.4, 0.6]} />
+        <DustMotes count={50} color="#ff6ec7" />
         <color attach="background" args={["#0a0812"]} />
         <fog attach="fog" args={["#0a0812", 14, 26]} />
         <ambientLight intensity={0.55} color="#c8b0ff" />

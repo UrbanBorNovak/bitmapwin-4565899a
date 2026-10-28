@@ -7,6 +7,7 @@ import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { DioramaCam, DustMotes } from "@/components/biternam/RoomAtmosphere";
 import type { CafeHotspot } from "@/lib/cafe-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
@@ -85,7 +86,8 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
     <div className="relative h-full w-full">
       <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
-        <FixedCam />
+        <DioramaCam home={[8, 9, 11]} at={[-0.5, 0.25, 0.7]} />
+        <DustMotes color="#ffc980" />
         <color attach="background" args={["#100c0a"]} />
         <fog attach="fog" args={["#100c0a", 14, 26]} />
         <ambientLight intensity={0.6} color="#ffd9b0" />
