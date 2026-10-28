@@ -1,6 +1,6 @@
 /** Highland Charge: every seated Bitmapper is a soldier in one army. Pure maths, no React/three. */
 
-export const CHARGE_CYCLE = 14; // seconds per charge loop
+export const CHARGE_CYCLE = 20; // battle cry, charge, cavalry, then the King's rally // seconds per charge loop
 export const FIELD_GAP = 70; // distance between the two lines at the start
 export const COLS = 24;
 export const SPACING = 1.6;
@@ -103,9 +103,14 @@ export type BattleGame = {
   casualties: number; standing: number;
   next: { kind: "arrows" | "cavalry"; in: number } | null;
   shieldReady: boolean;
+  vip: boolean; // set by the page: followed seat holds a VIP pass or sits in Founders Row
+  mount: boolean; // HUD asks to mount the warhorse and rally
+  rallyAt: number | null; // local time the King's rally began this cycle
+  rallyReady: boolean; // VIP may mount right now
+  breakouts: number; glory: number; lastGlory: number;
 };
 export function newBattleGame(best = 0): BattleGame {
-  return { raise: false, shieldUntil: -1, cooldownUntil: -1, cycle: -1, resolved: 0, heroDownAt: null, blocks: 0, streak: 0, best, last: "", casualties: 0, standing: 0, next: null, shieldReady: true };
+  return { raise: false, shieldUntil: -1, cooldownUntil: -1, cycle: -1, resolved: 0, heroDownAt: null, blocks: 0, streak: 0, best, last: "", casualties: 0, standing: 0, next: null, shieldReady: true, vip: false, mount: false, rallyAt: null, rallyReady: false, breakouts: 0, glory: 0, lastGlory: 0 };
 }
 
 /** One step of the commander rules; t = scene clock seconds. Pure apart from mutating g. */
@@ -113,7 +118,7 @@ export function stepBattle(g: BattleGame, t: number, playing: boolean): void {
   const local = localTime(t), c = cycleOf(t);
   if (c !== g.cycle) {
     if (g.cycle >= 0 && playing && g.heroDownAt == null) { g.streak++; g.best = Math.max(g.best, g.streak); }
-    g.cycle = c; g.resolved = 0; g.heroDownAt = null; g.last = "";
+    g.cycle = c; g.resolved = 0; g.heroDownAt = null; g.last = ""; g.rallyAt = null; g.mount = false;
   }
   if (g.raise) {
     g.raise = false;
@@ -126,6 +131,26 @@ export function stepBattle(g: BattleGame, t: number, playing: boolean): void {
     if (t <= g.shieldUntil) { g.blocks++; g.last = "BLOCKED"; }
     else { g.heroDownAt = local; g.last = "HIT"; g.streak = 0; }
   }
+  // King Richard: a surviving VIP mounts after the cavalry hits and leads the remaining army through the wall.
+  g.rallyReady = playing && g.vip && g.heroDownAt == null && g.rallyAt == null && local >= CAV_CONTACT && local < CAV_CONTACT + RALLY_WINDOW;
+  if (g.mount) { g.mount = false; if (g.rallyReady) { g.rallyAt = local; g.last = "RALLY"; } }
+  if (g.rallyAt != null && g.last === "RALLY" && local >= g.rallyAt + BREAKOUT_AFTER) {
+    g.breakouts++; g.lastGlory = gloryFor(g.standing, g.streak + 1); g.glory += g.lastGlory; g.last = "BREAKOUT";
+  }
   const nx = THREATS[g.resolved];
   g.next = nx ? { kind: nx.kind, in: nx.at - local } : null;
+}
+
+/* ---------- The King's rally ---------- */
+export const RALLY_WINDOW = 3; // seconds after cavalry contact a VIP may mount
+export const RALLY_SPEED = 7; // army speed behind the King
+export const KING_SPEED = 11; // warhorse speed
+export const BREAKOUT_AFTER = 3.2; // seconds of riding until the enemy wall breaks
+/** Extra distance gained since the rally began. */
+export function rallyGain(local: number, rallyAt: number | null, speed: number): number {
+  return rallyAt == null || local < rallyAt ? 0 : (local - rallyAt) * speed;
+}
+/** Glory for a breakout: survivors × streak multiplier. */
+export function gloryFor(standing: number, streak: number): number {
+  return standing * Math.max(1, streak);
 }
