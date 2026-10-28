@@ -116,7 +116,7 @@ function ChargePage() {
       </div>
       {playing && (
         // Actions sit at the bottom within thumb reach, leaving the battlefield in view.
-        <div className="pointer-events-none absolute inset-x-0 bottom-32 z-10 flex justify-center px-4">
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-40 flex justify-center px-4">
           <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
               {vip && (
                 <button
