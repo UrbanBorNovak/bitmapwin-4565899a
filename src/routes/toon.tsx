@@ -12,6 +12,7 @@ import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, probeMp4, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
 import { BEACH_LANDING, CITADEL_TEASER, FORGE_PROMO, PIXELS_HOMECOMING, TRANSMISSION } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
+import { StageDirector, ThirdsGuide } from "@/components/toon/StageDirector";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
@@ -54,6 +55,7 @@ function ToonPage() {
   const timeRef = useRef(0);
   timeRef.current = time;
   const [muted, setMuted] = useState(false);
+  const [guides, setGuides] = useState(false);
   const soundRef = useRef<{ key: string; buf: Promise<AudioBuffer | null> } | null>(null);
   const soundtrack = () => {
     const key = JSON.stringify(episode);
@@ -181,6 +183,7 @@ function ToonPage() {
             </ClientOnly>
             </div>
             <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+            {guides && !recording && <ThirdsGuide />}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
             <button className="btn-term" disabled={recording} onClick={() => { if (time >= total) setTime(0); setPlaying((p) => !p); }}>[ {playing ? "PAUSE" : "▶ PLAY"} ]</button>
@@ -191,6 +194,10 @@ function ToonPage() {
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
           </div>
+          <label className="mt-2 flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+            <input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} /> FRAMING GUIDES (not exported)
+          </label>
+          <StageDirector episode={episode} time={time} disabled={recording} onChange={(n) => { setEpisode(n); setScript(JSON.stringify(n, null, 2)); }} />
           <div className="mt-3"><CinemaSubmitPanel episode={episode} /></div>
           <div className="mt-3"><ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} /></div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
