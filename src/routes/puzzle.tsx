@@ -18,67 +18,27 @@ export const Route = createFileRoute("/puzzle")({
   component: PuzzlePage,
 });
 
-const FOUND_KEY = "bitmap.puzzle.found";
-const DUTIES = [
-  { id: "ECO", duty: 0.15 },
-  { id: "BALANCED", duty: 0.5 },
-  { id: "OVERCLOCK", duty: 1 },
-] as const;
-
 function PuzzlePage() {
   const wallet = useWalletSession();
-  const worker = useRef<Worker | null>(null);
-  const [on, setOn] = useState(false);
-  const [duty, setDuty] = useState<(typeof DUTIES)[number]["id"]>("BALANCED");
-  const [scanned, setScanned] = useState(0);
-  const [rate, setRate] = useState(0);
-  const [slice, setSlice] = useState<string | null>(null);
-  const [found, setFound] = useState<string | null>(null);
+  const lot = useLottery();
+  const { on, scanned, rate, slice, found } = lot;
+  const duty = lot.power;
+  const setDuty = lotterySetPower;
+  const DUTIES = LOTTERY_POWER;
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [txid, setTxid] = useState<string | null>(null);
-  const window5 = useRef<{ t: number; n: number }[]>([]);
 
   useEffect(() => {
-    const k = localStorage.getItem(FOUND_KEY);
-    if (k) setFound(k);
+    lotteryBoot();
     fetch(`https://mempool.space/api/address/${PUZZLE_71.address}`)
       .then((r) => r.json())
       .then((a) => setBalance(a.chain_stats.funded_txo_sum - a.chain_stats.spent_txo_sum))
       .catch(() => setBalance(null));
-    return () => worker.current?.terminate();
   }, []);
 
-  const dutyVal = DUTIES.find((d) => d.id === duty)!.duty;
-  useEffect(() => { worker.current?.postMessage({ type: "duty", duty: dutyVal }); }, [dutyVal]);
-
-  function start() {
-    if (!worker.current) {
-      const w = new Worker(new URL("../lib/puzzle-worker.ts", import.meta.url), { type: "module" });
-      w.onmessage = (e) => {
-        const m = e.data;
-        if (m.type === "batch") {
-          setScanned((s) => s + m.count);
-          const now = performance.now();
-          window5.current.push({ t: now, n: m.count });
-          window5.current = window5.current.filter((x) => now - x.t < 5000);
-          const n = window5.current.reduce((a, b) => a + b.n, 0);
-          setRate(Math.round(n / 5));
-        } else if (m.type === "slice") setSlice(m.startHex);
-        else if (m.type === "found") {
-          localStorage.setItem(FOUND_KEY, m.keyHex);
-          const blob = new Blob([`PUZZLE #71 KEY\n${m.keyHex}\n${new Date().toISOString()}\n`], { type: "text/plain" });
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob); a.download = "puzzle71-key.txt"; a.click();
-          setFound(m.keyHex); setOn(false);
-        }
-      };
-      worker.current = w;
-    }
-    worker.current.postMessage({ type: "start", startHex: PUZZLE_71.startHex, endHex: PUZZLE_71.endHex, target: Array.from(hash160Of(PUZZLE_71.address)), duty: dutyVal });
-    setOn(true);
-  }
-  function stop() { worker.current?.postMessage({ type: "stop" }); setOn(false); setRate(0); }
+  const start = lotteryStart;
+  const stop = lotteryStop;
 
   async function sweep() {
     if (!found || !wallet) return;
