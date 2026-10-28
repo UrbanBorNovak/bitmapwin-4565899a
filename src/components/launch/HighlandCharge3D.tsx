@@ -503,7 +503,7 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
 
 /** Dev-only: lets browser tests jump the battle clock. Never mounted in production builds. */
 function DevClock() {
-  useFrame(({ clock, camera }) => { (window as unknown as Record<string, unknown>).__chargeClock = clock; (window as unknown as Record<string, unknown>).__chargeCam = camera; }, -2);
+  useFrame(({ clock, camera }) => { (window as unknown as Record<string, unknown>)["__chargeClock"] = clock; (window as unknown as Record<string, unknown>)["__chargeCam"] = camera; }, -2);
   return null;
 }
 

@@ -73,7 +73,7 @@ function ChargePage() {
       if (e.code === "KeyE" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.mount = true; }
     };
     window.addEventListener("keydown", key);
-    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__charge = { game, follow: (n: number) => { setFocus(n); setInput(String(n)); }, fixtureKing: (seat: number, vip: boolean) => setDevKing({ address: "fixture", seat, vip }) };
+    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>)["__charge"] = { game, follow: (n: number) => { setFocus(n); setInput(String(n)); }, fixtureKing: (seat: number, vip: boolean) => setDevKing({ address: "fixture", seat, vip }) };
     return () => { clearInterval(id); window.removeEventListener("keydown", key); };
   }, [game]);
   const danger = hud.next && hud.next.in < 1.2 && hud.heroDownAt == null;
