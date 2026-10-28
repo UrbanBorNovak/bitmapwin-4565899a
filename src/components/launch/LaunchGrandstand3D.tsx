@@ -457,6 +457,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
 }) {
   const picked = seats.find((s) => s.seat === selected) ?? null;
   const vips = useMemo(() => seats.filter((s) => s.ticketId), [seats]);
+  const [talking, setTalking] = useState<string | null>(null);
   return (
     <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]}>
       <color attach="background" args={["#07090d"]} />
@@ -469,7 +470,8 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <Stands /><NeonTiers /><Stage /><Trusses /><Beams /><Motes />
       <Jumbotron seat={picked} sponsors={sponsors} vips={vips} />
       <StageVideo />
-      {STAFF.map((c, i) => <StaffWalker key={c.id} ins={c.ins} i={i} />)}
+      {STAFF.map((c, i) => <StaffWalker key={c.id} id={c.id} name={c.name} ins={c.ins} i={i} talking={talking === c.id} onTalk={setTalking} />)}
+      <BackstageDoor />
       <PopcornLayer throws={popcornThrows} fromSeat={mySeat} onHit={onPopcornHit} />
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
