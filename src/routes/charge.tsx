@@ -118,7 +118,7 @@ function ChargePage() {
               >[SPACE] SHIELD</button>
             </>
           ) : (
-            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land and the cavalry hits. VIP pass holders and Founders Row survive the cavalry, then mount the warhorse and lead the army through the wall.</span>
+            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land and the cavalry hits. VIP pass holders and Founders Row press PROVE VIP to sign with their wallet, survive the cavalry, then mount the warhorse and lead the army through the wall.</span>
           )}
         </div>
       </div>
