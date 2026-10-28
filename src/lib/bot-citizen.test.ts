@@ -15,7 +15,7 @@ describe("bot citizen", () => {
   });
   it("gives each bot its own taproot address", () => {
     const a = createBot({ ...ok, maxFeeSats: 5000 }), b = createBot({ ...ok, maxFeeSats: 5000 });
-    expect(a.address.startsWith("bc1p")).toBe(true);
+    expect(a.address.startsWith("tb1p")).toBe(true);
     expect(a.address).not.toBe(b.address);
   });
 });
