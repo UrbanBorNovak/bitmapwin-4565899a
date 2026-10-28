@@ -150,6 +150,13 @@ export const BREAKOUT_AFTER = 3.2; // seconds of riding until the enemy wall bre
 export function rallyGain(local: number, rallyAt: number | null, speed: number): number {
   return rallyAt == null || local < rallyAt ? 0 : (local - rallyAt) * speed;
 }
+/** Where the King's warhorse reins in: just through the enemy wall, never off into the void. */
+export const KING_STOP = FIELD_GAP / 2 + 5;
+/** The King's z: eases into KING_STOP from wherever he mounted, so he never snaps or overshoots. */
+export function kingZ(startZ: number, gain: number): number {
+  const room = Math.max(0, KING_STOP - startZ);
+  return room <= 0 ? startZ : startZ + room * (1 - Math.exp(-gain / room));
+}
 /** Glory for a breakout: survivors × streak multiplier. */
 export function gloryFor(standing: number, streak: number): number {
   return standing * Math.max(1, streak);
