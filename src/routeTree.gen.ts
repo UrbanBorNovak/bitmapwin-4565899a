@@ -64,6 +64,7 @@ import { Route as PassportRouteImport } from './routes/passport'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PlayRouteImport } from './routes/play'
 import { Route as PlayGuideRouteImport } from './routes/play-guide'
+import { Route as PuzzleRouteImport } from './routes/puzzle'
 import { Route as RanksRouteImport } from './routes/ranks'
 import { Route as RegistryRouteImport } from './routes/registry'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -449,6 +450,11 @@ const PlayRoute = PlayRouteImport.update({
 const PlayGuideRoute = PlayGuideRouteImport.update({
   id: '/play-guide',
   path: '/play-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PuzzleRoute = PuzzleRouteImport.update({
+  id: '/puzzle',
+  path: '/puzzle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RanksRoute = RanksRouteImport.update({
@@ -1068,6 +1074,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
+  '/puzzle': typeof PuzzleRoute
   '/ranks': typeof RanksRouteWithChildren
   '/registry': typeof RegistryRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -1233,6 +1240,7 @@ export interface FileRoutesByTo {
   '/passport': typeof PassportRoute
   '/payments': typeof PaymentsRoute
   '/play-guide': typeof PlayGuideRoute
+  '/puzzle': typeof PuzzleRoute
   '/registry': typeof RegistryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
@@ -1401,6 +1409,7 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
+  '/puzzle': typeof PuzzleRoute
   '/ranks': typeof RanksRouteWithChildren
   '/registry': typeof RegistryRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -1571,6 +1580,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/play'
     | '/play-guide'
+    | '/puzzle'
     | '/ranks'
     | '/registry'
     | '/reset-password'
@@ -1736,6 +1746,7 @@ export interface FileRouteTypes {
     | '/passport'
     | '/payments'
     | '/play-guide'
+    | '/puzzle'
     | '/registry'
     | '/reset-password'
     | '/sdk'
@@ -1903,6 +1914,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/play'
     | '/play-guide'
+    | '/puzzle'
     | '/ranks'
     | '/registry'
     | '/reset-password'
@@ -2072,6 +2084,7 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   PlayRoute: typeof PlayRouteWithChildren
   PlayGuideRoute: typeof PlayGuideRoute
+  PuzzleRoute: typeof PuzzleRoute
   RanksRoute: typeof RanksRouteWithChildren
   RegistryRoute: typeof RegistryRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -2524,6 +2537,13 @@ declare module '@tanstack/react-router' {
       path: '/play-guide'
       fullPath: '/play-guide'
       preLoaderRoute: typeof PlayGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/puzzle': {
+      id: '/puzzle'
+      path: '/puzzle'
+      fullPath: '/puzzle'
+      preLoaderRoute: typeof PuzzleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ranks': {
@@ -3509,6 +3529,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   PlayRoute: PlayRouteWithChildren,
   PlayGuideRoute: PlayGuideRoute,
+  PuzzleRoute: PuzzleRoute,
   RanksRoute: RanksRouteWithChildren,
   RegistryRoute: RegistryRoute,
   ResetPasswordRoute: ResetPasswordRoute,
