@@ -122,6 +122,7 @@ import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.
 import { Route as CollectionsPixelsRouteImport } from './routes/collections.pixels'
 import { Route as CollectionsRelicsRouteImport } from './routes/collections.relics'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
+import { Route as DocsAgentsRouteImport } from './routes/docs_.agents'
 import { Route as EmbedOasisRouteImport } from './routes/embed.oasis'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
@@ -740,6 +741,11 @@ const DistrictSlugRoute = DistrictSlugRouteImport.update({
   path: '/district/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsAgentsRoute = DocsAgentsRouteImport.update({
+  id: '/docs_/agents',
+  path: '/docs/agents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmbedOasisRoute = EmbedOasisRouteImport.update({
   id: '/embed/oasis',
   path: '/embed/oasis',
@@ -1112,6 +1118,7 @@ export interface FileRoutesByFullPath {
   '/collections/pixels': typeof CollectionsPixelsRoute
   '/collections/relics': typeof CollectionsRelicsRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/docs/agents': typeof DocsAgentsRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
@@ -1274,6 +1281,7 @@ export interface FileRoutesByTo {
   '/collections/pixels': typeof CollectionsPixelsRoute
   '/collections/relics': typeof CollectionsRelicsRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/docs/agents': typeof DocsAgentsRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
@@ -1441,6 +1449,7 @@ export interface FileRoutesById {
   '/collections/pixels': typeof CollectionsPixelsRoute
   '/collections/relics': typeof CollectionsRelicsRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/docs_/agents': typeof DocsAgentsRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
@@ -1609,6 +1618,7 @@ export interface FileRouteTypes {
     | '/collections/pixels'
     | '/collections/relics'
     | '/district/$slug'
+    | '/docs/agents'
     | '/embed/oasis'
     | '/extenders/$slug'
     | '/extenders/adrenaline'
@@ -1771,6 +1781,7 @@ export interface FileRouteTypes {
     | '/collections/pixels'
     | '/collections/relics'
     | '/district/$slug'
+    | '/docs/agents'
     | '/embed/oasis'
     | '/extenders/$slug'
     | '/extenders/adrenaline'
@@ -1937,6 +1948,7 @@ export interface FileRouteTypes {
     | '/collections/pixels'
     | '/collections/relics'
     | '/district/$slug'
+    | '/docs_/agents'
     | '/embed/oasis'
     | '/extenders/$slug'
     | '/extenders/adrenaline'
@@ -2097,6 +2109,7 @@ export interface RootRouteChildren {
   CodexBestiaryRoute: typeof CodexBestiaryRoute
   CodexMorphsRoute: typeof CodexMorphsRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
+  DocsAgentsRoute: typeof DocsAgentsRoute
   EmbedOasisRoute: typeof EmbedOasisRoute
   MapBlockRoute: typeof MapBlockRoute
   PetIdRoute: typeof PetIdRoute
@@ -2906,6 +2919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DistrictSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs_/agents': {
+      id: '/docs_/agents'
+      path: '/docs/agents'
+      fullPath: '/docs/agents'
+      preLoaderRoute: typeof DocsAgentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/embed/oasis': {
       id: '/embed/oasis'
       path: '/embed/oasis'
@@ -3519,6 +3539,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodexBestiaryRoute: CodexBestiaryRoute,
   CodexMorphsRoute: CodexMorphsRoute,
   DistrictSlugRoute: DistrictSlugRoute,
+  DocsAgentsRoute: DocsAgentsRoute,
   EmbedOasisRoute: EmbedOasisRoute,
   MapBlockRoute: MapBlockRoute,
   PetIdRoute: PetIdRoute,
