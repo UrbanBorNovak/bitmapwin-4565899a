@@ -78,7 +78,7 @@ function ChargePage() {
   }, [game]);
   const danger = hud.next && hud.next.in < 1.2 && hud.heroDownAt == null;
   return (
-    <main className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-background">
+    <main className="relative h-[calc(100dvh-9rem)] w-full overflow-hidden bg-background">
       <ClientOnly fallback={null}>
         <Suspense fallback={null}><Charge seats={seats} focus={focus} game={game} /></Suspense>
       </ClientOnly>
@@ -116,7 +116,7 @@ function ChargePage() {
       </div>
       {playing && (
         // Actions sit at the bottom within thumb reach, leaving the battlefield in view.
-        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-40 flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-10 flex justify-center px-4">
           <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
               {vip && (
                 <button
