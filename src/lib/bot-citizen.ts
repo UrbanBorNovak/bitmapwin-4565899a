@@ -5,7 +5,9 @@
  */
 import { schnorr } from "@noble/curves/secp256k1.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
-import { p2tr, NETWORK } from "@scure/btc-signer";
+import { p2tr, NETWORK, TEST_NETWORK } from "@scure/btc-signer";
+
+export type BotNetwork = "signet" | "mainnet";
 
 export const MIN_DEPOSIT_SATS = 10_000;
 export const PROMPT_MAX = 280;
@@ -14,6 +16,9 @@ const KEY = "bitmapwin.botCitizens.v1";
 export type BotCitizen = {
   id: string; name: string; height: number; parcelIndex: number | null;
   prompt: string; maxFeeSats: number; secretHex: string; address: string; createdAt: number;
+  /** New bots start on signet; older ones stay mainnet (no auto-build there yet). */
+  network: BotNetwork;
+  lastBuild?: { revealTxid: string; blocks: number; fees: number; at: number };
 };
 
 export function validateCommission(i: { name: string; height: number; parcelIndex: number | null; prompt: string }): string | null {
@@ -25,8 +30,8 @@ export function validateCommission(i: { name: string; height: number; parcelInde
   return null;
 }
 
-export function addressFor(secret: Uint8Array): string {
-  return p2tr(schnorr.getPublicKey(secret), undefined, NETWORK).address!;
+export function addressFor(secret: Uint8Array, network: BotNetwork = "signet"): string {
+  return p2tr(schnorr.getPublicKey(secret), undefined, network === "signet" ? TEST_NETWORK : NETWORK).address!;
 }
 
 export function createBot(i: { name: string; height: number; parcelIndex: number | null; prompt: string; maxFeeSats: number }): BotCitizen {
@@ -34,7 +39,7 @@ export function createBot(i: { name: string; height: number; parcelIndex: number
   return {
     id: crypto.randomUUID(), name: i.name.trim(), height: i.height, parcelIndex: i.parcelIndex,
     prompt: i.prompt.trim(), maxFeeSats: i.maxFeeSats, secretHex: bytesToHex(secret),
-    address: addressFor(secret), createdAt: Date.now(),
+    address: addressFor(secret, "signet"), createdAt: Date.now(), network: "signet",
   };
 }
 
@@ -42,7 +47,7 @@ export function loadBots(): BotCitizen[] {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? "[]") as BotCitizen[];
     // Re-derive so a tampered address can never point deposits elsewhere.
-    return raw.filter((b) => b.secretHex).map((b) => ({ ...b, address: addressFor(hexToBytes(b.secretHex)) }));
+    return raw.filter((b) => b.secretHex).map((b) => { const network: BotNetwork = b.network ?? "mainnet"; return { ...b, network, address: addressFor(hexToBytes(b.secretHex), network) }; });
   } catch { return []; }
 }
 export function saveBots(bots: BotCitizen[]) { localStorage.setItem(KEY, JSON.stringify(bots)); }
@@ -54,8 +59,8 @@ export function statusFor(confirmed: number, pending: number): BotStatus {
   return "AWAITING_FUNDS";
 }
 
-export async function fetchBalance(address: string): Promise<{ confirmed: number; pending: number }> {
-  const r = await fetch(`https://mempool.space/api/address/${address}`);
+export async function fetchBalance(address: string, network: BotNetwork = "signet"): Promise<{ confirmed: number; pending: number }> {
+  const r = await fetch(`https://mempool.space${network === "signet" ? "/signet" : ""}/api/address/${address}`);
   if (!r.ok) throw new Error("Balance unavailable");
   const j = await r.json();
   const c = j.chain_stats, m = j.mempool_stats;
