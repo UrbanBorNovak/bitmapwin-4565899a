@@ -4,7 +4,7 @@ import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, stepBattle, type BattleGame, type Soldier } from "@/lib/highland-charge";
+import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
 import type { LaunchSeat } from "@/lib/launch-seats";
 import { ATLAS_GRID, atlasFaceMaterial, buildFaceAtlas } from "@/lib/face-atlas";
 
@@ -234,6 +234,12 @@ function Warhorse({ g }: { g: BattleGame }) {
   );
 }
 
+function BlockHorse({ s, g }: { s: Soldier; g: BattleGame }) {
+  const root = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => { const p = heroPose(s, clock.elapsedTime, g); root.current?.position.set(s.x, 0, p.z); });
+  return <group ref={root}><Warhorse g={g} /></group>;
+}
+
 function BlockHero({ s, game }: { s: Soldier; game: BattleGame }) {
   const root = useRef<THREE.Group>(null);
   const armL = useRef<THREE.Group>(null), armR = useRef<THREE.Group>(null);
@@ -255,6 +261,8 @@ function BlockHero({ s, game }: { s: Soldier; game: BattleGame }) {
     if (flag.current) flag.current.rotation.y = Math.sin(t * 6 + s.phase) * 0.4;
   });
   return (
+    <>
+    <BlockHorse s={s} g={game} />
     <group ref={root}>
       <HeroShield g={game} />
       <mesh position={[0, 1.05, 0]}><boxGeometry args={[0.5, 0.6, 0.3]} /><meshLambertMaterial color="#f7931a" /></mesh>
@@ -275,6 +283,7 @@ function BlockHero({ s, game }: { s: Soldier; game: BattleGame }) {
         </>
       )}
     </group>
+    </>
   );
 }
 
