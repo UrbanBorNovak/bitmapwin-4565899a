@@ -1,3 +1,4 @@
+import { RgbBadge } from "@/components/RgbBadge";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
