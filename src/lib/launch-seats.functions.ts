@@ -132,6 +132,26 @@ export const enterLoungeFn = createServerFn({ method: "POST" })
     return { ok: true as const, seat: toSeat(row as Row) };
   });
 
+/** Highland Charge King: a fresh signature proves the wallet; the seat and its VIP status come only from launch_seats. */
+export const verifyKingFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ address: addressSchema, issuedAt: z.string().max(40), signature: z.string().min(8).max(2000) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { kingMessage, isVipSeat, SEAT_MESSAGE_TTL_MS } = await import("@/lib/launch-seats");
+    const issued = Date.parse(data.issuedAt);
+    if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > SEAT_MESSAGE_TTL_MS) return { ok: false as const, error: "Signature expired — try again" };
+    const { Verifier } = await import("bip322-js");
+    let valid = false;
+    try { valid = Verifier.verifySignature(data.address, kingMessage(data.address, data.issuedAt), data.signature); } catch { valid = false; }
+    if (!valid) return { ok: false as const, error: "Signature does not match this address" };
+    const sb = await publicClient();
+    const { data: row } = await sb.from("launch_seats").select("seat_number,ticket_inscription_id").ilike("address", data.address).maybeSingle();
+    if (!row) return { ok: false as const, error: "NO_SEAT" };
+    const r = row as { seat_number: number; ticket_inscription_id: string | null };
+    return { ok: true as const, seat: r.seat_number, vip: isVipSeat({ seat: r.seat_number, ticketId: r.ticket_inscription_id }) };
+  });
+
 /** dev9's backchannel: verified on the server for a fresh signature from a Founders Row seat (1–100). */
 export const openBackchannelFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
