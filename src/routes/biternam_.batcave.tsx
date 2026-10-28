@@ -26,7 +26,9 @@ export const Route = createFileRoute("/biternam_/batcave")({
           : "I gave Dabber the booth. Up there they talk. Down here the chain talks. The Bat-computer is dark. Find me a cold fuse.", next: "b" },
         { id: "b", speaker: "DEV9", mood: "idle", text: s.solved
           ? "The ghost of 1138 wasn't orphaned by accident. Someone re-routed it. Urban knows who. He's on his island, sleeping it off."
-          : "The ASIC rack keeps a spare. Don't wake the bats. They each hold one sat and they hold a grudge.", next: null },
+          : "The ASIC rack keeps a spare. Don't wake the bats. They each hold one sat and they hold a grudge.", next: "c" },
+        { id: "c", speaker: "DEV9", mood: "smug", text: "Up in the Grandstand they think it's a metaverse. It isn't. It's a third place. Sit, talk, trade, or just be left alone.", next: "d" },
+        { id: "d", speaker: "DEV9", mood: "idle", text: "And keep your atoms honest: blocks for state, vectors for beauty. Be ahead of the curve, not the Hilbert curve.", next: null },
       ] })}
       scene={(p) => <BatcaveScene {...p} />}
     />
