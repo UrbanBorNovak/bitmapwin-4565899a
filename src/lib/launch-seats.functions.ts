@@ -8,7 +8,7 @@ const addressSchema = z
   .trim()
   .regex(/^(bc1[a-z0-9]{8,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,39})$/, "Not a valid Bitcoin address");
 
-type Row = { seat_number: number; address: string; pixel_id: string; pixel_source: string; held_bitmap: number | null; created_at: string; ticket_inscription_id?: string | null; club_hair?: string | null; club_proof?: string | null };
+type Row = { seat_number: number; address: string; pixel_id: string; pixel_source: string; held_bitmap: number | null; created_at: string; ticket_inscription_id?: string | null; club_hair?: string | null; club_proof?: string | null; x_handle?: string | null; status_note?: string | null };
 const toSeat = (r: Row): LaunchSeat => ({
   seat: r.seat_number,
   address: r.address,
@@ -19,6 +19,8 @@ const toSeat = (r: Row): LaunchSeat => ({
   ticketId: r.ticket_inscription_id ?? null,
   clubHair: r.club_hair === "marauders" || r.club_hair === "emporium" ? r.club_hair : null,
   clubProof: r.club_proof ?? null,
+  xHandle: r.x_handle ?? null,
+  statusNote: r.status_note ?? null,
 });
 
 async function publicClient() {
@@ -45,7 +47,7 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
   const sb = await publicClient();
   const { data, error } = await sb
     .from("launch_seats")
-    .select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at,ticket_inscription_id,club_hair,club_proof")
+    .select("seat_number,address,pixel_id,pixel_source,held_bitmap,created_at,ticket_inscription_id,club_hair,club_proof,x_handle,status_note")
     .order("seat_number")
     .limit(1000);
   if (error) return { seats: [] as LaunchSeat[], error: "Seats unavailable" };
@@ -172,5 +174,29 @@ export const buyWearFn = createServerFn({ method: "POST" })
     catch { return { ok: false as const, error: "Payment failed — check your BIT balance" }; }
     const { error } = await supabaseAdmin.from("launch_seat_wear").insert({ address: data.address, slot: item.slot, item: item.id, price_bit: item.price });
     if (error) return { ok: false as const, error: "Paid, but could not save — contact us" };
+    return { ok: true as const, error: null };
+  });
+
+/** Saves a seat's X handle and status after a fresh BIP-322 signature from the seat's own wallet. */
+export const setSeatProfileFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ address: addressSchema, issuedAt: z.string().max(40), signature: z.string().min(8).max(2000), handle: z.string().max(16), status: z.string().max(40) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { profileMessage, cleanHandle, SEAT_MESSAGE_TTL_MS } = await import("@/lib/launch-seats");
+    const issued = Date.parse(data.issuedAt);
+    if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > SEAT_MESSAGE_TTL_MS) return { ok: false as const, error: "Signature expired — try again" };
+    const rawHandle = data.handle.trim().replace(/^@/, "");
+    const handle = rawHandle ? cleanHandle(rawHandle) : null;
+    if (rawHandle && !handle) return { ok: false as const, error: "X handle: letters, numbers and _ only (max 15)" };
+    const status = data.status.replace(/[\u0000-\u001f]/g, "").trim() || null;
+    const { Verifier } = await import("bip322-js");
+    let valid = false;
+    try { valid = Verifier.verifySignature(data.address, profileMessage(data.address, data.issuedAt, handle ?? "", status ?? ""), data.signature); } catch { valid = false; }
+    if (!valid) return { ok: false as const, error: "Signature does not match this address" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.from("launch_seats").update({ x_handle: handle, status_note: status }).ilike("address", data.address).select("seat_number");
+    if (error) return { ok: false as const, error: "Could not save — try again" };
+    if (!rows?.length) return { ok: false as const, error: "Take a seat first" };
     return { ok: true as const, error: null };
   });

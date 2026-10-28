@@ -2832,7 +2832,9 @@ export type Database = {
           pixel_id: string
           pixel_source: string
           seat_number: number
+          status_note: string | null
           ticket_inscription_id: string | null
+          x_handle: string | null
         }
         Insert: {
           address: string
@@ -2844,7 +2846,9 @@ export type Database = {
           pixel_id: string
           pixel_source?: string
           seat_number?: never
+          status_note?: string | null
           ticket_inscription_id?: string | null
+          x_handle?: string | null
         }
         Update: {
           address?: string
@@ -2856,7 +2860,9 @@ export type Database = {
           pixel_id?: string
           pixel_source?: string
           seat_number?: never
+          status_note?: string | null
           ticket_inscription_id?: string | null
+          x_handle?: string | null
         }
         Relationships: []
       }

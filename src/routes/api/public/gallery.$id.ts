@@ -35,11 +35,12 @@ export const Route = createFileRoute("/api/public/gallery/$id")({
                 : "public, max-age=300",
             },
           });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Unavailable";
+        } catch {
+          // Chain explorer busy or down: answer with an empty, uncached result so
+          // pages keep rendering and the next visit retries.
           return Response.json(
-            { error: message },
-            { status: 503, headers: { ...CORS, "cache-control": "no-store", "retry-after": "3" } },
+            { inscriptionId: id, count: 0, ids: [], heights: [], unavailable: true },
+            { headers: { ...CORS, "cache-control": "no-store" } },
           );
         }
       },

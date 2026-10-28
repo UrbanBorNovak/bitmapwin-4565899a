@@ -5,6 +5,8 @@ export type GalleryMembers = {
   count: number;
   ids: string[];
   heights: number[];
+  /** true when the chain could not be read right now (retry later) */
+  unavailable?: boolean;
 };
 
 export async function fetchGalleryMembers(inscriptionId: string): Promise<GalleryMembers> {
@@ -18,6 +20,7 @@ export function galleryMembersQuery(inscriptionId: string) {
     queryKey: ["gallery-members", inscriptionId] as const,
     queryFn: () => fetchGalleryMembers(inscriptionId),
     staleTime: Number.POSITIVE_INFINITY,
+    refetchInterval: (q: { state: { data: GalleryMembers | undefined } }) => (q.state.data?.unavailable ? 30_000 : false),
     gcTime: 60 * 60 * 1000,
     retry: 1,
   };

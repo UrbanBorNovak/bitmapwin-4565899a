@@ -11,6 +11,7 @@ import { myDeploymentsQuery } from "@/lib/extenders";
 import { HostEarnPanel } from "@/components/extenders/HostEarnPanel";
 import { MyParcelsPanel } from "@/components/MyParcelsPanel";
 import { HostEarnTutorial } from "@/components/extenders/HostEarnTutorial";
+import { MySeatCard } from "@/components/launch/MySeatCard";
 
 export const Route = createFileRoute("/my-land")({
   head: () => {
@@ -102,6 +103,7 @@ function MyLandPage() {
         <Link to="/my-world" className="btn-term-ghost">[ MANAGE MY WORLD ]</Link>
       </div>
 
+      <MySeatCard address={wallet.ordinalsAddress} />
       <section data-tour="myland-stats" className="mt-8 grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-6">
         {[
           ["BITMAPS HELD", scanning ? "…" : String(heights.length), ""],

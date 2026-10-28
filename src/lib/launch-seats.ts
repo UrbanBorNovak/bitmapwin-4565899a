@@ -25,7 +25,26 @@ export type LaunchSeat = {
   clubProof?: string | null;
   /** Active MEMBER (JIGGLYPUFF holder or paid/trait member) from the public membership badge. */
   member?: boolean;
+  xHandle?: string | null;
+  statusNote?: string | null;
 };
+
+/** Seat profile: an optional X handle and a 40-character note, signed by the seat's own wallet. */
+export const STATUS_MAX = 40;
+export function cleanHandle(v: string): string | null {
+  const h = v.trim().replace(/^@/, "");
+  return /^[A-Za-z0-9_]{1,15}$/.test(h) ? h : null;
+}
+export function profileMessage(address: string, issuedAt: string, handle: string, status: string): string {
+  return [
+    "BITMAPWIN GRANDSTAND — SET MY SEAT PROFILE",
+    `ADDRESS: ${address}`,
+    `X: ${handle || "-"}`,
+    `STATUS: ${status || "-"}`,
+    `ISSUED: ${issuedAt}`,
+    "THIS SIGNATURE MOVES NO FUNDS AND COSTS NO FEE.",
+  ].join("\n");
+}
 
 /** Provenance gear: each piece is earned only by a recorded fact, never chosen. */
 export type SeatGear = "ancient" | "founder" | "tamer" | "builder";
