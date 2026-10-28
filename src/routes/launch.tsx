@@ -1,3 +1,4 @@
+import { RgbBadge } from "@/components/RgbBadge";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -255,6 +256,7 @@ function LaunchPage() {
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
             {picked.gear?.map((g) => <div key={g} className="text-muted-foreground">◆ {GEAR_LABEL[g]}</div>)}
             {mine?.seat === picked.seat ? <WardrobeShop seat={picked} /> : <div className="text-muted-foreground">◆ {HAIR_LABEL[hairFor(picked.heldBitmap, picked.clubHair ?? null)]}</div>}
+            {mine?.seat === picked.seat && <div className="mt-1"><RgbBadge /></div>}
             {picked.clubProof && <a href={`https://ordinals.com/inscription/${picked.clubProof}`} target="_blank" rel="noreferrer" className="text-signal hover:underline">✓ CLUB PROOF →</a>}
             <div className="text-muted-foreground">Seated {new Date(picked.createdAt).toLocaleDateString()}</div>
             {picked.ticketId && (

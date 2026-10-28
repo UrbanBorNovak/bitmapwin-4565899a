@@ -11,6 +11,7 @@ import {
 } from "@/lib/browser-wallet";
 import { shortenAddress } from "@/lib/registry";
 import { clearWalletSession, saveWalletSession } from "@/lib/wallet-session";
+import { RgbBadge } from "@/components/RgbBadge";
 
 
 const PROVIDERS: WalletProviderId[] = ["unisat", "xverse"];
@@ -91,6 +92,7 @@ export function WalletConnect({
           <Field k="PROVIDER" v={WALLET_LABEL[wallet.provider]} />
           <Field k="ORDINALS" v={shortenAddress(wallet.ordinalsAddress)} title={wallet.ordinalsAddress} />
           <Field k="PAYMENT" v={shortenAddress(wallet.paymentAddress)} title={wallet.paymentAddress} />
+          <div className="px-4 py-3 md:col-span-3"><RgbBadge /></div>
         </div>
       ) : (
         <div className="p-4">
