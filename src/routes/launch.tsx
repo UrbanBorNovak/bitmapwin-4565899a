@@ -289,7 +289,7 @@ function LaunchPage() {
           ) : mine ? <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">BUY POPCORN AT YOUR SEAT TO TOSS IT AT THE SCREEN</span> : null}
         </div>
         {picked && (
-          <div className="glass-panel absolute bottom-3 right-3 w-60 max-w-[calc(100%-1.5rem)] rounded border border-signal/50 p-3 font-mono text-xs">
+          <div className="absolute bottom-3 right-3 w-60 max-w-[calc(100%-1.5rem)] rounded border border-signal/50 bg-card p-3 font-mono text-xs">
             <div className="mb-2 flex justify-between text-[10px] text-signal"><span>&gt; INSPECT</span><button onClick={() => pickSeat(null)} aria-label="Close">[X]</button></div>
             <div className="flex items-center gap-2">
               <PixelFace inscriptionId={picked.pixelId} label="Avatar" className="h-12 w-12" />
