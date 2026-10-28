@@ -52,7 +52,7 @@ function Army({ soldiers, focus }: { soldiers: Soldier[]; focus: number | null }
       const s = soldiers[i]!;
       const fi = flagOf.m[i]!;
       const fs = focusSoldier;
-      if (s.seat === focus || (fs && Math.abs(s.x - fs.x) < 1.6 && Math.abs(s.z - fs.z) < 2.2 && Math.abs(s.speed - fs.speed) < 0.2)) {
+      if (s.seat === focus || (fs && Math.abs(s.x - fs.x) < 1.6 && Math.abs(s.z - fs.z) < 2.2)) {
         b.setMatrixAt(i, HIDDEN); h.setMatrixAt(i, HIDDEN);
         if (fi >= 0 && fl) fl.setMatrixAt(fi, HIDDEN);
         continue;
