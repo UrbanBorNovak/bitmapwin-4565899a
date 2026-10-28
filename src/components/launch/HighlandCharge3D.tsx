@@ -4,7 +4,7 @@ import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_STOP, SPACING, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
+import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, CAV_EXIT_Z, CAV_SPEED, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_STOP, SPACING, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
 import type { LaunchSeat } from "@/lib/launch-seats";
 import { ATLAS_GRID, atlasFaceMaterial, buildFaceAtlas } from "@/lib/face-atlas";
 
@@ -163,6 +163,25 @@ function heroPose(s: Soldier, t: number, g: BattleGame) {
   return { z, running: down < 0 && off > 0, fall: down < 0 ? 0 : Math.min(1, down * 3), mounted, lift: mounted ? 1.1 : 0 };
 }
 
+/** The hero's Highland spear: carried upright, couched and thrust forward while a thrust is live. */
+function HeroSpear({ g }: { g: BattleGame }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const r = ref.current; if (!r) return;
+    const t = clock.elapsedTime, live = t <= g.spearUntil && g.heroDownAt == null;
+    const k = live ? Math.sin(Math.min(1, (g.spearUntil - t) / SPEAR_WINDOW) * Math.PI) : 0; // out and back
+    r.rotation.x = live ? Math.PI / 2 - 0.1 : 0.15; // level when thrusting, sloped on the shoulder otherwise
+    r.position.set(0.42, live ? 1.25 : 1.1, live ? 0.3 + k * 0.9 : 0);
+    r.visible = g.heroDownAt == null && !(g.rallyAt != null && localTime(t) >= g.rallyAt);
+  });
+  return (
+    <group ref={ref}>
+      <mesh position={[0, 0.6, 0]}><boxGeometry args={[0.05, 2.4, 0.05]} /><meshLambertMaterial color="#5b3a22" /></mesh>
+      <mesh position={[0, 1.9, 0]}><boxGeometry args={[0.12, 0.3, 0.04]} /><meshLambertMaterial color="#c9ced6" /></mesh>
+    </group>
+  );
+}
+
 /** Raised shield in front of the hero while the commander's block window is open. */
 function HeroShield({ g }: { g: BattleGame }) {
   const ref = useRef<THREE.Mesh>(null);
@@ -198,6 +217,7 @@ function PixelHero({ s, model, texture, game }: { s: Soldier; model: string; tex
       <Warhorse g={game} />
       <group ref={rider}>
       <HeroShield g={game} />
+      <HeroSpear g={game} />
       <PixelAvatar model={model} texture={texture} height={1.9} ground={0} via={proxied} />
       {s.flag && (
         <>
@@ -269,6 +289,7 @@ function BlockHero({ s, game }: { s: Soldier; game: BattleGame }) {
     <BlockHorse s={s} g={game} />
     <group ref={root}>
       <HeroShield g={game} />
+      <HeroSpear g={game} />
       <mesh position={[0, 1.05, 0]}><boxGeometry args={[0.5, 0.6, 0.3]} /><meshLambertMaterial color="#f7931a" /></mesh>
       <mesh position={[0, 0.65, 0]}><boxGeometry args={[0.55, 0.3, 0.34]} /><meshLambertMaterial color={tunic} /></mesh>
       <mesh position={[0, 1.6, 0]}><boxGeometry args={[0.38, 0.38, 0.38]} /><meshLambertMaterial color="#e8c39e" /></mesh>
@@ -398,51 +419,73 @@ function Arrows() {
  * call. Before the charge they are hidden once; after they have reared up they freeze, so only the
  * ~3 s gallop costs CPU.
  */
-function Cavalry() {
+function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const dust = useRef<THREE.InstancedMesh>(null);
   const o = useMemo(() => new THREE.Object3D(), []);
-  const last = useRef<"" | "off" | "frozen">("");
+  const last = useRef("");
   useEffect(() => {
     const m = ref.current; if (!m) return;
     const cs = [new THREE.Color("#3b2a1e"), new THREE.Color("#6b717b"), new THREE.Color("#c9ced6")];
     for (let i = 0; i < RIDERS * 3; i++) m.setColorAt(i, cs[i % 3]!);
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
   }, []);
+  const laneX = (i: number) => (i - (RIDERS - 1) / 2) * (38 / RIDERS) + (rnd(i) - 0.5) * 0.5;
+  // The rider charging straight at the followed soldier: the one whose lane is closest.
+  const duel = useMemo(() => {
+    if (!lead) return -1;
+    let best = 0;
+    for (let i = 1; i < RIDERS; i++) if (Math.abs(laneX(i) - lead.x) < Math.abs(laneX(best) - lead.x)) best = i;
+    return best;
+  }, [lead]);
   useFrame(({ clock }) => {
     const m = ref.current, d = dust.current; if (!m || !d) return;
     const t = clock.elapsedTime, local = localTime(t);
     const on = local >= CAV_START - 0.5;
-    const settle = CAV_CONTACT + 0.3;
+    const cz = cavalryZ(local);
+    const gone = cz + 2.5 < CAV_EXIT_Z; // every free rider has galloped off the back of the field
     const dustShown = Math.floor(RIDERS * DUST_PER * DUST_SHARE[battleQuality.level as 0 | 1 | 2]);
     if (d.count !== dustShown) { d.count = dustShown; last.current = ""; }
-    const mode = !on ? "off" : local > settle + 0.6 ? "frozen" : "";
-    if (mode && last.current === mode) return; // nothing changes: no CPU, no upload
-    last.current = mode;
-    const moving = local < CAV_CONTACT;
-    const cz = cavalryZ(local);
+    const key = !on ? "off" : gone ? `gone:${game.rider}:${game.rallyAt != null}` : "";
+    if (key && last.current === key) return; // nothing changes: no CPU, no upload
+    last.current = key;
+    const heroZ = lead ? heroPose(lead, t, game).z : 0;
     for (let i = 0; i < RIDERS; i++) {
       const k = i * 3;
-      if (!on) { m.setMatrixAt(k, HIDDEN); m.setMatrixAt(k + 1, HIDDEN); m.setMatrixAt(k + 2, HIDDEN); }
-      else {
-        const x = (i - (RIDERS - 1) / 2) * (38 / RIDERS) + (rnd(i) - 0.5) * 0.5;
-        const z = cz + rnd(i + 50) * 2.5;
-        const gal = moving ? Math.abs(Math.sin(t * 14 + i)) * 0.3 : 0;
-        const rear = moving ? 0 : Math.min(0.5, (local - CAV_CONTACT) * 2);
-        o.position.set(x, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
-        o.position.set(x, 1.9 + gal, z + 0.1); o.rotation.set(0, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
-        o.position.set(x + 0.3, 1.8 + gal, z - 1.2); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+      const x = laneX(i);
+      let z = cz + rnd(i + 50) * 2.5;
+      let gal = Math.abs(Math.sin(t * 14 + i)) * 0.3, rear = 0, riderOff = false, horseOff = z < CAV_EXIT_Z, riderFall = 0;
+      if (i === duel && lead && (game.rider === "stopped" || game.rider === "speared")) {
+        // Shield or spear held this horse at the hero's front instead of letting it through.
+        const stopZ = heroZ + 1.6;
+        if (z < stopZ) {
+          const since = (stopZ - z) / CAV_SPEED;
+          z = stopZ; gal = 0; horseOff = false;
+          rear = game.rider === "stopped" ? Math.min(0.5, since * 2) * Math.max(0, 1 - since * 0.5) : 0;
+          if (game.rider === "speared") { riderOff = true; riderFall = Math.min(1, since * 3); }
+          if (game.rallyAt != null && local >= game.rallyAt) horseOff = true; // the King now rides it
+        }
       }
-      // Dust: short-lived puffs kicked up behind the hooves, a burst at contact, gone once settled.
+      if (!on || horseOff) { m.setMatrixAt(k, HIDDEN); m.setMatrixAt(k + 1, HIDDEN); m.setMatrixAt(k + 2, HIDDEN); }
+      else {
+        o.position.set(x, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
+        if (riderOff) {
+          // Unseated: the rider lies on the ground beside the riderless horse, lance dropped.
+          o.position.set(x - 0.9, 0.2, z + 0.2 - riderFall * 0.3); o.rotation.set(0, 0, Math.PI / 2 * riderFall); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+          o.position.set(x - 1.2, 0.05, z - 0.4); o.rotation.set(0, 0.4, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+        } else {
+          o.position.set(x, 1.9 + gal, z + 0.1); o.rotation.set(rear, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+          o.position.set(x + 0.3, 1.8 + gal, z - 1.2); o.rotation.set(0, 0, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+        }
+      }
+      // Dust: short-lived puffs behind galloping hooves only.
       for (let p = 0; p < DUST_PER; p++) {
         const di = p * RIDERS + i; // interleaved so a shorter count thins dust evenly
-        const age = ((t * 1.8 + rnd(di + 90)) % 1); // 0..1 loop per puff
-        const alive = on && local < settle + 0.5;
-        if (!alive) { d.setMatrixAt(di, HIDDEN); continue; }
-        const x = (i - (RIDERS - 1) / 2) * (38 / RIDERS) + (rnd(di + 7) - 0.5) * 1.2;
-        const burst = moving ? 1 : 1.8;
-        o.position.set(x, 0.3 + age * 0.8, cz + 1.2 + age * 2.5); o.rotation.set(0, 0, 0);
-        o.scale.setScalar((0.4 + age * 1.4) * burst * (1 - age * 0.5)); o.updateMatrix(); d.setMatrixAt(di, o.matrix);
+        const age = ((t * 1.8 + rnd(di + 90)) % 1);
+        if (!on || horseOff || gal === 0) { d.setMatrixAt(di, HIDDEN); continue; }
+        const dx = x + (rnd(di + 7) - 0.5) * 1.2;
+        o.position.set(dx, 0.3 + age * 0.8, z + 1.2 + age * 2.5); o.rotation.set(0, 0, 0);
+        o.scale.setScalar((0.4 + age * 1.4) * (1 - age * 0.5)); o.updateMatrix(); d.setMatrixAt(di, o.matrix);
       }
     }
     m.instanceMatrix.needsUpdate = true; d.instanceMatrix.needsUpdate = true;
@@ -510,7 +553,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         {focus != null && lead && lead.seat === focus && <Hero s={lead} game={game} pixelId={seats.find((x) => x.seat === focus)?.pixelId} />}
         <Enemy />
         <Arrows />
-        <Cavalry />
+        <Cavalry lead={lead} game={game} />
         <ChaseCam lead={lead} game={game} />
       </SafeCanvas>
     </div>
