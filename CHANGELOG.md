@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0-beta.3
+
+- Launch Grandstand: 480 reserved Bitmapper seats, BIP-322 claims, on-chain Pixel faces, club hair from live chain proof, BITMAP flags.
+- VIP Launch Tickets inscribed on L1, auto-synced from treasury payments; gold rings and a minter ticker.
+- Stage CRT stream, popcorn minigame, arena sound, Biternam crew as staff with clickable lines, backstage door to the Bit-Café.
+- Bit-Café TV with live stream status, sponsor slots, tip jar, and a VIP Lounge for verified seat holders.
+- Biternam Gear Locker, on-chain exhibits, and Vault/Lair backrooms with server-checked Shadow passes.
+- BW-STAND-1 Sovereign Grandstands with Convention Badges.
+- Bit-Transit bar between Grandstand, Café, Oasis and Forge.
+- Clip recorder (8/15/30s, 16:9 or 9:16) in the Oasis and the Grandstand.
+- 90s retro rendering pass tuned for 60 FPS; 2.5D Oasis camera.
+- Added `docs/` with protocol specs (BWVX, BW-STAND-1, Parcel Floor Metric, Shadow Passes) and CONTRIBUTING.md.
+
+
 ## 0.9.0-beta.2
 
 - Guardians are mountable by their owners in the Oasis, with riding controls, roar, and dismount.

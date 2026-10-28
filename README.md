@@ -105,6 +105,8 @@ Seat claims are a message signature only: **no transaction, no fee**.
 
 ## 📜 Protocols & Standards
 
+Full specs live in [`docs/`](./docs/README.md). Read [VISION](./docs/VISION.md) and [CONTRIBUTING](./CONTRIBUTING.md) as well.
+
 | Standard | Purpose |
 |---|---|
 | **BWVX1 / BWVX2** | Compact voxel encoding for Land Forge builds |
