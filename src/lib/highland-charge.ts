@@ -153,8 +153,8 @@ export function rallyGain(local: number, rallyAt: number | null, speed: number):
 /** Where the King's warhorse reins in: just through the enemy wall, never off into the void. */
 export const KING_STOP = FIELD_GAP / 2 + 5;
 /** The King's z: eases into KING_STOP from wherever he mounted, so he never snaps or overshoots. */
-export function kingZ(startZ: number, gain: number): number {
-  const room = Math.max(0, KING_STOP - startZ);
+export function kingZ(startZ: number, gain: number, stop = KING_STOP): number {
+  const room = Math.max(0, stop - startZ);
   return room <= 0 ? startZ : startZ + room * (1 - Math.exp(-gain / room));
 }
 /** Glory for a breakout: survivors × streak multiplier. */

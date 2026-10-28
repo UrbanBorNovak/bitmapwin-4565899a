@@ -4,7 +4,7 @@ import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
+import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_STOP, SPACING, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
 import type { LaunchSeat } from "@/lib/launch-seats";
 import { ATLAS_GRID, atlasFaceMaterial, buildFaceAtlas } from "@/lib/face-atlas";
 
@@ -93,7 +93,9 @@ function Army({ soldiers, focus, game, seats }: { soldiers: Soldier[]; focus: nu
         if (fi >= 0 && fl) { o.position.set(s.x + 0.6, 0.1, z + 0.4); o.rotation.set(-Math.PI / 2, 0, 0.3); o.scale.set(0.5, 0.35, 0.04); o.updateMatrix(); fl.setMatrixAt(fi, o.matrix); }
         continue;
       }
-      const off = chargeOffset(t, s.speed) + rallyGain(local, game.rallyAt, RALLY_SPEED);
+      const run = s.z + chargeOffset(t, s.speed);
+      // The army follows the King but stops in rank order behind him, never marching through the wall.
+      const off = kingZ(run, rallyGain(local, game.rallyAt, RALLY_SPEED), KING_STOP - 2.5 - s.rank * SPACING) - s.z;
       const z = s.z + off;
       const d = Math.abs(z - cz) + Math.abs(s.x - cx);
       const tier = d < NEAR ? 1 : d < FAR ? 2 : 4;
@@ -463,6 +465,8 @@ function BattleStepper({ game, playing }: { game: BattleGame; playing: boolean }
 
 function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame }) {
   const target = useMemo(() => new THREE.Vector3(), []);
+  const look = useMemo(() => new THREE.Vector3(), []);
+  const lookGoal = useMemo(() => new THREE.Vector3(), []);
   const lastCycle = useRef(-1);
   const lastLead = useRef<number | undefined>(undefined);
   useFrame(({ camera, clock }, delta) => {
@@ -478,11 +482,13 @@ function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame 
     // Mounted: sit behind the King looking at the wall, so the camera never ends up inside the enemy ranks.
     target.set((lead?.x ?? 0) + side * 0.5, riding ? 4.2 : 3.6, z + (riding ? -7 : 8));
     // New cycle or new rider: cut straight there instead of swooping across the whole field.
-    if (jump) camera.position.copy(target);
-    else camera.position.lerp(target, 1 - Math.exp(-(riding ? 5 : 4) * Math.min(delta, 0.05)));
+    lookGoal.set((lead?.x ?? 0), riding ? 1.2 : -0.4, z + (riding ? 6 : -1));
+    const k = 1 - Math.exp(-(riding ? 5 : 4) * Math.min(delta, 0.05));
+    if (jump) { camera.position.copy(target); look.copy(lookGoal); }
+    else { camera.position.lerp(target, k); look.lerp(lookGoal, k); }
     const quake = Math.max(0, 1 - Math.abs(localTime(t) - CAV_CONTACT) * 1.5);
     if (quake > 0) { camera.position.x += (Math.random() - 0.5) * 0.25 * quake; camera.position.y += (Math.random() - 0.5) * 0.2 * quake; }
-    camera.lookAt((lead?.x ?? 0), riding ? 1.2 : -0.4, z + (riding ? 6 : -1));
+    camera.lookAt(look);
   });
   return null;
 }
