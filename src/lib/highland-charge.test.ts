@@ -18,3 +18,26 @@ describe("highland charge commander", () => {
     expect(g.streak).toBe(1);
   });
 });
+
+import { CAV_CONTACT, BREAKOUT_AFTER } from "./highland-charge";
+describe("King's rally", () => {
+  const run = (vip: boolean) => {
+    const g = newBattleGame(); g.vip = vip; g.standing = 400;
+    for (let t = 0; t <= CAV_CONTACT + BREAKOUT_AFTER + 1; t += 0.05) {
+      if (THREATS.some((x) => Math.abs(x.at - 0.3 - t) < 0.026)) g.raise = true;
+      if (Math.abs(t - (CAV_CONTACT + 0.5)) < 0.026) g.mount = true;
+      stepBattle(g, t, true);
+    }
+    return g;
+  };
+  it("a surviving VIP mounts and breaks out for glory", () => {
+    const g = run(true);
+    expect(g.breakouts).toBe(1);
+    expect(g.glory).toBe(400);
+  });
+  it("non-VIP soldiers cannot mount", () => {
+    const g = run(false);
+    expect(g.rallyAt).toBeNull();
+    expect(g.breakouts).toBe(0);
+  });
+});
