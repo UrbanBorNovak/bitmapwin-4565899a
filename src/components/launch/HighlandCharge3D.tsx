@@ -496,7 +496,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         <Enemy />
         <Arrows />
         <Cavalry />
-        <ChaseCam lead={lead} />
+        <ChaseCam lead={lead} game={game} />
       </SafeCanvas>
     </div>
   );
