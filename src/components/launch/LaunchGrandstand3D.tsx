@@ -534,7 +534,7 @@ const STAFF = [
 
 /** Floor banter per crew member; clicking cycles through their lines. */
 const BANTER: Record<string, string[]> = {
-  dev9: ["Be ahead of the curve, not the Hilbert curve.", "Vectors simulate voxels. Not the other way around.", "The Batcave terminal remembers who sat in Founders Row.", "Backstage door's by the stage wing. Mind the cables."],
+  dev9: ["Be ahead of the curve, not the Hilbert curve.", "Vectors simulate voxels. Not the other way around.", "Atoms for state and physics. Vectors for the look. Both, not one.", "No metaverse here. Just a third place where people actually sit down.", "Gold ring? That's a pass inscribed on Bitcoin. Real sats, not a pipe dream.", "The Batcave terminal remembers who sat in Founders Row.", "Backstage door's by the stage wing. Mind the cables."],
   anchorman: ["Breaking: another block found. The chain keeps its promises.", "Live from the Grandstand — every seat here is a real wallet.", "This just in: popcorn is legal tender at the screen."],
   tornado: ["Keep the aisles clear, Bitmapper.", "Saw someone sneak into the Café through the stage wing…", "No running on the stands. Spinning is fine."],
   bitty: ["Rawr! Founders Row gets the good view.", "Psst — the VIP Lounge is behind the Café counter."],
