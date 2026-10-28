@@ -118,7 +118,7 @@ export function ArcadeInterior({ onHit, onHover, hover, feeWon, hashWon, prize, 
     <div className="relative h-full w-full">
       <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
-        <DioramaCam home={[8, 9, 11]} at={[0.5, -0.2, 1.3]} />
+        <DioramaCam home={[8, 9, 11]} at={[1.0, -0.7, 1.9]} />
         <DustMotes count={50} color="#ff6ec7" />
         <color attach="background" args={["#0a0812"]} />
         <fog attach="fog" args={["#0a0812", 14, 26]} />

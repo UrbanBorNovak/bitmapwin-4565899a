@@ -85,7 +85,7 @@ export function CafeInterior({ onHit, onHover, hover, hasCoin, distracted, falli
     <div className="relative h-full w-full">
       <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
-        <DioramaCam home={[8, 9, 11]} at={[1.5, -1.5, 2.5]} />
+        <DioramaCam home={[8, 9, 11]} at={[1.0, -0.8, 1.9]} />
         <DustMotes color="#ffc980" />
         <color attach="background" args={["#100c0a"]} />
         <fog attach="fog" args={["#100c0a", 14, 26]} />

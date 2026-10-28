@@ -145,7 +145,7 @@ function SignaturesCase({ open, hot, plaque }: { open: boolean; hot: boolean; pl
 }
 
 /** Fixed camera; when `focus` is set it glides to frame the Night of Two Signatures case. */
-const HOME = { pos: [8, 9, 11], look: [0.4, -0.3, 1.4] } as const;
+const HOME = { pos: [8, 9, 11], look: [0.9, -0.8, 1.9] } as const;
 const CASE = { pos: [7.2, 4.6, 5.2], look: [3.2, 0.9, 1.4] } as const;
 const look = { x: HOME.look[0], y: HOME.look[1], z: HOME.look[2] };
 function FixedCam({ focus = false }: { focus?: boolean }) {
