@@ -247,6 +247,31 @@ const MOBILE = typeof window !== "undefined" && window.matchMedia?.("(pointer: c
 const PER_VOLLEY = MOBILE ? 40 : 90;
 const RIDERS = MOBILE ? 14 : 22;
 const DUST_PER = MOBILE ? 1 : 2;
+/**
+ * Adaptive battle quality: 2 = full, 1 = reduced, 0 = minimal. Only cosmetic effects read it
+ * (dust, arrow count). The army, the followed Pixel and the shield rules never do: shield
+ * timing runs on the scene clock in BattleStepper, so it is identical at every level.
+ */
+export const battleQuality = { level: 2, ema: 16.7 };
+const ARROW_SHARE = [0.3, 0.6, 1] as const;
+const DUST_SHARE = [0, 0.5, 1] as const;
+const SLOW_MS = 22, FAST_MS = 15;
+
+function QualityMonitor() {
+  const slow = useRef(0), fast = useRef(0);
+  useFrame((_, delta) => {
+    const ms = Math.min(delta, 0.25) * 1000;
+    const q = battleQuality;
+    q.ema += (ms - q.ema) * 0.08;
+    if (q.ema > SLOW_MS) { slow.current += delta; fast.current = 0; }
+    else if (q.ema < FAST_MS) { fast.current += delta; slow.current = 0; }
+    else { slow.current = 0; fast.current = 0; }
+    if (slow.current > 1.5 && q.level > 0) { q.level--; slow.current = 0; }
+    if (fast.current > 5 && q.level < 2) { q.level++; fast.current = 0; }
+  }, -2);
+  return null;
+}
+
 const enemyZ = (t: number) => FIELD_GAP / 2 + 1 - Math.min(chargeOffset(t, 1.2), 10);
 function rnd(n: number) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
@@ -273,6 +298,9 @@ function Arrows() {
     const t = clock.elapsedTime, local = localTime(t), c = cycleOf(t);
     const st = state.current;
     if (st.cycle !== c) { st.cycle = c; st.v.fill(9); }
+    // Draw fewer arrows when frames are slow; the rest are simply not drawn (mesh.count).
+    const shown = Math.ceil(PER_VOLLEY * ARROW_SHARE[battleQuality.level as 0 | 1 | 2]) * VOLLEYS.length;
+    if (m.count !== shown) { if (shown > m.count) st.v.fill(9); m.count = shown; }
     let dirty = false;
     for (let v = 0; v < VOLLEYS.length; v++) {
       const launch = VOLLEYS[v]!;
@@ -283,7 +311,7 @@ function Arrows() {
       const q = Math.min(1, Math.max(0, p));
       const ez = enemyZ(clock.elapsedTime - (local - launch)); // launch point fixed at release
       for (let j = 0; j < PER_VOLLEY; j++) {
-        const idx = v * PER_VOLLEY + j;
+        const idx = j * VOLLEYS.length + v; // interleaved so a shorter count keeps both volleys
         if (want === 0) { m.setMatrixAt(idx, HIDDEN); continue; }
         at(v, j, q, c, a, ez); at(v, j, Math.max(0, q - 0.02), c, b, ez);
         b.sub(a).multiplyScalar(-1).add(a);
@@ -318,6 +346,8 @@ function Cavalry() {
     const t = clock.elapsedTime, local = localTime(t);
     const on = local >= CAV_START - 0.5;
     const settle = CAV_CONTACT + 0.3;
+    const dustShown = Math.floor(RIDERS * DUST_PER * DUST_SHARE[battleQuality.level as 0 | 1 | 2]);
+    if (d.count !== dustShown) { d.count = dustShown; last.current = ""; }
     const mode = !on ? "off" : local > settle + 0.6 ? "frozen" : "";
     if (mode && last.current === mode) return; // nothing changes: no CPU, no upload
     last.current = mode;
@@ -337,7 +367,7 @@ function Cavalry() {
       }
       // Dust: short-lived puffs kicked up behind the hooves, a burst at contact, gone once settled.
       for (let p = 0; p < DUST_PER; p++) {
-        const di = i * DUST_PER + p;
+        const di = p * RIDERS + i; // interleaved so a shorter count thins dust evenly
         const age = ((t * 1.8 + rnd(di + 90)) % 1); // 0..1 loop per puff
         const alive = on && local < settle + 0.5;
         if (!alive) { d.setMatrixAt(di, HIDDEN); continue; }
@@ -392,6 +422,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         <hemisphereLight args={["#dfe8ee", "#3c4a2e", 1.1]} />
         <directionalLight position={[10, 20, -10]} intensity={1.2} />
         <mesh rotation-x={-Math.PI / 2}><planeGeometry args={[200, 200]} /><meshLambertMaterial color="#4f6b3a" /></mesh>
+        <QualityMonitor />
         <BattleStepper game={game} playing={focus != null && lead?.seat === focus} />
         <Army soldiers={soldiers} focus={focus} game={game} />
         {focus != null && lead && lead.seat === focus && <Hero s={lead} game={game} pixelId={seats.find((x) => x.seat === focus)?.pixelId} />}
