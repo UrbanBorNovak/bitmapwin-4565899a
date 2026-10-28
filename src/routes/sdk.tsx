@@ -219,6 +219,9 @@ function SdkPage() {
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Machine-readable recipes an AI agent can follow. Agents prepare and preview; a human wallet always signs and pays.
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link to="/docs/agents" className="btn-term-ghost">[ CONNECT GROK & AGENTS ]</Link>
+        </div>
         <div className="mt-5 space-y-4">
           <GuardianLifecycleInfographic />
           <ForgeBuildInfographic />
@@ -238,6 +241,7 @@ function SdkPage() {
       <div className="mt-10 flex flex-wrap gap-2">
         <Link to="/studio" search={{ tool: "extenders" }} className="btn-term">[ START BUILDING ]</Link>
         <Link to="/extenders" className="btn-term-ghost">[ SEE WHAT EXISTS ]</Link>
+        <Link to="/docs/agents" className="btn-term-ghost">[ CONNECT GROK & AGENTS ]</Link>
       </div>
     </div>
   );
