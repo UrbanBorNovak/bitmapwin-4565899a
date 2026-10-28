@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+import { CHARGE_CYCLE, THREATS, newBattleGame, stepBattle } from "./highland-charge";
+
+describe("highland charge commander", () => {
+  it("falls when a threat lands without a shield", () => {
+    const g = newBattleGame();
+    for (let t = 0; t <= THREATS[0]!.at + 0.05; t += 0.05) stepBattle(g, t, true);
+    expect(g.last).toBe("HIT");
+    expect(g.heroDownAt).not.toBeNull();
+  });
+  it("blocks every threat when the shield is raised just before each one and earns a streak", () => {
+    const g = newBattleGame();
+    for (let t = 0; t <= CHARGE_CYCLE + 0.1; t += 0.05) {
+      if (THREATS.some((x) => Math.abs(x.at - 0.3 - t) < 0.026)) g.raise = true;
+      stepBattle(g, t, true);
+    }
+    expect(g.blocks).toBe(3);
+    expect(g.streak).toBe(1);
+  });
+});
