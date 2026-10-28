@@ -99,7 +99,7 @@ export type BattleGame = {
   cycle: number; resolved: number; // threats resolved this cycle
   heroDownAt: number | null; // local time the followed soldier fell this cycle
   blocks: number; streak: number; best: number;
-  last: "" | "BLOCKED" | "HIT";
+  last: "" | "BLOCKED" | "HIT" | "RALLY" | "BREAKOUT";
   casualties: number; standing: number;
   next: { kind: "arrows" | "cavalry"; in: number } | null;
   shieldReady: boolean;
