@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
+
+const OwnedPixelModel3D = lazy(() => import("./OwnedPixelModel3D"));
 
 /** Owned Pixel in the seat inspector: shows the real PNG texture behind text/BRC-420 inscriptions. */
 export function OwnedPixelCard({ pixelId }: { pixelId: string }) {
