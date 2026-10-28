@@ -532,7 +532,7 @@ function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame 
     // Mounted: sit behind the King looking at the wall, so the camera never ends up inside the enemy ranks.
     target.set((lead?.x ?? 0) + side * 0.5, riding ? 9 : 3.6, z + (riding ? -9 : 8)); // high enough to see the King over the army's heads
     // New cycle or new rider: cut straight there instead of swooping across the whole field.
-    lookGoal.set((lead?.x ?? 0), riding ? 1 : -0.4, z + (riding ? 2 : -1));
+    lookGoal.set((lead?.x ?? 0), riding ? 1.6 : -0.4, z + (riding ? 0.5 : -1));
     const k = 1 - Math.exp(-(riding ? 5 : 4) * Math.min(delta, 0.05));
     if (jump) { camera.position.copy(target); look.copy(lookGoal); }
     else { camera.position.lerp(target, k); look.lerp(lookGoal, k); }
