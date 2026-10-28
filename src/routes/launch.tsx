@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { WalletConnect } from "@/components/WalletConnect";
 import { PixelFace } from "@/components/game/PixelFace";
+import { OwnedPixelCard } from "@/components/launch/OwnedPixelCard";
 import { signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { claimLaunchSeatFn, listLaunchSeatsFn } from "@/lib/launch-seats.functions";
@@ -299,12 +300,7 @@ function LaunchPage() {
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
             <SeatProfileLine seat={picked} />
             {mine?.seat === picked.seat && <SeatProfileEditor key={picked.seat} seat={picked} signer={active} />}
-            {picked.pixelSource === "held" && (
-              <a href={`https://ordinals.com/inscription/${picked.pixelId}`} target="_blank" rel="noreferrer" className="mt-2 block border border-bitcoin/50 bg-background p-1">
-                <img src={`/api/public/inscription/${picked.pixelId}`} alt="BITMAP Pixel owned by this wallet" className="aspect-square w-full object-contain" style={{ imageRendering: "pixelated" }} />
-                <div className="mt-1 text-[10px] text-bitcoin">✓ OWNED BITMAP PIXEL →</div>
-              </a>
-            )}
+            {picked.pixelSource === "held" && <OwnedPixelCard pixelId={picked.pixelId} />}
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
             {picked.gear?.map((g) => <div key={g} className="text-muted-foreground">◆ {GEAR_LABEL[g]}</div>)}
             {mine?.seat === picked.seat ? <WardrobeShop seat={picked} /> : <div className="text-muted-foreground">◆ {HAIR_LABEL[hairFor(picked.heldBitmap, picked.clubHair ?? null)]}</div>}
