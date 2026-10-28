@@ -4,7 +4,7 @@ import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, CAV_EXIT_Z, CAV_SPEED, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_STOP, SPACING, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
+import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, CAV_EXIT_Z, CAV_SPEED, SPEAR_WINDOW, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_STOP, SPACING, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
 import type { LaunchSeat } from "@/lib/launch-seats";
 import { ATLAS_GRID, atlasFaceMaterial, buildFaceAtlas } from "@/lib/face-atlas";
 
