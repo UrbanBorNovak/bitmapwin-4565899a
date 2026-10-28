@@ -106,7 +106,7 @@ function ChargePage() {
               {hud.heroDownAt != null ? "YOU FELL — RISE NEXT CHARGE" : hud.next ? `${hud.next.kind === "arrows" ? "ARROWS" : "CAVALRY"} IN ${Math.max(0, hud.next.in).toFixed(1)}s` : "HOLD THE LINE"}
             </span>
             {vip && <span className="font-bold text-primary">♛ KING · GLORY {hud.glory}</span>}
-            {hud.last && <span className={hud.last === "HIT" ? "text-destructive" : "text-accent"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : hud.last === "SPEARED" ? (hud.vip ? "RIDER UNSEATED! TAKE THE HORSE [E]" : "RIDER UNSEATED!") : hud.last === "BLOCKED" && hud.rider === "stopped" ? "HORSE STOPPED!" : `${hud.last}!`}</span>}
+            {hud.last && <span className={hud.last === "HIT" ? "font-bold text-destructive" : "font-bold text-primary"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : hud.last === "SPEARED" ? (hud.vip ? "RIDER UNSEATED! TAKE THE HORSE [E]" : "RIDER UNSEATED!") : hud.last === "BLOCKED" && hud.rider === "stopped" ? "HORSE STOPPED!" : `${hud.last}!`}</span>}
             </>
           ) : (
             <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land, then shield to stop the rider charging at you or spear to unseat him. Unblocked riders gallop straight through. VIP pass holders and Founders Row press PROVE VIP to sign with their wallet, spear their rider, then take his horse and lead the army through the wall.</span>
@@ -116,7 +116,7 @@ function ChargePage() {
       </div>
       {playing && (
         // Actions sit at the bottom within thumb reach, leaving the battlefield in view.
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-10 flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-32 z-10 flex justify-center px-4">
           <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
               {vip && (
                 <button
