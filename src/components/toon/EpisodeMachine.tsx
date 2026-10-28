@@ -1,28 +1,13 @@
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { writeEpisodeFn } from "@/lib/episode-machine.functions";
 import { beatsToEpisode, freeBeats, PITCH_CHIPS, PITCH_MAX } from "@/lib/episode-machine";
 import type { ToonEpisode } from "@/lib/toon-script";
 
 /** One-line pitch → AI beat sheet → playable episode loaded straight onto the stage. */
 export function EpisodeMachine({ onEpisode, disabled, initialPitch = "" }: { onEpisode: (e: ToonEpisode) => void; disabled?: boolean; initialPitch?: string }) {
-  const write = useServerFn(writeEpisodeFn);
   const [pitch, setPitch] = useState(initialPitch);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<{ score: number; text: string } | null>(null);
-
-  const go = async () => {
-    setBusy(true); setErr(null); setVerdict(null);
-    try {
-      const r = await write({ data: { pitch } });
-      if (!r.ok) return setErr(r.error);
-      onEpisode(beatsToEpisode(r.beats));
-      setVerdict({ score: Math.round(Math.max(1, Math.min(10, r.beats.score))), text: r.beats.verdict });
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "SCRIPT FAILED");
-    } finally { setBusy(false); }
-  };
 
   const free = () => {
     setErr(null);
