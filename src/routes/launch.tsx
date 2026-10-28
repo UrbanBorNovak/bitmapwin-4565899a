@@ -263,6 +263,20 @@ function LaunchPage() {
                 <div className="text-[10px] text-muted-foreground">Seat #{picked.seat} pass inscribed on Bitcoin · view inscription →</div>
               </a>
             )}
+            {neighbors.length > 0 && (
+              <div className="mt-2">
+                <div className="text-[10px] text-signal">NEIGHBORS</div>
+                <div className="mt-1 flex gap-1">
+                  {neighbors.map((n) => (
+                    <button key={n.seat} type="button" onClick={() => pickSeat(n)} aria-label={`Inspect seat ${n.seat}`}
+                      className="flex flex-1 items-center gap-1 rounded border border-border px-1 py-0.5 hover:border-signal">
+                      <PixelFace inscriptionId={n.pixelId} label="Neighbor" className="h-6 w-6" />
+                      <span className="text-[10px]">#{n.seat}{n.ticketId ? " ★" : ""}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <ShareSeatButton seat={picked} own={mine?.seat === picked.seat} />
           </div>
         )}
