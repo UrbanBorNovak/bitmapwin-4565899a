@@ -67,7 +67,7 @@ export function CommissionCitizen() {
   const submit = () => {
     const input = { name, height: Number(height), parcelIndex: parcel === "" ? null : Number(parcel), prompt, maxFeeSats: maxFee };
     const why = validateCommission(input);
-    if (why) return toast.error(why);
+    if (why) { toast.error(why); return; }
     update([createBot(input), ...bots]);
     setName(""); setPrompt(""); setParcel("");
     toast.success("Bot commissioned — fund its address to start");
