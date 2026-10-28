@@ -9,8 +9,8 @@ export const askNpcFn = createServerFn({ method: "POST" })
     const { npcById } = await import("@/lib/biternam-quests");
     const npc = npcById(data.npc);
     if (!npc) return { ok: false as const, text: "", error: "UNKNOWN CONTACT" };
-    const { askInCharacter } = await import("@/lib/biternam-npc.server");
-    return askInCharacter(npc.name, npc.persona, data.question);
+    // AI character replies are switched off so no AI credits are spent.
+    return { ok: false as const, text: "", error: "CHARACTER REPLIES ARE OFF" };
   });
 
 /** Records one quest step on the server; only the next step in order, matching the quest definition. */
