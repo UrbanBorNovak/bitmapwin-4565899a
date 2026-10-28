@@ -84,6 +84,7 @@ import { Route as VaultRouteImport } from './routes/vault'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
+import { Route as XmasRouteImport } from './routes/xmas'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BiternamAftermathRouteImport } from './routes/biternam_.aftermath'
 import { Route as BiternamArcadeRouteImport } from './routes/biternam_.arcade'
@@ -548,6 +549,11 @@ const WatchRoute = WatchRouteImport.update({
 const WorldStatsRoute = WorldStatsRouteImport.update({
   id: '/world-stats',
   path: '/world-stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const XmasRoute = XmasRouteImport.update({
+  id: '/xmas',
+  path: '/xmas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -1082,6 +1088,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
+  '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/aftermath': typeof BiternamAftermathRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
@@ -1245,6 +1252,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
+  '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/aftermath': typeof BiternamAftermathRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
@@ -1413,6 +1421,7 @@ export interface FileRoutesById {
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
   '/world-stats': typeof WorldStatsRoute
+  '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam_/aftermath': typeof BiternamAftermathRoute
   '/biternam_/arcade': typeof BiternamArcadeRoute
@@ -1582,6 +1591,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/watch'
     | '/world-stats'
+    | '/xmas'
     | '/.well-known/oauth-protected-resource'
     | '/biternam/aftermath'
     | '/biternam/arcade'
@@ -1745,6 +1755,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/watch'
     | '/world-stats'
+    | '/xmas'
     | '/.well-known/oauth-protected-resource'
     | '/biternam/aftermath'
     | '/biternam/arcade'
@@ -1912,6 +1923,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/watch'
     | '/world-stats'
+    | '/xmas'
     | '/.well-known/oauth-protected-resource'
     | '/biternam_/aftermath'
     | '/biternam_/arcade'
@@ -2080,6 +2092,7 @@ export interface RootRouteChildren {
   WalletRoute: typeof WalletRoute
   WatchRoute: typeof WatchRoute
   WorldStatsRoute: typeof WorldStatsRoute
+  XmasRoute: typeof XmasRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BiternamAftermathRoute: typeof BiternamAftermathRoute
   BiternamArcadeRoute: typeof BiternamArcadeRoute
@@ -2651,6 +2664,13 @@ declare module '@tanstack/react-router' {
       path: '/world-stats'
       fullPath: '/world-stats'
       preLoaderRoute: typeof WorldStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/xmas': {
+      id: '/xmas'
+      path: '/xmas'
+      fullPath: '/xmas'
+      preLoaderRoute: typeof XmasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {
@@ -3509,6 +3529,7 @@ const rootRouteChildren: RootRouteChildren = {
   WalletRoute: WalletRoute,
   WatchRoute: WatchRoute,
   WorldStatsRoute: WorldStatsRoute,
+  XmasRoute: XmasRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BiternamAftermathRoute: BiternamAftermathRoute,
