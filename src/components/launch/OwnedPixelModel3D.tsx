@@ -1,32 +1,47 @@
 import { Suspense, useEffect, useMemo } from "react";
-import { Bounds, Center, OrbitControls, useGLTF, useTexture } from "@react-three/drei";
+import { OrbitControls, useAnimations, useGLTF, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { Primitive } from "@/components/game/Primitive";
+import { rigAnimations } from "@/lib/map-identity";
 
-const url = (id: string) => `/api/public/inscription/${id}`;
+const content = (id: string) => `https://ordinals.com/content/${id}`;
+const TRANSPARENT_PIXEL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
 
-function Model({ model, texture }: { model: string; texture: string | null }) {
-  const gltf = useGLTF(url(model));
+/** Same pipeline as the Oasis ModelAvatar: rig + idle clip + pixel skin on its own UVs. */
+function Avatar({ model, texture }: { model: string; texture: string | null }) {
+  const gltf = useGLTF(content(model));
+  const clipSource = rigAnimations(model);
+  const clipGltf = useGLTF(content(clipSource ?? model));
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  return texture ? <Skinned scene={scene} texture={texture} /> : <primitive object={scene} />;
-}
+  const { actions, names } = useAnimations(clipSource ? clipGltf.animations : gltf.animations, scene);
+  const tex = useTexture(texture ? content(texture) : TRANSPARENT_PIXEL);
 
-function Skinned({ scene, texture }: { scene: THREE.Object3D; texture: string }) {
-  const tex = useTexture(url(texture));
   useEffect(() => {
+    const name = names.find((n) => /idle|stand/i.test(n)) ?? names[0];
+    const a = name ? actions[name] : null;
+    if (!a) return;
+    a.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
+    return () => { a.stop(); };
+  }, [actions, names]);
+
+  useEffect(() => {
+    if (!texture) return;
     tex.flipY = false;
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.magFilter = THREE.NearestFilter;
     tex.minFilter = THREE.NearestFilter;
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
     const made: THREE.Material[] = [];
     const paint = (src: THREE.Material) => {
       const m = src.clone() as THREE.MeshStandardMaterial;
       m.map = tex; m.color = new THREE.Color("#ffffff");
-      m.metalness = 0; m.roughness = 0.85; m.alphaTest = 0; m.transparent = false; m.opacity = 1;
-      m.depthWrite = true; m.side = THREE.FrontSide; m.blending = THREE.NormalBlending;
+      m.metalness = 0; m.roughness = 0.85; m.envMapIntensity = 0.25;
+      m.transparent = false; m.depthWrite = true; m.alphaTest = 0.5; m.side = THREE.FrontSide;
       m.needsUpdate = true; made.push(m); return m;
     };
     scene.traverse((c) => {
@@ -36,22 +51,32 @@ function Skinned({ scene, texture }: { scene: THREE.Object3D; texture: string })
       mesh.material = Array.isArray(mesh.material) ? mesh.material.map(paint) : paint(mesh.material);
     });
     return () => made.forEach((m) => m.dispose());
-  }, [scene, tex]);
-  return <primitive object={scene} />;
+  }, [scene, tex, texture]);
+
+  const fit = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    const b = new THREE.Box3().setFromObject(scene);
+    const s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
+    const k = 1.6 / Math.max(s.y, 0.0001);
+    return { k, x: -c.x * k, y: -b.min.y * k - 0.8, z: -c.z * k };
+  }, [scene]);
+
+  return (
+    <group scale={fit.k} position={[fit.x, fit.y, fit.z]}>
+      <Primitive object={scene} />
+    </group>
+  );
 }
 
-/** The Pixel's own on-chain GLB wearing its own on-chain PNG texture. */
+/** The Pixel's own on-chain rig wearing its own on-chain skin, exactly as in the Oasis. */
 export default function OwnedPixelModel3D({ model, texture }: { model: string; texture: string | null }) {
   return (
-    <SafeCanvas camera={{ position: [2.4, 1.6, 2.4], fov: 38 }} dpr={[1, 1.5]}>
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[3, 5, 3]} intensity={1.4} />
-      <Suspense fallback={null}>
-        <Bounds fit clip observe margin={1.2}>
-          <Center><Model model={model} texture={texture} /></Center>
-        </Bounds>
-      </Suspense>
-      <OrbitControls makeDefault autoRotate autoRotateSpeed={1.5} enablePan={false} />
+    <SafeCanvas camera={{ position: [0.9, 0.3, 2.6], fov: 38 }} dpr={[1, 1.5]}>
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[2, 3, 3]} intensity={2.2} />
+      <directionalLight position={[-2, 1, -2]} intensity={0.8} />
+      <Suspense fallback={null}><Avatar model={model} texture={texture} /></Suspense>
+      <OrbitControls makeDefault autoRotate autoRotateSpeed={1.5} enablePan={false} enableZoom={false} target={[0, 0, 0]} />
     </SafeCanvas>
   );
 }
