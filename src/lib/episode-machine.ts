@@ -65,3 +65,29 @@ export function beatsToEpisode(b: BeatSheet, castHeights: number[] = DEFAULT_CAS
   // Round-trip through the stage's own validator so only playable episodes leave here.
   return parseEpisode(JSON.stringify(ep));
 }
+
+/** Free writers' room: builds a beat sheet from the pitch on-device with fixed templates.
+ * Uses no AI credits; the same pitch always writes the same episode. */
+export function freeBeats(pitch: string): BeatSheet {
+  const p = clean(pitch, 90) || "something strange happens at the café";
+  let h = 2166136261;
+  for (const c of p) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const r = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) % 1000) / 1000;
+  const pick = <T,>(a: readonly T[]) => a[Math.floor(r() * a.length)]!;
+  const A = pick(["SATOSHA", "BLOCKY", "HODLER JIM", "MEMPOOL MO"]);
+  const B = pick(["DEV9", "PATOSHI PAT", "FEE FIONA", "NODE NED"]);
+  const sets = MACHINE_SETS;
+  const short = p.length > 60 ? p.slice(0, 57) + "…" : p;
+  const L = (speaker: number, text: string, style: BeatLine["style"] = "speech", emote: BeatLine["emote"] = "none"): BeatLine => ({ speaker, text, style, emote });
+  return {
+    title: short.toUpperCase(),
+    verdict: "Written free by the house script desk.",
+    score: 6 + Math.floor(r() * 3),
+    cast: [{ name: A }, { name: B }],
+    scenes: [
+      { set: pick(sets), lines: [L(0, pick(["Okay, nobody panic.", "You will not believe this.", "Breaking news from my block:"]), "shout", "surprised"), L(0, short), L(1, pick(["That's not how Bitcoin works.", "Again? This is the third time this block.", "I'm going to need a confirmation."]), "speech", "angry")] },
+      { set: pick(sets), lines: [L(0, pick(["It's fine, it's in the mempool.", "Trust me, I read the whitepaper once.", "Fees are low, what could go wrong?"])), L(1, pick(["Fees just spiked.", "The difficulty adjusted. Mid-sentence.", "A whale just bought every sat in the room."]), "shout", "terrified"), L(0, pick(["...HODL?", "Okay, now panic.", "Is that a re-org?"]), "thought", "afraid")] },
+      { set: pick(sets), lines: [L(1, pick(["Same chain, same mess.", "See you next block.", "Don't trust. Verify."]), "speech", "happy")] },
+    ],
+  };
+}
