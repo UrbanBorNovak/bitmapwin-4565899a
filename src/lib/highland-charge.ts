@@ -140,11 +140,14 @@ export function stepBattle(g: BattleGame, t: number, playing: boolean): void {
   g.shieldReady = t >= g.cooldownUntil;
   while (g.resolved < THREATS.length && local >= THREATS[g.resolved]!.at) {
     g.resolved++;
-    const cav = THREATS[g.resolved - 1]!.kind === "cavalry";
+    const th = THREATS[g.resolved - 1]!, cav = th.kind === "cavalry";
+    // Judge at the threat's own moment, not this frame's, so a slow frame never misses a well-timed press.
+    const at = c * CHARGE_CYCLE + th.at;
+    const covers = (until: number, win: number) => until >= at && until - win <= at;
     if (!playing || g.heroDownAt != null) { if (cav) g.rider = "through"; continue; }
     // A spear only helps against the rider; arrows still need the shield.
-    if (cav && t <= g.spearUntil) { g.kills++; g.last = "SPEARED"; g.rider = "speared"; }
-    else if (t <= g.shieldUntil) { g.blocks++; g.last = "BLOCKED"; if (cav) g.rider = "stopped"; }
+    if (cav && covers(g.spearUntil, SPEAR_WINDOW)) { g.kills++; g.last = "SPEARED"; g.rider = "speared"; }
+    else if (covers(g.shieldUntil, SHIELD_WINDOW)) { g.blocks++; g.last = "BLOCKED"; if (cav) g.rider = "stopped"; }
     else { g.heroDownAt = local; g.last = "HIT"; g.streak = 0; if (cav) g.rider = "through"; }
   }
   // King Richard: only a verified VIP who speared the rider takes the riderless horse and leads the army through the wall.
