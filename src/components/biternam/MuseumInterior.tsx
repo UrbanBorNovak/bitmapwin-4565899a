@@ -9,7 +9,7 @@ import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { DustMotes } from "@/components/biternam/RoomAtmosphere";
+import { DustMotes, fitCamera } from "@/components/biternam/RoomAtmosphere";
 import type { Hotspot } from "@/lib/museum-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
