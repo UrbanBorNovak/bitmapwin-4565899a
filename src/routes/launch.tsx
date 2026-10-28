@@ -41,7 +41,7 @@ export const Route = createFileRoute("/launch")({
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
     ] };
   },
-  validateSearch: (s: Record<string, unknown>): { seat?: number } => { const n = Number(s.seat); return Number.isInteger(n) && n > 0 ? { seat: n } : {}; },
+  validateSearch: (s: Record<string, unknown>): { seat?: number } => { const n = Number(s["seat"]); return Number.isInteger(n) && n > 0 ? { seat: n } : {}; },
   loader: ({ context }) => context.queryClient.ensureQueryData(seatsQuery),
   component: LaunchPage,
 });
