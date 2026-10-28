@@ -453,14 +453,15 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
     for (let i = 0; i < RIDERS; i++) {
       const k = i * 3;
       const x = laneX(i);
-      let z = cz + rnd(i + 50) * 2.5;
+      let z = cz + rnd(i + 50) * 2.5, sideX = 0;
       let gal = Math.abs(Math.sin(t * 14 + i)) * 0.3, rear = 0, riderOff = false, horseOff = z < CAV_EXIT_Z, riderFall = 0;
       if (i === duel && lead && (game.rider === "stopped" || game.rider === "speared")) {
         // Shield or spear held this horse at the hero's front instead of letting it through.
-        const stopZ = heroZ + 1.6;
+        // Pulled up beside the hero (not in front) so the camera keeps the followed Pixel in view.
+        const stopZ = heroZ + 0.8;
         if (z < stopZ) {
           const since = (stopZ - z) / CAV_SPEED;
-          z = stopZ; gal = 0; horseOff = false;
+          z = stopZ; gal = 0; horseOff = false; sideX = 1.5;
           rear = game.rider === "stopped" ? Math.min(0.5, since * 2) * Math.max(0, 1 - since * 0.5) : 0;
           if (game.rider === "speared") { riderOff = true; riderFall = Math.min(1, since * 3); }
           if (game.rallyAt != null && local >= game.rallyAt) horseOff = true; // the King now rides it
@@ -529,9 +530,9 @@ function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame 
     const local = t % CHARGE_CYCLE;
     const side = riding ? 1.5 : local < 2 ? 0 : Math.sin(t * 0.3) * 8;
     // Mounted: sit behind the King looking at the wall, so the camera never ends up inside the enemy ranks.
-    target.set((lead?.x ?? 0) + side * 0.5, riding ? 4.2 : 3.6, z + (riding ? -7 : 8));
+    target.set((lead?.x ?? 0) + side * 0.5, riding ? 6.5 : 3.6, z + (riding ? -8 : 8)); // high enough to see the King over the army's heads
     // New cycle or new rider: cut straight there instead of swooping across the whole field.
-    lookGoal.set((lead?.x ?? 0), riding ? 1.2 : -0.4, z + (riding ? 6 : -1));
+    lookGoal.set((lead?.x ?? 0), riding ? 1.4 : -0.4, z + (riding ? 4 : -1));
     const k = 1 - Math.exp(-(riding ? 5 : 4) * Math.min(delta, 0.05));
     if (jump) { camera.position.copy(target); look.copy(lookGoal); }
     else { camera.position.lerp(target, k); look.lerp(lookGoal, k); }
