@@ -35,7 +35,6 @@ const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
   },
 });
 
-function FixedCam() { useFrame(({ camera }) => camera.lookAt(-0.5, 0.25, 0.7)); return null; }
 
 function Person({ body, skin, hot, shades }: { body: string; skin: string; hot: boolean; shades?: boolean }) {
   return (

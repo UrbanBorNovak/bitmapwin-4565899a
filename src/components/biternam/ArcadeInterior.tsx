@@ -39,7 +39,6 @@ const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
     state.raycaster.setFromCamera(state.pointer, state.camera);
   },
 });
-function FixedCam() { useFrame(({ camera }) => camera.lookAt(-0.4, 0.4, 0.6)); return null; }
 
 /** Arcade cabinet with a flickering, colour-cycling CRT and marquee. */
 function Cabinet({ color, hot, won, seed }: { color: string; hot: boolean; won?: boolean; seed: number }) {
