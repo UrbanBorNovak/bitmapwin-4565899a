@@ -25,6 +25,8 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
   const flags = useRef<THREE.InstancedMesh>(null);
   const o = useMemo(() => new THREE.Object3D(), []);
   const frame = useRef(0);
+  // Fallen soldiers who have finished falling are written once and then skipped until the next charge.
+  const downDone = useMemo(() => ({ cycle: -1, m: new Uint8Array(soldiers.length) }), [soldiers]);
   // Neighbours right beside the followed soldier step aside so nothing blocks them.
   const focusSoldier = useMemo(() => soldiers.find((s) => s.seat === focus), [soldiers, focus]);
   useEffect(() => {
@@ -50,6 +52,7 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
     if (!b || !h) return;
     const local = localTime(t), cyc = cycleOf(t);
     let dead = 0;
+    if (downDone.cycle !== cyc) { downDone.cycle = cyc; downDone.m.fill(0); }
     for (let i = 0; i < soldiers.length; i++) {
       const s = soldiers[i]!;
       const fi = flagOf.m[i]!;
@@ -62,8 +65,10 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
       const dt = deathTime(s.seat, s.rank, cyc);
       if (dt != null && local >= dt) {
         dead++;
+        if (downDone.m[i]) continue;
         const z = s.z + chargeOffset(t - (local - dt), s.speed);
         const fall = Math.min(1, (local - dt) * 3);
+        if (fall >= 1) downDone.m[i] = 1;
         o.position.set(s.x, 0.6 - 0.4 * fall, z + fall * 0.5); o.rotation.set(-fall * Math.PI / 2, 0, (s.phase - 3) * 0.1); o.scale.set(0.5, 1.1, 0.35); o.updateMatrix();
         b.setMatrixAt(i, o.matrix);
         o.position.set(s.x, 0.2, z + fall * 1.2); o.scale.setScalar(0.38); o.rotation.set(0, 0, 0); o.updateMatrix();
@@ -237,68 +242,119 @@ function Enemy() {
   return <group ref={group}><instancedMesh ref={ref} args={[undefined, undefined, ENEMY]}><boxGeometry /><meshLambertMaterial color="#5a5f68" /></instancedMesh></group>;
 }
 
-const PER_VOLLEY = 90;
+/** Phones get a lighter battle: fewer arrows, riders and dust puffs. */
+const MOBILE = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+const PER_VOLLEY = MOBILE ? 40 : 90;
+const RIDERS = MOBILE ? 14 : 22;
+const DUST_PER = MOBILE ? 1 : 2;
 const enemyZ = (t: number) => FIELD_GAP / 2 + 1 - Math.min(chargeOffset(t, 1.2), 10);
 function rnd(n: number) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
-/** Fiat arrow volleys: one instanced mesh, ballistic arcs, arrows stay stuck in the ground until the loop. */
+/**
+ * Fiat arrow volleys: one instanced mesh, one draw call. Each volley is only rewritten while
+ * in flight; once landed it is written one last time (stuck in the ground) and then left alone,
+ * so most frames upload nothing at all.
+ */
 function Arrows() {
   const ref = useRef<THREE.InstancedMesh>(null);
   const o = useMemo(() => new THREE.Object3D(), []);
   const a = useMemo(() => new THREE.Vector3(), []), b = useMemo(() => new THREE.Vector3(), []);
-  const at = (v: number, j: number, p: number, c: number, out: THREE.Vector3, t: number) => {
+  // per volley: 0 = hidden written, 1 = flying, 2 = landed written; keyed to the cycle
+  const state = useRef({ cycle: -1, v: new Uint8Array(VOLLEYS.length).fill(9) });
+  const at = (v: number, j: number, p: number, c: number, out: THREE.Vector3, ez: number) => {
     const k = v * 1000 + j + c * 7919;
     const land = VOLLEYS[v]! + ARROW_FLIGHT;
-    const x0 = (rnd(k) - 0.5) * 38, z0 = enemyZ(t) + rnd(k + 1) * 3;
+    const x0 = (rnd(k) - 0.5) * 38, z0 = ez + rnd(k + 1) * 3;
     const x1 = (rnd(k + 2) - 0.5) * 38, z1 = armyFront(land) - rnd(k + 3) * 14 + 1;
     out.set(x0 + (x1 - x0) * p, 2.2 + Math.sin(Math.PI * p) * 16 - p * 2.2, z0 + (z1 - z0) * p);
   };
   useFrame(({ clock }) => {
     const m = ref.current; if (!m) return;
     const t = clock.elapsedTime, local = localTime(t), c = cycleOf(t);
-    for (let v = 0; v < VOLLEYS.length; v++) for (let j = 0; j < PER_VOLLEY; j++) {
-      const idx = v * PER_VOLLEY + j;
-      const p = (local - VOLLEYS[v]!) / ARROW_FLIGHT;
-      if (p < 0) { m.setMatrixAt(idx, HIDDEN); continue; }
-      const q = Math.min(1, p);
-      at(v, j, q, c, a, t); at(v, j, Math.max(0, q - 0.02), c, b, t);
-      b.sub(a).multiplyScalar(-1).add(a); // point ahead along the flight direction
-      o.position.copy(a); if (q >= 1) o.position.y = 0.3;
-      o.lookAt(b);
-      o.scale.set(0.05, 0.05, 1); o.updateMatrix(); m.setMatrixAt(idx, o.matrix);
+    const st = state.current;
+    if (st.cycle !== c) { st.cycle = c; st.v.fill(9); }
+    let dirty = false;
+    for (let v = 0; v < VOLLEYS.length; v++) {
+      const launch = VOLLEYS[v]!;
+      const p = (local - launch) / ARROW_FLIGHT;
+      const want = p < 0 ? 0 : p < 1 ? 1 : 2;
+      if (want !== 1 && st.v[v] === want) continue; // already written, nothing moves
+      st.v[v] = want; dirty = true;
+      const q = Math.min(1, Math.max(0, p));
+      const ez = enemyZ(clock.elapsedTime - (local - launch)); // launch point fixed at release
+      for (let j = 0; j < PER_VOLLEY; j++) {
+        const idx = v * PER_VOLLEY + j;
+        if (want === 0) { m.setMatrixAt(idx, HIDDEN); continue; }
+        at(v, j, q, c, a, ez); at(v, j, Math.max(0, q - 0.02), c, b, ez);
+        b.sub(a).multiplyScalar(-1).add(a);
+        o.position.copy(a); if (want === 2) o.position.y = 0.3;
+        o.lookAt(b);
+        o.scale.set(0.05, 0.05, 1); o.updateMatrix(); m.setMatrixAt(idx, o.matrix);
+      }
     }
-    m.instanceMatrix.needsUpdate = true;
+    if (dirty) m.instanceMatrix.needsUpdate = true;
   });
   return <instancedMesh ref={ref} frustumCulled={false} args={[undefined, undefined, PER_VOLLEY * VOLLEYS.length]}><boxGeometry /><meshLambertMaterial color="#2b2118" /></instancedMesh>;
 }
 
-const RIDERS = 22;
-/** Fiat cavalry: horses, riders and lances in three instanced meshes, galloping into the front rank. */
+/**
+ * Fiat cavalry: horses, riders and lances share ONE instanced mesh (per-instance colour) = 1 draw
+ * call. Before the charge they are hidden once; after they have reared up they freeze, so only the
+ * ~3 s gallop costs CPU.
+ */
 function Cavalry() {
-  const horse = useRef<THREE.InstancedMesh>(null), rider = useRef<THREE.InstancedMesh>(null), lance = useRef<THREE.InstancedMesh>(null);
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dust = useRef<THREE.InstancedMesh>(null);
   const o = useMemo(() => new THREE.Object3D(), []);
+  const last = useRef<"" | "off" | "frozen">("");
+  useEffect(() => {
+    const m = ref.current; if (!m) return;
+    const cs = [new THREE.Color("#3b2a1e"), new THREE.Color("#6b717b"), new THREE.Color("#c9ced6")];
+    for (let i = 0; i < RIDERS * 3; i++) m.setColorAt(i, cs[i % 3]!);
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, []);
   useFrame(({ clock }) => {
+    const m = ref.current, d = dust.current; if (!m || !d) return;
     const t = clock.elapsedTime, local = localTime(t);
-    const hm = horse.current, rm = rider.current, lm = lance.current; if (!hm || !rm || !lm) return;
     const on = local >= CAV_START - 0.5;
+    const settle = CAV_CONTACT + 0.3;
+    const mode = !on ? "off" : local > settle + 0.6 ? "frozen" : "";
+    if (mode && last.current === mode) return; // nothing changes: no CPU, no upload
+    last.current = mode;
     const moving = local < CAV_CONTACT;
+    const cz = cavalryZ(local);
     for (let i = 0; i < RIDERS; i++) {
-      if (!on) { hm.setMatrixAt(i, HIDDEN); rm.setMatrixAt(i, HIDDEN); lm.setMatrixAt(i, HIDDEN); continue; }
-      const x = (i - (RIDERS - 1) / 2) * 1.7 + (rnd(i) - 0.5) * 0.5;
-      const z = cavalryZ(local) + rnd(i + 50) * 2.5;
-      const gal = moving ? Math.abs(Math.sin(t * 14 + i)) * 0.3 : 0;
-      const rear = moving ? 0 : Math.min(0.5, (local - CAV_CONTACT) * 2);
-      o.position.set(x, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); hm.setMatrixAt(i, o.matrix);
-      o.position.set(x, 1.9 + gal, z + 0.1); o.rotation.set(0, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); rm.setMatrixAt(i, o.matrix);
-      o.position.set(x + 0.3, 1.8 + gal, z - 1.2); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); lm.setMatrixAt(i, o.matrix);
+      const k = i * 3;
+      if (!on) { m.setMatrixAt(k, HIDDEN); m.setMatrixAt(k + 1, HIDDEN); m.setMatrixAt(k + 2, HIDDEN); }
+      else {
+        const x = (i - (RIDERS - 1) / 2) * (38 / RIDERS) + (rnd(i) - 0.5) * 0.5;
+        const z = cz + rnd(i + 50) * 2.5;
+        const gal = moving ? Math.abs(Math.sin(t * 14 + i)) * 0.3 : 0;
+        const rear = moving ? 0 : Math.min(0.5, (local - CAV_CONTACT) * 2);
+        o.position.set(x, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
+        o.position.set(x, 1.9 + gal, z + 0.1); o.rotation.set(0, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+        o.position.set(x + 0.3, 1.8 + gal, z - 1.2); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+      }
+      // Dust: short-lived puffs kicked up behind the hooves, a burst at contact, gone once settled.
+      for (let p = 0; p < DUST_PER; p++) {
+        const di = i * DUST_PER + p;
+        const age = ((t * 1.8 + rnd(di + 90)) % 1); // 0..1 loop per puff
+        const alive = on && local < settle + 0.5;
+        if (!alive) { d.setMatrixAt(di, HIDDEN); continue; }
+        const x = (i - (RIDERS - 1) / 2) * (38 / RIDERS) + (rnd(di + 7) - 0.5) * 1.2;
+        const burst = moving ? 1 : 1.8;
+        o.position.set(x, 0.3 + age * 0.8, cz + 1.2 + age * 2.5); o.rotation.set(0, 0, 0);
+        o.scale.setScalar((0.4 + age * 1.4) * burst * (1 - age * 0.5)); o.updateMatrix(); d.setMatrixAt(di, o.matrix);
+      }
     }
-    hm.instanceMatrix.needsUpdate = true; rm.instanceMatrix.needsUpdate = true; lm.instanceMatrix.needsUpdate = true;
+    m.instanceMatrix.needsUpdate = true; d.instanceMatrix.needsUpdate = true;
   });
   return (
     <>
-      <instancedMesh ref={horse} frustumCulled={false} args={[undefined, undefined, RIDERS]}><boxGeometry /><meshLambertMaterial color="#3b2a1e" /></instancedMesh>
-      <instancedMesh ref={rider} frustumCulled={false} args={[undefined, undefined, RIDERS]}><boxGeometry /><meshLambertMaterial color="#6b717b" /></instancedMesh>
-      <instancedMesh ref={lance} frustumCulled={false} args={[undefined, undefined, RIDERS]}><boxGeometry /><meshLambertMaterial color="#c9ced6" /></instancedMesh>
+      <instancedMesh ref={ref} frustumCulled={false} args={[undefined, undefined, RIDERS * 3]}><boxGeometry /><meshLambertMaterial /></instancedMesh>
+      <instancedMesh ref={dust} frustumCulled={false} args={[undefined, undefined, RIDERS * DUST_PER]}>
+        <boxGeometry /><meshBasicMaterial color="#9c8a6a" transparent opacity={0.35} depthWrite={false} />
+      </instancedMesh>
     </>
   );
 }

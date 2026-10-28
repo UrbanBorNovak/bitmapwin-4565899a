@@ -60,9 +60,9 @@ function ChargePage() {
           </form>
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-24 p-4">
+      <div className="pointer-events-none absolute inset-x-0 top-36 z-10 p-4">
         <div className="pointer-events-auto mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded border border-border bg-background/85 p-3 font-mono text-xs">
-          <span className="text-accent">STANDING {hud.standing}</span>
+          <span className="font-bold text-foreground">STANDING {hud.standing}</span>
           <span className="text-destructive">FALLEN {hud.casualties}</span>
           {playing ? (
             <>
