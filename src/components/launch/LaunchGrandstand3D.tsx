@@ -459,7 +459,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   const vips = useMemo(() => seats.filter((s) => s.ticketId), [seats]);
   const [talking, setTalking] = useState<string | null>(null);
   return (
-    <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]}>
+    <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]} onPointerMissed={() => setTalking(null)}>
       <color attach="background" args={["#07090d"]} />
       <fog attach="fog" args={["#07090d", 28, 64]} />
       <ambientLight intensity={0.7} />
