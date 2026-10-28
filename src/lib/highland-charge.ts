@@ -6,7 +6,7 @@ export const COLS = 24;
 export const SPACING = 1.6;
 export const RUN_SPEED = 4.2; // world units per second
 
-export type Soldier = { seat: number; x: number; z: number; speed: number; phase: number; hue: number; flag: boolean; founder: boolean };
+export type Soldier = { seat: number; rank: number; x: number; z: number; speed: number; phase: number; hue: number; flag: boolean; founder: boolean };
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -22,7 +22,7 @@ export function formation(seats: { seat: number; address: string; heldBitmap: nu
     const rank = Math.floor(i / COLS);
     const col = (i % COLS) - (COLS - 1) / 2;
     return {
-      seat: s.seat,
+      seat: s.seat, rank,
       x: col * SPACING + ((h & 255) / 255 - 0.5) * 0.6,
       z: -FIELD_GAP / 2 - rank * SPACING - (((h >> 8) & 255) / 255) * 0.5,
       speed: RUN_SPEED * (0.9 + ((h >> 16) & 255) / 255 * 0.2),
