@@ -25,7 +25,8 @@ function Skinned({ scene, texture }: { scene: THREE.Object3D; texture: string })
     const paint = (src: THREE.Material) => {
       const m = src.clone() as THREE.MeshStandardMaterial;
       m.map = tex; m.color = new THREE.Color("#ffffff");
-      m.metalness = 0; m.roughness = 0.85; m.alphaTest = 0.5; m.transparent = false;
+      m.metalness = 0; m.roughness = 0.85; m.alphaTest = 0; m.transparent = false; m.opacity = 1;
+      m.depthWrite = true; m.side = THREE.FrontSide; m.blending = THREE.NormalBlending;
       m.needsUpdate = true; made.push(m); return m;
     };
     scene.traverse((c) => {
