@@ -9,6 +9,7 @@ import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { DustMotes } from "@/components/biternam/RoomAtmosphere";
 import type { Hotspot } from "@/lib/museum-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
@@ -168,6 +169,7 @@ export function MuseumInterior({ onHit, onHover, hover, hasLens, solved, exhibit
       <SafeCanvas events={zoomSafeEvents} dpr={0.45} shadows="percentage" gl={{ antialias: false }} camera={{ position: [8, 9, 11], fov: 42, zoom: 1.65 }} style={{ imageRendering: "pixelated" }}
         onPointerMissed={() => onHover(null)}>
         <FixedCam focus={focus && exhibitOpen} />
+        <DustMotes color="#fff0d0" />
         <color attach="background" args={["#120d14"]} />
         <fog attach="fog" args={["#120d14", 14, 26]} />
         <ambientLight intensity={0.55} color="#ffd9b0" />
