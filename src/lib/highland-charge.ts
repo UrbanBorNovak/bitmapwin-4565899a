@@ -91,3 +91,41 @@ export function deathTime(seat: number, rank: number, cycle: number): number | n
   if (rank <= 2 && f < 0.4) return CAV_CONTACT + (f - 0.14) * 2;
   return null;
 }
+
+/** Mutable commander state shared between the HUD and the 3D stepper (per-frame, outside React). */
+export type BattleGame = {
+  raise: boolean; // HUD asks to raise the shield; the stepper stamps it with scene time
+  shieldUntil: number; cooldownUntil: number;
+  cycle: number; resolved: number; // threats resolved this cycle
+  heroDownAt: number | null; // local time the followed soldier fell this cycle
+  blocks: number; streak: number; best: number;
+  last: "" | "BLOCKED" | "HIT";
+  casualties: number; standing: number;
+  next: { kind: "arrows" | "cavalry"; in: number } | null;
+  shieldReady: boolean;
+};
+export function newBattleGame(best = 0): BattleGame {
+  return { raise: false, shieldUntil: -1, cooldownUntil: -1, cycle: -1, resolved: 0, heroDownAt: null, blocks: 0, streak: 0, best, last: "", casualties: 0, standing: 0, next: null, shieldReady: true };
+}
+
+/** One step of the commander rules; t = scene clock seconds. Pure apart from mutating g. */
+export function stepBattle(g: BattleGame, t: number, playing: boolean): void {
+  const local = localTime(t), c = cycleOf(t);
+  if (c !== g.cycle) {
+    if (g.cycle >= 0 && playing && g.heroDownAt == null) { g.streak++; g.best = Math.max(g.best, g.streak); }
+    g.cycle = c; g.resolved = 0; g.heroDownAt = null; g.last = "";
+  }
+  if (g.raise) {
+    g.raise = false;
+    if (t >= g.cooldownUntil && g.heroDownAt == null) { g.shieldUntil = t + SHIELD_WINDOW; g.cooldownUntil = t + SHIELD_COOLDOWN; }
+  }
+  g.shieldReady = t >= g.cooldownUntil;
+  while (g.resolved < THREATS.length && local >= THREATS[g.resolved]!.at) {
+    g.resolved++;
+    if (!playing || g.heroDownAt != null) continue;
+    if (t <= g.shieldUntil) { g.blocks++; g.last = "BLOCKED"; }
+    else { g.heroDownAt = local; g.last = "HIT"; g.streak = 0; }
+  }
+  const nx = THREATS[g.resolved];
+  g.next = nx ? { kind: nx.kind, in: nx.at - local } : null;
+}
