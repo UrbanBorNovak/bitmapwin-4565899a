@@ -21,10 +21,11 @@ describe("highland charge commander", () => {
 
 import { CAV_CONTACT, BREAKOUT_AFTER } from "./highland-charge";
 describe("King's rally", () => {
-  const run = (vip: boolean) => {
+  const run = (vip: boolean, spear = true) => {
     const g = newBattleGame(); g.vip = vip; g.standing = 400;
     for (let t = 0; t <= CAV_CONTACT + BREAKOUT_AFTER + 1; t += 0.05) {
-      if (THREATS.some((x) => Math.abs(x.at - 0.3 - t) < 0.026)) g.raise = true;
+      if (THREATS.some((x) => x.kind === "arrows" && Math.abs(x.at - 0.3 - t) < 0.026)) g.raise = true;
+      if (Math.abs(CAV_CONTACT - 0.2 - t) < 0.026) { if (spear) g.thrust = true; else g.raise = true; }
       if (Math.abs(t - (CAV_CONTACT + 0.5)) < 0.026) g.mount = true;
       stepBattle(g, t, true);
     }
@@ -35,10 +36,29 @@ describe("King's rally", () => {
     expect(g.breakouts).toBe(1);
     expect(g.glory).toBe(400);
   });
-  it("non-VIP soldiers cannot mount", () => {
+  it("non-VIP soldiers spear the rider but cannot take the horse", () => {
     const g = run(false);
+    expect(g.rider).toBe("speared");
+    expect(g.kills).toBe(1);
     expect(g.rallyAt).toBeNull();
     expect(g.breakouts).toBe(0);
+  });
+  it("a shield stops the rider but leaves no horse to take, even for a VIP", () => {
+    const g = run(true, false);
+    expect(g.rider).toBe("stopped");
+    expect(g.heroDownAt).toBeNull();
+    expect(g.rallyAt).toBeNull();
+  });
+  it("a spear does not stop arrows", () => {
+    const g = newBattleGame();
+    for (let t = 0; t <= THREATS[0]!.at + 0.05; t += 0.05) { if (Math.abs(THREATS[0]!.at - 0.2 - t) < 0.026) g.thrust = true; stepBattle(g, t, true); }
+    expect(g.last).toBe("HIT");
+  });
+  it("an unblocked rider gallops through", () => {
+    const g = newBattleGame();
+    for (let t = 0; t <= CAV_CONTACT + 0.1; t += 0.05) { if (THREATS.some((x) => x.kind === "arrows" && Math.abs(x.at - 0.3 - t) < 0.026)) g.raise = true; stepBattle(g, t, true); }
+    expect(g.rider).toBe("through");
+    expect(g.last).toBe("HIT");
   });
 });
 
