@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LANDMARKS, landmarkSpot } from "@/lib/world-landmarks";
 import { toast } from "sonner";
 import { GuardianAgents } from "@/components/colony/GuardianAgents";
+import { CommissionCitizen } from "@/components/colony/CommissionCitizen";
 
 export const Route = createFileRoute("/colony")({
   head: () => ({
@@ -211,6 +212,7 @@ function ColonyPage() {
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Citizens walk fixed routes between Oasis landmarks, so everyone sees them in the same place. They can walk and talk on their own. Any trade or spend waits here for the owner to approve, and an approved action only opens the normal page where you sign it yourself.
         </p>
+        <div className="mt-4"><CommissionCitizen /></div>
       </header>
 
       <GuardianAgents />
