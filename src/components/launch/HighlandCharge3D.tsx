@@ -213,7 +213,7 @@ function ChaseCam({ lead }: { lead: Soldier | undefined }) {
     const side = local < 2 ? 0 : Math.sin(t * 0.3) * 8;
     target.set((lead?.x ?? 0) + side * 0.5, 3.6, z + 8);
     camera.position.lerp(target, 1 - Math.exp(-4 * Math.min(delta, 0.05)));
-    camera.lookAt((lead?.x ?? 0), 1.4, z - 2);
+    camera.lookAt((lead?.x ?? 0), 2.6, z - 1);
   });
   return null;
 }
