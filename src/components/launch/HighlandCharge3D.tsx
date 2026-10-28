@@ -25,6 +25,8 @@ function Army({ soldiers, focus }: { soldiers: Soldier[]; focus: number | null }
   const flags = useRef<THREE.InstancedMesh>(null);
   const o = useMemo(() => new THREE.Object3D(), []);
   const frame = useRef(0);
+  // Neighbours right beside the followed soldier step aside so nothing blocks them.
+  const focusSoldier = useMemo(() => soldiers.find((s) => s.seat === focus), [soldiers, focus]);
   useEffect(() => {
     const c = new THREE.Color();
     soldiers.forEach((s, i) => {
@@ -49,7 +51,8 @@ function Army({ soldiers, focus }: { soldiers: Soldier[]; focus: number | null }
     for (let i = 0; i < soldiers.length; i++) {
       const s = soldiers[i]!;
       const fi = flagOf.m[i]!;
-      if (s.seat === focus) {
+      const fs = focusSoldier;
+      if (s.seat === focus || (fs && Math.abs(s.x - fs.x) < 1.6 && Math.abs(s.z - fs.z) < 2.2 && Math.abs(s.speed - fs.speed) < 0.2)) {
         b.setMatrixAt(i, HIDDEN); h.setMatrixAt(i, HIDDEN);
         if (fi >= 0 && fl) fl.setMatrixAt(fi, HIDDEN);
         continue;
@@ -208,9 +211,9 @@ function ChaseCam({ lead }: { lead: Soldier | undefined }) {
     const z = (lead ? lead.z + chargeOffset(t, lead.speed) : -FIELD_GAP / 2);
     const local = t % CHARGE_CYCLE;
     const side = local < 2 ? 0 : Math.sin(t * 0.3) * 8;
-    target.set((lead?.x ?? 0) + side, 6, z + 14);
+    target.set((lead?.x ?? 0) + side * 0.5, 3.6, z + 8);
     camera.position.lerp(target, 1 - Math.exp(-4 * Math.min(delta, 0.05)));
-    camera.lookAt((lead?.x ?? 0), 1, z - 6);
+    camera.lookAt((lead?.x ?? 0), 1.4, z - 2);
   });
   return null;
 }
