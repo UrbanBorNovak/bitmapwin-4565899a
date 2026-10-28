@@ -45,7 +45,7 @@ export function chargeOffset(t: number, speed: number): number {
 
 export const VOLLEYS = [4.5, 8] as const; // local launch times of the Fiat arrow volleys
 export const ARROW_FLIGHT = 1.6; // seconds in the air
-export const CAV_START = 7.5; // local time the cavalry breaks out of the wall
+export const CAV_START = 9.5; // local time the cavalry breaks out of the wall
 export const CAV_SPEED = 12;
 export const SHIELD_WINDOW = 0.7; // seconds a raised shield protects
 export const SHIELD_COOLDOWN = 1.2;
