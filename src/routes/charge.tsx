@@ -40,7 +40,10 @@ function ChargePage() {
   // Held in page memory only: every visit signs again, and it is dropped when the wallet changes.
   const [king, setKing] = useState<{ address: string; seat: number; vip: boolean } | null>(null);
   const [kingMsg, setKingMsg] = useState<string | null>(null);
-  const verified = king && session && king.address === session.ordinalsAddress ? king : null;
+  // Dev-only test fixture (stripped from production builds): stands in for a server-verified seat so
+  // automated browser tests can drive the King flow without a real wallet signature.
+  const [devKing, setDevKing] = useState<{ address: string; seat: number; vip: boolean } | null>(null);
+  const verified = import.meta.env.DEV && devKing ? devKing : king && session && king.address === session.ordinalsAddress ? king : null;
   const vip = kingEligible(verified, focus);
   game.vip = vip;
   const proveKing = async () => {
@@ -70,6 +73,7 @@ function ChargePage() {
       if (e.code === "KeyE" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.mount = true; }
     };
     window.addEventListener("keydown", key);
+    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__charge = { game, follow: (n: number) => { setFocus(n); setInput(String(n)); }, fixtureKing: (seat: number, vip: boolean) => setDevKing({ address: "fixture", seat, vip }) };
     return () => { clearInterval(id); window.removeEventListener("keydown", key); };
   }, [game]);
   const danger = hud.next && hud.next.in < 1.2 && hud.heroDownAt == null;

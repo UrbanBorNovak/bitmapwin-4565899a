@@ -500,6 +500,12 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
   );
 }
 
+/** Dev-only: lets browser tests jump the battle clock. Never mounted in production builds. */
+function DevClock() {
+  useFrame(({ clock }) => { (window as unknown as Record<string, unknown>).__chargeClock = clock; }, -2);
+  return null;
+}
+
 /** Runs the commander rules once per frame, before anything reads them. */
 function BattleStepper({ game, playing }: { game: BattleGame; playing: boolean }) {
   useFrame(({ clock }) => stepBattle(game, clock.elapsedTime, playing), -1);
@@ -548,6 +554,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         <directionalLight position={[10, 20, -10]} intensity={1.2} />
         <mesh rotation-x={-Math.PI / 2}><planeGeometry args={[200, 200]} /><meshLambertMaterial color="#4f6b3a" /></mesh>
         <QualityMonitor />
+        {import.meta.env.DEV && <DevClock />}
         <BattleStepper game={game} playing={focus != null && lead?.seat === focus} />
         <Army soldiers={soldiers} focus={focus} game={game} seats={seats} />
         {focus != null && lead && lead.seat === focus && <Hero s={lead} game={game} pixelId={seats.find((x) => x.seat === focus)?.pixelId} />}
