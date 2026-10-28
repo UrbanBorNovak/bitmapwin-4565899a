@@ -6,12 +6,15 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { Primitive } from "@/components/game/Primitive";
 import { rigAnimations } from "@/lib/map-identity";
 
-const content = (id: string) => `https://ordinals.com/content/${id}`;
+const ordinals = (id: string) => `https://ordinals.com/content/${id}`;
+/** Same bytes via our own inscription proxy, for when ordinals.com refuses the browser. */
+export const proxied = (id: string) => `/api/public/inscription/${id}`;
 const TRANSPARENT_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
 
 /** Same pipeline as the Oasis ModelAvatar: rig + idle clip + pixel skin on its own UVs. */
-export function PixelAvatar({ model, texture, height = 1.6, ground = -0.8 }: { model: string; texture: string | null; height?: number; ground?: number }) {
+export function PixelAvatar({ model, texture, height = 1.6, ground = -0.8, via = ordinals }: { model: string; texture: string | null; height?: number; ground?: number; via?: (id: string) => string }) {
+  const content = via;
   const gltf = useGLTF(content(model));
   const clipSource = rigAnimations(model);
   const clipGltf = useGLTF(content(clipSource ?? model));

@@ -1,5 +1,5 @@
 import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { PixelAvatar } from "@/components/launch/OwnedPixelModel3D";
+import { PixelAvatar, proxied } from "@/components/launch/OwnedPixelModel3D";
 import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -128,7 +128,7 @@ function PixelHero({ s, model, texture }: { s: Soldier; model: string; texture: 
   });
   return (
     <group ref={root}>
-      <PixelAvatar model={model} texture={texture} height={1.9} ground={0} />
+      <PixelAvatar model={model} texture={texture} height={1.9} ground={0} via={proxied} />
       {s.flag && (
         <>
           <mesh position={[-0.45, 1.6, -0.1]}><boxGeometry args={[0.04, 1.6, 0.04]} /><meshLambertMaterial color="#5b3a22" /></mesh>
