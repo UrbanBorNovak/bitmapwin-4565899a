@@ -123,6 +123,7 @@ function ApiPage() {
         <DataBadge kind="live" note="SERVING NOW" />
         <Link to="/bot" className="btn-term-ghost">[ MARKET BOT ]</Link>
         <Link to="/sdk" className="btn-term-ghost">[ IN-WORLD SDK ]</Link>
+        <Link to="/docs/agents" className="btn-term-ghost">[ CONNECT GROK & AGENTS ]</Link>
         <Link to="/dev-tools" className="btn-term-ghost">[ DEVELOPER TOOLS ]</Link>
       </div>
 
