@@ -11,10 +11,17 @@ export function OwnedPixelCard({ pixelId }: { pixelId: string }) {
   }, [pixelId]);
   return (
     <div className="mt-2 border border-bitcoin/50 bg-background p-1">
+      {a?.model && (
+        <div className="aspect-square w-full">
+          <Suspense fallback={<div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">LOADING 3D…</div>}>
+            <OwnedPixelModel3D model={a.model} texture={a.texture} />
+          </Suspense>
+        </div>
+      )}
       <a href={`https://ordinals.com/inscription/${pixelId}`} target="_blank" rel="noreferrer" className="block">
         {a === undefined ? (
           <div className="flex aspect-square w-full items-center justify-center text-[10px] text-muted-foreground">LOADING PIXEL…</div>
-        ) : a?.texture ? (
+        ) : a?.model ? null : a?.texture ? (
           <img src={`/api/public/inscription/${a.texture}`} alt={a.name ?? "BITMAP Pixel owned by this wallet"} className="aspect-square w-full object-contain" style={{ imageRendering: "pixelated" }} />
         ) : (
           <div className="flex aspect-square w-full items-center justify-center text-[10px] text-muted-foreground">PIXEL IMAGE UNAVAILABLE</div>
