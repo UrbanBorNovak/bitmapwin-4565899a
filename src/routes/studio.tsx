@@ -640,17 +640,8 @@ function AiComposer({
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        className="btn-term mt-3 w-full"
-        disabled={run.isPending}
-        onClick={() => run.mutate()}
-      >
-        {run.isPending
-          ? "[ WRITING THE CODE… ]"
-          : code.trim()
-            ? "[ REVISE THE CODE ]"
-            : "[ BUILD IT FOR ME ]"}
+      <button type="button" className="btn-term mt-3 w-full" disabled>
+        [ AI BUILDING IS OFF · WRITE OR USE A TEMPLATE ]
       </button>
       <p className="mt-2 font-mono text-[10px] text-muted-foreground">
         THE RESULT IS EDITABLE CODE — NOTHING IS HIDDEN, AND NOTHING PUBLISHES UNTIL YOU SAY SO

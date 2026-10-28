@@ -354,13 +354,12 @@ function CreatePage() {
                 {tier.detail.toUpperCase()} · UP TO {tier.maxProps} OBJECTS AND {tier.maxQuests} QUESTS · ONLY CHARGED IF IT WORKS
               </p>
             </div>
-            <button type="button" className="btn-term mt-3 w-full" disabled={generate.isPending} onClick={() => generate.mutate()}>
-              {generate.isPending
-                ? "[ BUILDING… ]"
-                : design
-                  ? `[ BUILD AGAIN · ${tier.costBit} BIT ]`
-                  : `[ BUILD IT · ${tier.costBit} BIT ]`}
+            <button type="button" className="btn-term mt-3 w-full" disabled>
+              [ AI BUILDING IS OFF ]
             </button>
+            <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+              BUILD BY HAND IN <Link to="/forge" className="text-bitcoin">LAND FORGE</Link> OR THE STUDIO
+            </p>
           </div>
 
           <div className="border border-border bg-surface p-4">
