@@ -155,7 +155,9 @@ export const KING_STOP = FIELD_GAP / 2 + 5;
 /** The King's z: eases into KING_STOP from wherever he mounted, so he never snaps or overshoots. */
 export function kingZ(startZ: number, gain: number, stop = KING_STOP): number {
   const room = Math.max(0, stop - startZ);
-  return room <= 0 ? startZ : startZ + room * (1 - Math.exp(-gain / room));
+  if (room <= 0) return startZ;
+  const ease = Math.min(4, room), full = room - ease; // gallop at full speed, then rein in over the last 4 units
+  return gain <= full ? startZ + gain : startZ + full + ease * (1 - Math.exp(-(gain - full) / ease));
 }
 /** Glory for a breakout: survivors × streak multiplier. */
 export function gloryFor(standing: number, streak: number): number {
