@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, stepBattle, type BattleGame, type Soldier } from "@/lib/highland-charge";
 import type { LaunchSeat } from "@/lib/launch-seats";
+import { ATLAS_GRID, atlasFaceMaterial, buildFaceAtlas } from "@/lib/face-atlas";
 
 const ENEMY = 240;
 
@@ -19,7 +20,22 @@ const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
  * 2nd frame, far ones every 4th frame without bob or head. The followed soldier is
  * removed from the instances and drawn by <Hero> with real limbs.
  */
-function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | null; game: BattleGame }) {
+function Army({ soldiers, focus, game, seats }: { soldiers: Soldier[]; focus: number | null; game: BattleGame; seats: LaunchSeat[] }) {
+  const faces = useRef<THREE.InstancedMesh>(null);
+  // Every soldier's own Pixel face, packed into one shared texture: one draw call for all faces.
+  const atlas = useMemo(() => {
+    const bySeat = new Map(seats.map((x) => [x.seat, x.pixelId]));
+    return buildFaceAtlas(soldiers.map((s) => bySeat.get(s.seat) ?? ""));
+  }, [soldiers, seats]);
+  useEffect(() => () => atlas.dispose(), [atlas]);
+  const faceMat = useMemo(() => atlasFaceMaterial(atlas.texture), [atlas]);
+  const faceGeo = useMemo(() => {
+    const g = new THREE.PlaneGeometry(1, 1);
+    const cell = new Float32Array(soldiers.length * 2);
+    soldiers.forEach((_, i) => { cell[i * 2] = i % ATLAS_GRID; cell[i * 2 + 1] = Math.floor(i / ATLAS_GRID); });
+    g.setAttribute("cell", new THREE.InstancedBufferAttribute(cell, 2));
+    return g;
+  }, [soldiers]);
   const body = useRef<THREE.InstancedMesh>(null);
   const head = useRef<THREE.InstancedMesh>(null);
   const flags = useRef<THREE.InstancedMesh>(null);
@@ -48,8 +64,8 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
     const f = ++frame.current;
     const t = clock.elapsedTime;
     const cz = camera.position.z, cx = camera.position.x;
-    const b = body.current, h = head.current, fl = flags.current;
-    if (!b || !h) return;
+    const b = body.current, h = head.current, fl = flags.current, fc = faces.current;
+    if (!b || !h || !fc) return;
     const local = localTime(t), cyc = cycleOf(t);
     let dead = 0;
     if (downDone.cycle !== cyc) { downDone.cycle = cyc; downDone.m.fill(0); }
@@ -58,7 +74,7 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
       const fi = flagOf.m[i]!;
       const fs = focusSoldier;
       if (s.seat === focus || (fs && Math.abs(s.x - fs.x) < 1.6 && Math.abs(s.z - fs.z) < 2.2)) {
-        b.setMatrixAt(i, HIDDEN); h.setMatrixAt(i, HIDDEN);
+        b.setMatrixAt(i, HIDDEN); h.setMatrixAt(i, HIDDEN); fc.setMatrixAt(i, HIDDEN);
         if (fi >= 0 && fl) fl.setMatrixAt(fi, HIDDEN);
         continue;
       }
@@ -73,6 +89,7 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
         b.setMatrixAt(i, o.matrix);
         o.position.set(s.x, 0.2, z + fall * 1.2); o.scale.setScalar(0.38); o.rotation.set(0, 0, 0); o.updateMatrix();
         h.setMatrixAt(i, o.matrix);
+        fc.setMatrixAt(i, HIDDEN);
         if (fi >= 0 && fl) { o.position.set(s.x + 0.6, 0.1, z + 0.4); o.rotation.set(-Math.PI / 2, 0, 0.3); o.scale.set(0.5, 0.35, 0.04); o.updateMatrix(); fl.setMatrixAt(fi, o.matrix); }
         continue;
       }
@@ -85,10 +102,13 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
       const bob = running && tier < 4 ? Math.abs(Math.sin(t * 10 + s.phase)) * 0.25 : 0;
       o.position.set(s.x, 0.6 + bob, z); o.rotation.set(running ? 0.25 : 0, 0, 0); o.scale.set(0.5, 1.1, 0.35); o.updateMatrix();
       b.setMatrixAt(i, o.matrix);
-      if (tier === 4) h.setMatrixAt(i, HIDDEN);
+      if (tier === 4) { h.setMatrixAt(i, HIDDEN); fc.setMatrixAt(i, HIDDEN); }
       else {
-        o.position.set(s.x, 1.4 + bob, z + (running ? 0.15 : 0)); o.scale.setScalar(0.38); o.rotation.set(0, 0, 0); o.updateMatrix();
+        const hz = z + (running ? 0.15 : 0);
+        o.position.set(s.x, 1.4 + bob, hz); o.scale.setScalar(0.38); o.rotation.set(0, 0, 0); o.updateMatrix();
         h.setMatrixAt(i, o.matrix);
+        o.position.set(s.x, 1.4 + bob, hz + 0.192); o.scale.set(0.36, 0.36, 1); o.updateMatrix();
+        fc.setMatrixAt(i, o.matrix);
       }
       if (fi >= 0 && fl) {
         o.position.set(s.x + 0.35, 2.3, z); o.scale.set(0.5, 0.35, 0.04);
@@ -97,13 +117,14 @@ function Army({ soldiers, focus, game }: { soldiers: Soldier[]; focus: number | 
       }
     }
     game.casualties = dead; game.standing = soldiers.length - dead;
-    b.instanceMatrix.needsUpdate = true; h.instanceMatrix.needsUpdate = true;
+    b.instanceMatrix.needsUpdate = true; h.instanceMatrix.needsUpdate = true; fc.instanceMatrix.needsUpdate = true;
     if (fl) fl.instanceMatrix.needsUpdate = true;
   });
   return (
     <>
       <instancedMesh ref={body} frustumCulled={false} args={[undefined, undefined, Math.max(1, soldiers.length)]}><boxGeometry /><meshLambertMaterial /></instancedMesh>
       <instancedMesh ref={head} frustumCulled={false} args={[undefined, undefined, Math.max(1, soldiers.length)]}><boxGeometry /><meshLambertMaterial /></instancedMesh>
+      <instancedMesh ref={faces} frustumCulled={false} args={[faceGeo, faceMat, Math.max(1, soldiers.length)]} />
       <instancedMesh ref={flags} frustumCulled={false} args={[undefined, undefined, Math.max(1, flagOf.count)]}><boxGeometry /><meshLambertMaterial color="#f7931a" /></instancedMesh>
     </>
   );
@@ -424,7 +445,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         <mesh rotation-x={-Math.PI / 2}><planeGeometry args={[200, 200]} /><meshLambertMaterial color="#4f6b3a" /></mesh>
         <QualityMonitor />
         <BattleStepper game={game} playing={focus != null && lead?.seat === focus} />
-        <Army soldiers={soldiers} focus={focus} game={game} />
+        <Army soldiers={soldiers} focus={focus} game={game} seats={seats} />
         {focus != null && lead && lead.seat === focus && <Hero s={lead} game={game} pixelId={seats.find((x) => x.seat === focus)?.pixelId} />}
         <Enemy />
         <Arrows />
