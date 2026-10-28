@@ -1,4 +1,5 @@
 import { ReleasePanel } from "@/components/toon/ReleasePanel";
+import { EpisodeMachine } from "@/components/toon/EpisodeMachine";
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, transitionAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
@@ -218,6 +219,7 @@ function ToonPage() {
         </div>
 
         <aside className="space-y-4">
+          <div id="episode-machine"><EpisodeMachine disabled={recording} onEpisode={(e) => { load(e); setPlaying(true); }} /></div>
           <ToonLibraryPanel episode={episode} onOpen={load} onCharacters={setCharacters} onNotes={setNotes} />
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="label text-signal">EPISODE GENERATOR</div>
