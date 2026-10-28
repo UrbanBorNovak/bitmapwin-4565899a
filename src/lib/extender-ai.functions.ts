@@ -3,6 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BUILD_TIER_IDS, DEFAULT_BUILD_TIER, buildTier } from "@/lib/build-tiers";
 
+/** Users may not build with AI; kept as a server-side switch so the browser cannot bypass it. */
+const AI_BUILD_OFF = true;
+
 const inputSchema = z.object({
   prompt: z.string().trim().min(4).max(1200),
   height: z.number().int().nonnegative().max(3_000_000).default(36095),
@@ -16,6 +19,7 @@ export const generateExtenderCodeFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<{ code: string }> => {
+    if (AI_BUILD_OFF) throw new Error("AI BUILDING IS SWITCHED OFF");
     const { writeExtenderCode, listModelCatalogue } = await import("@/lib/extender-ai.server");
     const models = await listModelCatalogue();
     const code = await writeExtenderCode({ ...data, models });
@@ -38,6 +42,7 @@ export const buildExtenderPackageFn = createServerFn({ method: "POST" })
   )
 
   .handler(async ({ data, context }) => {
+    if (AI_BUILD_OFF) throw new Error("AI BUILDING IS SWITCHED OFF");
     const { buildExtenderPackage } = await import("@/lib/extender-ai.server");
     const { assertControls, bitBalance, spendBit } = await import("@/lib/coins.server");
     const tier = buildTier(data.tier);

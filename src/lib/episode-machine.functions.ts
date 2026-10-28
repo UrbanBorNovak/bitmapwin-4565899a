@@ -8,6 +8,7 @@ export const writeEpisodeFn = createServerFn({ method: "POST" })
     return { pitch: pitch.slice(0, PITCH_MAX) };
   })
   .handler(async ({ data }) => {
-    const { writeBeatSheet } = await import("./episode-machine.server");
-    return writeBeatSheet(data.pitch);
+    void data;
+    // AI building is switched off site-wide; use the free on-device script.
+    return { ok: false as const, error: "AI WRITING IS OFF · USE FREE SCRIPT" };
   });
