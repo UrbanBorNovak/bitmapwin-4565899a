@@ -35,7 +35,9 @@ export function botVoxels(height: number, prompt: string, ground: Ground): { arc
   const r = ground.rect;
   if (r) {
     // Re-centre the build onto the parcel tile, then keep only owned cells.
-    const cx = Math.floor((r.x0 + r.x1) / 2) - 32, cz = Math.floor((r.z0 + r.z1) / 2) - 32;
+    let sx = 0, sz = 0; for (const b of blocks) { sx += b.dx; sz += b.dz; }
+    const n = Math.max(1, blocks.length);
+    const cx = Math.floor((r.x0 + r.x1) / 2) - Math.round(sx / n), cz = Math.floor((r.z0 + r.z1) / 2) - Math.round(sz / n);
     const owned = new Set(r.cells);
     blocks = blocks.map((b) => ({ ...b, dx: b.dx + cx, dz: b.dz + cz }))
       .filter((b) => b.dx >= r.x0 && b.dx <= r.x1 && b.dz >= r.z0 && b.dz <= r.z1 && owned.has(b.dx * 64 + b.dz));
