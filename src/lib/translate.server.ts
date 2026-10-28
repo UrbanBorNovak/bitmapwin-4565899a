@@ -99,6 +99,8 @@ async function translateBatch(lang: Lang, texts: string[]): Promise<string[]> {
   });
 }
 
+const AI_TRANSLATE_OFF = true;
+
 /** Translate the given strings, reading and filling the shared cache. */
 export async function translateStrings(
   lang: Lang,
@@ -127,6 +129,9 @@ export async function translateStrings(
   const missingKeys = keys.filter((k) => !hit.has(k));
   if (missingKeys.length === 0) return out;
 
+  // AI translation is switched off: only already-cached translations are served,
+  // new strings stay in English so no AI credits are spent.
+  if (AI_TRANSLATE_OFF) return out;
   const missing = missingKeys.map((k) => byKey.get(k) as string);
   const translated = await translateBatch(lang, missing);
 
