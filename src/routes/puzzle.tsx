@@ -8,9 +8,9 @@ import { PUZZLE_71, SWEEP_TREASURY_PERCENT, broadcast, buildSweep, hash160Of, ke
 export const Route = createFileRoute("/puzzle")({
   head: () => ({
     meta: [
-      { title: "Puzzle Cracker #71 — bitmapwin" },
+      { title: "Bitmap Lottery · Puzzle #71 — bitmapwin" },
       { name: "description", content: "Scan Bitcoin Puzzle #71 keys in your browser while you explore. Any found key is swept on your device." },
-      { property: "og:title", content: "Puzzle Cracker #71 — bitmapwin" },
+      { property: "og:title", content: "Bitmap Lottery · Puzzle #71 — bitmapwin" },
       { property: "og:description", content: "A background key scanner for the 7.1 BTC Bitcoin Puzzle #71, running on your device." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -60,7 +60,7 @@ function PuzzlePage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 font-mono">
       <p className="label text-accent">BITCOIN PUZZLE RIG</p>
-      <h1 className="display mt-2 text-3xl">PUZZLE #71 CRACKER</h1>
+      <h1 className="display mt-2 text-3xl">BITMAP LOTTERY · PUZZLE #71</h1>
       <p className="mt-3 text-sm text-muted-foreground">
         Your browser checks random keys from the #71 range in the background. Keys and any find stay on this device.
         Honest odds: the range holds about 1.18 sextillion keys — a browser will almost certainly never find it. This is a lottery ticket, not income.
@@ -82,7 +82,7 @@ function PuzzlePage() {
             <button key={d.id} onClick={() => setDuty(d.id)} className={`rounded border px-3 py-1 ${duty === d.id ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{d.id}</button>
           ))}
           <button onClick={on ? stop : start} disabled={!!found} className="ml-auto rounded bg-primary px-4 py-1 text-primary-foreground disabled:opacity-50">
-            {on ? "[ STOP ]" : "[ START SCANNING ]"}
+            {on ? "[ STOP ]" : "[ TURN LOTTERY ON ]"}
           </button>
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
