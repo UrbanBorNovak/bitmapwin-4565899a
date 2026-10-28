@@ -35,8 +35,8 @@ export function DustMotes({ count = 60, color = "#ffd9a0", box = [7, 3.5, 7] as 
   });
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, count]} raycast={() => null}>
-      <boxGeometry args={[0.035, 0.035, 0.035]} />
-      <meshBasicMaterial color={color} transparent opacity={0.55} depthWrite={false} />
+      <boxGeometry args={[0.025, 0.025, 0.025]} />
+      <meshBasicMaterial color={color} transparent opacity={0.4} depthWrite={false} />
     </instancedMesh>
   );
 }
