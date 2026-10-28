@@ -75,3 +75,15 @@ describe("King eligibility", () => {
     expect(kingEligible({ seat: 300, vip: false }, 300)).toBe(false);
   });
 });
+
+describe("frame-rate independent timing", () => {
+  it("a shield raised just before contact still blocks when the next frame lands well after it", () => {
+    const g = newBattleGame();
+    stepBattle(g, 11.5, true); g.heroDownAt = null; // skip the arrows
+    stepBattle(g, CAV_CONTACT - 0.3, true); g.raise = true;
+    stepBattle(g, CAV_CONTACT - 0.25, true);
+    stepBattle(g, CAV_CONTACT + 0.6, true); // one slow frame jumps past the shield window
+    expect(g.rider).toBe("stopped");
+    expect(g.heroDownAt).toBeNull();
+  });
+});
