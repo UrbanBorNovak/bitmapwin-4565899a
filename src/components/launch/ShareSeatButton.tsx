@@ -6,7 +6,9 @@ export function seatShareText(seat: LaunchSeat, own: boolean): string {
   if (seat.ticketId) {
     return `${own ? "Minted my" : "Seat #" + seat.seat + " minted a"} gold VIP pass${own ? ` for seat #${seat.seat}` : ""} in the BITMAPWIN Grandstand — inscribed on Bitcoin ★ Gold ring activated 🟧 Check your wallet: https://bitmapwin.app/launch`;
   }
-  return `Found ${who} seat #${seat.seat} in the BITMAPWIN Grandstand with ${own ? "my" : "an"} on-chain Pixel! 🟧 Check your wallet: https://bitmapwin.app/launch`;
+  const land = seat.heldBitmap !== null ? ` (holding ${seat.heldBitmap}.bitmap)` : "";
+  const near = seat.seat > 1 ? ` Sitting next to #${seat.seat - 1} and #${seat.seat + 1}.` : "";
+  return `Found ${who} seat #${seat.seat}${land} in the BITMAPWIN Grandstand with ${own ? "my" : "an"} on-chain Pixel!${near} 🟧 Check your wallet: https://bitmapwin.app/launch`;
 }
 
 export function ShareSeatButton({ seat, own, className = "" }: { seat: LaunchSeat; own: boolean; className?: string }) {
