@@ -453,14 +453,15 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
     for (let i = 0; i < RIDERS; i++) {
       const k = i * 3;
       const x = laneX(i);
-      let z = cz + rnd(i + 50) * 2.5;
+      let z = cz + rnd(i + 50) * 2.5, sideX = 0;
       let gal = Math.abs(Math.sin(t * 14 + i)) * 0.3, rear = 0, riderOff = false, horseOff = z < CAV_EXIT_Z, riderFall = 0;
       if (i === duel && lead && (game.rider === "stopped" || game.rider === "speared")) {
         // Shield or spear held this horse at the hero's front instead of letting it through.
-        const stopZ = heroZ + 1.6;
+        // Pulled up beside the hero (not in front) so the camera keeps the followed Pixel in view.
+        const stopZ = heroZ + 0.8;
         if (z < stopZ) {
           const since = (stopZ - z) / CAV_SPEED;
-          z = stopZ; gal = 0; horseOff = false;
+          z = stopZ; gal = 0; horseOff = false; sideX = 1.5;
           rear = game.rider === "stopped" ? Math.min(0.5, since * 2) * Math.max(0, 1 - since * 0.5) : 0;
           if (game.rider === "speared") { riderOff = true; riderFall = Math.min(1, since * 3); }
           if (game.rallyAt != null && local >= game.rallyAt) horseOff = true; // the King now rides it
@@ -468,14 +469,14 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
       }
       if (!on || horseOff) { m.setMatrixAt(k, HIDDEN); m.setMatrixAt(k + 1, HIDDEN); m.setMatrixAt(k + 2, HIDDEN); }
       else {
-        o.position.set(x, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
+        o.position.set(x + sideX, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
         if (riderOff) {
           // Unseated: the rider lies on the ground beside the riderless horse, lance dropped.
-          o.position.set(x - 0.9, 0.2, z + 0.2 - riderFall * 0.3); o.rotation.set(0, 0, Math.PI / 2 * riderFall); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
-          o.position.set(x - 1.2, 0.05, z - 0.4); o.rotation.set(0, 0.4, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+          o.position.set(x + sideX + 0.9, 0.2, z + 0.2 - riderFall * 0.3); o.rotation.set(0, 0, Math.PI / 2 * riderFall); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+          o.position.set(x + sideX + 1.2, 0.05, z - 0.4); o.rotation.set(0, 0.4, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
         } else {
-          o.position.set(x, 1.9 + gal, z + 0.1); o.rotation.set(rear, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
-          o.position.set(x + 0.3, 1.8 + gal, z - 1.2); o.rotation.set(0, 0, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+          o.position.set(x + sideX, 1.9 + gal, z + 0.1); o.rotation.set(rear, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+          o.position.set(x + sideX + 0.3, 1.8 + gal, z - 1.2); o.rotation.set(0, 0, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
         }
       }
       // Dust: short-lived puffs behind galloping hooves only.
@@ -498,6 +499,12 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
       </instancedMesh>
     </>
   );
+}
+
+/** Dev-only: lets browser tests jump the battle clock. Never mounted in production builds. */
+function DevClock() {
+  useFrame(({ clock, camera }) => { (window as unknown as Record<string, unknown>)["__chargeClock"] = clock; (window as unknown as Record<string, unknown>)["__chargeCam"] = camera; }, -2);
+  return null;
 }
 
 /** Runs the commander rules once per frame, before anything reads them. */
@@ -523,9 +530,9 @@ function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame 
     const local = t % CHARGE_CYCLE;
     const side = riding ? 1.5 : local < 2 ? 0 : Math.sin(t * 0.3) * 8;
     // Mounted: sit behind the King looking at the wall, so the camera never ends up inside the enemy ranks.
-    target.set((lead?.x ?? 0) + side * 0.5, riding ? 4.2 : 3.6, z + (riding ? -7 : 8));
+    target.set((lead?.x ?? 0) + side * 0.5, riding ? 9 : 3.6, z + (riding ? -9 : 8)); // high enough to see the King over the army's heads
     // New cycle or new rider: cut straight there instead of swooping across the whole field.
-    lookGoal.set((lead?.x ?? 0), riding ? 1.2 : -0.4, z + (riding ? 6 : -1));
+    lookGoal.set((lead?.x ?? 0), riding ? 1.6 : -0.4, z + (riding ? 0.5 : -1));
     const k = 1 - Math.exp(-(riding ? 5 : 4) * Math.min(delta, 0.05));
     if (jump) { camera.position.copy(target); look.copy(lookGoal); }
     else { camera.position.lerp(target, k); look.lerp(lookGoal, k); }
@@ -548,6 +555,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         <directionalLight position={[10, 20, -10]} intensity={1.2} />
         <mesh rotation-x={-Math.PI / 2}><planeGeometry args={[200, 200]} /><meshLambertMaterial color="#4f6b3a" /></mesh>
         <QualityMonitor />
+        {import.meta.env.DEV && <DevClock />}
         <BattleStepper game={game} playing={focus != null && lead?.seat === focus} />
         <Army soldiers={soldiers} focus={focus} game={game} seats={seats} />
         {focus != null && lead && lead.seat === focus && <Hero s={lead} game={game} pixelId={seats.find((x) => x.seat === focus)?.pixelId} />}

@@ -40,7 +40,10 @@ function ChargePage() {
   // Held in page memory only: every visit signs again, and it is dropped when the wallet changes.
   const [king, setKing] = useState<{ address: string; seat: number; vip: boolean } | null>(null);
   const [kingMsg, setKingMsg] = useState<string | null>(null);
-  const verified = king && session && king.address === session.ordinalsAddress ? king : null;
+  // Dev-only test fixture (stripped from production builds): stands in for a server-verified seat so
+  // automated browser tests can drive the King flow without a real wallet signature.
+  const [devKing, setDevKing] = useState<{ address: string; seat: number; vip: boolean } | null>(null);
+  const verified = import.meta.env.DEV && devKing ? devKing : king && session && king.address === session.ordinalsAddress ? king : null;
   const vip = kingEligible(verified, focus);
   game.vip = vip;
   const proveKing = async () => {
@@ -70,11 +73,12 @@ function ChargePage() {
       if (e.code === "KeyE" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.mount = true; }
     };
     window.addEventListener("keydown", key);
+    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>)["__charge"] = { game, follow: (n: number) => { setFocus(n); setInput(String(n)); }, fixtureKing: (seat: number, vip: boolean) => setDevKing({ address: "fixture", seat, vip }) };
     return () => { clearInterval(id); window.removeEventListener("keydown", key); };
   }, [game]);
   const danger = hud.next && hud.next.in < 1.2 && hud.heroDownAt == null;
   return (
-    <main className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-background">
+    <main className="relative h-[calc(100dvh-9rem)] w-full overflow-hidden bg-background">
       <ClientOnly fallback={null}>
         <Suspense fallback={null}><Charge seats={seats} focus={focus} game={game} /></Suspense>
       </ClientOnly>
@@ -89,45 +93,51 @@ function ChargePage() {
             <Link to="/launch" className="ml-auto self-center text-accent">← GRANDSTAND</Link>
           </form>
           {kingMsg && <p className="mt-1 text-accent">{kingMsg}</p>}
-        </div>
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 top-36 z-10 p-4">
-        <div className="pointer-events-auto mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded border border-border bg-background/85 p-3 font-mono text-xs">
+          {/* Battle stats live inside the top panel so they never stack over it on phones. */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-2">
           <span className="font-bold text-foreground">STANDING {hud.standing}</span>
           <span className="text-destructive">FALLEN {hud.casualties}</span>
           {playing ? (
             <>
-              <span className="text-foreground">BLOCKS {hud.blocks}</span>
-              <span className="text-foreground">STREAK {hud.streak}</span>
-              <span className="text-muted-foreground">BEST {hud.best}</span>
-              <span className={danger ? "animate-pulse font-bold text-destructive" : "text-muted-foreground"}>
-                {hud.heroDownAt != null ? "YOU FELL — RISE NEXT CHARGE" : hud.next ? `${hud.next.kind === "arrows" ? "ARROWS" : "CAVALRY"} IN ${Math.max(0, hud.next.in).toFixed(1)}s` : "HOLD THE LINE"}
-              </span>
-              {vip && <span className="font-bold text-primary">♛ KING · GLORY {hud.glory}</span>}
-              {hud.last && <span className={hud.last === "HIT" ? "text-destructive" : "text-accent"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : hud.last === "SPEARED" ? (hud.vip ? "RIDER UNSEATED! TAKE THE HORSE [E]" : "RIDER UNSEATED!") : hud.last === "BLOCKED" && hud.rider === "stopped" ? "HORSE STOPPED!" : `${hud.last}!`}</span>}
+            <span className="text-foreground">BLOCKS {hud.blocks}</span>
+            <span className="text-foreground">STREAK {hud.streak}</span>
+            <span className="text-muted-foreground">BEST {hud.best}</span>
+            <span className={danger ? "animate-pulse font-bold text-destructive" : "text-muted-foreground"}>
+              {hud.heroDownAt != null ? "YOU FELL — RISE NEXT CHARGE" : hud.next ? `${hud.next.kind === "arrows" ? "ARROWS" : "CAVALRY"} IN ${Math.max(0, hud.next.in).toFixed(1)}s` : "HOLD THE LINE"}
+            </span>
+            {vip && <span className="font-bold text-primary">♛ KING · GLORY {hud.glory}</span>}
+            {hud.last && <span className={hud.last === "HIT" ? "font-bold text-destructive" : "font-bold text-primary"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : hud.last === "SPEARED" ? (hud.vip ? "RIDER UNSEATED! TAKE THE HORSE [E]" : "RIDER UNSEATED!") : hud.last === "BLOCKED" && hud.rider === "stopped" ? "HORSE STOPPED!" : `${hud.last}!`}</span>}
+            </>
+          ) : (
+            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land, then shield to stop the rider charging at you or spear to unseat him. Unblocked riders gallop straight through. VIP pass holders and Founders Row press PROVE VIP to sign with their wallet, spear their rider, then take his horse and lead the army through the wall.</span>
+          )}
+          </div>
+        </div>
+      </div>
+      {playing && (
+        // Actions sit at the bottom within thumb reach, leaving the battlefield in view.
+        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-10 flex justify-center px-4">
+          <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
               {vip && (
                 <button
                   onPointerDown={(e) => { e.preventDefault(); game.mount = true; }}
                   disabled={!hud.rallyReady}
-                  className={`rounded border border-primary px-4 py-2 text-primary disabled:opacity-40 ${hud.rallyReady ? "animate-pulse" : ""}`}
+                  className={`rounded border border-primary bg-background/85 px-5 py-3 text-primary disabled:opacity-40 ${hud.rallyReady ? "animate-pulse" : ""}`}
                 >[E] MOUNT &amp; RALLY</button>
               )}
               <button
                 onPointerDown={(e) => { e.preventDefault(); game.raise = true; }}
                 disabled={!hud.shieldReady || hud.heroDownAt != null}
-                className="ml-auto rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-40"
+                className="rounded bg-primary px-5 py-3 text-primary-foreground disabled:opacity-40"
               >[SPACE] SHIELD</button>
               <button
                 onPointerDown={(e) => { e.preventDefault(); game.thrust = true; }}
                 disabled={!hud.spearReady || hud.heroDownAt != null}
-                className="rounded border border-primary px-4 py-2 text-primary disabled:opacity-40"
+                className="rounded border border-primary bg-background/85 px-5 py-3 text-primary disabled:opacity-40"
               >[F] SPEAR</button>
-            </>
-          ) : (
-            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land, then shield to stop the rider charging at you or spear to unseat him. Unblocked riders gallop straight through. VIP pass holders and Founders Row press PROVE VIP to sign with their wallet, spear their rider, then take his horse and lead the army through the wall.</span>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
