@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { writeEpisodeFn } from "@/lib/episode-machine.functions";
-import { beatsToEpisode, PITCH_CHIPS, PITCH_MAX } from "@/lib/episode-machine";
+import { beatsToEpisode, freeBeats, PITCH_CHIPS, PITCH_MAX } from "@/lib/episode-machine";
 import type { ToonEpisode } from "@/lib/toon-script";
 
 /** One-line pitch → AI beat sheet → playable episode loaded straight onto the stage. */
@@ -24,6 +24,13 @@ export function EpisodeMachine({ onEpisode, disabled, initialPitch = "" }: { onE
     } finally { setBusy(false); }
   };
 
+  const free = () => {
+    setErr(null);
+    const b = freeBeats(pitch);
+    onEpisode(beatsToEpisode(b));
+    setVerdict({ score: b.score, text: b.verdict });
+  };
+
   return (
     <section className="rounded-lg border border-primary/40 bg-card p-4">
       <div className="label text-primary">EPISODE MACHINE</div>
@@ -37,6 +44,9 @@ export function EpisodeMachine({ onEpisode, disabled, initialPitch = "" }: { onE
       </div>
       <button className="btn-term mt-3 w-full" disabled={busy || disabled || pitch.trim().length < 8} onClick={() => void go()}>
         {busy ? "[ WRITERS' ROOM IS TYPING… ]" : "[ GREENLIGHT EPISODE ]"}
+      </button>
+      <button type="button" className="mt-2 w-full border border-signal px-2 py-1 font-mono text-[11px] text-signal hover:bg-signal/10 disabled:opacity-50" disabled={busy || disabled || pitch.trim().length < 8} onClick={free}>
+        [ FREE SCRIPT · NO AI ]
       </button>
       {err && <p className="mt-2 font-mono text-[11px] text-destructive">&gt; {err}</p>}
       {verdict && <p className="mt-2 font-mono text-[11px] text-signal">&gt; GREENLIT · {verdict.score}/10 · {verdict.text}</p>}

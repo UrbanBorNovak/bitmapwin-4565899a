@@ -26,3 +26,11 @@ describe("episode machine", () => {
     expect(beatsToEpisode(sheet)).toEqual(beatsToEpisode(sheet));
   });
 });
+
+import { freeBeats } from "./episode-machine";
+import { it as it2, expect as ex2 } from "vitest";
+it2("free script plays and repeats identically", () => {
+  const a = beatsToEpisode(freeBeats("A maxi pays with a Patoshi sat"));
+  ex2(a.scenes.length).toBe(3);
+  ex2(beatsToEpisode(freeBeats("A maxi pays with a Patoshi sat"))).toEqual(a);
+});
