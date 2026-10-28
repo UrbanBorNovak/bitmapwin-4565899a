@@ -162,8 +162,7 @@ export function OasisQuests({ pose, hidden }: { pose: MutableRefObject<Pose>; hi
             <TracyCom key={talking.n} script={mission?.step.indoors ? indoorRedirectScript(talking.npc) : mission ? missionScript(talking.npc, mission.step, talking.held) : talking.npc.script} voice={talking.npc.voice} avatar={CREW_PIXEL_AVATAR[talking.npc.id]} onEnd={endCall} onNode={onMissionNode} />
           )}
           <form className="glass-panel flex gap-2 rounded-[14px] border border-border p-2 font-mono text-[12px]" onSubmit={(e) => { e.preventDefault(); void sendQuestion(); }}>
-            <input value={q} onChange={(e) => setQ(e.target.value)} maxLength={240} placeholder={`Ask ${talking.npc.name.toLowerCase()} anything…`} aria-label="Question" className="min-w-0 flex-1 rounded bg-muted px-2 py-1 text-foreground outline-none" />
-            <button type="submit" disabled={busy || !q.trim()} className="rounded border border-signal/40 px-2 text-signal disabled:opacity-40">{busy ? "…" : "ASK"}</button>
+            <span className="min-w-0 flex-1 px-2 py-1 text-muted-foreground">FREE QUESTIONS ARE OFF</span>
             <button type="button" onClick={() => { setTalking(null); setReply(null); }} className="rounded border border-border px-2 text-muted-foreground">BYE</button>
           </form>
         </div>
