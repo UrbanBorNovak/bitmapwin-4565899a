@@ -74,8 +74,8 @@ function ChaseCam({ lead }: { lead: Soldier | undefined }) {
     const z = (lead ? lead.z + chargeOffset(t, lead.speed) : -FIELD_GAP / 2);
     const local = t % CHARGE_CYCLE;
     const side = local < 2 ? 0 : Math.sin(t * 0.3) * 8;
-    camera.position.lerp(new THREE.Vector3((lead?.x ?? 0) + side, 5, z - 9), 0.06);
-    camera.lookAt((lead?.x ?? 0), 1.5, z + 12);
+    camera.position.lerp(new THREE.Vector3((lead?.x ?? 0) + side, 10, z - 16), 0.06);
+    camera.lookAt((lead?.x ?? 0), 0, z + 10);
   });
   return null;
 }
