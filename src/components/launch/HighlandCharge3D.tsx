@@ -261,9 +261,10 @@ function Arrows() {
       const p = (local - VOLLEYS[v]!) / ARROW_FLIGHT;
       if (p < 0) { m.setMatrixAt(idx, HIDDEN); continue; }
       const q = Math.min(1, p);
-      at(v, j, q, c, a, t); at(v, j, Math.min(1, q + 0.02) - (q >= 1 ? 0.02 : 0) , c, b, t);
-      o.position.copy(a);
-      if (q >= 1) { at(v, j, 0.98, c, b, t); o.lookAt(a.clone().multiplyScalar(2).sub(b)); o.position.y = 0.3; } else o.lookAt(b);
+      at(v, j, q, c, a, t); at(v, j, Math.max(0, q - 0.02), c, b, t);
+      b.sub(a).multiplyScalar(-1).add(a); // point ahead along the flight direction
+      o.position.copy(a); if (q >= 1) o.position.y = 0.3;
+      o.lookAt(b);
       o.scale.set(0.05, 0.05, 1); o.updateMatrix(); m.setMatrixAt(idx, o.matrix);
     }
     m.instanceMatrix.needsUpdate = true;
