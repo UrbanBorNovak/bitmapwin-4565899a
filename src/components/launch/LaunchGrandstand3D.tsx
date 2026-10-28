@@ -520,20 +520,35 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
 
 /** STAFF: the Biternam crew, wearing the same on-chain Pixel faces they wear in Biternam rooms. */
 const STAFF = [
-  { id: "dev9", ins: CREW_PIXEL_AVATAR["dev9"]! },
-  { id: "anchorman", ins: "11e0423355a75b615977f7da49f33f140c68c825f94caacb28762cbd7c8cec26i0" }, // OG Anchorman @BitMap_News #1
-  { id: "tornado", ins: CREW_PIXEL_AVATAR["tornado"]! },
-  { id: "bitty", ins: CREW_PIXEL_AVATAR["bitlodo"]! }, // Roaring Bitty - 9
-  { id: "bop", ins: CREW_PIXEL_AVATAR["bop"]! },
-  { id: "dabber", ins: CREW_PIXEL_AVATAR["dabber"]! },
-  { id: "mr-shiddy", ins: CREW_PIXEL_AVATAR["mr-shiddy"]! },
-  { id: "wierdamoto", ins: CREW_PIXEL_AVATAR["wierdamoto"]! },
+  { id: "dev9", name: "dev9", ins: CREW_PIXEL_AVATAR["dev9"]! },
+  { id: "anchorman", name: "Anchorman", ins: "11e0423355a75b615977f7da49f33f140c68c825f94caacb28762cbd7c8cec26i0" }, // OG Anchorman @BitMap_News #1
+  { id: "tornado", name: "Tornado", ins: CREW_PIXEL_AVATAR["tornado"]! },
+  { id: "bitty", name: "Bitty", ins: CREW_PIXEL_AVATAR["bitlodo"]! }, // Roaring Bitty - 9
+  { id: "bop", name: "BOP", ins: CREW_PIXEL_AVATAR["bop"]! },
+  { id: "dabber", name: "Dabber", ins: CREW_PIXEL_AVATAR["dabber"]! },
+  { id: "mr-shiddy", name: "Mr Shiddy", ins: CREW_PIXEL_AVATAR["mr-shiddy"]! },
+  { id: "wierdamoto", name: "Wierdamoto", ins: CREW_PIXEL_AVATAR["wierdamoto"]! },
 ];
-function StaffWalker({ ins, i }: { ins: string; i: number }) {
+
+/** Floor banter per crew member; clicking cycles through their lines. */
+const BANTER: Record<string, string[]> = {
+  dev9: ["Be ahead of the curve, not the Hilbert curve.", "Vectors simulate voxels. Not the other way around.", "The Batcave terminal remembers who sat in Founders Row.", "Backstage door's by the stage wing. Mind the cables."],
+  anchorman: ["Breaking: another block found. The chain keeps its promises.", "Live from the Grandstand — every seat here is a real wallet.", "This just in: popcorn is legal tender at the screen."],
+  tornado: ["Keep the aisles clear, Bitmapper.", "Saw someone sneak into the Café through the stage wing…", "No running on the stands. Spinning is fine."],
+  bitty: ["Rawr! Founders Row gets the good view.", "Psst — the VIP Lounge is behind the Café counter."],
+  bop: ["Bop bop. Seat check complete.", "Gold rings mean an inscribed VIP pass. Respect."],
+  dabber: ["We're live on bitmap.stream — say hi in chat!", "Bet you can't land 20 kernels on my face. Grab popcorn.", "Stream's better from the Café couch, just saying."],
+  "mr-shiddy": ["I've seen things in the backrooms. Don't ask.", "Floor's sticky. That's popcorn. Probably."],
+  wierdamoto: ["The genesis block was a stage too.", "Every seat is a UTXO of attention."],
+};
+
+function StaffWalker({ id, name, ins, i, talking, onTalk }: { id: string; name: string; ins: string; i: number; talking: boolean; onTalk: (id: string) => void }) {
   const g = useRef<THREE.Group>(null);
   const moving = useRef(true);
+  const [line, setLine] = useState(0);
+  const lines = BANTER[id] ?? ["…"];
   useFrame(({ clock }) => {
-    const o = g.current; if (!o) return;
+    const o = g.current; if (!o || talking) { moving.current = false; return; }
     const t = clock.elapsedTime * 0.12 + i * 1.7;
     const r = 5.6 + (i % 2) * 0.9, a = Math.sin(t) * 1.15;
     const x = Math.sin(a) * r, z = 3.6 + Math.cos(a) * (r - 3.6);
@@ -545,10 +560,42 @@ function StaffWalker({ ins, i }: { ins: string; i: number }) {
   });
   const fallback = <mesh position-y={0.6}><boxGeometry args={[0.45, 1.2, 0.3]} /><meshLambertMaterial color="#1b1f26" /></mesh>;
   return (
-    <group ref={g}>
+    <group ref={g} onClick={(e) => { e.stopPropagation(); if (talking) setLine((l) => (l + 1) % lines.length); onTalk(id); }}>
       {/* The inscribed on-chain avatar rig wearing this crew member's BITMAP Pixel skin, as in Biternam. */}
       <ToonPixelRig inscriptionId={ins} pose="idle" movingRef={moving} fallback={fallback} />
       <mesh position-y={1.38}><boxGeometry args={[0.42, 0.08, 0.42]} /><meshLambertMaterial color="#f7931a" /></mesh>
+      {/* Invisible hit box so the crew is easy to tap. */}
+      <mesh position-y={0.7} visible={false}><boxGeometry args={[0.8, 1.6, 0.8]} /></mesh>
+      {talking && (
+        <SafeHtml position={[0, 2.1, 0]} center zIndexRange={[5, 0]}>
+          <div style={{ width: 220, background: "rgba(6,9,13,0.92)", border: "1px solid #22d3ee", color: "#e6edf3", font: "11px monospace", padding: "6px 8px", lineHeight: "16px" }}>
+            <div style={{ color: "#f7931a", fontWeight: 700 }}>{name.toUpperCase()} · STAFF</div>
+            <div>{lines[line % lines.length]}</div>
+            <div style={{ color: "#22d3ee", marginTop: 4 }}>tap again ▸</div>
+          </div>
+        </SafeHtml>
+      )}
+    </group>
+  );
+}
+
+/** Backstage door in the stage wing: walks straight into the Biternam Bit-Café. */
+function BackstageDoor() {
+  const [hot, setHot] = useState(false);
+  return (
+    <group position={[-5.4, 0, 2.4]} rotation-y={Math.PI}
+      onClick={(e) => { e.stopPropagation(); window.location.assign("/biternam/cafe"); }}
+      onPointerOver={(e) => { e.stopPropagation(); setHot(true); document.body.style.cursor = "pointer"; }}
+      onPointerOut={() => { setHot(false); document.body.style.cursor = ""; }}>
+      <mesh position-y={1.1}><boxGeometry args={[1.3, 2.2, 0.15]} /><meshLambertMaterial color="#2a1a0e" emissive={hot ? "#7a3d00" : "#2a1400"} /></mesh>
+      <mesh position={[0, 2.35, 0]}><boxGeometry args={[1.5, 0.12, 0.2]} /><meshLambertMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={0.6} /></mesh>
+      {[-0.85, 0.85].map((x) => (
+        <mesh key={x} position={[x, 0.45, -0.5]}><cylinderGeometry args={[0.05, 0.05, 0.9, 6]} /><meshLambertMaterial color="#c9a227" /></mesh>
+      ))}
+      <mesh position={[0, 0.8, -0.5]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.04, 0.04, 1.7, 6]} /><meshLambertMaterial color="#8b0d1a" /></mesh>
+      <SafeHtml position={[0, 2.8, 0]} center zIndexRange={[4, 0]}>
+        <div style={{ whiteSpace: "nowrap", background: "rgba(6,9,13,0.9)", border: "1px solid #f7931a", color: "#f7931a", font: "bold 10px monospace", padding: "2px 6px", pointerEvents: "none" }}>← BACKSTAGE · BIT-CAFÉ</div>
+      </SafeHtml>
     </group>
   );
 }
