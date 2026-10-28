@@ -31,14 +31,20 @@ function ChargePage() {
   const game = useRef<BattleGame>(newBattleGame()).current;
   const [hud, setHud] = useState<BattleGame>(() => ({ ...game }));
   const playing = focus != null && seats.some((s) => s.seat === focus);
+  const mine = seats.find((s) => s.seat === focus);
+  const vip = !!mine && (!!mine.ticketId || mine.seat <= 100);
+  game.vip = vip;
   useEffect(() => {
     game.best = Number(localStorage.getItem("charge-best") ?? 0) || 0;
+    game.glory = Number(localStorage.getItem("charge-glory") ?? 0) || 0;
     const id = setInterval(() => {
       setHud({ ...game });
       localStorage.setItem("charge-best", String(game.best));
+      localStorage.setItem("charge-glory", String(game.glory));
     }, 150);
     const key = (e: KeyboardEvent) => {
       if (e.code === "Space" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.raise = true; }
+      if (e.code === "KeyE" && !(e.target instanceof HTMLInputElement)) { e.preventDefault(); game.mount = true; }
     };
     window.addEventListener("keydown", key);
     return () => { clearInterval(id); window.removeEventListener("keydown", key); };
@@ -72,7 +78,15 @@ function ChargePage() {
               <span className={danger ? "animate-pulse font-bold text-destructive" : "text-muted-foreground"}>
                 {hud.heroDownAt != null ? "YOU FELL — RISE NEXT CHARGE" : hud.next ? `${hud.next.kind === "arrows" ? "ARROWS" : "CAVALRY"} IN ${Math.max(0, hud.next.in).toFixed(1)}s` : "HOLD THE LINE"}
               </span>
-              {hud.last && <span className={hud.last === "BLOCKED" ? "text-accent" : "text-destructive"}>{hud.last}!</span>}
+              {vip && <span className="font-bold text-primary">♛ KING · GLORY {hud.glory}</span>}
+              {hud.last && <span className={hud.last === "HIT" ? "text-destructive" : "text-accent"}>{hud.last === "RALLY" ? "FOR BITCOIN! CHARGE!" : hud.last === "BREAKOUT" ? `WALL BROKEN +${hud.lastGlory} GLORY` : `${hud.last}!`}</span>}
+              {vip && (
+                <button
+                  onPointerDown={(e) => { e.preventDefault(); game.mount = true; }}
+                  disabled={!hud.rallyReady}
+                  className={`rounded border border-primary px-4 py-2 text-primary disabled:opacity-40 ${hud.rallyReady ? "animate-pulse" : ""}`}
+                >[E] MOUNT &amp; RALLY</button>
+              )}
               <button
                 onPointerDown={(e) => { e.preventDefault(); game.raise = true; }}
                 disabled={!hud.shieldReady || hud.heroDownAt != null}
@@ -80,7 +94,7 @@ function ChargePage() {
               >[SPACE] SHIELD</button>
             </>
           ) : (
-            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land and the cavalry hits.</span>
+            <span className="text-muted-foreground">Follow a soldier to fight: raise your shield as arrows land and the cavalry hits. VIP pass holders and Founders Row survive the cavalry, then mount the warhorse and lead the army through the wall.</span>
           )}
         </div>
       </div>
