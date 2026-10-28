@@ -93,7 +93,7 @@ function Army({ soldiers, focus, game, seats }: { soldiers: Soldier[]; focus: nu
         if (fi >= 0 && fl) { o.position.set(s.x + 0.6, 0.1, z + 0.4); o.rotation.set(-Math.PI / 2, 0, 0.3); o.scale.set(0.5, 0.35, 0.04); o.updateMatrix(); fl.setMatrixAt(fi, o.matrix); }
         continue;
       }
-      const off = chargeOffset(t, s.speed);
+      const off = chargeOffset(t, s.speed) + rallyGain(local, game.rallyAt, RALLY_SPEED);
       const z = s.z + off;
       const d = Math.abs(z - cz) + Math.abs(s.x - cx);
       const tier = d < NEAR ? 1 : d < FAR ? 2 : 4;
@@ -154,8 +154,9 @@ function usePixelAsset(id: string | undefined) {
 function heroPose(s: Soldier, t: number, g: BattleGame) {
   const local = localTime(t);
   const down = g.heroDownAt != null && local >= g.heroDownAt ? local - g.heroDownAt : -1;
-  const off = chargeOffset(down >= 0 ? t - down : t, s.speed);
-  return { z: s.z + off, running: down < 0 && off > 0, fall: down < 0 ? 0 : Math.min(1, down * 3) };
+  const off = chargeOffset(down >= 0 ? t - down : t, s.speed) + rallyGain(local, g.rallyAt, KING_SPEED);
+  const mounted = g.rallyAt != null && local >= g.rallyAt;
+  return { z: s.z + off, running: down < 0 && off > 0, fall: down < 0 ? 0 : Math.min(1, down * 3), mounted, lift: mounted ? 1.1 : 0 };
 }
 
 /** Raised shield in front of the hero while the commander's block window is open. */
@@ -179,15 +180,19 @@ function Hero({ s, pixelId, game }: { s: Soldier; pixelId?: string | undefined; 
 /** The followed soldier as their own on-chain Pixel, skinned exactly as in the Oasis. */
 function PixelHero({ s, model, texture, game }: { s: Soldier; model: string; texture: string | null; game: BattleGame }) {
   const root = useRef<THREE.Group>(null);
+  const rider = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     const p = heroPose(s, t, game);
-    const bob = p.running ? Math.abs(Math.sin(t * 10 + s.phase)) * 0.2 : 0;
+    const bob = p.running ? Math.abs(Math.sin(t * (p.mounted ? 14 : 10) + s.phase)) * 0.2 : 0;
     root.current?.position.set(s.x, bob, p.z);
+    if (rider.current) rider.current.position.y = p.lift;
     if (root.current) root.current.rotation.x = -p.fall * Math.PI / 2;
   });
   return (
     <group ref={root}>
+      <Warhorse g={game} />
+      <group ref={rider}>
       <HeroShield g={game} />
       <PixelAvatar model={model} texture={texture} height={1.9} ground={0} via={proxied} />
       {s.flag && (
@@ -196,6 +201,35 @@ function PixelHero({ s, model, texture, game }: { s: Soldier; model: string; tex
           <mesh position={[-0.2, 2.2, -0.1]}><boxGeometry args={[0.5, 0.35, 0.04]} /><meshLambertMaterial color="#f7931a" /></mesh>
         </>
       )}
+      </group>
+    </group>
+  );
+}
+
+/** King Richard's armoured warhorse: only drawn for the followed VIP once the rally begins. */
+function Warhorse({ g }: { g: BattleGame }) {
+  const root = useRef<THREE.Group>(null);
+  const legs = useRef<(THREE.Mesh | null)[]>([]);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime, local = localTime(t);
+    const on = g.rallyAt != null && local >= g.rallyAt;
+    if (!root.current) return;
+    root.current.visible = on;
+    if (!on) return;
+    legs.current.forEach((l, i) => { if (l) l.rotation.x = Math.sin(t * 14 + (i % 2 ? Math.PI : 0) + (i > 1 ? 0.6 : 0)) * 0.7; });
+  });
+  return (
+    <group ref={root} visible={false}>
+      <mesh position={[0, 1.05, 0]}><boxGeometry args={[0.7, 0.6, 1.8]} /><meshLambertMaterial color="#3b2a1e" /></mesh>
+      <mesh position={[0, 1.12, 0]}><boxGeometry args={[0.78, 0.4, 1.4]} /><meshLambertMaterial color="#8a8f96" /></mesh>
+      <mesh position={[0, 1.55, 1.05]} rotation-x={-0.6}><boxGeometry args={[0.4, 0.8, 0.4]} /><meshLambertMaterial color="#3b2a1e" /></mesh>
+      <mesh position={[0, 1.85, 1.35]}><boxGeometry args={[0.32, 0.32, 0.6]} /><meshLambertMaterial color="#8a8f96" /></mesh>
+      <mesh position={[0, 2.05, 0.95]}><boxGeometry args={[0.1, 0.5, 0.5]} /><meshLambertMaterial color="#1a120c" /></mesh>
+      {[[-0.25, 0.7], [0.25, 0.7], [-0.25, -0.7], [0.25, -0.7]].map(([x, z], i) => (
+        <mesh key={i} ref={(m) => { legs.current[i] = m; }} position={[x!, 0.4, z!]}><boxGeometry args={[0.16, 0.8, 0.16]} /><meshLambertMaterial color="#2a1d14" /></mesh>
+      ))}
+      <mesh position={[0.5, 3.2, -0.3]}><boxGeometry args={[0.05, 2.6, 0.05]} /><meshLambertMaterial color="#5b3a22" /></mesh>
+      <mesh position={[0.85, 4.1, -0.3]}><boxGeometry args={[0.7, 0.5, 0.04]} /><meshLambertMaterial color="#f7931a" /></mesh>
     </group>
   );
 }
@@ -212,7 +246,7 @@ function BlockHero({ s, game }: { s: Soldier; game: BattleGame }) {
     const running = p.running;
     const sw = running ? Math.sin(t * 10 + s.phase) : 0;
     const bob = running ? Math.abs(sw) * 0.2 : 0;
-    root.current?.position.set(s.x, bob, p.z);
+    root.current?.position.set(s.x, bob + p.lift, p.z);
     if (root.current) root.current.rotation.x = p.fall > 0 ? -p.fall * Math.PI / 2 : running ? 0.2 : 0;
     if (armL.current) armL.current.rotation.x = sw * 0.9;
     if (armR.current) armR.current.rotation.x = running ? -2.4 + sw * 0.3 : -2.8; // sword raised
