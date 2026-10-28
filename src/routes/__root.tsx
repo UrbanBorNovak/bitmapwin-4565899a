@@ -241,6 +241,7 @@ function RootComponent() {
       </div>
       <PillarDock />
       <BitTransitBar />
+      <BitmapLotteryWidget />
       <GuidedTour />
       <TradeCrawlerDriver />
       <BssCrawlerDriver />
