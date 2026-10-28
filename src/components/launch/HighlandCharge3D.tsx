@@ -35,7 +35,7 @@ function Army({ soldiers, focus }: { soldiers: Soldier[]; focus: number | null }
       head.current?.setMatrixAt(i, o.matrix);
     });
     flagIdx.forEach((i, k) => {
-      const s = soldiers[i];
+      const s = soldiers[i]; if (!s) return;
       const z = s.z + chargeOffset(t, s.speed);
       o.position.set(s.x + 0.35, 2.3, z); o.scale.set(0.5, 0.35, 0.04); o.rotation.set(0, Math.sin(t * 6 + s.phase) * 0.4, 0); o.updateMatrix();
       flags.current?.setMatrixAt(k, o.matrix);
