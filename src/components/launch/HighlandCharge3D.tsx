@@ -24,7 +24,7 @@ function Army({ soldiers, focus, game, seats }: { soldiers: Soldier[]; focus: nu
   const faces = useRef<THREE.InstancedMesh>(null);
   // Every soldier's own Pixel face, packed into one shared texture: one draw call for all faces.
   const atlas = useMemo(() => {
-    const bySeat = new Map(seats.map((x) => [x.seat, x.pixelId]));
+    const bySeat = new Map((seats ?? []).map((x) => [x.seat, x.pixelId]));
     return buildFaceAtlas(soldiers.map((s) => bySeat.get(s.seat) ?? ""));
   }, [soldiers, seats]);
   useEffect(() => () => atlas.dispose(), [atlas]);
