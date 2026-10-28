@@ -56,7 +56,7 @@ export function beatsToEpisode(b: BeatSheet, castHeights: number[] = DEFAULT_CAS
       shot: SHOTS[si % SHOTS.length]!,
       set: (MACHINE_SETS.includes(s.set) ? s.set : "cafe") as ToonSet,
       transition: si === 0 ? "cut" : si === b.scenes.length - 1 ? "iris" : "cut",
-      cast: cast.map((c, i) => ({ height: c.height, name: c.name, x: MARKS[i]![0], z: MARKS[i]![1], pose: lines.some((l) => l.speaker === i) ? "talk" : "idle", ...(emotes.get(i) ? { emote: emotes.get(i) } : {}) })),
+      cast: cast.map((c, i): ToonScene["cast"][number] => { const e = emotes.get(i); return { height: c.height, name: c.name, x: MARKS[i]![0], z: MARKS[i]![1], pose: lines.some((l) => l.speaker === i) ? "talk" : "idle", ...(e ? { emote: e } : {}) }; }),
       lines,
     };
   }).filter((s) => s.lines.length > 0);
