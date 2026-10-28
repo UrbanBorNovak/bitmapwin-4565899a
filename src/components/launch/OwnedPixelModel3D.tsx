@@ -11,7 +11,7 @@ const TRANSPARENT_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
 
 /** Same pipeline as the Oasis ModelAvatar: rig + idle clip + pixel skin on its own UVs. */
-function Avatar({ model, texture }: { model: string; texture: string | null }) {
+export function PixelAvatar({ model, texture, height = 1.6, ground = -0.8 }: { model: string; texture: string | null; height?: number; ground?: number }) {
   const gltf = useGLTF(content(model));
   const clipSource = rigAnimations(model);
   const clipGltf = useGLTF(content(clipSource ?? model));
@@ -57,9 +57,9 @@ function Avatar({ model, texture }: { model: string; texture: string | null }) {
     scene.updateMatrixWorld(true);
     const b = new THREE.Box3().setFromObject(scene);
     const s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
-    const k = 1.6 / Math.max(s.y, 0.0001);
-    return { k, x: -c.x * k, y: -b.min.y * k - 0.8, z: -c.z * k };
-  }, [scene]);
+    const k = height / Math.max(s.y, 0.0001);
+    return { k, x: -c.x * k, y: -b.min.y * k + ground, z: -c.z * k };
+  }, [scene, height, ground]);
 
   return (
     <group scale={fit.k} position={[fit.x, fit.y, fit.z]}>
@@ -75,7 +75,7 @@ export default function OwnedPixelModel3D({ model, texture }: { model: string; t
       <ambientLight intensity={1.5} />
       <directionalLight position={[2, 3, 3]} intensity={2.2} />
       <directionalLight position={[-2, 1, -2]} intensity={0.8} />
-      <Suspense fallback={null}><Avatar model={model} texture={texture} /></Suspense>
+      <Suspense fallback={null}><PixelAvatar model={model} texture={texture} /></Suspense>
       <OrbitControls makeDefault autoRotate autoRotateSpeed={1.5} enablePan={false} enableZoom={false} target={[0, 0, 0]} />
     </SafeCanvas>
   );

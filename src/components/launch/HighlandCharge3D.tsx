@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { PixelAvatar } from "@/components/launch/OwnedPixelModel3D";
+import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
@@ -85,7 +87,59 @@ function Army({ soldiers, focus }: { soldiers: Soldier[]; focus: number | null }
 }
 
 /** The followed soldier at full detail: torso, kilt, head, swinging arms and legs, sword, flag. */
-function Hero({ s }: { s: Soldier }) {
+class AvatarBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
+
+/** Resolves the seat's Pixel (BRC-420 pointer → GLB + PNG skin); null while loading or if it has no model. */
+function usePixelAsset(id: string | undefined) {
+  const [a, setA] = useState<PixelAsset | null>(null);
+  useEffect(() => {
+    setA(null);
+    if (!id) return;
+    let live = true;
+    resolvePixelAsset(id).then((r) => { if (live) setA(r ?? null); }).catch(() => {});
+    return () => { live = false; };
+  }, [id]);
+  return a;
+}
+
+function Hero({ s, pixelId }: { s: Soldier; pixelId?: string }) {
+  const asset = usePixelAsset(pixelId);
+  if (!asset?.model) return <BlockHero s={s} />;
+  const fallback = <BlockHero s={s} />;
+  return (
+    <AvatarBoundary key={asset.model} fallback={fallback}>
+      <Suspense fallback={fallback}><PixelHero s={s} model={asset.model} texture={asset.texture ?? null} /></Suspense>
+    </AvatarBoundary>
+  );
+}
+
+/** The followed soldier as their own on-chain Pixel, skinned exactly as in the Oasis. */
+function PixelHero({ s, model, texture }: { s: Soldier; model: string; texture: string | null }) {
+  const root = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const off = chargeOffset(t, s.speed);
+    const bob = off > 0 ? Math.abs(Math.sin(t * 10 + s.phase)) * 0.2 : 0;
+    root.current?.position.set(s.x, bob, s.z + off);
+  });
+  return (
+    <group ref={root}>
+      <PixelAvatar model={model} texture={texture} height={1.9} ground={0} />
+      {s.flag && (
+        <>
+          <mesh position={[-0.45, 1.6, -0.1]}><boxGeometry args={[0.04, 1.6, 0.04]} /><meshLambertMaterial color="#5b3a22" /></mesh>
+          <mesh position={[-0.2, 2.2, -0.1]}><boxGeometry args={[0.5, 0.35, 0.04]} /><meshLambertMaterial color="#f7931a" /></mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
+function BlockHero({ s }: { s: Soldier }) {
   const root = useRef<THREE.Group>(null);
   const armL = useRef<THREE.Group>(null), armR = useRef<THREE.Group>(null);
   const legL = useRef<THREE.Group>(null), legR = useRef<THREE.Group>(null);
@@ -173,7 +227,7 @@ export default function HighlandCharge3D({ seats, focus }: { seats: LaunchSeat[]
         <directionalLight position={[10, 20, -10]} intensity={1.2} />
         <mesh rotation-x={-Math.PI / 2}><planeGeometry args={[200, 200]} /><meshLambertMaterial color="#4f6b3a" /></mesh>
         <Army soldiers={soldiers} focus={focus} />
-        {focus != null && lead && lead.seat === focus && <Hero s={lead} />}
+        {focus != null && lead && lead.seat === focus && <Hero s={lead} pixelId={seats.find((x) => x.seat === focus)?.pixelId} />}
         <Enemy />
         <ChaseCam lead={lead} />
       </SafeCanvas>
