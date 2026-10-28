@@ -1,5 +1,7 @@
 import { CinemaPremiere } from "@/components/home/CinemaPremiere";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
+const HeroVoxelDiorama3D = lazy(() => import("@/components/home/HeroVoxelDiorama3D"));
 import { GeoTransfers } from "@/components/GeoTransfers";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
@@ -119,8 +121,12 @@ function Index() {
 
           <div className="relative order-1 flex flex-col bg-card lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
-            <GeoTransfers className="opacity-80" heights={recentSales.map((s) => s.bitmap_height)} />
-            <BitmapConstellations className="opacity-55" />
+            <GeoTransfers className="opacity-40" heights={recentSales.map((s) => s.bitmap_height)} />
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-full overflow-hidden opacity-90 md:w-[70%]">
+              <ClientOnly><Suspense fallback={null}><HeroVoxelDiorama3D /></Suspense></ClientOnly>
+            </div>
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--card)_0%,color-mix(in_oklab,var(--card)_85%,transparent)_35%,transparent_75%)]" />
+            <BitmapConstellations className="opacity-35" />
             <div className="relative flex flex-1 flex-col justify-center p-5 py-7 md:p-8 lg:p-10">
               <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
               <h1 className="display mt-3 text-[2rem] leading-none sm:text-5xl lg:text-6xl">
