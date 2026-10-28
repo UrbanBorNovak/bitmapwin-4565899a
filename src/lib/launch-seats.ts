@@ -128,6 +128,25 @@ export function loungeMessage(address: string, issuedAt: string): string {
   ].join("\n");
 }
 
+export function kingMessage(address: string, issuedAt: string): string {
+  return [
+    "BITMAPWIN HIGHLAND CHARGE — RIDE AS KING",
+    `ADDRESS: ${address}`,
+    `ISSUED: ${issuedAt}`,
+    "THIS SIGNATURE MOVES NO FUNDS AND COSTS NO FEE.",
+  ].join("\n");
+}
+
+/** VIP = an inscribed launch pass or a Founders Row seat. */
+export function isVipSeat(seat: { seat: number; ticketId?: string | null }): boolean {
+  return !!seat.ticketId || seat.seat <= FOUNDERS_ROW;
+}
+
+/** Mount & Rally only for the seat the server verified for this wallet, never for a followed stranger. */
+export function kingEligible(verified: { seat: number; vip: boolean } | null, followed: number | null): boolean {
+  return !!verified && verified.vip && followed != null && verified.seat === followed;
+}
+
 /** The lounge opens only for a wallet that already holds a seat. */
 export function loungeSeat(seats: { seat: number; address: string }[], address: string) {
   const a = address.trim().toLowerCase();

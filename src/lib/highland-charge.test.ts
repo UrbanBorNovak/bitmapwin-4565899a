@@ -41,3 +41,17 @@ describe("King's rally", () => {
     expect(g.breakouts).toBe(0);
   });
 });
+
+import { kingEligible } from "./launch-seats";
+describe("King eligibility", () => {
+  it("only the server-verified VIP seat may ride", () => {
+    expect(kingEligible({ seat: 7, vip: true }, 7)).toBe(true);
+  });
+  it("following someone else's seat grants nothing", () => {
+    expect(kingEligible({ seat: 7, vip: true }, 8)).toBe(false);
+  });
+  it("no verification or a non-VIP seat grants nothing", () => {
+    expect(kingEligible(null, 1)).toBe(false);
+    expect(kingEligible({ seat: 300, vip: false }, 300)).toBe(false);
+  });
+});

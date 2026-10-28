@@ -3,7 +3,11 @@ import { ClientOnly } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { newBattleGame, type BattleGame } from "@/lib/highland-charge";
-import { listLaunchSeatsFn } from "@/lib/launch-seats.functions";
+import { listLaunchSeatsFn, verifyKingFn } from "@/lib/launch-seats.functions";
+import { kingEligible, kingMessage } from "@/lib/launch-seats";
+import { useServerFn } from "@tanstack/react-start";
+import { signMessageWithWallet } from "@/lib/browser-wallet";
+import { useWalletSession } from "@/lib/wallet-session";
 
 const Charge = lazy(() => import("@/components/launch/HighlandCharge3D"));
 const seatsQuery = queryOptions({ queryKey: ["launch-seats"], queryFn: () => listLaunchSeatsFn(), staleTime: 15_000 });
@@ -31,9 +35,27 @@ function ChargePage() {
   const game = useRef<BattleGame>(newBattleGame()).current;
   const [hud, setHud] = useState<BattleGame>(() => ({ ...game }));
   const playing = focus != null && seats.some((s) => s.seat === focus);
-  const mine = seats.find((s) => s.seat === focus);
-  const vip = !!mine && (!!mine.ticketId || mine.seat <= 100);
+  const session = useWalletSession();
+  const verify = useServerFn(verifyKingFn);
+  // Held in page memory only: every visit signs again, and it is dropped when the wallet changes.
+  const [king, setKing] = useState<{ address: string; seat: number; vip: boolean } | null>(null);
+  const [kingMsg, setKingMsg] = useState<string | null>(null);
+  const verified = king && session && king.address === session.ordinalsAddress ? king : null;
+  const vip = kingEligible(verified, focus);
   game.vip = vip;
+  const proveKing = async () => {
+    if (!session) { setKingMsg("Connect your wallet first"); return; }
+    setKingMsg(null);
+    try {
+      const address = session.ordinalsAddress, issuedAt = new Date().toISOString();
+      const signature = await signMessageWithWallet(session.provider, address, kingMessage(address, issuedAt));
+      const r = await verify({ data: { address, issuedAt, signature } });
+      if (!r.ok) { setKing(null); setKingMsg(r.error === "NO_SEAT" ? "This wallet has no Grandstand seat" : r.error); return; }
+      setKing({ address, seat: r.seat, vip: r.vip });
+      setFocus(r.seat); setInput(String(r.seat));
+      setKingMsg(r.vip ? `Seat ${r.seat} verified — you ride as King` : `Seat ${r.seat} verified — no VIP pass or Founders Row seat`);
+    } catch (e) { setKingMsg((e as Error).message); }
+  };
   useEffect(() => {
     game.best = Number(localStorage.getItem("charge-best") ?? 0) || 0;
     game.glory = Number(localStorage.getItem("charge-glory") ?? 0) || 0;
@@ -62,8 +84,10 @@ function ChargePage() {
           <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); const n = Number(input); setFocus(Number.isFinite(n) && n > 0 ? n : null); }}>
             <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Seat #" className="w-24 rounded border border-border bg-background px-2 py-1" />
             <button className="rounded bg-primary px-3 py-1 text-primary-foreground">FOLLOW MY SOLDIER</button>
+            <button type="button" onClick={proveKing} className="rounded border border-primary px-3 py-1 text-primary">♛ PROVE VIP</button>
             <Link to="/launch" className="ml-auto self-center text-accent">← GRANDSTAND</Link>
           </form>
+          {kingMsg && <p className="mt-1 text-accent">{kingMsg}</p>}
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-36 z-10 p-4">
