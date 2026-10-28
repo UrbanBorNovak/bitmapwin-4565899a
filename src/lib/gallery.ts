@@ -20,7 +20,7 @@ export function galleryMembersQuery(inscriptionId: string) {
     queryKey: ["gallery-members", inscriptionId] as const,
     queryFn: () => fetchGalleryMembers(inscriptionId),
     staleTime: Number.POSITIVE_INFINITY,
-    refetchInterval: (q: { state: { data?: GalleryMembers } }) => (q.state.data?.unavailable ? 30_000 : false),
+    refetchInterval: (q: { state: { data: GalleryMembers | undefined } }) => (q.state.data?.unavailable ? 30_000 : false),
     gcTime: 60 * 60 * 1000,
     retry: 1,
   };
