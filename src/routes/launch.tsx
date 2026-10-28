@@ -78,6 +78,9 @@ function LaunchPage() {
   const sponsorQ = useQuery({ queryKey: ["sponsor-slides"], queryFn: () => listSponsorSlidesFn(), refetchInterval: 300_000 });
   const stageAds = (sponsorQ.data?.slides ?? []).filter((x) => slotLive(x, "launch", Date.now()));
   const tier = nextTier(count);
+  const [search, setSearch] = useState("");
+  const vipCount = seats.filter((s) => s.ticketId).length;
+  const neighbors = picked ? [picked.seat - 1, picked.seat + 1].map((n) => seats.find((s) => s.seat === n)).filter((s): s is LaunchSeat => !!s) : [];
 
   const takeSeat = async () => {
     if (!active) return;
@@ -133,6 +136,29 @@ function LaunchPage() {
             <WalletConnect onConnect={(w) => { setWallet(w); saveWalletSession(w); }} />
           )}
           {msg && <p className="mt-2 font-mono text-xs text-signal">{msg}</p>}
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-3 md:grid-cols-2">
+        <form className="glass-panel flex gap-2 rounded border border-border p-3" onSubmit={(e) => {
+          e.preventDefault();
+          const q = search.trim().toLowerCase().replace(/\.bitmap$/, "").replace(/^#/, "");
+          if (!q) return;
+          const hit = seats.find((s) => s.address.toLowerCase().startsWith(q) || String(s.heldBitmap) === q) ?? (/^\d+$/.test(q) ? seats.find((s) => String(s.seat) === q) : undefined);
+          if (hit) { pickSeat(hit); setMsg(null); } else setMsg(`No seat found for "${search.trim()}"`);
+        }}>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a seat: bc1p…, 717328.bitmap or #82"
+            aria-label="Find a seat" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-2 font-mono text-xs" />
+          <button className="rounded border border-signal px-3 font-mono text-xs text-signal">FIND</button>
+        </form>
+        <div className="flex items-center justify-between gap-3 rounded border border-bitcoin bg-bitcoin/10 p-3 font-mono text-xs">
+          <div>
+            <div className="font-bold text-bitcoin">★ {vipCount} VIP {vipCount === 1 ? "PASS" : "PASSES"} INSCRIBED</div>
+            <div className="text-muted-foreground">Gold ring + permanent proof of attendance on Bitcoin</div>
+          </div>
+          {mine && !mine.ticketId ? (
+            <button className="shrink-0 rounded bg-bitcoin px-3 py-2 font-bold text-primary-foreground" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>GET MINE</button>
+          ) : !mine ? <span className="shrink-0 text-muted-foreground">Take a seat first</span> : <span className="shrink-0 text-bitcoin">✓ YOURS</span>}
         </div>
       </div>
 
