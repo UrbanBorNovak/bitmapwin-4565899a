@@ -76,6 +76,27 @@ export type Database = {
         }
         Relationships: []
       }
+      advent_signups: {
+        Row: {
+          created_at: string
+          handle: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          handle?: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          handle?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       agent_proposal_events: {
         Row: {
           created_at: string
@@ -5198,6 +5219,8 @@ export type Database = {
     }
     Functions: {
       adrenaline_claim: { Args: { _user: string }; Returns: Json }
+      advent_card_number: { Args: never; Returns: number }
+      advent_signup_count: { Args: never; Returns: number }
       archaeology_ledger: { Args: never; Returns: Json }
       atlas_region_stats: {
         Args: { p_hi: number; p_lo: number }
