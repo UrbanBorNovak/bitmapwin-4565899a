@@ -302,6 +302,7 @@ function LaunchPage() {
             {mine?.seat === picked.seat && <SeatProfileEditor key={picked.seat} seat={picked} signer={active} />}
             {picked.pixelSource === "held" && <OwnedPixelCard pixelId={picked.pixelId} />}
             {picked.heldBitmap !== null && <Link to="/map/$block" params={{ block: String(picked.heldBitmap) }} className="text-signal hover:underline">Holds {picked.heldBitmap}.bitmap →</Link>}
+            <Link to="/charge" className="block text-bitcoin hover:underline">⚔ JOIN THE HIGHLAND CHARGE →</Link>
             {picked.gear?.map((g) => <div key={g} className="text-muted-foreground">◆ {GEAR_LABEL[g]}</div>)}
             {mine?.seat === picked.seat ? <WardrobeShop seat={picked} /> : <div className="text-muted-foreground">◆ {HAIR_LABEL[hairFor(picked.heldBitmap, picked.clubHair ?? null)]}</div>}
             {mine?.seat === picked.seat && <div className="mt-1"><RgbBadge /></div>}
