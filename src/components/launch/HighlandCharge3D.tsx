@@ -459,15 +459,18 @@ function BattleStepper({ game, playing }: { game: BattleGame; playing: boolean }
   return null;
 }
 
-function ChaseCam({ lead }: { lead: Soldier | undefined }) {
+function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame }) {
   const target = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ camera, clock }, delta) => {
     const t = clock.elapsedTime;
-    const z = (lead ? lead.z + chargeOffset(t, lead.speed) : -FIELD_GAP / 2);
+    // Once the King mounts, follow the warhorse's real position (rally gain included) to the end.
+    const pose = lead ? heroPose(lead, t, game) : null;
+    const riding = !!pose?.mounted;
+    const z = pose ? (riding ? pose.z : lead!.z + chargeOffset(t, lead!.speed)) : -FIELD_GAP / 2;
     const local = t % CHARGE_CYCLE;
-    const side = local < 2 ? 0 : Math.sin(t * 0.3) * 8;
-    target.set((lead?.x ?? 0) + side * 0.5, 3.6, z + 8);
-    camera.position.lerp(target, 1 - Math.exp(-4 * Math.min(delta, 0.05)));
+    const side = riding ? 1.5 : local < 2 ? 0 : Math.sin(t * 0.3) * 8;
+    target.set((lead?.x ?? 0) + side * 0.5, riding ? 4.2 : 3.6, z + (riding ? 7 : 8));
+    camera.position.lerp(target, 1 - Math.exp(-(riding ? 7 : 4) * Math.min(delta, 0.05)));
     const quake = Math.max(0, 1 - Math.abs(localTime(t) - CAV_CONTACT) * 1.5);
     if (quake > 0) { camera.position.x += (Math.random() - 0.5) * 0.25 * quake; camera.position.y += (Math.random() - 0.5) * 0.2 * quake; }
     camera.lookAt((lead?.x ?? 0), -0.4, z - 1);
@@ -493,7 +496,7 @@ export default function HighlandCharge3D({ seats, focus, game }: { seats: Launch
         <Enemy />
         <Arrows />
         <Cavalry />
-        <ChaseCam lead={lead} />
+        <ChaseCam lead={lead} game={game} />
       </SafeCanvas>
     </div>
   );
