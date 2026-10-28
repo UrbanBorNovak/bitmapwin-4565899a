@@ -18,6 +18,7 @@ import { WardrobeShop } from "@/components/launch/WardrobeShop";
 import { HAIR_LABEL, hairFor } from "@/lib/launch-seats";
 import { LaunchTicket } from "@/components/launch/LaunchTicket";
 import { ShareSeatButton } from "@/components/launch/ShareSeatButton";
+import { SeatProfileEditor, SeatProfileLine } from "@/components/launch/SeatProfileEditor";
 import { ClipRecorder } from "@/components/game/ClipRecorder";
 import { useQuery } from "@tanstack/react-query";
 import { ZapDialog } from "@/components/lightning/ZapDialog";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/launch")({
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
     ] };
   },
+  validateSearch: (s: Record<string, unknown>): { seat?: number } => { const n = Number(s.seat); return Number.isInteger(n) && n > 0 ? { seat: n } : {}; },
   loader: ({ context }) => context.queryClient.ensureQueryData(seatsQuery),
   component: LaunchPage,
 });
@@ -63,6 +65,13 @@ function LaunchPage() {
   const [throws, setThrows] = useState(0);
   const [hits, setHits] = useState(0);
   useEffect(() => () => { stopCafeMusic(); stopCrowd(); }, []);
+  const { seat: seatParam } = Route.useSearch();
+  useEffect(() => {
+    if (!seatParam) return;
+    const s = seats.find((x) => x.seat === seatParam);
+    if (s) { setPicked(s); setFocus(s.seat); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seatParam, seats.length]);
   const stageTip = useTipBanner("launch");
   useEffect(() => { if (stageTip) { playArena("airhorn"); window.setTimeout(() => playArena("coin"), 700); } }, [stageTip]);
   const blip = () => playArena("seat");
@@ -247,6 +256,8 @@ function LaunchPage() {
             <div className="mt-2 text-signal">{picked.seat <= 100 ? "FOUNDERS ROW" : picked.seat <= 500 ? "FULL HOUSE" : "IGNITION"}</div>
             {picked.member && <div className="text-signal">🧟 MEMBER · verified membership</div>}
             <div className="text-muted-foreground">{picked.pixelSource === "held" ? "Own Pixel (wallet scan)" : "Assigned Pixel"}</div>
+            <SeatProfileLine seat={picked} />
+            {mine?.seat === picked.seat && <SeatProfileEditor key={picked.seat} seat={picked} signer={active} />}
             {picked.pixelSource === "held" && (
               <a href={`https://ordinals.com/inscription/${picked.pixelId}`} target="_blank" rel="noreferrer" className="mt-2 block border border-bitcoin/50 bg-background p-1">
                 <img src={`/api/public/inscription/${picked.pixelId}`} alt="BITMAP Pixel owned by this wallet" className="aspect-square w-full object-contain" style={{ imageRendering: "pixelated" }} />
@@ -273,7 +284,7 @@ function LaunchPage() {
                     <button key={n.seat} type="button" onClick={() => pickSeat(n)} aria-label={`Inspect seat ${n.seat}`}
                       className="flex flex-1 items-center gap-1 rounded border border-border px-1 py-0.5 hover:border-signal">
                       <PixelFace inscriptionId={n.pixelId} label="Neighbor" className="h-6 w-6" />
-                      <span className="text-[10px]">#{n.seat}{n.ticketId ? " ★" : ""}</span>
+                      <span className="truncate text-[10px]">#{n.seat}{n.ticketId ? " ★" : ""}{n.xHandle ? ` @${n.xHandle}` : ""}</span>
                     </button>
                   ))}
                 </div>
