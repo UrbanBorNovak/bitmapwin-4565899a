@@ -367,7 +367,7 @@ function Cavalry() {
       }
       // Dust: short-lived puffs kicked up behind the hooves, a burst at contact, gone once settled.
       for (let p = 0; p < DUST_PER; p++) {
-        const di = i * DUST_PER + p;
+        const di = p * RIDERS + i; // interleaved so a shorter count thins dust evenly
         const age = ((t * 1.8 + rnd(di + 90)) % 1); // 0..1 loop per puff
         const alive = on && local < settle + 0.5;
         if (!alive) { d.setMatrixAt(di, HIDDEN); continue; }
