@@ -48,6 +48,18 @@ export const Route = createFileRoute("/launch")({
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
+type CohortId = "all" | "ancient" | "emporium" | "marauders" | "founders" | "vip";
+const bySeat = (a: LaunchSeat, b: LaunchSeat) => a.seat - b.seat;
+const byBlock = (a: LaunchSeat, b: LaunchSeat) => (a.heldBitmap ?? Infinity) - (b.heldBitmap ?? Infinity) || a.seat - b.seat;
+const COHORTS: { id: CohortId; label: string; match: (s: LaunchSeat) => boolean; sort: typeof bySeat }[] = [
+  { id: "all", label: "ALL", match: () => true, sort: bySeat },
+  { id: "ancient", label: "ANCIENT <1K", match: (s) => s.heldBitmap !== null && s.heldBitmap < 1000, sort: byBlock },
+  { id: "emporium", label: "EMPORIUM", match: (s) => s.clubHair === "emporium", sort: bySeat },
+  { id: "marauders", label: "MARAUDERS", match: (s) => s.clubHair === "marauders", sort: bySeat },
+  { id: "founders", label: "FOUNDERS", match: (s) => s.seat <= 100, sort: bySeat },
+  { id: "vip", label: "VIP PASS", match: (s) => !!s.ticketId, sort: bySeat },
+];
+
 function LaunchPage() {
   const { data } = useSuspenseQuery(seatsQuery);
   const seats = data.seats;
@@ -76,10 +88,14 @@ function LaunchPage() {
   useEffect(() => { if (stageTip) { playArena("airhorn"); window.setTimeout(() => playArena("coin"), 700); } }, [stageTip]);
   const blip = () => playArena("seat");
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
+  const [cohort, setCohort] = useState<CohortId>("all");
+  const cohortDef = COHORTS.find((c) => c.id === cohort)!;
+  const cohortSeats = seats.filter(cohortDef.match).sort(cohortDef.sort);
   const stepSeat = (dir: number) => {
-    if (!seats.length) return;
-    const i = picked ? seats.findIndex((x) => x.seat === picked.seat) : -1;
-    pickSeat(seats[(i + dir + seats.length) % seats.length]);
+    const list = cohortSeats.length ? cohortSeats : seats;
+    if (!list.length) return;
+    const i = picked ? list.findIndex((x) => x.seat === picked.seat) : -1;
+    pickSeat(list[(i + dir + list.length) % list.length]);
   };
   const active = wallet ?? session;
   const myAddr = active?.ordinalsAddress ?? null;
@@ -193,6 +209,31 @@ function LaunchPage() {
         </div>
       </section>
 
+      <div data-testid="cohort-filter" className="mt-6 glass-panel rounded border border-border p-3 font-mono text-[11px]">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground">COHORT</span>
+          {COHORTS.map((c) => {
+            const n = seats.filter(c.match).length;
+            return (
+              <button key={c.id} type="button" disabled={!n} aria-pressed={cohort === c.id}
+                onClick={() => { blip(); setCohort(c.id); const first = [...seats.filter(c.match)].sort(c.sort)[0]; if (first && c.id !== "all") pickSeat(first); }}
+                className={`rounded border px-2 py-1 disabled:opacity-40 ${cohort === c.id ? "border-signal bg-signal/15 text-signal" : "border-border hover:border-signal"}`}>
+                [{c.label}] <span className="text-muted-foreground">{n}</span>
+              </button>
+            );
+          })}
+        </div>
+        {cohort !== "all" && (
+          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+            {cohortSeats.map((s) => (
+              <button key={s.seat} type="button" onClick={() => pickSeat(s)}
+                className={`shrink-0 rounded border px-2 py-0.5 ${picked?.seat === s.seat ? "border-bitcoin bg-bitcoin text-primary-foreground" : "border-border hover:border-bitcoin"}`}>
+                #{s.seat}{s.heldBitmap !== null ? ` · ${s.heldBitmap}.bitmap` : ""}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       {seats.some((s) => s.ticketId) && (
         <div data-testid="vip-ticker" className="mt-6 flex items-center gap-2 overflow-x-auto rounded border border-bitcoin bg-bitcoin/10 px-3 py-2 font-mono text-[11px]">
           <span className="shrink-0 font-bold text-bitcoin">★ VIP PASSES MINTED · TAP TO FRAME</span>
