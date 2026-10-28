@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
 import { PUZZLE_71, SWEEP_TREASURY_PERCENT, broadcast, buildSweep, hash160Of, keyMatches } from "@/lib/puzzle-sweep";
