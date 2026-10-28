@@ -469,14 +469,14 @@ function Cavalry({ lead, game }: { lead: Soldier | undefined; game: BattleGame }
       }
       if (!on || horseOff) { m.setMatrixAt(k, HIDDEN); m.setMatrixAt(k + 1, HIDDEN); m.setMatrixAt(k + 2, HIDDEN); }
       else {
-        o.position.set(x, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
+        o.position.set(x + sideX, 0.95 + gal, z); o.rotation.set(rear, Math.PI, 0); o.scale.set(0.6, 0.8, 1.7); o.updateMatrix(); m.setMatrixAt(k, o.matrix);
         if (riderOff) {
           // Unseated: the rider lies on the ground beside the riderless horse, lance dropped.
-          o.position.set(x - 0.9, 0.2, z + 0.2 - riderFall * 0.3); o.rotation.set(0, 0, Math.PI / 2 * riderFall); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
-          o.position.set(x - 1.2, 0.05, z - 0.4); o.rotation.set(0, 0.4, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+          o.position.set(x + sideX + 0.9, 0.2, z + 0.2 - riderFall * 0.3); o.rotation.set(0, 0, Math.PI / 2 * riderFall); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+          o.position.set(x + sideX + 1.2, 0.05, z - 0.4); o.rotation.set(0, 0.4, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
         } else {
-          o.position.set(x, 1.9 + gal, z + 0.1); o.rotation.set(rear, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
-          o.position.set(x + 0.3, 1.8 + gal, z - 1.2); o.rotation.set(0, 0, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
+          o.position.set(x + sideX, 1.9 + gal, z + 0.1); o.rotation.set(rear, 0, 0); o.scale.set(0.45, 0.8, 0.35); o.updateMatrix(); m.setMatrixAt(k + 1, o.matrix);
+          o.position.set(x + sideX + 0.3, 1.8 + gal, z - 1.2); o.rotation.set(0, 0, 0); o.scale.set(0.05, 0.05, 2.6); o.updateMatrix(); m.setMatrixAt(k + 2, o.matrix);
         }
       }
       // Dust: short-lived puffs behind galloping hooves only.
