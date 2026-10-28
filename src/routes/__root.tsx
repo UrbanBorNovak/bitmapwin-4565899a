@@ -30,6 +30,7 @@ import { BlockFactsDriver } from "@/components/BlockFactsDriver";
 import { LanguageProvider } from "@/lib/i18n";
 import { GuidedTour } from "@/components/GuidedTour";
 import { PillarDock } from "@/components/PillarDock";
+import { BitmapLotteryWidget } from "@/components/BitmapLotteryWidget";
 
 
 
@@ -240,6 +241,7 @@ function RootComponent() {
       </div>
       <PillarDock />
       <BitTransitBar />
+      <BitmapLotteryWidget />
       <GuidedTour />
       <TradeCrawlerDriver />
       <BssCrawlerDriver />
