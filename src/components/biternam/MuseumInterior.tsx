@@ -9,7 +9,7 @@ import { useRef, type ReactNode } from "react";
 import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import type { Group } from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { DustMotes } from "@/components/biternam/RoomAtmosphere";
+import { DustMotes, fitCamera } from "@/components/biternam/RoomAtmosphere";
 import type { Hotspot } from "@/lib/museum-verbs";
 import { ToonPixelRig } from "@/components/toon/ToonPixelRig";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
@@ -149,8 +149,9 @@ const HOME = { pos: [8, 9, 11], look: [-0.6, 0.2, 0.8] } as const;
 const CASE = { pos: [7.2, 4.6, 5.2], look: [3.2, 0.9, 1.4] } as const;
 const look = { x: HOME.look[0], y: HOME.look[1], z: HOME.look[2] };
 function FixedCam({ focus = false }: { focus?: boolean }) {
-  useFrame(({ camera }, dt) => {
+  useFrame(({ camera, size }, dt) => {
     const t = focus ? CASE : HOME, k = 1 - Math.exp(-Math.min(dt, 0.1) * 2.5);
+    fitCamera(camera, size.width / Math.max(1, size.height));
     camera.position.x += (t.pos[0] - camera.position.x) * k;
     camera.position.y += (t.pos[1] - camera.position.y) * k;
     camera.position.z += (t.pos[2] - camera.position.z) * k;

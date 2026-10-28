@@ -19,11 +19,21 @@ export function useMotionPrefs() {
 /** Camera sways up to PARALLAX units with the pointer around its home spot, always looking at `at`.
  *  Still on reduced motion and on touch (a tap would jerk the view right as you aim at a hotspot). */
 export const PARALLAX = 0.35;
-export function DioramaCam({ home, at }: { home: [number, number, number]; at: [number, number, number] }) {
+/** Fit zoom to the canvas shape: wide screens keep `base`, tall phones pull back so the whole room stays in frame. */
+export const ROOM_ZOOM = 1.5;
+export function fitZoom(aspect: number, base = ROOM_ZOOM) {
+  return base * Math.min(1, Math.max(0.42, aspect / 1.9));
+}
+export function fitCamera(camera: { zoom: number; updateProjectionMatrix(): void }, aspect: number, base = ROOM_ZOOM) {
+  const z = fitZoom(aspect, base);
+  if (Math.abs(camera.zoom - z) > 0.005) { camera.zoom = z; camera.updateProjectionMatrix(); }
+}
+export function DioramaCam({ home, at, zoom = ROOM_ZOOM }: { home: [number, number, number]; at: [number, number, number]; zoom?: number }) {
   const off = useRef(new Vector3());
   const { reduced, coarse } = useMotionPrefs();
   const still = reduced || coarse;
-  useFrame(({ camera, pointer }, dt) => {
+  useFrame(({ camera, pointer, size }, dt) => {
+    fitCamera(camera, size.width / Math.max(1, size.height), zoom);
     const k = 1 - Math.exp(-Math.min(dt, 0.1) * 3);
     const px = still ? 0 : pointer.x, py = still ? 0 : pointer.y;
     off.current.x += (px * PARALLAX - off.current.x) * k;
