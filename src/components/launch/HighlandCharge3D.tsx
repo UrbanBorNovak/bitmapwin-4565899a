@@ -4,7 +4,7 @@ import { resolvePixelAsset, type PixelAsset } from "@/lib/pixel-texture";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
+import { ARROW_FLIGHT, CAV_CONTACT, CAV_START, CHARGE_CYCLE, FIELD_GAP, VOLLEYS, armyFront, cavalryZ, chargeOffset, cycleOf, deathTime, formation, localTime, rallyGain, stepBattle, kingZ, KING_STOP, SPACING, KING_SPEED, RALLY_SPEED, type BattleGame, type Soldier } from "@/lib/highland-charge";
 import type { LaunchSeat } from "@/lib/launch-seats";
 import { ATLAS_GRID, atlasFaceMaterial, buildFaceAtlas } from "@/lib/face-atlas";
 
@@ -93,7 +93,9 @@ function Army({ soldiers, focus, game, seats }: { soldiers: Soldier[]; focus: nu
         if (fi >= 0 && fl) { o.position.set(s.x + 0.6, 0.1, z + 0.4); o.rotation.set(-Math.PI / 2, 0, 0.3); o.scale.set(0.5, 0.35, 0.04); o.updateMatrix(); fl.setMatrixAt(fi, o.matrix); }
         continue;
       }
-      const off = chargeOffset(t, s.speed) + rallyGain(local, game.rallyAt, RALLY_SPEED);
+      const run = s.z + chargeOffset(t, s.speed);
+      // The army follows the King but stops in rank order behind him, never marching through the wall.
+      const off = kingZ(run, rallyGain(local, game.rallyAt, RALLY_SPEED), KING_STOP - 2.5 - s.rank * SPACING) - s.z;
       const z = s.z + off;
       const d = Math.abs(z - cz) + Math.abs(s.x - cx);
       const tier = d < NEAR ? 1 : d < FAR ? 2 : 4;
@@ -154,9 +156,11 @@ function usePixelAsset(id: string | undefined) {
 function heroPose(s: Soldier, t: number, g: BattleGame) {
   const local = localTime(t);
   const down = g.heroDownAt != null && local >= g.heroDownAt ? local - g.heroDownAt : -1;
-  const off = chargeOffset(down >= 0 ? t - down : t, s.speed) + rallyGain(local, g.rallyAt, KING_SPEED);
   const mounted = g.rallyAt != null && local >= g.rallyAt;
-  return { z: s.z + off, running: down < 0 && off > 0, fall: down < 0 ? 0 : Math.min(1, down * 3), mounted, lift: mounted ? 1.1 : 0 };
+  const base = s.z + chargeOffset(down >= 0 ? t - down : t, s.speed);
+  const z = mounted ? kingZ(base, rallyGain(local, g.rallyAt, KING_SPEED)) : base;
+  const off = z - s.z;
+  return { z, running: down < 0 && off > 0, fall: down < 0 ? 0 : Math.min(1, down * 3), mounted, lift: mounted ? 1.1 : 0 };
 }
 
 /** Raised shield in front of the hero while the commander's block window is open. */
@@ -461,19 +465,30 @@ function BattleStepper({ game, playing }: { game: BattleGame; playing: boolean }
 
 function ChaseCam({ lead, game }: { lead: Soldier | undefined; game: BattleGame }) {
   const target = useMemo(() => new THREE.Vector3(), []);
+  const look = useMemo(() => new THREE.Vector3(), []);
+  const lookGoal = useMemo(() => new THREE.Vector3(), []);
+  const lastCycle = useRef(-1);
+  const lastLead = useRef<number | undefined>(undefined);
   useFrame(({ camera, clock }, delta) => {
     const t = clock.elapsedTime;
+    const c = cycleOf(t), jump = c !== lastCycle.current || lead?.seat !== lastLead.current;
+    lastCycle.current = c; lastLead.current = lead?.seat;
     // Once the King mounts, follow the warhorse's real position (rally gain included) to the end.
     const pose = lead ? heroPose(lead, t, game) : null;
     const riding = !!pose?.mounted;
     const z = pose ? (riding ? pose.z : lead!.z + chargeOffset(t, lead!.speed)) : -FIELD_GAP / 2;
     const local = t % CHARGE_CYCLE;
     const side = riding ? 1.5 : local < 2 ? 0 : Math.sin(t * 0.3) * 8;
-    target.set((lead?.x ?? 0) + side * 0.5, riding ? 4.2 : 3.6, z + (riding ? 7 : 8));
-    camera.position.lerp(target, 1 - Math.exp(-(riding ? 7 : 4) * Math.min(delta, 0.05)));
+    // Mounted: sit behind the King looking at the wall, so the camera never ends up inside the enemy ranks.
+    target.set((lead?.x ?? 0) + side * 0.5, riding ? 4.2 : 3.6, z + (riding ? -7 : 8));
+    // New cycle or new rider: cut straight there instead of swooping across the whole field.
+    lookGoal.set((lead?.x ?? 0), riding ? 1.2 : -0.4, z + (riding ? 6 : -1));
+    const k = 1 - Math.exp(-(riding ? 5 : 4) * Math.min(delta, 0.05));
+    if (jump) { camera.position.copy(target); look.copy(lookGoal); }
+    else { camera.position.lerp(target, k); look.lerp(lookGoal, k); }
     const quake = Math.max(0, 1 - Math.abs(localTime(t) - CAV_CONTACT) * 1.5);
     if (quake > 0) { camera.position.x += (Math.random() - 0.5) * 0.25 * quake; camera.position.y += (Math.random() - 0.5) * 0.2 * quake; }
-    camera.lookAt((lead?.x ?? 0), -0.4, z - 1);
+    camera.lookAt(look);
   });
   return null;
 }
