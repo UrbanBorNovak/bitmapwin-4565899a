@@ -4,6 +4,8 @@ import { EMOTES, MUSIC, TOON_SETS, parseEpisode, type ToonEpisode } from "./toon
 import { HOUSE_VFX, VFX_MAX_CUES, loadCustomVFX } from "./toon-vfx";
 import { TOON_STYLES } from "./toon-style";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Rec = any;
 export const PACKET_FORMAT = "bitmapwin.toon/1";
 const SHOTS = ["wide", "orbit", "dolly", "dutch", "crane"];
 const POSES = ["idle", "walk", "talk", "jump", "combat", "wave", "dance"];
@@ -46,7 +48,7 @@ export function readPacket(text: string): { episode: ToonEpisode } | { errors: s
     return { errors: [`Not valid JSON: ${e instanceof Error ? e.message : "parse error"}. Check for missing commas, quotes or brackets.`] };
   }
   const o = raw as { episode?: unknown; scenes?: unknown };
-  const ep = (o && typeof o === "object" && o.episode ? o.episode : o) as Record<string, unknown>;
+  const ep = (o && typeof o === "object" && o.episode ? o.episode : o) as Rec;
   const errors: string[] = [];
   if (!ep || typeof ep !== "object") return { errors: ["Expected an object with an \"episode\"."] };
   const fxIds = new Set(effects().map((f) => f.id));
@@ -57,21 +59,21 @@ export function readPacket(text: string): { episode: ToonEpisode } | { errors: s
   if (ep.aspect !== undefined && ep.aspect !== "16:9" && ep.aspect !== "9:16") bad("Episode", "aspect", ep.aspect, ["16:9", "9:16"]);
   const scenes = ep.scenes;
   if (!Array.isArray(scenes) || scenes.length === 0) errors.push("Episode needs a \"scenes\" list with at least one scene.");
-  else scenes.forEach((s: Record<string, unknown>, i) => {
+  else scenes.forEach((s: Rec, i) => {
     const w = `Scene ${i + 1}`;
     if (!s || typeof s !== "object") return errors.push(`${w}: must be an object.`);
     const dur = Number(s.duration);
     if (!SHOTS.includes(s.shot as string)) bad(w, "shot", s.shot, SHOTS);
     if (s.set !== undefined && !TOON_SETS.includes(s.set as never)) bad(w, "set", s.set, TOON_SETS);
     if (s.transition !== undefined && !TRANSITIONS.includes(s.transition as string)) bad(w, "transition", s.transition, TRANSITIONS);
-    const cast = Array.isArray(s.cast) ? (s.cast as Record<string, unknown>[]) : (errors.push(`${w}: "cast" must be a list.`), []);
+    const cast = Array.isArray(s.cast) ? (s.cast as Rec[]) : (errors.push(`${w}: "cast" must be a list.`), []);
     cast.forEach((a, j) => {
       const aw = `${w} actor ${j + 1}`;
       if (!POSES.includes(a?.pose as string)) bad(aw, "pose", a?.pose, POSES);
       if (a?.emote !== undefined && !EMOTES.some((e) => e.v === a.emote)) bad(aw, "emote", a.emote, EMOTES.map((e) => e.v));
       if (!Number.isFinite(a?.x) || !Number.isFinite(a?.z)) errors.push(`${aw}: x and z must be numbers.`);
     });
-    const lines = Array.isArray(s.lines) ? (s.lines as Record<string, unknown>[]) : [];
+    const lines = Array.isArray(s.lines) ? (s.lines as Rec[]) : [];
     lines.forEach((l, j) => {
       const lw = `${w} line ${j + 1}`;
       const sp = Number(l?.speaker);
@@ -81,7 +83,7 @@ export function readPacket(text: string): { episode: ToonEpisode } | { errors: s
       if (l?.cam !== undefined && !CAMS.includes(l.cam as string)) bad(lw, "cam", l.cam, CAMS);
       if (Number.isFinite(dur) && Number(l?.at) > dur) errors.push(`${lw}: starts at ${String(l?.at)}s, after the scene ends (${dur}s).`);
     });
-    const fx = Array.isArray(s.fx) ? (s.fx as Record<string, unknown>[]) : [];
+    const fx = Array.isArray(s.fx) ? (s.fx as Rec[]) : [];
     if (fx.length > VFX_MAX_CUES) errors.push(`${w}: at most ${VFX_MAX_CUES} effects (found ${fx.length}).`);
     fx.forEach((c, j) => {
       if (!fxIds.has(c?.id as string)) errors.push(`${w} effect ${j + 1}: unknown effect "${String(c?.id)}". Use an id from allowed.effects.`);
