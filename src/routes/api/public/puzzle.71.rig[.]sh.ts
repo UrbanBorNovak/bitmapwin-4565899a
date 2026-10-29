@@ -8,6 +8,8 @@ import { createFileRoute } from "@tanstack/react-router";
 const SCRIPT = `#!/usr/bin/env bash
 # bitmapwin.app Puzzle #71 pool rig — needs curl, jq, sha256sum.
 # WORKER=<your btc address>  SCANNER='<cmd using {start} {end} {targets} {out}>'
+# Note: 3 trap keys are evidence of scanning, NOT proof of full range coverage.
+# Partial scans can still pass sometimes, and the pool cannot detect a hidden prize key.
 set -euo pipefail
 API="\${API:-https://bitmapwin.app/api/public/puzzle/\${POOL:-71}}"
 : "\${WORKER:?set WORKER to your Bitcoin address}"
