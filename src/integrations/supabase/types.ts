@@ -5749,6 +5749,20 @@ export type Database = {
         Args: { _commitment: string; _slug: string }
         Returns: boolean
       }
+      speed_bounty_next_round: {
+        Args: {
+          _dp_bits: number
+          _expect_current: string
+          _herd: number
+          _hi_hex: string
+          _jumps: number
+          _label: string
+          _lo_hex: string
+          _pub_hex: string
+          _seed: string
+        }
+        Returns: string
+      }
       voxel_bag_add: {
         Args: { _kind: string; _n: number; _user: string }
         Returns: boolean

@@ -260,6 +260,13 @@
       "when": 1793312888682,
       "tag": "0036_speed_bounty_pool",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793313599209,
+      "tag": "0037_speed_bounty_atomic_round",
+      "breakpoints": true
     }
   ]
 }
