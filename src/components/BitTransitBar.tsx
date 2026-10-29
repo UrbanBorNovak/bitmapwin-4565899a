@@ -68,6 +68,12 @@ export function BitTransitBar() {
           </div>
         );
       })}
+      <span className="mx-0.5 w-px self-stretch bg-border" />
+      <Link to="/puzzle" title="Free background key scan for the 7.10 BTC Bitcoin Puzzle #71"
+        className="flex flex-col rounded px-2 py-1 leading-tight text-primary transition-colors hover:bg-primary/10 md:px-3">
+        <span className="whitespace-nowrap text-[10px] tracking-widest">₿ <span className="hidden sm:inline">LOTTERY ·</span> #71</span>
+        <span className="text-[9px] whitespace-nowrap text-accent" data-no-translate>7.10 BTC</span>
+      </Link>
     </nav>
   );
 }
