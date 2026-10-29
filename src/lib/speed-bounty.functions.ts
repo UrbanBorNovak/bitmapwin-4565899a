@@ -14,20 +14,27 @@ async function currentBounty() {
   return createTestBounty();
 }
 
-async function createTestBounty() {
-  const db = await admin();
+/** Fresh test-bounty columns; the private key exists only inside this function. */
+async function testBountyFields() {
   const { G } = await import("@/lib/kangaroo");
   const { lo, hi, jumps, dpBits } = poolParams(TEST_BOUNTY_BITS);
   const b = new Uint8Array(16); crypto.getRandomValues(b);
   let r = 0n; for (const x of b) r = (r << 8n) | BigInt(x);
   const k = lo + (r % (hi - lo));
-  const pub = G.multiply(k).toHex(true);
-  const { data: row, error } = await db.from("speed_bounties").insert({
-    label: `TEST · ${TEST_BOUNTY_BITS}-BIT · UNFUNDED`, pub_hex: pub, lo_hex: lo.toString(16), hi_hex: hi.toString(16),
+  return {
+    label: `TEST · ${TEST_BOUNTY_BITS}-BIT · UNFUNDED`, pub_hex: G.multiply(k).toHex(true), lo_hex: lo.toString(16), hi_hex: hi.toString(16),
     jumps, dp_bits: dpBits, herd: POOL_HERD, seed: crypto.randomUUID(), funded: false,
-  }).select("*").single();
-  if (error) throw new Error("Could not open bounty");
-  return row;
+  };
+}
+
+/** First-ever round only. The one-open-round index makes a racing duplicate fail; we then read the winner. */
+async function createTestBounty() {
+  const db = await admin();
+  const { data: row, error } = await db.from("speed_bounties").insert(await testBountyFields()).select("*").single();
+  if (!error && row) return row;
+  const { data } = await db.from("speed_bounties").select("*").order("created_at", { ascending: false }).limit(1).single();
+  if (!data) throw new Error("Could not open bounty");
+  return data;
 }
 
 type BountyRow = Awaited<ReturnType<typeof createTestBounty>>;
@@ -127,15 +134,25 @@ export const speedBountyIsAdminFn = createServerFn({ method: "POST" })
     return { admin: data === true };
   });
 
-/** Admin only: open a fresh unfunded test round. Earlier rounds, sessions and DPs stay untouched. */
+/**
+ * Admin only: open a fresh unfunded test round. Close + insert run in one locked
+ * database transaction and only succeed if `expectCurrent` is still the latest
+ * round, so duplicate clicks or two admins at once open exactly one round.
+ * Earlier rounds, sessions and DPs are never modified beyond open → closed.
+ */
 export const startNextRoundFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: { expectCurrent: string }) => ({ expectCurrent: String(d?.expectCurrent ?? "") }))
+  .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (isAdmin !== true) return { ok: false as const, error: "Admins only." };
     const db = await admin();
-    // Close any still-open round so only the new one accepts hunters.
-    await db.from("speed_bounties").update({ status: "closed" }).eq("status", "open");
-    const b = await createTestBounty();
-    return { ok: true as const, id: b.id };
+    const f = await testBountyFields();
+    const { data: id, error } = await db.rpc("speed_bounty_next_round", {
+      _label: f.label, _pub_hex: f.pub_hex, _lo_hex: f.lo_hex, _hi_hex: f.hi_hex, _jumps: f.jumps,
+      _dp_bits: f.dp_bits, _herd: f.herd, _seed: f.seed, _expect_current: data.expectCurrent,
+    });
+    if (error) return { ok: false as const, error: "Could not open a new round." };
+    if (!id) return { ok: false as const, error: "A new round was already started — refreshed." };
+    return { ok: true as const, id };
   });
