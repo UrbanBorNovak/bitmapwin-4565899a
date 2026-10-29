@@ -1,0 +1,28 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type" };
+
+const Body = z.object({
+  index: z.string().regex(/^\d{1,16}$/),
+  token: z.string().uuid(),
+  canaryProof: z.string().regex(/^[0-9a-fA-F]{64}$/),
+  offset: z.number().int().min(0).optional(),
+  hash: z.string().regex(/^[0-9a-fA-F]{40}$/).optional(),
+});
+
+/** Rig API: report a finished slice. canaryProof = sha256(hex64(k1)+hex64(k2)+hex64(k3)) of the trap keys, in lease order. */
+export const Route = createFileRoute("/api/public/puzzle/71/share")({
+  server: {
+    handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
+      POST: async ({ request }) => {
+        const parsed = Body.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) return Response.json({ ok: false, error: "Bad body" }, { status: 400, headers: CORS });
+        const { reportSlice } = await import("@/lib/puzzle-pool.server");
+        const r = await reportSlice(parsed.data);
+        return Response.json(r, { status: r.ok ? 200 : 422, headers: CORS });
+      },
+    },
+  },
+});
