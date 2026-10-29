@@ -1908,3 +1908,15 @@
 .oasis-retro .hud-panel { border-radius: 0 !important; box-shadow: 3px 3px 0 0 color-mix(in oklch, var(--background) 70%, transparent); }
 @media (prefers-reduced-motion: reduce) { .retro-stage > .floor, .retro-bar > i { animation: none; } .retro-type { animation: none; width: auto; } }
 @media (max-width: 640px) { .retro-type { white-space: normal; width: auto; animation: none; } }
+
+/* Toon Studio workstation */
+.studio-panel { border: 1px solid var(--border); border-radius: 0.5rem; background: color-mix(in oklch, var(--card) 85%, transparent); backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 0 color-mix(in oklch, var(--foreground) 6%, transparent); }
+.studio-monitor { background: var(--background); box-shadow: inset 0 0 0 1px var(--border), inset 0 0 40px color-mix(in oklch, var(--background) 80%, transparent); }
+.studio-key { min-width: 2.25rem; border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.35rem 0.6rem; color: var(--foreground); background: color-mix(in oklch, var(--muted) 60%, transparent); }
+.studio-key:hover:not(:disabled) { border-color: var(--signal); color: var(--signal); }
+.studio-key:disabled { opacity: 0.4; }
+.studio-key-main { min-width: 3rem; background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.studio-timecode { font-variant-numeric: tabular-nums; border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.3rem 0.6rem; color: var(--signal); background: var(--background); }
+.studio-clip { border-top: 2px solid color-mix(in oklch, var(--signal) 40%, transparent); background: color-mix(in oklch, var(--muted) 70%, transparent); color: var(--foreground); }
+.studio-clip:hover { background: var(--muted); }
+.studio-clip-on { border-top-color: var(--bitcoin); background: color-mix(in oklch, var(--bitcoin) 18%, var(--muted)); }
