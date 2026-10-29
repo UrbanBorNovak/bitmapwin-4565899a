@@ -31,7 +31,7 @@ export function PoolPanel() {
         <Box label="PROSPECTORS" value={s ? s.workers.toLocaleString() : "…"} />
       </div>
 
-      {s && <RangeHeatmap done={s.heat.done} open={s.heat.open} active={s.active} />}
+      {s?.heat && <RangeHeatmap done={s.heat.done} open={s.heat.open} active={s.active ?? 0} />}
 
       {lot.poolWorker ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
