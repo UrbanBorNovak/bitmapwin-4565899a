@@ -50,14 +50,14 @@ export async function claimSlice(worker: string, pool: PoolId = "71", height?: n
   for (let i = 0; i < 5; i++) {
     const idx = height !== undefined ? cartographicSlice(height).index : randomIndex(POOLS[pool].count);
     const token = crypto.randomUUID();
-    const { error } = await db.from(table).insert({ slice_index: Number(idx), worker, lease_token: token, ...(height !== undefined ? { block_height: height } : {}) });
+    const { error } = await db.from(table as "puzzle_pool_slices").insert({ slice_index: Number(idx), worker, lease_token: token, ...(height !== undefined ? { block_height: height } : {}) });
     if (error) {
       if (height === undefined) continue;
       // Block slices are fixed: re-lease only an unfinished, expired lease.
       const { data: row } = await db.from(table).select("done_at, leased_at").eq("slice_index", Number(idx)).maybeSingle();
       if (row?.done_at) return { ok: false, error: `${height}.bitmap is already scouted` };
       if (row && new Date(row.leased_at).getTime() > Date.now() - LEASE_MS) return { ok: false, error: `${height}.bitmap is being scanned right now` };
-      const { data: up } = await db.from(table).update({ worker, lease_token: token, leased_at: new Date().toISOString(), block_height: height })
+      const { data: up } = await db.from(table as "puzzle_pool_slices").update({ worker, lease_token: token, leased_at: new Date().toISOString(), block_height: height })
         .eq("slice_index", Number(idx)).is("done_at", null).lt("leased_at", since).select("slice_index");
       if (!up?.length) return { ok: false, error: "Pool busy, try again." };
     }
