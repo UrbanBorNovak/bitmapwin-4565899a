@@ -35,7 +35,7 @@ export function PoolPanel() {
           <li>Trust in the site: trap keys come from a server secret, so you rely on the pool to place them fairly and keep them private.</li>
         </ul>
         <p className="mt-1">Credit is a public record of verified trap hits, not proof of full coverage or a guaranteed payout.</p>
-      </p>
+      </details>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <Box label="SLICES DONE" value={s ? s.slices.toLocaleString() : "…"} />
