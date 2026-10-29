@@ -33,10 +33,12 @@ export async function runTestSlice(worker: string, onStatus: (s: string) => void
 }
 
 /** Scout a BITMAP block's own #71 slice. A real #71 hit is handed to onFound. */
-export async function runBlockSlice(worker: string, height: number, onStatus: (s: string) => void, onFound: (keyHex: string) => void): Promise<TestRunResult> {
+export async function runBlockSlice(worker: string, height: number, onStatus: (s: string) => void, onFound: (keyHex: string) => void,
+  onProgress?: (p: { done: number; size: number; rate: number }) => void): Promise<TestRunResult> {
   onStatus(`CLAIMING ${height}.bitmap SECTOR…`);
   const lease = await claimSliceFn({ data: { worker, pool: "71", height } });
   if (!lease.ok) return { ok: false, message: lease.error };
+  onStatus(`SCANNING SLICE #${lease.index}`);
   const t0 = performance.now();
   const w = new Worker(new URL("./puzzle-worker.ts", import.meta.url), { type: "module" });
   let scanned = 0;
@@ -44,7 +46,11 @@ export async function runBlockSlice(worker: string, height: number, onStatus: (s
     w.onmessage = (e) => {
       const m = e.data;
       if (m.type === "found") onFound(m.keyHex);
-      else if (m.type === "batch") { scanned += m.count; onStatus(`SCANNING SLICE #${lease.index} · ${((scanned / lease.size) * 100).toFixed(1)}%`); }
+      else if (m.type === "batch") {
+        scanned += m.count;
+        const secs = (performance.now() - t0) / 1000;
+        onProgress?.({ done: scanned, size: lease.size, rate: secs > 0 ? scanned / secs : 0 });
+      }
       else if (m.type === "slice-done") resolve(m);
     };
     w.onerror = (e) => reject(new Error(e.message || "worker failed"));

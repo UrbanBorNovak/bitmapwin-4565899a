@@ -6,6 +6,7 @@ import { isWorkerAddress } from "@/lib/puzzle-pool";
 import { isBlockHeight } from "@/lib/puzzle-cartographic";
 import { FOUND_KEY } from "@/lib/bitmap-lottery";
 import { useWalletSession } from "@/lib/wallet-session";
+import { ScanProgress } from "./ScanProgress";
 
 /** Cartographic Luck: scout the one #71 slice your BITMAP block owns. */
 export function BlockHuntPanel() {
@@ -15,6 +16,7 @@ export function BlockHuntPanel() {
   const [addr, setAddr] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [prog, setProg] = useState<{ done: number; size: number; rate: number } | null>(null);
   useEffect(() => { if (!addr && wallet?.paymentAddress) setAddr(wallet.paymentAddress); }, [wallet?.paymentAddress, addr]);
   const h = Number(input.replace(/\.bitmap$/i, "").trim());
   const valid = input.trim() !== "" && isBlockHeight(h);
@@ -23,14 +25,14 @@ export function BlockHuntPanel() {
   const s = status.data?.ok ? status.data : null;
 
   async function scout() {
-    setBusy(true); setMsg(null);
+    setBusy(true); setMsg(null); setProg(null);
     try {
       const r = await runBlockSlice(addr.trim(), h, setMsg, (k) => {
         localStorage.setItem(FOUND_KEY, k);
         const a = document.createElement("a");
         a.href = URL.createObjectURL(new Blob([`PUZZLE #71 KEY\n${k}\n`], { type: "text/plain" }));
         a.download = "puzzle71-key.txt"; a.click();
-      });
+      }, setProg);
       setMsg(r.message);
       void qc.invalidateQueries({ queryKey: ["block-slice", h] });
       void qc.invalidateQueries({ queryKey: ["scouted-blocks"] });
@@ -58,7 +60,9 @@ export function BlockHuntPanel() {
           {s.worker && <p className="text-accent">by {s.worker.slice(0, 8)}…{s.worker.slice(-6)}</p>}
         </div>
       )}
-      {busy && <p className="mt-2 text-muted-foreground">16.7M keys — usually 5–15 minutes. Keep this tab open.</p>}
+      {busy && <p className="mt-2 text-muted-foreground">16.7M keys — usually 10–20 minutes. Keep this tab open.</p>}
+      {busy && prog && <ScanProgress done={prog.done} size={prog.size} rate={prog.rate} />}
+      {!busy && s?.status === "scanning" && <p className="mt-2 text-muted-foreground">Someone is scanning this block right now. If it was you and you left the page, it frees up within 20 minutes.</p>}
       {msg && <p className="mt-2 font-mono text-accent">{msg}</p>}
       {!!scouted.data?.length && (
         <p className="mt-3 font-mono text-[11px] text-muted-foreground" data-no-translate>
