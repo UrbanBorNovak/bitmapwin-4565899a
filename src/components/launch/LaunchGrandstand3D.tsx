@@ -658,7 +658,7 @@ function CameraRig({ focus, view, mySeat, showScreen, vipFocus = false }: { focu
       eye.current.set(Math.sin(t) * 3, 5, -3); target.current.set(0, 5, 16); fov = 55;
     } else {
       // Biternam 2.5D diorama: fixed high tilted angle, narrow lens.
-      eye.current.set(0, 34, -24); target.current.set(0, 2, 10); fov = 40;
+      eye.current.set(0, 24, -30); target.current.set(0, 4, 14); fov = 52;
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
     const pc = camera as THREE.PerspectiveCamera;
