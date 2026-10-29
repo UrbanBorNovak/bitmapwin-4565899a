@@ -15,6 +15,7 @@ import { drawOverlay } from "@/lib/toon-overlay";
 import { StageDirector, ThirdsGuide } from "@/components/toon/StageDirector";
 import { packetText, readPacket } from "@/lib/toon-ai-packet";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
+import { NostrEpisodesPanel } from "@/components/toon/NostrEpisodesPanel";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -339,6 +340,7 @@ function ToonPage() {
                 </section>
                 <ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} />
                 <CinemaSubmitPanel episode={episode} />
+                <ClientOnly fallback={null}><NostrEpisodesPanel episode={episode} onOpen={load} /></ClientOnly>
               </>
             )}
             {tab === "code" && (
