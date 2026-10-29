@@ -56,7 +56,7 @@ export async function claimSlice(worker: string): Promise<Lease | { ok: false; e
   return { ok: false, error: "Pool busy, try again." };
 }
 
-export async function reportSlice(d: { index: string; token: string; canaryProof: string; offset?: number; hash?: string }) {
+export async function reportSlice(d: { index: string; token: string; canaryProof: string; offset?: number | undefined; hash?: string | undefined }) {
   if (!/^\d{1,16}$/.test(d.index) || typeof d.token !== "string" || !/^[0-9a-f]{64}$/i.test(String(d.canaryProof)))
     return { ok: false as const, error: "Bad report" };
   const db = await admin();
