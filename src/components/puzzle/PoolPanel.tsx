@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { lotterySetPool, useLottery } from "@/lib/bitmap-lottery";
 import { poolStatsFn } from "@/lib/puzzle-pool.functions";
-import { SLICE_COUNT, SLICE_SIZE, isWorkerAddress } from "@/lib/puzzle-pool";
+import { HEAT_CELLS, HEAT_CELL_SLICES, HEAT_SIDE, SLICE_COUNT, SLICE_SIZE, isWorkerAddress } from "@/lib/puzzle-pool";
 import { POOL_DIVIDEND_PERCENT, PUZZLE_71 } from "@/lib/puzzle-sweep";
 import { useWalletSession } from "@/lib/wallet-session";
 
@@ -13,7 +13,7 @@ export function PoolPanel() {
   const wallet = useWalletSession();
   const [addr, setAddr] = useState("");
   useEffect(() => { if (!addr && wallet?.paymentAddress) setAddr(wallet.paymentAddress); }, [wallet?.paymentAddress, addr]);
-  const stats = useQuery({ queryKey: ["puzzle-pool-stats", lot.poolDone], queryFn: () => poolStatsFn(), refetchInterval: 60_000 });
+  const stats = useQuery({ queryKey: ["puzzle-pool-stats", lot.poolDone], queryFn: () => poolStatsFn(), refetchInterval: 15_000 });
   const s = stats.data;
   const keys = s ? BigInt(s.slices) * SLICE_SIZE : 0n;
 
@@ -22,7 +22,7 @@ export function PoolPanel() {
       <p className="label text-accent">SHARED SCANNING POOL</p>
       <p className="mt-2 text-muted-foreground">
         The site splits #71 into {SLICE_COUNT.toLocaleString()} slices of {Number(SLICE_SIZE).toLocaleString()} keys and hands each visitor an unused one, so no two browsers repeat work.
-        A finished slice must include its lowest key hash as proof; the server re-checks it before counting it.
+        Every slice hides 3 secret trap keys. A slice only counts when the scanner returns all three, so skipped work is always caught.
       </p>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -30,6 +30,8 @@ export function PoolPanel() {
         <Box label="KEYS CHECKED BY POOL" value={s ? keys.toLocaleString() : "…"} />
         <Box label="PROSPECTORS" value={s ? s.workers.toLocaleString() : "…"} />
       </div>
+
+      {s && <RangeHeatmap done={s.heat.done} open={s.heat.open} active={s.active} />}
 
       {lot.poolWorker ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -57,11 +59,50 @@ export function PoolPanel() {
         </table>
       )}
 
+      <RigApi />
+
       <p className="mt-3 text-[11px] text-muted-foreground">
         Credit is a public record of who did the work. Whoever's browser finds the key still holds it and signs the sweep (80% to them, 20% treasury). Half of the treasury share — {POOL_DIVIDEND_PERCENT}% of the prize — is pledged to contributors by verified slices; the treasury pays it after the sweep confirms, so it is a promise, not enforced by Bitcoin —
         the pool cannot force a payout. Your address is shown on this board.
       </p>
     </section>
+  );
+}
+
+function RangeHeatmap({ done, open, active }: { done: Record<string, number>; open: Record<string, number>; active: number }) {
+  return (
+    <div className="mt-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="label text-muted-foreground">#71 RANGE MAP · {HEAT_CELLS.toLocaleString()} CHUNKS · LIVE</p>
+        <p className="text-[11px] text-muted-foreground">
+          <span className="mr-1 inline-block h-2 w-2 bg-bitcoin" /> SCANNED
+          <span className="ml-3 mr-1 inline-block h-2 w-2 bg-accent" /> BEING SCANNED NOW ({active})
+        </p>
+      </div>
+      <div className="mt-2 grid aspect-square w-full max-w-md gap-px bg-border p-px" style={{ gridTemplateColumns: `repeat(${HEAT_SIDE}, 1fr)` }}>
+        {Array.from({ length: HEAT_CELLS }, (_, i) => (
+          <div key={i} title={`chunk ${i}`} className={open[i] ? "bg-accent" : done[i] ? "bg-bitcoin" : "bg-background"}
+            style={done[i] && !open[i] ? { opacity: Math.min(1, 0.4 + done[i] / 4) } : undefined} />
+        ))}
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">Each chunk is {HEAT_CELL_SLICES.toLocaleString()} slices. A lit chunk has at least one finished or leased slice — the range is huge, so it fills slowly.</p>
+    </div>
+  );
+}
+
+function RigApi() {
+  const one = "curl -s https://bitmapwin.app/api/public/puzzle/71/rig.sh | WORKER=<your-btc-address> SCANNER='<scanner> {start} {end} {targets} {out}' bash";
+  return (
+    <details className="mt-4 border border-border p-3">
+      <summary className="label cursor-pointer text-accent">RIG API · BRING YOUR OWN GPU</summary>
+      <p className="mt-2 text-muted-foreground">Point any range scanner at the pool. It gets a slice, the puzzle address and 3 trap addresses; it must print every key it matches.</p>
+      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-all bg-background p-2 text-[11px]" data-no-translate>{one}</pre>
+      <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground" data-no-translate>
+        <li>GET /api/public/puzzle/71/range?worker=ADDR → index, token, startHex, endHex, targetAddress, canaryAddresses[3]</li>
+        <li>POST /api/public/puzzle/71/share {"{"} index, token, canaryProof {"}"} — canaryProof = sha256 of the 3 trap keys (64-hex, sorted, joined)</li>
+      </ul>
+      <p className="mt-2 text-[11px] text-muted-foreground">The wrapper needs curl, jq and sha256sum. Use a scanner that supports a key range and multiple addresses (VanitySearch/KeyHunt forks); its exact flags vary, so check its docs. If it finds a 4th key, that may be the prize — the script saves it locally and never uploads it.</p>
+    </details>
   );
 }
 
