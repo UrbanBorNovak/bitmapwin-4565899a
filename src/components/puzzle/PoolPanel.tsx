@@ -23,7 +23,18 @@ export function PoolPanel() {
       <p className="label text-accent">SHARED SCANNING POOL</p>
       <p className="mt-2 text-muted-foreground">
         The site splits #71 into {SLICE_COUNT.toLocaleString()} slices of {Number(SLICE_SIZE).toLocaleString()} keys and hands each visitor an unused one, so no two browsers repeat work.
-        Every slice hides 3 secret trap keys. A slice only counts when the scanner returns all three, so skipped work is always caught.
+        Every slice hides 3 secret trap keys at random spots. A slice only counts when the scanner returns all three. That is strong evidence of scanning, but not a guarantee that every key in the slice was checked.
+      </p>
+      <details className="mt-2 text-[11px] text-muted-foreground">
+        <summary className="label cursor-pointer">WHAT TRAP KEYS CAN'T CATCH</summary>
+        <ul className="mt-1 list-disc space-y-1 pl-4">
+          <li>Partial scans: someone who checks most of a slice still finds all 3 traps fairly often (scan 90% → about 73% chance), so some skipped work can earn credit.</li>
+          <li>Hidden prize: a scanner could find the real #71 key, keep it, and report only the traps. The pool can't see this; the 80/20 split only applies if the finder uses our sweep.</li>
+          <li>Broken or wrong scanners: a buggy rig may hit the traps yet miss other keys, leaving gaps nobody revisits.</li>
+          <li>Many identities: one person can use many worker addresses; credit shows work, not unique people.</li>
+          <li>Trust in the site: trap keys come from a server secret, so you rely on the pool to place them fairly and keep them private.</li>
+        </ul>
+        <p className="mt-1">Credit is a public record of verified trap hits, not proof of full coverage or a guaranteed payout.</p>
       </p>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -130,6 +141,7 @@ function RigApi() {
         <li>POST /api/public/puzzle/71/share {"{"} index, token, canaryProof {"}"} — canaryProof = sha256 of the 3 trap keys (64-hex, sorted, joined)</li>
       </ul>
       <p className="mt-2 text-[11px] text-muted-foreground">The wrapper needs curl, jq and sha256sum. Use a scanner that supports a key range and multiple addresses (VanitySearch/KeyHunt forks); its exact flags vary, so check its docs. If it finds a 4th key, that may be the prize — the script saves it locally and never uploads it.</p>
+      <p className="mt-2 text-[11px] text-muted-foreground">Returning all 3 trap keys shows your rig scanned the slice; it does not prove every key was checked. A rig that skips part of the range can still pass sometimes, and the pool cannot tell if a rig hides a real prize key.</p>
     </details>
   );
 }
