@@ -42,7 +42,7 @@ function Stands() {
     for (let i = 0; i < total; i++) {
       const [x, y, z, a] = seatPos(i + 1);
       const top = y; // seat surface
-      o.position.set(x, top / 2, z); o.rotation.set(0, a, 0); o.scale.set(SEAT_W, top, STEP_D);
+      o.position.set(x, top / 2, z); o.rotation.set(0, a, 0); { const pl = seatPlace(i + 1); o.scale.set(seatWidth(pl.row, pl.perRow), top, STEP_D); }
       o.updateMatrix(); m.setMatrixAt(i, o.matrix);
       m.setColorAt(i, c.set(seatPlace(i + 1).row % 2 ? "#4a4f5a" : "#3a3e47"));
     }
@@ -295,7 +295,7 @@ function NeonTiers() {
       const [x, y, z, a] = seatPos(i + 1);
       const { row } = seatPlace(i + 1);
       const r = Math.hypot(x, z); const k = (r - STEP_D / 2 + 0.02) / r;
-      o.position.set(x * k, y + 0.02, z * k); o.rotation.set(0, a, 0); o.scale.set(SEAT_W, 0.06, 0.06);
+      o.position.set(x * k, y + 0.02, z * k); o.rotation.set(0, a, 0); o.scale.set(seatWidth(row, seatPlace(i + 1).perRow), 0.06, 0.06);
       o.updateMatrix(); m.setMatrixAt(i, o.matrix);
       // Founders Row (#1-#100) orange, rest cyan
       m.setColorAt(i, c.set(i < 100 ? "#f7931a" : row % 4 === 0 ? "#22d3ee" : "#145f6b"));
