@@ -262,7 +262,7 @@ export function SiteHeader() {
           <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border 2xl:flex" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border min-[1900px]:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => {
             const here = groupItems(group).some((i) => itemIsActive(i.to));
             return (
@@ -382,7 +382,7 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="relative border-t border-border 2xl:hidden" aria-label="Main navigation">
+      <nav className="relative border-t border-border min-[1900px]:hidden" aria-label="Main navigation">
         <button
           type="button"
           aria-expanded={mobileOpen}
