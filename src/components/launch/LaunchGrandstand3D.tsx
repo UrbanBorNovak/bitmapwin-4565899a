@@ -16,13 +16,20 @@ const ROWS = 24;
 const STEP_H = 0.55;
 const STEP_D = 1.1;
 const SEAT_W = 0.9;
+/** Cyber-Colosseum: every tier wraps 220° around the open centre pit. */
+const ARC = (220 * Math.PI) / 180;
+const PIT_R = 9;
 
-/** Seat world position on the stepped arc grandstand. */
+/** Seat block width so each row fills its 220° arc. */
+function seatWidth(row: number, perRow: number) {
+  return Math.min(2.4, (ARC * (PIT_R + row * STEP_D)) / perRow) * 0.92;
+}
+
+/** Seat world position on the stepped 220° amphitheatre. */
 function seatPos(seat: number): [number, number, number, number] {
   const { row, col, perRow } = seatPlace(seat);
-  const radius = 8 + row * STEP_D;
-  const spread = (perRow * SEAT_W) / radius;
-  const a = -spread / 2 + (col + 0.5) * (spread / perRow);
+  const radius = PIT_R + row * STEP_D;
+  const a = -ARC / 2 + (col + 0.5) * (ARC / perRow);
   return [Math.sin(a) * radius, row * STEP_H + STEP_H / 2, Math.cos(a) * radius, a];
 }
 
