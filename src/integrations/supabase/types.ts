@@ -4055,6 +4055,36 @@ export type Database = {
         }
         Relationships: []
       }
+      puzzle_test_slices: {
+        Row: {
+          best_hash: string | null
+          best_offset: number | null
+          done_at: string | null
+          lease_token: string
+          leased_at: string
+          slice_index: number
+          worker: string
+        }
+        Insert: {
+          best_hash?: string | null
+          best_offset?: number | null
+          done_at?: string | null
+          lease_token: string
+          leased_at?: string
+          slice_index: number
+          worker: string
+        }
+        Update: {
+          best_hash?: string | null
+          best_offset?: number | null
+          done_at?: string | null
+          lease_token?: string
+          leased_at?: string
+          slice_index?: number
+          worker?: string
+        }
+        Relationships: []
+      }
       pvp_events: {
         Row: {
           bitmap: number | null
