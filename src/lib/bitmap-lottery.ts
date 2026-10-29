@@ -5,6 +5,7 @@
  */
 import { useSyncExternalStore } from "react";
 import { PUZZLE_71, hash160Of } from "@/lib/puzzle-sweep";
+import { claimSliceFn, reportSliceFn } from "@/lib/puzzle-pool.functions";
 
 export const LOTTERY_POWER = [
   { id: "ECO", duty: 0.15 },
@@ -16,13 +17,18 @@ export type LotteryPower = (typeof LOTTERY_POWER)[number]["id"];
 export type LotteryState = {
   on: boolean; power: LotteryPower; scanned: number; rate: number;
   slice: string | null; found: string | null;
+  /** Pool mode: payout address shown on the board, or null for solo. */
+  poolWorker: string | null; poolDone: number; poolMsg: string | null;
 };
+const POOL_KEY = "bitmap.pool.worker";
+const POOL_DONE_KEY = "bitmap.pool.done";
+let lease: { index: string; token: string } | null = null;
 
 const ON_KEY = "bitmap.lottery.on";
 const POWER_KEY = "bitmap.lottery.power";
 export const FOUND_KEY = "bitmap.puzzle.found";
 
-let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null };
+let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null };
 const listeners = new Set<() => void>();
 let worker: Worker | null = null;
 let recent: { t: number; n: number }[] = [];
@@ -43,6 +49,7 @@ function ensureWorker() {
       recent = recent.filter((x) => now - x.t < 5000);
       set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / 5) });
     } else if (m.type === "slice") set({ slice: m.startHex });
+    else if (m.type === "slice-done") void finishSlice(m.offset, m.hash);
     else if (m.type === "found") {
       localStorage.setItem(FOUND_KEY, m.keyHex);
       const blob = new Blob([`PUZZLE #71 KEY\n${m.keyHex}\n${new Date().toISOString()}\n`], { type: "text/plain" });
@@ -55,20 +62,61 @@ function ensureWorker() {
   return worker;
 }
 
-export function lotteryStart() {
-  if (state.found || typeof window === "undefined") return;
+function startWorker(slice?: { startHex: string; size: number }) {
   ensureWorker().postMessage({
     type: "start", startHex: PUZZLE_71.startHex, endHex: PUZZLE_71.endHex,
-    target: Array.from(hash160Of(PUZZLE_71.address)), duty: dutyOf(state.power),
+    target: Array.from(hash160Of(PUZZLE_71.address)), duty: dutyOf(state.power), slice,
   });
-  localStorage.setItem(ON_KEY, "1");
+}
+
+async function nextSlice() {
+  if (!state.on || !state.poolWorker) return;
+  set({ poolMsg: "GETTING A SLICE…" });
+  try {
+    const r = await claimSliceFn({ data: { worker: state.poolWorker } });
+    if (!r.ok) { set({ poolMsg: r.error }); setTimeout(nextSlice, 60_000); return; }
+    lease = { index: r.index, token: r.token };
+    set({ poolMsg: `SCANNING SLICE #${r.index}` });
+    if (state.on) startWorker({ startHex: r.startHex, size: r.size });
+  } catch { set({ poolMsg: "POOL OFFLINE — RETRYING" }); setTimeout(nextSlice, 30_000); }
+}
+
+async function finishSlice(offset: number, hash: string) {
+  const l = lease; lease = null;
+  if (l) {
+    try {
+      const r = await reportSliceFn({ data: { ...l, offset, hash } });
+      if (r.ok) {
+        const done = state.poolDone + 1;
+        localStorage.setItem(POOL_DONE_KEY, String(done));
+        set({ poolDone: done });
+      } else set({ poolMsg: r.error });
+    } catch { set({ poolMsg: "REPORT FAILED" }); }
+  }
+  void nextSlice();
+}
+
+/** Join the shared pool with a payout address, or pass null to scan solo. */
+export function lotterySetPool(worker: string | null) {
+  const wasOn = state.on;
+  if (wasOn) lotteryStop();
+  if (worker) localStorage.setItem(POOL_KEY, worker); else localStorage.removeItem(POOL_KEY);
+  set({ poolWorker: worker, poolMsg: null });
+  if (wasOn) lotteryStart();
+}
+
+export function lotteryStart() {
+  if (state.found || typeof window === "undefined") return;
   set({ on: true });
+  if (state.poolWorker) void nextSlice(); else startWorker();
+  localStorage.setItem(ON_KEY, "1");
 }
 export function lotteryStop() {
   worker?.postMessage({ type: "stop" });
   localStorage.setItem(ON_KEY, "0");
   recent = [];
-  set({ on: false, rate: 0 });
+  lease = null;
+  set({ on: false, rate: 0, poolMsg: null });
 }
 export function lotteryToggle() { if (state.on) lotteryStop(); else lotteryStart(); }
 export function lotterySetPower(power: LotteryPower) {
@@ -83,7 +131,8 @@ export function lotteryBoot() {
   booted = true;
   const power = localStorage.getItem(POWER_KEY) as LotteryPower | null;
   const found = localStorage.getItem(FOUND_KEY);
-  set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found });
+  set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
+    poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0 });
   if (!found && localStorage.getItem(ON_KEY) === "1") lotteryStart();
 }
 
