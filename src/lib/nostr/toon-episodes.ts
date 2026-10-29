@@ -73,3 +73,13 @@ export const naddrOf = (e: Event) =>
   nip19.naddrEncode({ kind: TOON_KIND, pubkey: e.pubkey, identifier: e.tags.find((t) => t[0] === "d")?.[1] ?? "", relays: RELAYS.slice(0, 2) });
 export const titleOf = (e: Event) => e.tags.find((t) => t[0] === "title")?.[1] ?? "Untitled episode";
 export const myLocalPubkey = () => getPublicKey(localSecret());
+
+/** Device key backup/restore (nsec). Same key used by BITMAP dispatches on this device. */
+export const myNpub = () => nip19.npubEncode(myLocalPubkey());
+export const exportNsec = () => nip19.nsecEncode(localSecret());
+export function importNsec(nsec: string) {
+  const d = nip19.decode(nsec.trim());
+  if (d.type !== "nsec") throw new Error("THAT IS NOT AN NSEC KEY");
+  localStorage.setItem(KEY, hex(d.data));
+  return nip19.npubEncode(getPublicKey(d.data));
+}
