@@ -196,7 +196,7 @@ function ToonPage() {
         </div>
       </header>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_440px]">
+      <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(0,1fr)_440px]">
         {/* Monitor column */}
         <div className="min-w-0 space-y-3">
           <section className="studio-panel p-2">
@@ -253,7 +253,7 @@ function ToonPage() {
         </div>
 
         {/* Inspector */}
-        <aside className="studio-panel flex min-h-0 flex-col lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)]">
+        <aside className="studio-panel flex min-h-0 min-w-0 flex-col lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)]">
           <nav className="flex gap-px overflow-x-auto border-b border-border p-1 font-mono text-[10px]">
             {TABS.map(([id, label]) => (
               <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id}
