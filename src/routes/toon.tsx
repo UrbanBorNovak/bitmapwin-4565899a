@@ -237,7 +237,7 @@ function ToonPage() {
               <div className="flex h-12 gap-px rounded">
                 {episode.scenes.map((s, i) => (
                   <button key={i} onClick={() => { setPlaying(false); setTime(episode.scenes.slice(0, i).reduce((a, x) => a + x.duration, 0) + 0.01); }}
-                    style={{ flexGrow: s.duration, flexBasis: 0, minWidth: 80 }}
+                    style={{ flexGrow: s.duration, flexBasis: 0 }}
                     className={`studio-clip min-w-0 px-1.5 text-left ${i === cur ? "studio-clip-on" : ""}`}>
                     <span className="block truncate">{i + 1} · {s.shot.toUpperCase()}</span>
                     <span className="block truncate text-muted-foreground">{s.lines.length} LINE{s.lines.length === 1 ? "" : "S"} · {s.duration}s</span>
