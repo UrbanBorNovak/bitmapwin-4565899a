@@ -77,7 +77,7 @@ function EmbassyPage() {
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <Stat label="HOLDERS ON CHAIN" value={holders.isPending ? "COUNTING…" : holders.data?.count == null ? "CHAIN BUSY" : holders.data.count.toLocaleString()} />
-          <Stat label="RESIDENT PORTRAITS" value={art.isPending ? "LOADING…" : items.length.toLocaleString()} />
+          <Stat label="RESIDENT PORTRAITS" value={art.isPending ? "LOADING…" : items.length ? items.length.toLocaleString() : "CHAIN BUSY"} />
           <Stat label="HALL STATUS" value={hall ? "OPEN · VERIFIED" : "SEALED"} accent={!!hall} />
         </div>
 
