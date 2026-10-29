@@ -246,6 +246,13 @@
       "when": 1793197380926,
       "tag": "0034_launch_seat_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793311103661,
+      "tag": "0035_puzzle_pool_slices",
+      "breakpoints": true
     }
   ]
 }
