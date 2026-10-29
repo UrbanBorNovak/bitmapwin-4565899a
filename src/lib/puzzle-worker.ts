@@ -1,14 +1,14 @@
 /// <reference lib="webworker" />
 /**
- * Background key scanner. Picks a random start inside the puzzle range, walks
- * keys by adding G, and compares Hash160(compressed pubkey) with the target.
- * Duty cycle (0..1) leaves CPU for the 3D world.
+ * Background key scanner. Solo mode picks random starts inside the puzzle
+ * range; pool mode scans exactly one server-assigned slice and reports the
+ * key with the lowest Hash160 as proof. Duty cycle (0..1) leaves CPU for 3D.
  */
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { ripemd160 } from "@noble/hashes/legacy.js";
 
-type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number };
+type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; slice?: { startHex: string; size: number } };
 type Msg = Start | { type: "stop" } | { type: "duty"; duty: number };
 
 const G = secp256k1.Point.BASE;
@@ -24,30 +24,43 @@ function randomIn(lo: bigint, hi: bigint): bigint {
   return lo + (r % span);
 }
 
+const less = (a: Uint8Array, b: Uint8Array) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] < b[i]; return false; };
+const toHex = (h: Uint8Array) => Array.from(h, (b) => b.toString(16).padStart(2, "0")).join("");
+
 async function run(m: Start) {
   const lo = BigInt("0x" + m.startHex), hi = BigInt("0x" + m.endHex);
   const target = Uint8Array.from(m.target);
-  let k = randomIn(lo, hi);
+  const pool = m.slice;
+  let k = pool ? BigInt("0x" + pool.startHex) : randomIn(lo, hi);
+  const k0 = k;
+  const end = pool ? k + BigInt(pool.size) : hi;
   let P = G.multiply(k);
+  let best: Uint8Array | null = null, bestOff = 0n;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const t0 = performance.now();
     let n = 0;
-    while (performance.now() - t0 < 40) {
-      for (let i = 0; i < 64; i++) {
+    while (performance.now() - t0 < 40 && k < end) {
+      for (let i = 0; i < 64 && k < end; i++) {
         const h = ripemd160(sha256(P.toBytes(true)));
         if (h[0] === target[0] && h.every((b, j) => b === target[j])) {
           self.postMessage({ type: "found", keyHex: k.toString(16).padStart(64, "0") });
           running = false;
           return;
         }
+        if (pool && (!best || less(h, best))) { best = h; bestOff = k - k0; }
         P = P.add(G);
         k++;
         n++;
       }
-      if (k >= hi) { k = randomIn(lo, hi); P = G.multiply(k); }
+      if (!pool && k >= hi) { k = randomIn(lo, hi); P = G.multiply(k); }
     }
     self.postMessage({ type: "batch", count: n });
+    if (pool && k >= end) {
+      running = false;
+      self.postMessage({ type: "slice-done", offset: Number(bestOff), hash: toHex(best!) });
+      return;
+    }
     const rest = (40 / Math.max(0.05, duty)) - 40;
     await new Promise((r) => setTimeout(r, rest));
   }
