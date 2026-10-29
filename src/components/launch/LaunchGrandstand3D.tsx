@@ -244,44 +244,51 @@ function Stage() {
   return (
     <group position={[0, 0, 2]} rotation-y={Math.PI}>
       <mesh position-y={0.2}><boxGeometry args={[6, 0.4, 2.4]} /><meshLambertMaterial color="#2a2d34" /></mesh>
-      <mesh position={[0, 1.6, -0.9]}><boxGeometry args={[5.6, 2.4, 0.2]} /><meshLambertMaterial color="#f7931a" emissive="#5a2d00" /></mesh>
+      
       {[-2.6, 2.6].map((x) => (
         <mesh key={x} position={[x, 1.2, 0.8]}><boxGeometry args={[0.25, 2, 0.25]} /><meshLambertMaterial color="#22d3ee" emissive="#0a4a55" /></mesh>
       ))}
-      {/* Line-array speaker stacks flanking the screen. */}
-      {[-5, 5].map((x) => (
-        <group key={`spk${x}`} position={[x, 0, -0.6]}>
-          {[0, 1, 2, 3].map((i) => (
-            <group key={i} position-y={0.45 + i * 0.85}>
-              <mesh><boxGeometry args={[1.1, 0.8, 0.9]} /><meshLambertMaterial color="#15181d" /></mesh>
-              <mesh position-z={-0.46}><circleGeometry args={[0.3, 10]} /><meshLambertMaterial color="#2c3138" side={THREE.DoubleSide} /></mesh>
-            </group>
-          ))}
-          <mesh position={[0, 3.85, -0.46]}><boxGeometry args={[1.1, 0.05, 0.02]} /><meshBasicMaterial color="#22d3ee" /></mesh>
-        </group>
-      ))}
-      {/* Goal-post truss cradling the video wall. */}
-      {[-4.55, 4.55].map((x) => (
-        <mesh key={`tr${x}`} position={[x, 3.6, -1.1]}><boxGeometry args={[0.22, 7.2, 0.22]} /><meshLambertMaterial color="#5a606a" /></mesh>
-      ))}
-      <mesh position={[0, 7.1, -1.1]}><boxGeometry args={[9.3, 0.22, 0.22]} /><meshLambertMaterial color="#5a606a" /></mesh>
     </group>
   );
 }
 
-/** Biternam-style light trusses and antenna towers ringing the arena. */
+/** Cyber-Colosseum: monolithic arcade arches ringing the top tier, neon floor rings and a floating halo crown. */
 function Trusses() {
-  const spots = useMemo(() => Array.from({ length: 14 }, (_, i) => {
-    const a = -1.3 + (i / 13) * 2.6;
-    return [Math.sin(a) * 38, Math.cos(a) * 38, a] as const;
-  }), []);
-  return <>{spots.map(([x, z, a], i) => (
-    <group key={i} position={[x, 0, z]} rotation-y={a}>
-      {[-0.5, 0.5].map((dx) => <mesh key={dx} position={[dx, 7, 0]}><boxGeometry args={[0.18, 14, 0.18]} /><meshLambertMaterial color="#3a3e47" /></mesh>)}
-      {[3, 7, 11].map((y) => <mesh key={y} position={[0, y, 0]}><boxGeometry args={[1.2, 0.14, 0.14]} /><meshLambertMaterial color="#4a4f5a" /></mesh>)}
-      <mesh position={[0, 14.4, 0]}><boxGeometry args={[0.5, 0.5, 0.5]} /><meshBasicMaterial color={i % 2 ? "#22d3ee" : "#f7931a"} /></mesh>
+  const R = PIT_R + ROWS * STEP_D + 2.5;
+  const n = 22;
+  const arches = useMemo(() => Array.from({ length: n }, (_, i) => {
+    const a = -ARC / 2 + (i + 0.5) * (ARC / n);
+    return [Math.sin(a) * R, Math.cos(a) * R, a] as const;
+  }), [R]);
+  const w = (ARC * R) / n;
+  const halo = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => { if (halo.current) halo.current.rotation.y = clock.elapsedTime * 0.08; });
+  return <>
+    {arches.map(([x, z, a], i) => (
+      <group key={i} position={[x, 0, z]} rotation-y={a}>
+        {[-w / 2 + 0.4, w / 2 - 0.4].map((dx) => <mesh key={dx} position={[dx, 9, 0]}><boxGeometry args={[0.8, 18, 1.2]} /><meshLambertMaterial color="#1c1f26" /></mesh>)}
+        {[6, 12].map((y) => <mesh key={y} position={[0, y, 0]}><boxGeometry args={[w, 0.7, 1.2]} /><meshLambertMaterial color="#23272f" /></mesh>)}
+        <mesh position={[0, 18.3, 0]}><boxGeometry args={[w, 0.6, 1.3]} /><meshLambertMaterial color="#23272f" /></mesh>
+        {[-w / 2 + 0.4, w / 2 - 0.4].map((dx) => <mesh key={`n${dx}`} position={[dx, 9, -0.62]}><boxGeometry args={[0.08, 18, 0.04]} /><meshBasicMaterial color={i % 2 ? "#22d3ee" : "#f7931a"} toneMapped={false} /></mesh>)}
+        {[5.6, 11.6, 17.95].map((y) => <mesh key={`h${y}`} position={[0, y, -0.62]}><boxGeometry args={[w - 0.8, 0.06, 0.04]} /><meshBasicMaterial color="#22d3ee" toneMapped={false} /></mesh>)}
+      </group>
+    ))}
+    {/* Neon floor rings marking the open pit */}
+    {([[PIT_R - 0.6, "#f7931a"], [PIT_R - 2.4, "#22d3ee"], [3.2, "#22d3ee"]] as const).map(([r, c]) => (
+      <mesh key={r} rotation-x={-Math.PI / 2} position-y={0.02}>
+        <ringGeometry args={[r - 0.08, r, 96]} />
+        <meshBasicMaterial color={c} toneMapped={false} transparent opacity={0.85} />
+      </mesh>
+    ))}
+    {/* Ringside rail in front of Founders Row */}
+    <mesh position-y={0.6}><cylinderGeometry args={[PIT_R - 0.6, PIT_R - 0.6, 0.06, 96, 1, true, -ARC / 2, ARC]} /><meshBasicMaterial color="#f7931a" toneMapped={false} side={THREE.DoubleSide} /></mesh>
+    {/* Floating halo crown high above the pit */}
+    <group ref={halo} position={[0, 15, 4]}>
+      <mesh rotation-x={Math.PI / 2}><torusGeometry args={[9, 0.12, 6, 64]} /><meshBasicMaterial color="#22d3ee" toneMapped={false} /></mesh>
+      <mesh rotation-x={Math.PI / 2} position-y={-0.5}><torusGeometry args={[8.4, 0.07, 6, 64]} /><meshBasicMaterial color="#f7931a" toneMapped={false} /></mesh>
+      {Array.from({ length: 12 }, (_, i) => <mesh key={i} position={[Math.sin(i / 12 * Math.PI * 2) * 9, -0.3, Math.cos(i / 12 * Math.PI * 2) * 9]}><boxGeometry args={[0.4, 0.4, 0.4]} /><meshBasicMaterial color={i % 2 ? "#22d3ee" : "#f7931a"} /></mesh>)}
     </group>
-  ))}</>;
+  </>;
 }
 
 /** Neon rim strip along the front edge of every tier row (one instanced mesh). */
@@ -446,7 +453,7 @@ function StageVideo() {
     if (f !== front) setFront(f);
   });
   return (
-    <group position={[0, 1.5 + h / 2, z]}>
+    <group position={[0, 3.5 + h / 2, z]}>
       <mesh position-z={-0.04}><boxGeometry args={[w + 0.16, h + 0.16, 0.06]} /><meshLambertMaterial color="#1a1410" emissive="#5a2d00" /></mesh>
       {/* Rear chassis: opaque LED-wall back with ribs and cable conduits. */}
       <mesh position-z={-0.22}><boxGeometry args={[w + 0.1, h + 0.1, 0.3]} /><meshLambertMaterial color="#202328" /></mesh>
@@ -479,7 +486,7 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   return (
     <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]} onPointerMissed={() => setTalking(null)}>
       <color attach="background" args={["#07090d"]} />
-      <fog attach="fog" args={["#07090d", 28, 64]} />
+      <fog attach="fog" args={["#07090d", 36, 90]} />
       <ambientLight intensity={0.7} />
       <directionalLight position={[6, 14, -8]} intensity={1.3} />
       <hemisphereLight args={["#9fb6ff", "#2a1a0a", 0.4]} />
@@ -526,7 +533,7 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
       k.t += d;
       if (!k.hit) {
         k.v.y -= 9.8 * d; k.p.addScaledVector(k.v, d);
-        if (k.p.z <= 3.12 && Math.abs(k.p.x) < 4.3 && k.p.y > 1.5 && k.p.y < 6.4) { k.hit = true; k.p.z = 3.12; k.t = 0; onHit?.(); }
+        if (k.p.z <= 3.12 && Math.abs(k.p.x) < 4.3 && k.p.y > 3.5 && k.p.y < 8.4) { k.hit = true; k.p.z = 3.12; k.t = 0; onHit?.(); }
       } else if (k.t > 0.6) { k.p.y -= 3 * d; }
       const s = k.hit ? 0.22 : 0.09;
       m.makeScale(s, s, k.hit ? 0.02 : s).setPosition(k.p); im.setMatrixAt(i++, m);
@@ -651,7 +658,7 @@ function CameraRig({ focus, view, mySeat, showScreen, vipFocus = false }: { focu
       eye.current.set(Math.sin(t) * 3, 5, -3); target.current.set(0, 5, 16); fov = 55;
     } else {
       // Biternam 2.5D diorama: fixed high tilted angle, narrow lens.
-      eye.current.set(-22, 30, -18); target.current.set(0, 4, 12); fov = 32;
+      eye.current.set(0, 34, -24); target.current.set(0, 2, 10); fov = 40;
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
     const pc = camera as THREE.PerspectiveCamera;
