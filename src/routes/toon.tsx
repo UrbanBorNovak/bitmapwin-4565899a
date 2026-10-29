@@ -56,6 +56,7 @@ function ToonPage() {
   timeRef.current = time;
   const [muted, setMuted] = useState(false);
   const [guides, setGuides] = useState(false);
+  const [tab, setTab] = useState<"direct" | "write" | "look" | "library" | "export" | "code">("direct");
   const soundRef = useRef<{ key: string; buf: Promise<AudioBuffer | null> } | null>(null);
   const soundtrack = () => {
     const key = JSON.stringify(episode);
@@ -164,116 +165,197 @@ function ToonPage() {
   };
 
   const vertical = episode.aspect === "9:16";
+  const edit = (n: ToonEpisode) => { setEpisode(n); setScript(JSON.stringify(n, null, 2)); setScriptError(null); };
+  const cur = sceneAt(episode, time).index;
+  const tc = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${(s % 60).toFixed(1).padStart(4, "0")}`;
+  const presets: [string, ToonEpisode, string][] = [
+    ["CITADEL", CITADEL_TEASER, "Guardians of the Citadel teaser"],
+    ["PIXELS", PIXELS_HOMECOMING, "BITMAP Pixels: Coming Home trailer"],
+    ["TIDE OF IRON", BEACH_LANDING, "3-minute short Tide of Iron"],
+    ["TRANSMISSION", TRANSMISSION, "portal short Transmission"],
+    ["FORGE PROMO", FORGE_PROMO, "Land Forge promo"],
+  ];
+  const TABS = [["direct", "DIRECT"], ["write", "WRITE"], ["look", "LOOK & SOUND"], ["library", "LIBRARY"], ["export", "EXPORT"], ["code", "SCRIPT"]] as const;
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-6 md:px-8">
-      <div className="label text-bitcoin">CREATION · TOOLS</div>
-      <h1 className="display mt-2 text-2xl md:text-4xl">TOON STUDIO</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Write a short episode, cast the Guardians of real BITMAPs on their own land and voxel builds, then export the video. Everything runs in your browser.
-      </p>
+    <div className="studio-shell mx-auto max-w-[1700px] px-3 py-4 md:px-6">
+      {/* Production bar */}
+      <header className="studio-panel flex flex-wrap items-center gap-3 px-3 py-2 font-mono text-xs">
+        <span className="flex items-center gap-2">
+          <span className={`h-2.5 w-2.5 rounded-full ${recording ? "animate-pulse bg-destructive" : playing ? "bg-signal" : "bg-muted-foreground/50"}`} />
+          <span className="label text-bitcoin">TOON STUDIO</span>
+        </span>
+        <span className="hidden h-4 w-px bg-border sm:block" />
+        <span className="truncate text-foreground" title={episode.title}>{episode.title}</span>
+        <span className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">{episode.scenes.length} SCENES · {total.toFixed(0)}s</span>
+        <div className="ml-auto flex items-center gap-1">
+          {(["16:9", "9:16"] as const).map((a) => (
+            <button key={a} aria-pressed={episode.aspect === a} disabled={recording} onClick={() => load({ ...episode, aspect: a })}
+              className={`rounded px-2 py-1 ${episode.aspect === a ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{a === "16:9" ? "▭ 16:9" : "▯ 9:16"}</button>
+          ))}
+          <button className="btn-term ml-2" disabled={recording} onClick={() => void record()}>{recording ? "● REC…" : "⏺ EXPORT"}</button>
+        </div>
+      </header>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_420px]">
-        <div>
-          <div ref={stageRef} className={`relative mx-auto overflow-hidden rounded-lg border border-border bg-card ${vertical ? "aspect-[9/16] max-h-[78vh]" : "aspect-video"}`}>
-            <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
-            <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
-              <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
-                <ToonStage3D episode={episode} time={time} />
-              </Suspense>
-            </ClientOnly>
+      <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_440px]">
+        {/* Monitor column */}
+        <div className="min-w-0 space-y-3">
+          <section className="studio-panel p-2">
+            <div className="mb-2 flex items-center justify-between px-1 font-mono text-[10px] text-muted-foreground">
+              <span>PROGRAM MONITOR · SCENE {cur + 1}/{episode.scenes.length} · {episode.scenes[cur]?.shot.toUpperCase()}</span>
+              <label className="flex items-center gap-1.5"><input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} /> GUIDES</label>
             </div>
-            <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-            {guides && !recording && <ThirdsGuide />}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
-            <button className="btn-term" disabled={recording} onClick={() => { if (time >= total) setTime(0); setPlaying((p) => !p); }}>[ {playing ? "PAUSE" : "▶ PLAY"} ]</button>
-            <button className="btn-term-ghost" disabled={recording} onClick={() => { setPlaying(false); setTime(0); }}>[ ⏮ REWIND ]</button>
-            <button className="btn-term" disabled={recording} onClick={() => void record()}>[ {recording ? "● RECORDING…" : `⏺ EXPORT VIDEO (${mp4Ok === false ? "WEBM" : mp4Ok ? "MP4 FOR X" : "…"})`} ]</button>
-            <button className="btn-term-ghost" disabled={recording} onClick={() => void postToX()}>[ 𝕏 POST TO X ]</button>
+            <div className="studio-monitor grid place-items-center rounded">
+              <div ref={stageRef} className={`relative w-full overflow-hidden ${vertical ? "aspect-[9/16] max-h-[70vh] w-auto" : "aspect-video"}`} style={vertical ? { height: "70vh" } : undefined}>
+                <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
+                  <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
+                    <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
+                      <ToonStage3D episode={episode} time={time} />
+                    </Suspense>
+                  </ClientOnly>
+                </div>
+                <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+                {guides && !recording && <ThirdsGuide />}
+                {recording && <span className="absolute left-3 top-3 rounded bg-destructive px-2 py-0.5 font-mono text-[10px] text-destructive-foreground">● REC</span>}
+              </div>
+            </div>
+
+            {/* Transport */}
+            <div className="mt-2 flex flex-wrap items-center gap-2 px-1 font-mono text-xs">
+              <button aria-label="Rewind" className="studio-key" disabled={recording} onClick={() => { setPlaying(false); setTime(0); }}>⏮</button>
+              <button aria-label="Back one second" className="studio-key" disabled={recording} onClick={() => { setPlaying(false); setTime((t) => Math.max(0, t - 1)); }}>◀◀</button>
+              <button aria-label={playing ? "Pause" : "Play"} className="studio-key studio-key-main" disabled={recording} onClick={() => { if (time >= total) setTime(0); setPlaying((p) => !p); }}>{playing ? "❚❚" : "▶"}</button>
+              <button aria-label="Forward one second" className="studio-key" disabled={recording} onClick={() => { setPlaying(false); setTime((t) => Math.min(total, t + 1)); }}>▶▶</button>
+              <span className="studio-timecode">{tc(time)} <span className="text-muted-foreground">/ {tc(total)}</span></span>
+              <button className="studio-key ml-auto" disabled={recording} onClick={() => setMuted((m) => !m)}>{muted ? "🔇 MUTED" : "🔊 SOUND"}</button>
+            </div>
+          </section>
+
+          {/* Timeline */}
+          <section className="studio-panel p-2 font-mono text-[10px]">
+            <div className="mb-1 flex justify-between px-1 text-muted-foreground"><span>TIMELINE</span><span>CLICK A CLIP TO JUMP</span></div>
+            <div className="relative">
+              <div className="flex h-12 gap-px overflow-hidden rounded">
+                {episode.scenes.map((s, i) => (
+                  <button key={i} onClick={() => { setPlaying(false); setTime(episode.scenes.slice(0, i).reduce((a, x) => a + x.duration, 0) + 0.01); }}
+                    style={{ flexGrow: s.duration, flexBasis: 0 }}
+                    className={`studio-clip min-w-0 px-1.5 text-left ${i === cur ? "studio-clip-on" : ""}`}>
+                    <span className="block truncate">{i + 1} · {s.shot.toUpperCase()}</span>
+                    <span className="block truncate text-muted-foreground">{s.lines.length} LINE{s.lines.length === 1 ? "" : "S"} · {s.duration}s</span>
+                  </button>
+                ))}
+              </div>
+              <div className="pointer-events-none absolute -bottom-1 -top-1 w-0.5 bg-bitcoin" style={{ left: `${total ? (time / total) * 100 : 0}%` }} />
+            </div>
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
-              onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
-            <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
-          </div>
-          <label className="mt-2 flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-            <input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} /> FRAMING GUIDES (not exported)
-          </label>
-          <StageDirector episode={episode} time={time} disabled={recording} onChange={(n) => { setEpisode(n); setScript(JSON.stringify(n, null, 2)); }} />
-          <div className="mt-3"><CinemaSubmitPanel episode={episode} /></div>
-          <div className="mt-3"><ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} /></div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
-            <span className="label text-signal">ART STYLE</span>
-            {TOON_STYLES.map((s) => (
-              <button key={s.id} disabled={recording} aria-pressed={(episode.style ?? "classic") === s.id}
-                className={(episode.style ?? "classic") === s.id ? "btn-term" : "btn-term-ghost"}
-                onClick={() => { const n = { ...episode, style: s.id as ToonStyle }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }}>[ {s.label} ]</button>
-            ))}
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
-            <span className="label text-signal">SOUND</span>
-            <button className="btn-term-ghost" disabled={recording} onClick={() => setMuted((m) => !m)}>[ {muted ? "🔇 SOUND OFF" : "🔊 SOUND ON"} ]</button>
-            <label className="flex items-center gap-1 text-muted-foreground">MUSIC
-              <select className="border border-border bg-background px-2 py-1" value={episode.music ?? "adventure"} disabled={recording}
-                onChange={(e) => { const n = { ...episode, music: e.target.value as Music }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }}>
-                {MUSIC.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-              </select>
-            </label>
-            <label className="flex items-center gap-1 text-muted-foreground">
-              <input type="checkbox" checked={episode.voices !== false} disabled={recording}
-                onChange={(e) => { const n = { ...episode, voices: e.target.checked }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }} /> GUARDIAN VOICES
-            </label>
-          </div>
-          {note && <p className="mt-2 font-mono text-[11px] text-signal">&gt; {note}</p>}
+              onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="mt-2 w-full" aria-label="Timeline" />
+          </section>
+          {note && <p className="studio-panel px-3 py-2 font-mono text-[11px] text-signal">&gt; {note}</p>}
         </div>
 
-        <aside className="space-y-4">
-          <div id="episode-machine"><EpisodeMachine disabled={recording} onEpisode={(e) => { load(e); setPlaying(true); }} /></div>
-          <ToonLibraryPanel episode={episode} onOpen={load} onCharacters={setCharacters} onNotes={setNotes} />
-          <section className="rounded-lg border border-border bg-card p-4">
-            <div className="label text-signal">EPISODE GENERATOR</div>
-            <div className="mt-3 flex gap-2 font-mono text-xs">
-              <input value={hero} onChange={(e) => setHero(e.target.value.replace(/\D/g, ""))} aria-label="Hero BITMAP" className="w-full border border-border bg-background px-2 py-1" placeholder="Hero block" />
-              <input value={rival} onChange={(e) => setRival(e.target.value.replace(/\D/g, ""))} aria-label="Rival BITMAP" className="w-full border border-border bg-background px-2 py-1" placeholder="Rival block" />
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button className="btn-term" onClick={() => load(generateEpisode(Number(hero) || 0, Number(rival) || 0))}>[ WRITE EPISODE ]</button>
-              <button className="btn-term-ghost" onClick={() => load(generateEpisode(Number(hero) || 0, Number(rival) || 0, Math.floor(Math.random() * 1e9)))}>[ NEW TAKE ]</button>
-              <button className="btn-term-ghost" disabled={recording} onClick={() => {
-                if (window.confirm("Replace your current episode with the Guardians of the Citadel teaser? Unsaved changes to this episode will be lost.")) load(structuredClone(CITADEL_TEASER));
-              }}>[ LOAD TEASER ]</button>
-              <button className="btn-term-ghost" disabled={recording} onClick={() => {
-                if (window.confirm("Replace your current episode with the BITMAP Pixels: Coming Home trailer? Unsaved changes to this episode will be lost.")) load(structuredClone(PIXELS_HOMECOMING));
-              }}>[ PIXELS TRAILER ]</button>
-              <button className="btn-term-ghost" disabled={recording} onClick={() => {
-                if (window.confirm("Replace your current episode with the 3-minute short Tide of Iron? Unsaved changes to this episode will be lost.")) load(structuredClone(BEACH_LANDING));
-              }}>[ TIDE OF IRON · 3 MIN ]</button>
-              <button className="btn-term-ghost" disabled={recording} onClick={() => {
-                if (window.confirm("Replace your current episode with the portal short Transmission? Unsaved changes to this episode will be lost.")) load(structuredClone(TRANSMISSION));
-              }}>[ TRANSMISSION · PORTAL ]</button>
-              <button className="btn-term-ghost" disabled={recording} onClick={() => {
-                if (window.confirm("Replace your current episode with the Land Forge promo? Unsaved changes to this episode will be lost.")) load(structuredClone(FORGE_PROMO));
-              }}>[ LAND FORGE PROMO ]</button>
-              <button className="btn-term-ghost" onClick={() => load({ ...episode, aspect: vertical ? "16:9" : "9:16" })}>[ {vertical ? "16:9 TV" : "9:16 REEL"} ]</button>
-            </div>
-          </section>
-          <SceneEditor episode={episode} characters={characters} notes={notes}
-            onChange={(e) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setScriptError(null); setTime((t) => Math.min(t, episodeLength(e))); }}
-            onSeek={(t) => { setPlaying(false); setTime(t + 0.01); }} />
-          <EffectsPanel episode={episode} time={time} onChange={(e) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setScriptError(null); }} />
-          <section className="rounded-lg border border-border bg-card p-4">
-            <div className="label text-signal">SCRIPT (JSON · ADVANCED)</div>
-            <p className="mt-1 text-[11px] text-muted-foreground">Edit scenes, shots (wide, orbit, dolly, dutch, crane), poses (idle, walk, talk, jump, combat) and lines, then apply.</p>
-            <textarea value={script} onChange={(e) => setScript(e.target.value)} spellCheck={false}
-              className="mt-2 h-80 w-full border border-border bg-background p-2 font-mono text-[11px]" aria-label="Episode script" />
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button className="btn-term" onClick={() => { try { load(parseEpisode(script)); } catch (err) { setScriptError(err instanceof Error ? err.message : "Invalid script."); } }}>[ APPLY SCRIPT ]</button>
-              <button className="btn-term-ghost" onClick={() => {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(new Blob([script], { type: "application/json" }));
-                a.download = "episode.toon.json"; a.click();
-              }}>[ DOWNLOAD SCRIPT ]</button>
-            </div>
-            {scriptError && <p className="mt-2 font-mono text-[11px] text-bitcoin">&gt; {scriptError}</p>}
-          </section>
+        {/* Inspector */}
+        <aside className="studio-panel flex min-h-0 flex-col lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)]">
+          <nav className="flex flex-wrap gap-px border-b border-border p-1 font-mono text-[10px]">
+            {TABS.map(([id, label]) => (
+              <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id}
+                className={`flex-1 rounded px-2 py-1.5 ${tab === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{label}</button>
+            ))}
+          </nav>
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+            {tab === "direct" && (
+              <>
+                <StageDirector episode={episode} time={time} disabled={recording} onChange={edit} />
+                <EffectsPanel episode={episode} time={time} onChange={edit} />
+              </>
+            )}
+            {tab === "write" && (
+              <>
+                <div id="episode-machine"><EpisodeMachine disabled={recording} onEpisode={(e) => { load(e); setPlaying(true); }} /></div>
+                <section className="rounded border border-border p-3">
+                  <div className="label text-signal">QUICK EPISODE FROM TWO BLOCKS</div>
+                  <div className="mt-2 flex gap-2 font-mono text-xs">
+                    <input value={hero} onChange={(e) => setHero(e.target.value.replace(/\D/g, ""))} aria-label="Hero BITMAP" className="w-full border border-border bg-background px-2 py-1" placeholder="Hero block" />
+                    <input value={rival} onChange={(e) => setRival(e.target.value.replace(/\D/g, ""))} aria-label="Rival BITMAP" className="w-full border border-border bg-background px-2 py-1" placeholder="Rival block" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button className="btn-term" onClick={() => load(generateEpisode(Number(hero) || 0, Number(rival) || 0))}>[ WRITE ]</button>
+                    <button className="btn-term-ghost" onClick={() => load(generateEpisode(Number(hero) || 0, Number(rival) || 0, Math.floor(Math.random() * 1e9)))}>[ NEW TAKE ]</button>
+                  </div>
+                </section>
+                <SceneEditor episode={episode} characters={characters} notes={notes}
+                  onChange={(e) => { edit(e); setTime((t) => Math.min(t, episodeLength(e))); }}
+                  onSeek={(t) => { setPlaying(false); setTime(t + 0.01); }} />
+              </>
+            )}
+            {tab === "look" && (
+              <section className="space-y-3 font-mono text-xs">
+                <div>
+                  <div className="label text-signal">ART STYLE</div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {TOON_STYLES.map((s) => (
+                      <button key={s.id} disabled={recording} aria-pressed={(episode.style ?? "classic") === s.id}
+                        className={(episode.style ?? "classic") === s.id ? "btn-term" : "btn-term-ghost"}
+                        onClick={() => edit({ ...episode, style: s.id as ToonStyle })}>{s.label}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="label text-signal">MUSIC</div>
+                  <select className="mt-2 w-full border border-border bg-background px-2 py-1.5" value={episode.music ?? "adventure"} disabled={recording}
+                    onChange={(e) => edit({ ...episode, music: e.target.value as Music })}>
+                    {MUSIC.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-muted-foreground">
+                  <input type="checkbox" checked={episode.voices !== false} disabled={recording} onChange={(e) => edit({ ...episode, voices: e.target.checked })} /> GUARDIAN VOICES
+                </label>
+              </section>
+            )}
+            {tab === "library" && (
+              <>
+                <section className="rounded border border-border p-3">
+                  <div className="label text-signal">TEMPLATES</div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {presets.map(([label, ep, desc]) => (
+                      <button key={label} className="btn-term-ghost" disabled={recording} onClick={() => {
+                        if (window.confirm(`Replace your current episode with the ${desc}? Unsaved changes will be lost.`)) load(structuredClone(ep));
+                      }}>{label}</button>
+                    ))}
+                  </div>
+                </section>
+                <ToonLibraryPanel episode={episode} onOpen={load} onCharacters={setCharacters} onNotes={setNotes} />
+              </>
+            )}
+            {tab === "export" && (
+              <>
+                <section className="rounded border border-border p-3 font-mono text-xs">
+                  <div className="label text-signal">RENDER</div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Plays the whole episode and saves {mp4Ok === false ? "a WEBM" : "an MP4 ready for X"} at {X_SIZES[episode.aspect].join("×")}.</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button className="btn-term" disabled={recording} onClick={() => void record()}>[ {recording ? "● RECORDING…" : "⏺ EXPORT VIDEO"} ]</button>
+                    <button className="btn-term-ghost" disabled={recording} onClick={() => void postToX()}>[ 𝕏 POST TO X ]</button>
+                  </div>
+                </section>
+                <ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} />
+                <CinemaSubmitPanel episode={episode} />
+              </>
+            )}
+            {tab === "code" && (
+              <section>
+                <p className="text-[11px] text-muted-foreground">Edit scenes, shots, poses and lines directly, then apply.</p>
+                <textarea value={script} onChange={(e) => setScript(e.target.value)} spellCheck={false}
+                  className="mt-2 h-[50vh] w-full border border-border bg-background p-2 font-mono text-[11px]" aria-label="Episode script" />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button className="btn-term" onClick={() => { try { load(parseEpisode(script)); } catch (err) { setScriptError(err instanceof Error ? err.message : "Invalid script."); } }}>[ APPLY ]</button>
+                  <button className="btn-term-ghost" onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(new Blob([script], { type: "application/json" }));
+                    a.download = "episode.toon.json"; a.click();
+                  }}>[ DOWNLOAD ]</button>
+                </div>
+                {scriptError && <p className="mt-2 font-mono text-[11px] text-bitcoin">&gt; {scriptError}</p>}
+              </section>
+            )}
+          </div>
         </aside>
       </div>
     </div>
