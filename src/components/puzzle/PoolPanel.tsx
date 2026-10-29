@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { lotterySetPool, useLottery } from "@/lib/bitmap-lottery";
 import { poolStatsFn } from "@/lib/puzzle-pool.functions";
 import { SLICE_COUNT, SLICE_SIZE, isWorkerAddress } from "@/lib/puzzle-pool";
+import { POOL_DIVIDEND_PERCENT, PUZZLE_71 } from "@/lib/puzzle-sweep";
 import { useWalletSession } from "@/lib/wallet-session";
 
 const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-6)}`;
@@ -47,17 +48,17 @@ export function PoolPanel() {
 
       {s && s.top.length > 0 && (
         <table className="mt-4 w-full">
-          <thead><tr className="text-left text-muted-foreground"><th>#</th><th>ADDRESS</th><th>SLICES</th><th>CREDIT</th></tr></thead>
+          <thead><tr className="text-left text-muted-foreground"><th>#</th><th>ADDRESS</th><th>SLICES</th><th>CREDIT</th><th>DIVIDEND IF SOLVED</th></tr></thead>
           <tbody>
             {s.top.map((t, i) => (
-              <tr key={t.worker}><td>{i + 1}</td><td data-no-translate>{short(t.worker)}</td><td>{t.slices}</td><td className="text-bitcoin">{(t.share * 100).toFixed(2)}%</td></tr>
+              <tr key={t.worker}><td>{i + 1}</td><td data-no-translate>{short(t.worker)}</td><td>{t.slices}</td><td className="text-bitcoin">{(t.share * 100).toFixed(2)}%</td><td className="text-bitcoin">{(t.share * PUZZLE_71.rewardBtc * POOL_DIVIDEND_PERCENT / 100).toFixed(4)} BTC</td></tr>
             ))}
           </tbody>
         </table>
       )}
 
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Credit is a public record of who did the work. Whoever's browser finds the key still holds it and signs the sweep (90% to them, 10% treasury) —
+        Credit is a public record of who did the work. Whoever's browser finds the key still holds it and signs the sweep (80% to them, 20% treasury). Half of the treasury share — {POOL_DIVIDEND_PERCENT}% of the prize — is pledged to contributors by verified slices; the treasury pays it after the sweep confirms, so it is a promise, not enforced by Bitcoin —
         the pool cannot force a payout. Your address is shown on this board.
       </p>
     </section>

@@ -46,7 +46,7 @@ export function BitmapLotteryWidget() {
             ))}
           </div>
           <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
-            The prize is real BTC already sitting on Bitcoin since 2015. No smart contract is needed: whoever finds the key signs the spend on their own device, 90% to you and 10% to the treasury. Odds are astronomically low, so treat it as a free lottery ticket. Keys never leave this device. No BIT is paid.
+            The prize is real BTC already sitting on Bitcoin since 2015. No smart contract is needed: whoever finds the key signs the spend on their own device, 80% to you and 20% to the treasury (half of that is pledged to pool contributors). Odds are astronomically low, so treat it as a free lottery ticket. Keys never leave this device. No BIT is paid.
           </p>
           <Link to="/puzzle" onClick={() => setOpen(false)} className="mt-2 block text-accent underline">OPEN SWEEP TERMINAL →</Link>
         </div>

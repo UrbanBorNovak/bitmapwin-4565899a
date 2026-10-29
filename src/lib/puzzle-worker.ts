@@ -24,7 +24,7 @@ function randomIn(lo: bigint, hi: bigint): bigint {
   return lo + (r % span);
 }
 
-const less = (a: Uint8Array, b: Uint8Array) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] < b[i]; return false; };
+const less = (a: Uint8Array, b: Uint8Array) => { for (let i = 0; i < a.length; i++) { const x = a[i]!, y = b[i]!; if (x !== y) return x < y; } return false; };
 const toHex = (h: Uint8Array) => Array.from(h, (b) => b.toString(16).padStart(2, "0")).join("");
 
 async function run(m: Start) {
