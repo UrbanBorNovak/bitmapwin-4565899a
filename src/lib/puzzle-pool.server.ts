@@ -9,6 +9,7 @@ import {
   heatCellOf, isWorkerAddress, p2pkhAddress, poolSize, poolSliceStart, verifyCanaryProof, verifyShare, type PoolId,
 } from "@/lib/puzzle-pool";
 import { PUZZLE_71, hash160Of } from "@/lib/puzzle-sweep";
+import { cartographicSlice, isBlockHeight } from "@/lib/puzzle-cartographic";
 const PUZZLE_71_H160 = hash160Of(PUZZLE_71.address);
 
 const TABLE = { "71": "puzzle_pool_slices", test: "puzzle_test_slices" } as const;
@@ -37,7 +38,7 @@ export type Lease = {
   targetAddress: string; canaryHash160: string[]; canaryAddresses: string[]; leaseExpiresAt: string;
 };
 
-export async function claimSlice(worker: string, pool: PoolId = "71"): Promise<Lease | { ok: false; error: string }> {
+export async function claimSlice(worker: string, pool: PoolId = "71", height?: number): Promise<Lease | { ok: false; error: string }> {
   if (!isWorkerAddress(worker)) return { ok: false, error: "Enter a valid Bitcoin address" };
   const db = await admin();
   const since = new Date(Date.now() - LEASE_MS).toISOString();
@@ -45,11 +46,21 @@ export async function claimSlice(worker: string, pool: PoolId = "71"): Promise<L
   const { count } = await db.from(table).select("slice_index", { count: "exact", head: true })
     .eq("worker", worker).is("done_at", null).gte("leased_at", since);
   if ((count ?? 0) >= MAX_OPEN_LEASES) return { ok: false, error: "Too many open slices for this address — finish one first." };
+  if (height !== undefined && (pool !== "71" || !isBlockHeight(height))) return { ok: false, error: "Enter a valid block height" };
   for (let i = 0; i < 5; i++) {
-    const idx = randomIndex(POOLS[pool].count);
+    const idx = height !== undefined ? cartographicSlice(height).index : randomIndex(POOLS[pool].count);
     const token = crypto.randomUUID();
-    const { error } = await db.from(table).insert({ slice_index: Number(idx), worker, lease_token: token });
-    if (error) continue;
+    const { error } = await db.from(table).insert({ slice_index: Number(idx), worker, lease_token: token, ...(height !== undefined ? { block_height: height } : {}) });
+    if (error) {
+      if (height === undefined) continue;
+      // Block slices are fixed: re-lease only an unfinished, expired lease.
+      const { data: row } = await db.from(table).select("done_at, leased_at").eq("slice_index", Number(idx)).maybeSingle();
+      if (row?.done_at) return { ok: false, error: `${height}.bitmap is already scouted` };
+      if (row && new Date(row.leased_at).getTime() > Date.now() - LEASE_MS) return { ok: false, error: `${height}.bitmap is being scanned right now` };
+      const { data: up } = await db.from(table).update({ worker, lease_token: token, leased_at: new Date().toISOString(), block_height: height })
+        .eq("slice_index", Number(idx)).is("done_at", null).lt("leased_at", since).select("slice_index");
+      if (!up?.length) return { ok: false, error: "Pool busy, try again." };
+    }
     const h = canaryKeys(secret(pool), idx, token, pool).map(hash160OfKey);
     const start = poolSliceStart(pool, idx);
     const size = poolSize(pool);
@@ -96,4 +107,22 @@ export async function poolStats(pool: PoolId = "71") {
   }
   const top = [...per.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([worker, slices]) => ({ worker, slices, share: total ? slices / total : 0 }));
   return { slices: total, active, workers: per.size, top, heat: { cells: HEAT_CELLS, done, open } };
+}
+
+/** Status of a block's fixed slice. */
+export async function blockSliceStatus(height: number) {
+  if (!isBlockHeight(height)) return { ok: false as const, error: "Enter a valid block height" };
+  const c = cartographicSlice(height);
+  const db = await admin();
+  const { data: row } = await db.from("puzzle_pool_slices").select("worker, done_at, leased_at").eq("slice_index", Number(c.index)).maybeSingle();
+  const status = row?.done_at ? "scouted" : row && new Date(row.leased_at).getTime() > Date.now() - LEASE_MS ? "scanning" : "open";
+  return { ok: true as const, height, index: c.index.toString(), startHex: c.startHex, endHex: c.endHex, status, worker: row?.done_at ? row.worker : null, doneAt: row?.done_at ?? null };
+}
+
+/** Most recently scouted blocks, for the Jumbotron badge. */
+export async function scoutedBlocks(limit = 20) {
+  const db = await admin();
+  const { data } = await db.from("puzzle_pool_slices").select("block_height, done_at").not("block_height", "is", null).not("done_at", "is", null)
+    .order("done_at", { ascending: false }).limit(limit);
+  return (data ?? []).map((r) => ({ height: r.block_height as number, doneAt: r.done_at as string }));
 }
