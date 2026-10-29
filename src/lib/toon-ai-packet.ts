@@ -59,9 +59,9 @@ export function readPacket(text: string): { episode: ToonEpisode } | { errors: s
   if (ep.aspect !== undefined && ep.aspect !== "16:9" && ep.aspect !== "9:16") bad("Episode", "aspect", ep.aspect, ["16:9", "9:16"]);
   const scenes = ep.scenes;
   if (!Array.isArray(scenes) || scenes.length === 0) errors.push("Episode needs a \"scenes\" list with at least one scene.");
-  else scenes.forEach((s: Rec, i) => {
+  else scenes.forEach((s: Rec, i): void => {
     const w = `Scene ${i + 1}`;
-    if (!s || typeof s !== "object") return errors.push(`${w}: must be an object.`);
+    if (!s || typeof s !== "object") { errors.push(`${w}: must be an object.`); return; }
     const dur = Number(s.duration);
     if (!SHOTS.includes(s.shot as string)) bad(w, "shot", s.shot, SHOTS);
     if (s.set !== undefined && !TOON_SETS.includes(s.set as never)) bad(w, "set", s.set, TOON_SETS);
