@@ -4,10 +4,10 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hash160Of, keyMatches, sweepSplit, PUZZLE_71 } from "./puzzle-sweep";
 
 describe("puzzle sweep", () => {
-  it("treasury takes exactly 10% of a 7.1 BTC puzzle", () => {
+  it("treasury takes exactly 20% of a 7.1 BTC puzzle", () => {
     const s = sweepSplit(710_000_000n, 15_000n);
-    expect(s.treasury).toBe(71_000_000n);
-    expect(s.player).toBe(638_985_000n);
+    expect(s.treasury).toBe(142_000_000n);
+    expect(s.player).toBe(567_985_000n);
   });
   it("refuses a sweep that leaves the solver dust", () => {
     expect(() => sweepSplit(1_000n, 500n)).toThrow();

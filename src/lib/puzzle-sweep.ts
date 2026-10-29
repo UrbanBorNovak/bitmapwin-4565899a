@@ -1,7 +1,7 @@
 /**
  * Bitcoin Puzzle sweep — everything runs on the device. The found key never
- * leaves the browser; the signed spend pays the solver 90% and the treasury a
- * fixed 10% of the puzzle balance (miner fee comes out of the solver's share).
+ * leaves the browser; the signed spend pays the solver 80% and the treasury a
+ * fixed 20% of the puzzle balance (miner fee comes out of the solver's share).
  */
 import * as btc from "@scure/btc-signer";
 import { hex } from "@scure/base";
@@ -10,7 +10,9 @@ import { DONATION_ADDRESS } from "@/lib/donations";
 
 export const MEMPOOL = "https://mempool.space/api";
 /** Treasury share of a swept puzzle, in percent. */
-export const SWEEP_TREASURY_PERCENT = 10;
+export const SWEEP_TREASURY_PERCENT = 20;
+/** Half of the treasury share (10% of the balance) is pledged back to pool contributors pro-rata by verified slices. */
+export const POOL_DIVIDEND_PERCENT = 10;
 
 export type Puzzle = { n: number; address: string; rewardBtc: number; startHex: string; endHex: string };
 
@@ -30,7 +32,7 @@ export function hash160Of(address: string): Uint8Array {
   return out.hash;
 }
 
-/** Fixed split: treasury takes 10% of the balance, solver gets the rest minus fee. */
+/** Fixed split: treasury takes 20% of the balance, solver gets the rest minus fee. */
 export function sweepSplit(totalSats: bigint, minerFee: bigint) {
   const treasury = (totalSats * BigInt(SWEEP_TREASURY_PERCENT)) / 100n;
   const player = totalSats - treasury - minerFee;
