@@ -89,6 +89,12 @@ function LaunchPage() {
   useEffect(() => { if (stageTip) { playArena("airhorn"); window.setTimeout(() => playArena("coin"), 700); } }, [stageTip]);
   const blip = () => playArena("seat");
   const pickSeat = (s: LaunchSeat | null | undefined) => { blip(); setPicked(s ?? null); setFocus(s?.seat ?? null); if (s && view === "seat") setView("diorama"); };
+  const navigate = Route.useNavigate();
+  const closeInspect = () => { pickSeat(null); if (seatParam) void navigate({ search: {}, replace: true }); };
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") closeInspect(); };
+    window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k);
+  });
   const [cohort, setCohort] = useState<CohortId>("all");
   const cohortDef = COHORTS.find((c) => c.id === cohort)!;
   const cohortSeats = seats.filter(cohortDef.match).sort(cohortDef.sort);
@@ -252,7 +258,7 @@ function LaunchPage() {
           <Suspense fallback={null}>
             <Grandstand seats={seats} myAddress={myAddr} selected={picked?.seat ?? null} focusSeat={focus}
               view={view} mySeat={mine?.seat ?? null} sponsors={stageAds} onPick={(s) => pickSeat(s)}
-              popcornThrows={throws} onPopcornHit={() => { setHits((h) => h + 1); playArena("splat"); }} />
+              onDeselect={() => picked && closeInspect()} popcornThrows={throws} onPopcornHit={() => { setHits((h) => h + 1); playArena("splat"); }} />
           </Suspense>
         </ClientOnly>
         <div className="pointer-events-none absolute left-3 top-3 z-20 font-mono text-[10px] text-signal">
@@ -289,8 +295,8 @@ function LaunchPage() {
           ) : mine ? <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">BUY POPCORN AT YOUR SEAT TO TOSS IT AT THE SCREEN</span> : null}
         </div>
         {picked && (
-          <div className="absolute bottom-3 right-3 z-50 w-60 max-w-[calc(100%-1.5rem)] rounded border border-signal/50 bg-card p-3 font-mono text-xs">
-            <div className="mb-2 flex justify-between text-[10px] text-signal"><span>&gt; INSPECT</span><button onClick={() => pickSeat(null)} aria-label="Close">[X]</button></div>
+          <div className="absolute bottom-3 right-3 z-50 max-h-[calc(100%-1.5rem)] w-60 max-w-[calc(100%-1.5rem)] overflow-y-auto rounded border border-signal/50 bg-card p-3 font-mono text-xs">
+            <div className="sticky -top-3 z-10 -mx-3 -mt-3 mb-2 flex items-center justify-between bg-card px-3 pt-2 text-[10px] text-signal"><span>&gt; INSPECT</span><button type="button" onClick={closeInspect} aria-label="Close inspector" className="-m-1 px-2 py-1 text-sm hover:text-bitcoin">[X]</button></div>
             <div className="flex items-center gap-2">
               <PixelFace inscriptionId={picked.pixelId} label="Avatar" className="h-12 w-12" />
               <div><div className="text-bitcoin">SEAT #{picked.seat}</div><div className="text-muted-foreground">{short(picked.address)}</div></div>

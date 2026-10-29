@@ -18,6 +18,10 @@ const STEP_D = 1.1;
 /** Cyber-Colosseum: every tier wraps 220° around the open centre pit. */
 const ARC = (220 * Math.PI) / 180;
 const PIT_R = 9;
+/** Theatre proscenium: stage, screen and wings sit back at the rear of the pit. */
+const SCREEN_Z = -4.5;
+const SCREEN_W = 12;
+const SCREEN_Y = 4.2;
 
 /** Seat block width so each row fills its 220° arc. */
 function seatWidth(row: number, perRow: number) {
@@ -242,12 +246,20 @@ function Bitmapper({ seat, mine, selected, onPick }: { seat: LaunchSeat; mine: b
 
 function Stage() {
   return (
-    <group position={[0, 0, 2]} rotation-y={Math.PI}>
-      <mesh position-y={0.2}><boxGeometry args={[6, 0.4, 2.4]} /><meshLambertMaterial color="#2a2d34" /></mesh>
+    <group position={[0, 0, SCREEN_Z + 1.6]} rotation-y={Math.PI}>
+      <mesh position-y={0.2}><boxGeometry args={[13, 0.4, 3.2]} /><meshLambertMaterial color="#2a2d34" /></mesh>
       
-      {[-2.6, 2.6].map((x) => (
-        <mesh key={x} position={[x, 1.2, 0.8]}><boxGeometry args={[0.25, 2, 0.25]} /><meshLambertMaterial color="#22d3ee" emissive="#0a4a55" /></mesh>
+      {[-7.2, 7.2].map((x) => (
+        <group key={x}>
+          <mesh position={[x, 6, 1.4]}><boxGeometry args={[1.2, 12, 0.8]} /><meshLambertMaterial color="#1c1f26" /></mesh>
+          <mesh position={[x, 6, 1.0]}><boxGeometry args={[0.08, 12, 0.04]} /><meshBasicMaterial color="#f7931a" toneMapped={false} /></mesh>
+          <mesh position={[x * 0.93, 5.6, 1.1]}><boxGeometry args={[0.8, 11, 0.3]} /><meshLambertMaterial color="#6b0d16" /></mesh>
+        </group>
       ))}
+      <mesh position={[0, 12.2, 1.4]}><boxGeometry args={[15.6, 1, 0.8]} /><meshLambertMaterial color="#1c1f26" /></mesh>
+      <mesh position={[0, 11.7, 1.0]}><boxGeometry args={[14.2, 0.08, 0.04]} /><meshBasicMaterial color="#22d3ee" toneMapped={false} /></mesh>
+      <mesh position={[0, 7, 2.6]}><boxGeometry args={[22, 14, 0.4]} /><meshLambertMaterial color="#101318" /></mesh>
+      {Array.from({ length: 11 }, (_, i) => <mesh key={i} position={[-5 + i, 0.45, -1.5]}><boxGeometry args={[0.3, 0.1, 0.15]} /><meshBasicMaterial color="#fbbf24" toneMapped={false} /></mesh>)}
     </group>
   );
 }
@@ -436,7 +448,7 @@ function Jumbotron({ seat, sponsors = [], vips = [] }: { seat: LaunchSeat | null
     strip(); scan();
   }, [seat, canvas, tex, ad, adImg, vipCard, vips, scroll, scout]);
   return (
-    <group position={[0, 0.82, 3.26]} scale={0.46}>
+    <group position={[0, 1.1, SCREEN_Z + 3.25]} scale={0.46}>
       <mesh><planeGeometry args={[5.2, 2.6]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
       {seat && face && <mesh position={[1.95, 0.05, 0.01]}><planeGeometry args={[1.05, 1.05]} /><meshBasicMaterial map={face} toneMapped={false} /></mesh>}
     </group>
@@ -445,7 +457,7 @@ function Jumbotron({ seat, sponsors = [], vips = [] }: { seat: LaunchSeat | null
 
 /** Big stage video wall above the jumbotron: Elevated Dabber's live bitmap.stream channel, watched by the whole stand. */
 function StageVideo() {
-  const w = 8.6, h = w * 9 / 16, z = 3.05;
+  const w = SCREEN_W, h = w * 9 / 16, z = SCREEN_Z;
   const [front, setFront] = useState(true);
   // Only the audience side (+z) sees the stream; from backstage the DOM layer is removed.
   useFrame(({ camera }) => {
@@ -453,11 +465,11 @@ function StageVideo() {
     if (f !== front) setFront(f);
   });
   return (
-    <group position={[0, 3.5 + h / 2, z]}>
+    <group position={[0, SCREEN_Y + h / 2, z]}>
       <mesh position-z={-0.04}><boxGeometry args={[w + 0.16, h + 0.16, 0.06]} /><meshLambertMaterial color="#1a1410" emissive="#5a2d00" /></mesh>
       {/* Rear chassis: opaque LED-wall back with ribs and cable conduits. */}
       <mesh position-z={-0.22}><boxGeometry args={[w + 0.1, h + 0.1, 0.3]} /><meshLambertMaterial color="#202328" /></mesh>
-      {[-3.4, -1.2, 1.2, 3.4].map((x) => (
+      {[-5, -1.7, 1.7, 5].map((x) => (
         <mesh key={x} position={[x, 0, -0.42]}><boxGeometry args={[0.12, h + 0.3, 0.12]} /><meshLambertMaterial color="#3a3f47" /></mesh>
       ))}
       {[-0.6, 0.6].map((y) => (
@@ -476,15 +488,15 @@ function StageVideo() {
 
 export type GrandstandView = "diorama" | "stage" | "seat";
 
-export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null, sponsors = [], popcornThrows = 0, onPopcornHit }: {
+export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null, sponsors = [], popcornThrows = 0, onPopcornHit, onDeselect }: {
   seats: LaunchSeat[]; myAddress: string | null; selected: number | null; onPick: (s: LaunchSeat) => void; focusSeat: number | null;
-  view?: GrandstandView; mySeat?: number | null; sponsors?: SponsorSlide[]; popcornThrows?: number; onPopcornHit?: () => void;
+  view?: GrandstandView; mySeat?: number | null; sponsors?: SponsorSlide[]; popcornThrows?: number; onPopcornHit?: () => void; onDeselect?: () => void;
 }) {
   const picked = seats.find((s) => s.seat === selected) ?? null;
   const vips = useMemo(() => seats.filter((s) => s.ticketId), [seats]);
   const [talking, setTalking] = useState<string | null>(null);
   return (
-    <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 10, -6], fov: 55 }} dpr={[1, 1.5]} onPointerMissed={() => setTalking(null)}>
+    <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 17, 30], fov: 52 }} dpr={[1, 1.5]} onPointerMissed={() => { setTalking(null); onDeselect?.(); }}>
       <color attach="background" args={["#07090d"]} />
       <fog attach="fog" args={["#07090d", 36, 90]} />
       <ambientLight intensity={0.7} />
@@ -505,25 +517,28 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   );
 }
 
-type Kernel = { p: THREE.Vector3; v: THREE.Vector3; t: number; hit: boolean };
-/** Popcorn throws: kernels arc from the thrower's seat to the stage screen; hits splat and report back. */
+type Kernel = { p: THREE.Vector3; v: THREE.Vector3; rot: THREE.Euler; spin: THREE.Vector3; t: number; hit: boolean; bounces: number; rest: boolean };
+const GRAV = 9.8, DRAG = 0.35, RESTITUTION = 0.45, FLOOR_Y = 0.05, KERNEL_LIFE = 6;
+/** Popcorn throws: ballistic kernels with drag and tumble arc from the thrower's seat; screen hits splat, slide, drop and bounce on the floor. */
 function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: number | null; onHit?: (() => void) | undefined }) {
-  const N = 40;
+  const N = 60;
   const mesh = useRef<THREE.InstancedMesh>(null);
   const ks = useRef<Kernel[]>([]);
   const last = useRef(throws);
-  const m = useMemo(() => new THREE.Matrix4(), []);
+  const o = useMemo(() => new THREE.Object3D(), []);
+  const h = (SCREEN_W * 9) / 16;
   useFrame((_, raw) => {
     const d = Math.min(raw, 0.05);
     if (throws !== last.current && fromSeat) {
       last.current = throws;
       const [x, y, z] = seatPos(fromSeat);
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         const p = new THREE.Vector3(x * 0.94, y + 1.4, z * 0.94);
-        const aim = new THREE.Vector3((Math.random() - 0.5) * 7, 2 + Math.random() * 4, 3.1);
-        const T = 1.1;
-        const v = aim.sub(p).divideScalar(T); v.y += 0.5 * 9.8 * T;
-        ks.current.push({ p, v, t: 0, hit: false });
+        const aim = new THREE.Vector3((Math.random() - 0.5) * SCREEN_W * 0.8, SCREEN_Y + 0.6 + Math.random() * (h - 1.2), SCREEN_Z + 0.08);
+        const T = 1.3 + Math.random() * 0.3;
+        // Solve launch velocity for a drag-free arc; drag makes some fall short for real.
+        const v = aim.sub(p).divideScalar(T); v.y += 0.5 * GRAV * T; v.multiplyScalar(1 + DRAG * T * 0.5);
+        ks.current.push({ p, v, rot: new THREE.Euler(), spin: new THREE.Vector3((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18), t: 0, hit: false, bounces: 0, rest: false });
       }
       ks.current = ks.current.slice(-N);
     }
@@ -531,18 +546,30 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
     let i = 0;
     for (const k of ks.current) {
       k.t += d;
-      if (!k.hit) {
-        k.v.y -= 9.8 * d; k.p.addScaledVector(k.v, d);
-        if (k.p.z <= 3.12 && Math.abs(k.p.x) < 4.3 && k.p.y > 3.5 && k.p.y < 8.4) { k.hit = true; k.p.z = 3.12; k.t = 0; onHit?.(); }
-      } else if (k.t > 0.6) { k.p.y -= 3 * d; }
-      const s = k.hit ? 0.22 : 0.09;
-      m.makeScale(s, s, k.hit ? 0.02 : s).setPosition(k.p); im.setMatrixAt(i++, m);
+      if (!k.rest) {
+        k.v.multiplyScalar(Math.exp(-DRAG * d));
+        k.v.y -= GRAV * (k.hit && k.t < 0.4 ? 0.15 : 1) * d; // splats cling, then slide off
+        k.p.addScaledVector(k.v, d);
+        k.rot.x += k.spin.x * d; k.rot.y += k.spin.y * d; k.rot.z += k.spin.z * d;
+        if (!k.hit && k.p.z <= SCREEN_Z + 0.08 && Math.abs(k.p.x) < SCREEN_W / 2 && k.p.y > SCREEN_Y && k.p.y < SCREEN_Y + h) {
+          k.hit = true; k.t = 0; k.p.z = SCREEN_Z + 0.1; onHit?.();
+          k.v.set(k.v.x * 0.15, 0, Math.abs(k.v.z) * 0.12); k.spin.multiplyScalar(0.2);
+        }
+        if (k.p.y <= FLOOR_Y && k.v.y < 0) {
+          k.p.y = FLOOR_Y; k.bounces++;
+          k.v.y = -k.v.y * RESTITUTION; k.v.x *= 0.6; k.v.z *= 0.6; k.spin.multiplyScalar(0.5);
+          if (k.bounces > 3 || Math.abs(k.v.y) < 0.4) { k.rest = true; k.t = 0; }
+        }
+      }
+      const s = k.hit && k.t < 0.4 && !k.rest ? 0.2 : 0.1;
+      o.position.copy(k.p); o.rotation.copy(k.rot); o.scale.set(s, s, k.hit && k.t < 0.4 && !k.rest ? 0.03 : s);
+      o.updateMatrix(); im.setMatrixAt(i++, o.matrix);
     }
-    ks.current = ks.current.filter((k) => !(k.hit && k.p.y < 0.4) && k.p.y > -1);
-    for (; i < N; i++) { m.makeScale(0, 0, 0); im.setMatrixAt(i, m); }
+    ks.current = ks.current.filter((k) => !(k.rest && k.t > KERNEL_LIFE) && k.p.y > -2);
+    for (; i < N; i++) { o.scale.set(0, 0, 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
     im.instanceMatrix.needsUpdate = true;
   });
-  return <instancedMesh ref={mesh} args={[undefined, undefined, N]}><boxGeometry /><meshBasicMaterial color="#ffe28a" /></instancedMesh>;
+  return <instancedMesh ref={mesh} args={[undefined, undefined, N]}><dodecahedronGeometry args={[0.6, 0]} /><meshLambertMaterial color="#ffe28a" emissive="#3a2a00" /></instancedMesh>;
 }
 
 /** STAFF: the Biternam crew, wearing the same on-chain Pixel faces they wear in Biternam rooms. */
@@ -610,7 +637,7 @@ function StaffWalker({ id, name, ins, i, talking, onTalk }: { id: string; name: 
 function BackstageDoor() {
   const [hot, setHot] = useState(false);
   return (
-    <group position={[-5.4, 0, 2.4]} rotation-y={Math.PI}
+    <group position={[-9.6, 0.4, SCREEN_Z - 0.3]}
       onClick={(e) => { e.stopPropagation(); window.location.assign("/biternam/cafe"); }}
       onPointerOver={(e) => { e.stopPropagation(); setHot(true); document.body.style.cursor = "pointer"; }}
       onPointerOut={() => { setHot(false); document.body.style.cursor = ""; }}>
@@ -621,7 +648,7 @@ function BackstageDoor() {
       ))}
       <mesh position={[0, 0.8, -0.5]} rotation-z={Math.PI / 2}><cylinderGeometry args={[0.04, 0.04, 1.7, 6]} /><meshLambertMaterial color="#8b0d1a" /></mesh>
       <SafeHtml position={[0, 2.8, 0]} center zIndexRange={[4, 0]}>
-        <div style={{ whiteSpace: "nowrap", background: "rgba(6,9,13,0.9)", border: "1px solid #f7931a", color: "#f7931a", font: "bold 10px monospace", padding: "2px 6px", pointerEvents: "none" }}>← BACKSTAGE · BIT-CAFÉ</div>
+        <div style={{ whiteSpace: "nowrap", background: "rgba(6,9,13,0.9)", border: "1px solid #f7931a", color: "#f7931a", font: "bold 10px monospace", padding: "2px 6px", pointerEvents: "none" }}>STAGE DOOR · BIT-CAFÉ →</div>
       </SafeHtml>
     </group>
   );
@@ -629,13 +656,13 @@ function BackstageDoor() {
 
 function CameraRig({ focus, view, mySeat, showScreen, vipFocus = false }: { focus: number | null; view: GrandstandView; mySeat: number | null; showScreen: boolean; vipFocus?: boolean }) {
   const target = useRef(new THREE.Vector3(0, 3, 13));
-  const eye = useRef(new THREE.Vector3(0, 10, -6));
+  const eye = useRef(new THREE.Vector3(0, 17, 30));
   useFrame(({ camera, clock }, d) => {
     let fov = 50;
     if (view === "seat" && mySeat) {
       // Sit in my seat: eye at head height, looking at the stage.
       const [x, y, z] = seatPos(mySeat);
-      eye.current.set(x * 0.94, y + 1.7, z * 0.94); target.current.set(0, 3.2, 3); fov = 60;
+      eye.current.set(x * 0.94, y + 1.7, z * 0.94); target.current.set(0, SCREEN_Y + 3, SCREEN_Z); fov = 60;
     } else if (focus) {
       const [x, y, z] = seatPos(focus);
       if (vipFocus) {
@@ -652,13 +679,13 @@ function CameraRig({ focus, view, mySeat, showScreen, vipFocus = false }: { focu
     } else if (view === "stage" && showScreen) {
       // A Bitmapper is picked: face the jumbotron from the open floor in front of the stands.
       const t = clock.elapsedTime * 0.2;
-      eye.current.set(Math.sin(t) * 1, 6.5, 12.5); target.current.set(0, 1.2, 3); fov = 55;
+      eye.current.set(Math.sin(t) * 1, 5, 6); target.current.set(0, 1.6, SCREEN_Z + 3); fov = 55;
     } else if (view === "stage") {
       const t = clock.elapsedTime * 0.15;
-      eye.current.set(Math.sin(t) * 3, 5, -3); target.current.set(0, 5, 16); fov = 55;
+      eye.current.set(Math.sin(t) * 1.5, 9, 16); target.current.set(0, SCREEN_Y + 3.2, SCREEN_Z); fov = 55;
     } else {
       // Biternam 2.5D diorama: fixed high tilted angle, narrow lens.
-      eye.current.set(0, 24, -30); target.current.set(0, 4, 14); fov = 52;
+      eye.current.set(0, 17, 30); target.current.set(0, SCREEN_Y + 2.5, SCREEN_Z); fov = 52;
     }
     const k = 1 - Math.exp(-3 * Math.min(d, 0.05));
     const pc = camera as THREE.PerspectiveCamera;
