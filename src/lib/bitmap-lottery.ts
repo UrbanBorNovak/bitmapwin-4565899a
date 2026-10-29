@@ -20,6 +20,8 @@ export type LotteryState = {
   slice: string | null; found: string | null;
   /** Pool mode: payout address shown on the board, or null for solo. */
   poolWorker: string | null; poolDone: number; poolMsg: string | null;
+  /** Keys checked in the current pool slice, and that slice's size (0 = none). */
+  poolScanned: number; poolSize: number;
 };
 const POOL_KEY = "bitmap.pool.worker";
 const POOL_DONE_KEY = "bitmap.pool.done";
@@ -29,7 +31,7 @@ const ON_KEY = "bitmap.lottery.on";
 const POWER_KEY = "bitmap.lottery.power";
 export const FOUND_KEY = "bitmap.puzzle.found";
 
-let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null };
+let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0 };
 const listeners = new Set<() => void>();
 let worker: Worker | null = null;
 let recent: { t: number; n: number }[] = [];
@@ -48,7 +50,7 @@ function ensureWorker() {
       const now = performance.now();
       recent.push({ t: now, n: m.count });
       recent = recent.filter((x) => now - x.t < 5000);
-      set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / 5) });
+      set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / 5), poolScanned: lease ? state.poolScanned + m.count : state.poolScanned });
     } else if (m.type === "slice") set({ slice: m.startHex });
     else if (m.type === "slice-done") void finishSlice(m.offset, m.hash, m.canaryKeys ?? []);
     else if (m.type === "found") {
@@ -77,7 +79,7 @@ async function nextSlice() {
     const r = await claimSliceFn({ data: { worker: state.poolWorker } });
     if (!r.ok) { set({ poolMsg: r.error }); setTimeout(nextSlice, 60_000); return; }
     lease = { index: r.index, token: r.token };
-    set({ poolMsg: `SCANNING SLICE #${r.index}` });
+    set({ poolMsg: `SCANNING SLICE #${r.index}`, poolScanned: 0, poolSize: r.size });
     if (state.on) startWorker({ startHex: r.startHex, size: r.size, canaries: r.canaryHash160 });
   } catch { set({ poolMsg: "POOL OFFLINE — RETRYING" }); setTimeout(nextSlice, 30_000); }
 }
@@ -97,13 +99,13 @@ async function finishSlice(offset: number, hash: string, canaryKeys: string[]) {
   void nextSlice();
 }
 
-/** Join the shared pool with a payout address, or pass null to scan solo. */
+/** Join the shared pool with a payout address (starts scanning), or pass null to scan solo. */
 export function lotterySetPool(worker: string | null) {
   const wasOn = state.on;
   if (wasOn) lotteryStop();
   if (worker) localStorage.setItem(POOL_KEY, worker); else localStorage.removeItem(POOL_KEY);
-  set({ poolWorker: worker, poolMsg: null });
-  if (wasOn) lotteryStart();
+  set({ poolWorker: worker, poolMsg: null, poolScanned: 0, poolSize: 0 });
+  if (wasOn || worker) lotteryStart();
 }
 
 export function lotteryStart() {
