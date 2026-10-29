@@ -22,10 +22,9 @@ while true; do
   CMD=\${SCANNER//\\{start\\}/$S}; CMD=\${CMD//\\{end\\}/$E}; CMD=\${CMD//\\{targets\\}/$T}; CMD=\${CMD//\\{out\\}/$O}
   eval "$CMD" || true
   KEYS=$(tr 'A-F' 'a-f' < "$O" | grep -oE '[0-9a-f]{1,64}' | while read -r k; do printf '%064s\\n' "$k" | tr ' ' 0; done)
-  # Order keys as the lease lists canaries: derive each key's slot by matching addresses is scanner-specific,
-  # so the scanner output must keep lease order; the target key (if any) is printed loudly.
-  PROOF=$(printf '%s' "$(head -n3 <<<"$KEYS" | tr -d '\\n')" | sha256sum | cut -d' ' -f1)
-  [ "$(wc -l <<<"$KEYS")" -gt 3 ] && echo "!!! EXTRA KEY FOUND — CHECK $O, IT MAY BE THE PUZZLE KEY !!!" && cp "$O" "found-$IDX.txt"
+  N=$(grep -c . <<<"$KEYS" || true)
+  if [ "$N" -gt 3 ]; then cp "$O" "found-$IDX.txt"; echo "!!! $N KEYS FOUND — ONE MAY BE THE PUZZLE KEY: found-$IDX.txt !!!"; fi
+  PROOF=$(sort <<<"$KEYS" | tr -d '\\n' | sha256sum | cut -d' ' -f1)
   curl -sf -X POST "$API/share" -H 'content-type: application/json' \\
     -d "{\\"index\\":\\"$IDX\\",\\"token\\":\\"$TOK\\",\\"canaryProof\\":\\"$PROOF\\"}" ; echo
   rm -f "$T" "$O"

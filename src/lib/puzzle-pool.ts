@@ -74,9 +74,9 @@ export const keyHex64 = (k: bigint) => k.toString(16).padStart(64, "0");
 /** Legacy P2PKH address of a Hash160 (what GPU scanners take as targets). */
 export const p2pkhAddress = (h160: Uint8Array) => b58.encode(Uint8Array.from([0, ...h160]));
 
-/** Proof a worker sends back: SHA-256 of the found canary keys (64-hex each, in order). */
+/** Proof a worker sends back: SHA-256 of the found canary keys (64-hex each, sorted ascending). */
 export const canaryProof = (keysHex: string[]) =>
-  hex(sha256(new TextEncoder().encode(keysHex.map((k) => k.toLowerCase().replace(/^0x/, "").padStart(64, "0")).join(""))));
+  hex(sha256(new TextEncoder().encode(keysHex.map((k) => k.toLowerCase().replace(/^0x/, "").padStart(64, "0")).sort().join(""))));
 
 export function verifyCanaryProof(secret: string, index: bigint, token: string, proof: string): boolean {
   const expect = canaryProof(canaryKeys(secret, index, token).map(keyHex64));

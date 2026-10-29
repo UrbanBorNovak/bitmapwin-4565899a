@@ -11,7 +11,7 @@ const Body = z.object({
   hash: z.string().regex(/^[0-9a-fA-F]{40}$/).optional(),
 });
 
-/** Rig API: report a finished slice. canaryProof = sha256(hex64(k1)+hex64(k2)+hex64(k3)) of the trap keys, in lease order. */
+/** Rig API: report a finished slice. canaryProof = sha256canaryProof = sha256 of the three 64-hex trap keys sorted ascending and concatenated. */
 export const Route = createFileRoute("/api/public/puzzle/71/share")({
   server: {
     handlers: {
