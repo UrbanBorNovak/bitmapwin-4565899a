@@ -1,5 +1,5 @@
 /** Oasis landmarks that hold a walk-in Biternam interior. */
-export type InteriorPath = "/biternam/cafe" | "/biternam/outpost" | "/biternam/museum" | "/biternam/safehouse" | "/biternam/arcade" | "/biternam/studio" | "/biternam/lab" | "/biternam/batcave" | "/biternam/island";
+export type InteriorPath = "/biternam/cafe" | "/biternam/outpost" | "/biternam/museum" | "/biternam/safehouse" | "/biternam/arcade" | "/biternam/studio" | "/biternam/lab" | "/biternam/batcave" | "/biternam/island" | "/biternam/embassy/emporium";
 
 export const INTERIOR_DOORS: Record<string, { to: InteriorPath; label: string; color: string }> = {
   "bit-cafe": { to: "/biternam/cafe", label: "ENTER BIT-CAFÉ", color: "#f7931a" },
@@ -10,6 +10,7 @@ export const INTERIOR_DOORS: Record<string, { to: InteriorPath; label: string; c
   "bitcoin-statue": { to: "/biternam/studio", label: "ENTER BITMAP NEWS STUDIO", color: "#ff4433" },
   "miner-rig-2": { to: "/biternam/lab", label: "ENTER BOPTIMIZATION LAB", color: "#28e0ff" },
   tower: { to: "/biternam/batcave", label: "DESCEND TO DEV9'S BATCAVE", color: "#3ee07a" },
+  "emporium-embassy": { to: "/biternam/embassy/emporium", label: "ENTER THE EMPORIUM EMBASSY", color: "#f7931a" },
   torii: { to: "/biternam/island", label: "SAIL TO URBAN'S ISLAND", color: "#22c4d6" },
 };
 

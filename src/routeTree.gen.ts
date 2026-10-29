@@ -160,6 +160,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
+import { Route as BiternamEmbassyEmporiumRouteImport } from './routes/biternam_.embassy.emporium'
 import { Route as CollectionsGuardiansHeightRouteImport } from './routes/collections.guardians_.$height'
 import { Route as EmbedBitmapBlockRouteImport } from './routes/embed.bitmap.$block'
 import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
@@ -935,6 +936,11 @@ const ApiPublicResolveRegistryRoute =
     path: '/public/resolve-registry',
     getParentRoute: () => ApiRoute,
   } as any)
+const BiternamEmbassyEmporiumRoute = BiternamEmbassyEmporiumRouteImport.update({
+  id: '/biternam_/embassy/emporium',
+  path: '/biternam/embassy/emporium',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsGuardiansHeightRoute =
   CollectionsGuardiansHeightRouteImport.update({
     id: '/guardians_/$height',
@@ -1170,6 +1176,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/biternam/embassy/emporium': typeof BiternamEmbassyEmporiumRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
@@ -1335,6 +1342,7 @@ export interface FileRoutesByTo {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/biternam/embassy/emporium': typeof BiternamEmbassyEmporiumRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
@@ -1505,6 +1513,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/biternam_/embassy/emporium': typeof BiternamEmbassyEmporiumRoute
   '/collections/guardians_/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map_/district/$slug': typeof MapDistrictSlugRoute
@@ -1676,6 +1685,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/biternam/embassy/emporium'
     | '/collections/guardians/$height'
     | '/embed/bitmap/$block'
     | '/map/district/$slug'
@@ -1841,6 +1851,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/biternam/embassy/emporium'
     | '/collections/guardians/$height'
     | '/embed/bitmap/$block'
     | '/map/district/$slug'
@@ -2010,6 +2021,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/biternam_/embassy/emporium'
     | '/collections/guardians_/$height'
     | '/embed/bitmap/$block'
     | '/map_/district/$slug'
@@ -2147,6 +2159,7 @@ export interface RootRouteChildren {
   StandIndexRoute: typeof StandIndexRoute
   TraitsIndexRoute: typeof TraitsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  BiternamEmbassyEmporiumRoute: typeof BiternamEmbassyEmporiumRoute
   EmbedBitmapBlockRoute: typeof EmbedBitmapBlockRoute
   MapDistrictSlugRoute: typeof MapDistrictSlugRoute
   MapPlaceBlockRoute: typeof MapPlaceBlockRoute
@@ -3211,6 +3224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/biternam_/embassy/emporium': {
+      id: '/biternam_/embassy/emporium'
+      path: '/biternam/embassy/emporium'
+      fullPath: '/biternam/embassy/emporium'
+      preLoaderRoute: typeof BiternamEmbassyEmporiumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collections/guardians_/$height': {
       id: '/collections/guardians_/$height'
       path: '/guardians/$height'
@@ -3593,6 +3613,7 @@ const rootRouteChildren: RootRouteChildren = {
   StandIndexRoute: StandIndexRoute,
   TraitsIndexRoute: TraitsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  BiternamEmbassyEmporiumRoute: BiternamEmbassyEmporiumRoute,
   EmbedBitmapBlockRoute: EmbedBitmapBlockRoute,
   MapDistrictSlugRoute: MapDistrictSlugRoute,
   MapPlaceBlockRoute: MapPlaceBlockRoute,

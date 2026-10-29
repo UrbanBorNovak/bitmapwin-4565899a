@@ -121,6 +121,16 @@ export const LANDMARKS: LandmarkSpec[] = [
     radius: 1.15,
     yaw: Math.PI / 2.4,
   },
+  {
+    id: "emporium-embassy",
+    label: "EMPORIUM EMBASSY",
+    blurb: "The Bitmap Emporium's embassy — a meeting hall for holders of 717328.bitmap.",
+    inscription: "70221b5444bb141183767975e86d7b04f144f343925bdf8a1d758eab79d33c74i0",
+    cell: [7, 9],
+    span: 1.8,
+    radius: 1.5,
+    yaw: 2.4,
+  },
   // THE MINING YARD — a row of BTC MINER rigs standing on their own BITMAPS just
   // north-east of the plaza, so everyone sees what a rig looks like before they
   // gather the minerals to raise one of their own.
