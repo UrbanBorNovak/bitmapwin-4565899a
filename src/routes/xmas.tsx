@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/lib/auth";
 import { ADVENT_DOORS, doorOpensAt, isDoorOpen } from "@/lib/advent";
+import { XmasTeaser } from "@/components/xmas/XmasTeaser";
 
 export const Route = createFileRoute("/xmas")({
   head: () => ({
@@ -80,6 +81,8 @@ function XmasPage() {
             <div><span className="text-muted-foreground">SIGNED UP </span><span className="text-primary">{count ?? "…"}</span></div>
           </div>
         </header>
+
+        <XmasTeaser />
 
         <section className="border border-border p-6 bg-card/60">
           <h2 className="text-sm tracking-widest text-accent">ADVENT RATION CARD</h2>
