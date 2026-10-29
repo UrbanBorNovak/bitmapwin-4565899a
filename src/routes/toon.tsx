@@ -13,6 +13,7 @@ import { canEncodeMp4, createXRecorder, probeMp4, X_MAX_SECONDS, X_SIZES, xInten
 import { BEACH_LANDING, CITADEL_TEASER, FORGE_PROMO, PIXELS_HOMECOMING, TRANSMISSION } from "@/lib/toon-teaser";
 import { drawOverlay } from "@/lib/toon-overlay";
 import { StageDirector, ThirdsGuide } from "@/components/toon/StageDirector";
+import { packetText, readPacket } from "@/lib/toon-ai-packet";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
@@ -41,8 +42,9 @@ function ToonPage() {
   const [hero, setHero] = useState("840000");
   const [rival, setRival] = useState("77819");
   const [episode, setEpisode] = useState<ToonEpisode>(() => generateEpisode(840000, 77819));
-  const [script, setScript] = useState(() => JSON.stringify(generateEpisode(840000, 77819), null, 2));
+  const [script, setScript] = useState(() => packetText(generateEpisode(840000, 77819)));
   const [scriptError, setScriptError] = useState<string | null>(null);
+  const [scriptErrors, setScriptErrors] = useState<string[]>([]);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -72,7 +74,7 @@ function ToonPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, muted, recording, episode]);
 
-  const load = (e: ToonEpisode) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setTime(0); setScriptError(null); };
+  const load = (e: ToonEpisode) => { setEpisode(e); setScript(packetText(e)); setTime(0); setScriptError(null); };
 
   useEffect(() => {
     if (!playing) return;
@@ -165,7 +167,7 @@ function ToonPage() {
   };
 
   const vertical = episode.aspect === "9:16";
-  const edit = (n: ToonEpisode) => { setEpisode(n); setScript(JSON.stringify(n, null, 2)); setScriptError(null); };
+  const edit = (n: ToonEpisode) => { setEpisode(n); setScript(packetText(n)); setScriptError(null); };
   const cur = sceneAt(episode, time).index;
   const tc = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${(s % 60).toFixed(1).padStart(4, "0")}`;
   const presets: [string, ToonEpisode, string][] = [
@@ -341,18 +343,26 @@ function ToonPage() {
             )}
             {tab === "code" && (
               <section>
-                <p className="text-[11px] text-muted-foreground">Edit scenes, shots, poses and lines directly, then apply.</p>
+                <p className="text-[11px] text-muted-foreground">The full episode with every allowed preset and instructions for an AI. Copy it, ask any AI to improve it, paste the reply here and apply. Nothing changes until the pasted script passes every check.</p>
                 <textarea value={script} onChange={(e) => setScript(e.target.value)} spellCheck={false}
                   className="mt-2 h-[50vh] w-full border border-border bg-background p-2 font-mono text-[11px]" aria-label="Episode script" />
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <button className="btn-term" onClick={() => { try { load(parseEpisode(script)); } catch (err) { setScriptError(err instanceof Error ? err.message : "Invalid script."); } }}>[ APPLY ]</button>
+                  <button className="btn-term" onClick={() => { const r = readPacket(script); if ("errors" in r) { setScriptErrors(r.errors); setScriptError(null); } else { setScriptErrors([]); load(r.episode); setScriptError("Applied. Your episode is updated."); } }}>[ APPLY ]</button>
+                  <button className="btn-term-ghost" onClick={() => { void navigator.clipboard?.writeText(script); setScriptError("Copied. Paste it into any AI and paste the reply back here."); }}>[ COPY FOR AI ]</button>
+                  <button className="btn-term-ghost" onClick={() => { setScript(packetText(episode)); setScriptErrors([]); setScriptError("Reset to your current episode."); }}>[ RESET ]</button>
                   <button className="btn-term-ghost" onClick={() => {
                     const a = document.createElement("a");
                     a.href = URL.createObjectURL(new Blob([script], { type: "application/json" }));
                     a.download = "episode.toon.json"; a.click();
                   }}>[ DOWNLOAD ]</button>
                 </div>
-                {scriptError && <p className="mt-2 font-mono text-[11px] text-bitcoin">&gt; {scriptError}</p>}
+                {scriptError && <p className="mt-2 font-mono text-[11px] text-signal">&gt; {scriptError}</p>}
+                {scriptErrors.length > 0 && (
+                  <div className="mt-2 border border-bitcoin/50 p-2 font-mono text-[11px] text-bitcoin" role="alert">
+                    <div>NOT APPLIED · fix {scriptErrors.length} problem{scriptErrors.length > 1 ? "s" : ""} (your current episode is unchanged):</div>
+                    <ul className="mt-1 list-disc pl-4">{scriptErrors.map((x, i) => <li key={i}>{x}</li>)}</ul>
+                  </div>
+                )}
               </section>
             )}
           </div>
