@@ -245,7 +245,7 @@ function ToonPage() {
                 ))}
               </div>
               <div className="pointer-events-none absolute -bottom-1 -top-1 w-0.5 bg-bitcoin" style={{ left: `${total ? (time / total) * 100 : 0}%` }} />
-            </div>
+            </div></div>
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="mt-2 w-full" aria-label="Timeline" />
           </section>
