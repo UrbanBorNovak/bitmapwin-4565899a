@@ -55,19 +55,33 @@ export const CANARY_COUNT = 3;
 const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 const b58 = createBase58check(sha256);
 
+/**
+ * Pools: "71" is the real prize range; "test" is a small unfunded practice range
+ * (2^16-key slices, target Hash160 of all zeros, which no key hits) for
+ * end-to-end checks of claim → scan → proof.
+ */
+export type PoolId = "71" | "test";
+export const POOLS = {
+  "71": { start: RANGE_START, bits: SLICE_BITS, count: SLICE_COUNT, target: null as string | null },
+  test: { start: 1n << 40n, bits: 16, count: 1n << 20n, target: "00".repeat(20) },
+} satisfies Record<PoolId, { start: bigint; bits: number; count: bigint; target: string | null }>;
+export const isPoolId = (p: string): p is PoolId => p === "71" || p === "test";
+export const poolSize = (p: PoolId) => 1n << BigInt(POOLS[p].bits);
+export const poolSliceStart = (p: PoolId, index: bigint) => POOLS[p].start + index * poolSize(p);
+
 /** Canary offsets for one lease: HMAC(secret, index|token|j) mod slice size. Server-only secret. */
-export function canaryOffsets(secret: string, index: bigint, token: string): bigint[] {
+export function canaryOffsets(secret: string, index: bigint, token: string, size: bigint = SLICE_SIZE): bigint[] {
   const out: bigint[] = [];
   for (let j = 0; out.length < CANARY_COUNT && j < 32; j++) {
     const m = hmac(sha256, new TextEncoder().encode(secret), new TextEncoder().encode(`${index}|${token}|${j}`));
-    const off = BigInt("0x" + hex(m)) % SLICE_SIZE;
+    const off = BigInt("0x" + hex(m)) % size;
     if (!out.includes(off)) out.push(off);
   }
   return out;
 }
 
-export const canaryKeys = (secret: string, index: bigint, token: string) =>
-  canaryOffsets(secret, index, token).map((o) => sliceStart(index) + o);
+export const canaryKeys = (secret: string, index: bigint, token: string, pool: PoolId = "71") =>
+  canaryOffsets(secret, index, token, poolSize(pool)).map((o) => poolSliceStart(pool, index) + o);
 
 export const keyHex64 = (k: bigint) => k.toString(16).padStart(64, "0");
 
@@ -78,8 +92,8 @@ export const p2pkhAddress = (h160: Uint8Array) => b58.encode(Uint8Array.from([0,
 export const canaryProof = (keysHex: string[]) =>
   hex(sha256(new TextEncoder().encode(keysHex.map((k) => k.toLowerCase().replace(/^0x/, "").padStart(64, "0")).sort().join(""))));
 
-export function verifyCanaryProof(secret: string, index: bigint, token: string, proof: string): boolean {
-  const expect = canaryProof(canaryKeys(secret, index, token).map(keyHex64));
+export function verifyCanaryProof(secret: string, index: bigint, token: string, proof: string, pool: PoolId = "71"): boolean {
+  const expect = canaryProof(canaryKeys(secret, index, token, pool).map(keyHex64));
   return typeof proof === "string" && proof.toLowerCase() === expect;
 }
 
