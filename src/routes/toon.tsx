@@ -199,13 +199,13 @@ function ToonPage() {
       <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(0,1fr)_440px]">
         {/* Monitor column */}
         <div className="min-w-0 space-y-3">
-          <section className="studio-panel p-2">
+          <section className="studio-panel min-w-0 overflow-hidden p-2">
             <div className="mb-2 flex items-center justify-between px-1 font-mono text-[10px] text-muted-foreground">
               <span>PROGRAM MONITOR · SCENE {cur + 1}/{episode.scenes.length} · {episode.scenes[cur]?.shot.toUpperCase()}</span>
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} /> GUIDES</label>
             </div>
-            <div className="studio-monitor grid place-items-center rounded">
-              <div ref={stageRef} className={`relative w-full overflow-hidden ${vertical ? "aspect-[9/16] max-h-[70vh] w-auto" : "aspect-video"}`} style={vertical ? { height: "70vh" } : undefined}>
+            <div className="studio-monitor flex min-w-0 justify-center overflow-hidden rounded">
+              <div ref={stageRef} className={`relative w-full max-w-full overflow-hidden ${vertical ? "aspect-[9/16] max-h-[70vh] w-auto" : "aspect-video"}`} style={vertical ? { height: "70vh" } : undefined}>
                 <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
                   <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
                     <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
