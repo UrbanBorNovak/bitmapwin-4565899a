@@ -354,16 +354,31 @@ function ForgePage() {
   const setHover = useCallback((c: [number, number, number] | null) => setHoverRaw((p) => (p && c && p[0] === c[0] && p[1] === c[1] && p[2] === c[2]) || (!p && !c) ? p : c), []);
   const [guide, setGuide] = useState(false);
   const [full, setFull] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [proj, setProj] = useState<"persp" | "ortho">("persp");
   const [view, setView] = useState<{ id: ViewId; n: number }>({ id: "iso", n: 0 });
   const pickView = (id: ViewId) => setView((v) => ({ id, n: v.n + 1 }));
   useEffect(() => {
-    if (!full) return;
+    const stage = stageRef.current;
+    if (!full) {
+      if (stage && document.fullscreenElement === stage) void document.exitFullscreen().catch(() => {});
+      return;
+    }
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFull(false); };
     window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+    // Native fullscreen where the browser allows it; the fixed-inset stage class
+    // on the canvas container is the fallback where element fullscreen is refused
+    // (e.g. iOS Safari), so the builder always actually fills the screen.
+    void stage?.requestFullscreen().catch(() => {});
+    const onFsChange = () => { if (!document.fullscreenElement) setFull(false); };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("fullscreenchange", onFsChange);
+    };
   }, [full]);
   const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
   const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
@@ -1027,8 +1042,9 @@ function ForgePage() {
         </aside>
 
         <div
+          ref={stageRef}
           data-testid="forge-dropzone"
-          className="relative order-first h-[460px] overflow-hidden rounded-lg border border-border bg-card/40 lg:order-none lg:h-[620px]"
+          className={`relative order-first overflow-hidden lg:order-none ${full ? "fixed inset-0 z-[70] h-full bg-background" : "h-[460px] rounded-lg border border-border bg-card/40 lg:h-[620px]"}`}
           onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setFileOver(true); } }}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFileOver(false); }}
           onDrop={(e) => { e.preventDefault(); setFileOver(false); const f = e.dataTransfer.files?.[0]; if (f) loadVoxelFile(f); }}
