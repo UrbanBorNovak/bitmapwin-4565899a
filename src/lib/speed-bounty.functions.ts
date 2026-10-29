@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { DP_BATCH_MAX, POOL_HERD, TEST_BOUNTY_BITS, keyFromCollision, poolParams, validDp } from "@/lib/kangaroo-pool";
 
 async function admin() {
@@ -10,6 +11,11 @@ async function currentBounty() {
   const db = await admin();
   const { data } = await db.from("speed_bounties").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (data) return data;
+  return createTestBounty();
+}
+
+async function createTestBounty() {
+  const db = await admin();
   const { G } = await import("@/lib/kangaroo");
   const { lo, hi, jumps, dpBits } = poolParams(TEST_BOUNTY_BITS);
   const b = new Uint8Array(16); crypto.getRandomValues(b);
@@ -24,7 +30,7 @@ async function currentBounty() {
   return row;
 }
 
-type BountyRow = Awaited<ReturnType<typeof currentBounty>>;
+type BountyRow = Awaited<ReturnType<typeof createTestBounty>>;
 const publicBounty = (b: BountyRow) => ({
   id: b.id, label: b.label, pubHex: b.pub_hex, loHex: b.lo_hex, hiHex: b.hi_hex, jumps: b.jumps, dpBits: b.dp_bits,
   herd: b.herd, funded: b.funded, status: b.status, solvedKeyHex: b.solved_key_hex, winnerName: b.winner_name, solvedAt: b.solved_at,
@@ -43,7 +49,8 @@ export const speedBountyStateFn = createServerFn({ method: "GET" }).handler(asyn
   }
   const board = [...per.values()].sort((a, b) => b.dps - a.dps).slice(0, 15);
   const { count } = await db.from("speed_bounty_dps").select("x_hex", { count: "exact", head: true }).eq("bounty_id", b.id);
-  return { bounty: publicBounty(b), board, totalDps: count ?? 0, totalSteps: board.reduce((a, r) => a + r.steps, 0), hunters: board.filter((r) => r.live).length };
+  const { data: past } = await db.from("speed_bounties").select("*").neq("id", b.id).order("created_at", { ascending: false }).limit(20);
+  return { past: (past ?? []).map(publicBounty), bounty: publicBounty(b), board, totalDps: count ?? 0, totalSteps: board.reduce((a, r) => a + r.steps, 0), hunters: board.filter((r) => r.live).length };
 });
 
 /** Join: server assigns the next session number, which fixes this hunter's starting offsets. */
@@ -110,4 +117,25 @@ export const submitDpsFn = createServerFn({ method: "POST" })
     }
     await db.from("speed_bounty_sessions").update({ dps: s.dps + accepted, steps: data.steps, last_seen: new Date().toISOString() }).eq("id", s.id);
     return { ok: true as const, accepted, rejected, solved: false, winnerName: null };
+  });
+
+/** Signed-in admin? Read through the caller's own client, never the admin client. */
+export const speedBountyIsAdminFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    return { admin: data === true };
+  });
+
+/** Admin only: open a fresh unfunded test round. Earlier rounds, sessions and DPs stay untouched. */
+export const startNextRoundFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (isAdmin !== true) return { ok: false as const, error: "Admins only." };
+    const db = await admin();
+    // Close any still-open round so only the new one accepts hunters.
+    await db.from("speed_bounties").update({ status: "closed" }).eq("status", "open");
+    const b = await createTestBounty();
+    return { ok: true as const, id: b.id };
   });
