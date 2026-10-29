@@ -75,6 +75,7 @@ function ToonPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, muted, recording, episode]);
 
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("ep")) setTab("export"); }, []);
   const load = (e: ToonEpisode) => { setEpisode(e); setScript(packetText(e)); setTime(0); setScriptError(null); };
 
   useEffect(() => {
