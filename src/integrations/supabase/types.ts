@@ -4743,6 +4743,139 @@ export type Database = {
         }
         Relationships: []
       }
+      speed_bounties: {
+        Row: {
+          created_at: string
+          dp_bits: number
+          funded: boolean
+          herd: number
+          hi_hex: string
+          id: string
+          jumps: number
+          label: string
+          lo_hex: string
+          pub_hex: string
+          seed: string
+          solved_at: string | null
+          solved_key_hex: string | null
+          status: string
+          winner_name: string | null
+          winner_session: string | null
+        }
+        Insert: {
+          created_at?: string
+          dp_bits: number
+          funded?: boolean
+          herd?: number
+          hi_hex: string
+          id?: string
+          jumps: number
+          label: string
+          lo_hex: string
+          pub_hex: string
+          seed: string
+          solved_at?: string | null
+          solved_key_hex?: string | null
+          status?: string
+          winner_name?: string | null
+          winner_session?: string | null
+        }
+        Update: {
+          created_at?: string
+          dp_bits?: number
+          funded?: boolean
+          herd?: number
+          hi_hex?: string
+          id?: string
+          jumps?: number
+          label?: string
+          lo_hex?: string
+          pub_hex?: string
+          seed?: string
+          solved_at?: string | null
+          solved_key_hex?: string | null
+          status?: string
+          winner_name?: string | null
+          winner_session?: string | null
+        }
+        Relationships: []
+      }
+      speed_bounty_dps: {
+        Row: {
+          bounty_id: string
+          created_at: string
+          dist_hex: string
+          session_id: string
+          tame: boolean
+          x_hex: string
+        }
+        Insert: {
+          bounty_id: string
+          created_at?: string
+          dist_hex: string
+          session_id: string
+          tame: boolean
+          x_hex: string
+        }
+        Update: {
+          bounty_id?: string
+          created_at?: string
+          dist_hex?: string
+          session_id?: string
+          tame?: boolean
+          x_hex?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speed_bounty_dps_bounty_id_fkey"
+            columns: ["bounty_id"]
+            isOneToOne: false
+            referencedRelation: "speed_bounties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      speed_bounty_sessions: {
+        Row: {
+          bounty_id: string
+          created_at: string
+          dps: number
+          id: string
+          last_seen: string
+          name: string
+          seq: number
+          steps: number
+        }
+        Insert: {
+          bounty_id: string
+          created_at?: string
+          dps?: number
+          id?: string
+          last_seen?: string
+          name: string
+          seq: number
+          steps?: number
+        }
+        Update: {
+          bounty_id?: string
+          created_at?: string
+          dps?: number
+          id?: string
+          last_seen?: string
+          name?: string
+          seq?: number
+          steps?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speed_bounty_sessions_bounty_id_fkey"
+            columns: ["bounty_id"]
+            isOneToOne: false
+            referencedRelation: "speed_bounties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stand_seats: {
         Row: {
           address: string

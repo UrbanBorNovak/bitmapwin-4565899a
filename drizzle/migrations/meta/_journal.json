@@ -253,6 +253,13 @@
       "when": 1793311103661,
       "tag": "0035_puzzle_pool_slices",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793312888682,
+      "tag": "0036_speed_bounty_pool",
+      "breakpoints": true
     }
   ]
 }
