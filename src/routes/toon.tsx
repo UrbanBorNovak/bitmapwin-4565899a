@@ -15,6 +15,7 @@ import { drawOverlay } from "@/lib/toon-overlay";
 import { StageDirector, ThirdsGuide } from "@/components/toon/StageDirector";
 import { packetText, readPacket } from "@/lib/toon-ai-packet";
 import { CinemaSubmitPanel } from "@/components/toon/CinemaSubmitPanel";
+import { NostrEpisodesPanel } from "@/components/toon/NostrEpisodesPanel";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -74,6 +75,7 @@ function ToonPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, muted, recording, episode]);
 
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("ep")) setTab("export"); }, []);
   const load = (e: ToonEpisode) => { setEpisode(e); setScript(packetText(e)); setTime(0); setScriptError(null); };
 
   useEffect(() => {
@@ -339,6 +341,7 @@ function ToonPage() {
                 </section>
                 <ReleasePanel episode={episode} file={lastFile} onAspect={(a) => load({ ...episode, aspect: a })} />
                 <CinemaSubmitPanel episode={episode} />
+                <ClientOnly fallback={null}><NostrEpisodesPanel episode={episode} onOpen={load} /></ClientOnly>
               </>
             )}
             {tab === "code" && (
