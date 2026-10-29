@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { practiceTarget } from "@/lib/kangaroo";
+import { SpeedBountyPool } from "@/components/puzzle/SpeedBountyPool";
 
 export const Route = createFileRoute("/speed-bounty")({
   head: () => ({
@@ -101,6 +102,8 @@ function SpeedBounty() {
           </p>
         )}
       </section>
+
+      <SpeedBountyPool />
 
       <section className="mt-6 rounded-md border border-border bg-card/40 p-5">
         <p className="text-xs text-muted-foreground">LIVE FUNDED BOUNTIES</p>
