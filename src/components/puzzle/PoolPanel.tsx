@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { lotterySetPool, useLottery } from "@/lib/bitmap-lottery";
 import { poolStatsFn } from "@/lib/puzzle-pool.functions";
+import { runTestSlice } from "@/lib/puzzle-test-run";
 import { HEAT_CELLS, HEAT_CELL_SLICES, HEAT_SIDE, SLICE_COUNT, SLICE_SIZE, isWorkerAddress } from "@/lib/puzzle-pool";
 import { POOL_DIVIDEND_PERCENT, PUZZLE_71 } from "@/lib/puzzle-sweep";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -13,7 +14,7 @@ export function PoolPanel() {
   const wallet = useWalletSession();
   const [addr, setAddr] = useState("");
   useEffect(() => { if (!addr && wallet?.paymentAddress) setAddr(wallet.paymentAddress); }, [wallet?.paymentAddress, addr]);
-  const stats = useQuery({ queryKey: ["puzzle-pool-stats", lot.poolDone], queryFn: () => poolStatsFn(), refetchInterval: 15_000 });
+  const stats = useQuery({ queryKey: ["puzzle-pool-stats", lot.poolDone], queryFn: () => poolStatsFn({ data: {} }), refetchInterval: 15_000 });
   const s = stats.data;
   const keys = s ? BigInt(s.slices) * SLICE_SIZE : 0n;
 
@@ -59,6 +60,8 @@ export function PoolPanel() {
         </table>
       )}
 
+      <TestPool addr={lot.poolWorker ?? addr} />
+
       <RigApi />
 
       <p className="mt-3 text-[11px] text-muted-foreground">
@@ -90,6 +93,30 @@ function RangeHeatmap({ done, open, active }: { done: Record<string, number>; op
   );
 }
 
+function TestPool({ addr }: { addr: string }) {
+  const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const stats = useQuery({ queryKey: ["puzzle-test-stats", status], queryFn: () => poolStatsFn({ data: { pool: "test" } }) });
+  const run = async () => {
+    setBusy(true);
+    try { const r = await runTestSlice(addr, setStatus); setStatus(r.ok ? r.message : `REJECTED · ${r.message}`); }
+    catch (e) { setStatus(`FAILED · ${(e as Error).message}`); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="mt-4 border border-border p-3">
+      <p className="label text-signal">TEST RANGE · NO PRIZE</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">A tiny practice range (65,536 keys per slice) that runs the full claim → scan → trap-key proof in a few seconds. Credit here is separate from #71.</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button disabled={busy || !isWorkerAddress(addr)} onClick={run} className="rounded border border-signal px-3 py-1 text-signal disabled:opacity-50">[ RUN TEST SLICE ]</button>
+        {!isWorkerAddress(addr) && <span className="text-[11px] text-muted-foreground">Enter your address above first.</span>}
+        {status && <span data-testid="test-status" className={status.startsWith("CREDITED") ? "text-signal" : "text-muted-foreground"}>{status}</span>}
+        {stats.data && <span className="ml-auto text-[11px] text-muted-foreground">TEST SLICES DONE: <span data-testid="test-done">{stats.data.slices}</span></span>}
+      </div>
+    </div>
+  );
+}
+
 function RigApi() {
   const one = "curl -s https://bitmapwin.app/api/public/puzzle/71/rig.sh | WORKER=<your-btc-address> SCANNER='<scanner> {start} {end} {targets} {out}' bash";
   return (
@@ -98,6 +125,7 @@ function RigApi() {
       <p className="mt-2 text-muted-foreground">Point any range scanner at the pool. It gets a slice, the puzzle address and 3 trap addresses; it must print every key it matches.</p>
       <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-all bg-background p-2 text-[11px]" data-no-translate>{one}</pre>
       <ul className="mt-2 space-y-1 text-[11px] text-muted-foreground" data-no-translate>
+        <li>Practice first: use /api/public/puzzle/test/… (or POOL=test in the script) — same rules, no prize.</li>
         <li>GET /api/public/puzzle/71/range?worker=ADDR → index, token, startHex, endHex, targetAddress, canaryAddresses[3]</li>
         <li>POST /api/public/puzzle/71/share {"{"} index, token, canaryProof {"}"} — canaryProof = sha256 of the 3 trap keys (64-hex, sorted, joined)</li>
       </ul>
