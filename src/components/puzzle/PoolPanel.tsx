@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { lotterySetPool, useLottery } from "@/lib/bitmap-lottery";
+import { lotterySetPool, lotteryStart, useLottery } from "@/lib/bitmap-lottery";
+import { ScanProgress } from "./ScanProgress";
 import { poolStatsFn } from "@/lib/puzzle-pool.functions";
 import { runTestSlice } from "@/lib/puzzle-test-run";
 import { HEAT_CELLS, HEAT_CELL_SLICES, HEAT_SIDE, SLICE_COUNT, SLICE_SIZE, isWorkerAddress } from "@/lib/puzzle-pool";
@@ -49,7 +50,9 @@ export function PoolPanel() {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground">CREDITING <span className="text-foreground" data-no-translate>{short(lot.poolWorker)}</span> · {lot.poolDone} SLICES FROM THIS DEVICE</span>
           {lot.poolMsg && <span className="text-accent">{lot.poolMsg}</span>}
+          {!lot.on && <button onClick={lotteryStart} className="rounded bg-primary px-3 py-1 text-primary-foreground">[ START SCANNING ]</button>}
           <button onClick={() => lotterySetPool(null)} className="ml-auto rounded border border-border px-3 py-1 text-muted-foreground">[ LEAVE POOL · SCAN SOLO ]</button>
+          {lot.on && <ScanProgress done={lot.poolScanned} size={lot.poolSize} rate={lot.rate} />}
         </div>
       ) : (
         <div className="mt-3 flex flex-wrap gap-2">
