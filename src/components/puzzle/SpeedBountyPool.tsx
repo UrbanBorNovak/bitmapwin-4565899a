@@ -63,12 +63,14 @@ export function SpeedBountyPool() {
     w.postMessage({ type: "start", pubHex: r.bounty.pubHex, jumps: r.bounty.jumps, dpBits: r.bounty.dpBits, starts: r.starts });
     setHunting(true);
   }
+  const [busy, setBusy] = useState(false);
   async function startNext() {
+    if (busy) return;
     if (!confirm("Close the current round and open a fresh unfunded test bounty?")) return;
-    stop();
-    const r = await nextRound().catch(() => ({ ok: false as const, error: "Admins only." }));
+    stop(); setBusy(true);
+    const r = await nextRound({ data: { expectCurrent: st?.bounty.id ?? "" } }).catch(() => ({ ok: false as const, error: "Admins only." }));
     setMsg(r.ok ? "NEW ROUND OPEN" : r.error);
-    refresh();
+    await refresh(); setBusy(false);
   }
   function stop() { worker.current?.terminate(); worker.current = null; setHunting(false); }
 
@@ -111,7 +113,7 @@ export function SpeedBountyPool() {
           )}
           {msg && <p className="mt-3 text-accent">{msg}</p>}
           {admin && (
-            <button onClick={startNext} className="mt-4 rounded border border-primary px-4 py-2 text-primary">[ ADMIN · START NEXT ROUND ]</button>
+            <button onClick={startNext} disabled={busy} className="mt-4 rounded border border-primary px-4 py-2 text-primary">[ ADMIN · START NEXT ROUND ]</button>
           )}
           <div className="mt-5">
             <p className="text-xs text-muted-foreground">LEADERBOARD · RANKED BY SERVER-VERIFIED DPs</p>
