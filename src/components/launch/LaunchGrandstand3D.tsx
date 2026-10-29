@@ -15,7 +15,6 @@ import type { SponsorSlide } from "@/lib/sponsor-slots.functions";
 const ROWS = 24;
 const STEP_H = 0.55;
 const STEP_D = 1.1;
-const SEAT_W = 0.9;
 /** Cyber-Colosseum: every tier wraps 220° around the open centre pit. */
 const ARC = (220 * Math.PI) / 180;
 const PIT_R = 9;
