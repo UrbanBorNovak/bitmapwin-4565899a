@@ -25,14 +25,28 @@ const EMPORIUM = GALLERY_IDS.slice(0, 10);
 const JIGGLY = GALLERY_IDS.slice(10);
 
 type Slide = { id: string; tag: string; image?: string };
-/** One break: logo → Emporium → JIGGLYPUFF → logo, rotating through the pools each break. */
+/** Marker id for the house Puzzle #71 lottery ad. */
+export const PUZZLE_SLIDE = "puzzle-71";
+
+/** One break: logo (or Puzzle #71 ad on odd breaks) → Emporium → JIGGLYPUFF → logo. */
 export function breakSlides(n: number): Slide[] {
   return [
-    { id: STREAM_LOGOS[n % 2]!, tag: "BITMAP.STREAM" },
+    n % 2 ? { id: PUZZLE_SLIDE, tag: "BITCOIN PUZZLE #71 · 7.10 BTC" } : { id: STREAM_LOGOS[n % 2]!, tag: "BITMAP.STREAM" },
     { id: EMPORIUM[n % EMPORIUM.length]!, tag: "BITMAP EMPORIUM · 717328" },
     { id: JIGGLY[n % JIGGLY.length]!, tag: "JIGGLYPUFF" },
     { id: STREAM_LOGOS[(n + 1) % 2]!, tag: "BITMAP.STREAM" },
   ];
+}
+
+function PuzzleAd() {
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#e6edf3", textAlign: "center" }}>
+      <div style={{ color: "#f7931a", fontSize: 44, fontWeight: 700, letterSpacing: 2 }}>7.10 BTC</div>
+      <div style={{ fontSize: 18, letterSpacing: 3 }}>BITCOIN PUZZLE #71 · UNSOLVED SINCE 2015</div>
+      <div style={{ color: "#7fe7ff", fontSize: 13 }}>FREE KEY SCAN IN YOUR BROWSER · YOU SIGN THE PRIZE YOURSELF</div>
+      <div style={{ marginTop: 8, padding: "4px 12px", border: "1px solid #f7931a", color: "#f7931a", fontSize: 15 }}>BITMAPWIN.APP/PUZZLE</div>
+    </div>
+  );
 }
 
 /** Paid café slots take the closing logo's place, rotating each break. */
@@ -96,7 +110,7 @@ export function CafeStreamTV({ position, rotationY = 0, width = 1.5 }: { positio
           <iframe src={G.embedUrl} title="Elevated Dabber on bitmap.stream" width={640} height={360} style={{ border: 0, display: "block" }} allow="autoplay; fullscreen" />
           {slide ? (
             <div style={{ position: "absolute", inset: 0, background: "#06090d" }}>
-              <div style={{ position: "absolute", inset: "28px 0 28px 0" }}>{slide.image ? <img src={slide.image} alt="" referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <Inscription id={slide.id} />}</div>
+              <div style={{ position: "absolute", inset: "28px 0 28px 0" }}>{slide.id === PUZZLE_SLIDE ? <PuzzleAd /> : slide.image ? <img src={slide.image} alt="" referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <Inscription id={slide.id} />}</div>
               <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a" }}>● COMMERCIAL BREAK · {slide.tag}</div>
               <div style={{ position: "absolute", bottom: 6, left: 10, color: "#7fe7ff" }}>BACK TO @{G.handle} IN {left}s</div>
               <div style={{ position: "absolute", bottom: 6, right: 10, color: "#9aa4ad" }}>SPONSOR THIS SCREEN · BITMAPWIN.APP/LAUNCH</div>
