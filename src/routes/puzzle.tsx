@@ -90,6 +90,7 @@ function PuzzlePage() {
       </div>
 
       <PoolPanel />
+      <a href="/speed-bounty" className="mt-4 block font-mono text-xs text-primary">→ KANGAROO SPEED BOUNTIES · race known-pubkey keys</a>
 
       {found && (
         <section className="mt-6 rounded border border-primary p-4 text-xs">
