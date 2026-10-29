@@ -177,9 +177,9 @@ function ToonPage() {
   ];
   const TABS = [["direct", "DIRECT"], ["write", "WRITE"], ["look", "LOOK & SOUND"], ["library", "LIBRARY"], ["export", "EXPORT"], ["code", "SCRIPT"]] as const;
   return (
-    <div className="studio-shell mx-auto max-w-[1700px] px-3 py-4 md:px-6">
+    <div className="studio-shell mx-auto max-w-[1700px] px-2 pb-32 pt-3 sm:px-3 md:px-6 lg:pb-6">
       {/* Production bar */}
-      <header className="studio-panel flex flex-wrap items-center gap-3 px-3 py-2 font-mono text-xs">
+      <header className="studio-panel flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 font-mono text-xs">
         <span className="flex items-center gap-2">
           <span className={`h-2.5 w-2.5 rounded-full ${recording ? "animate-pulse bg-destructive" : playing ? "bg-signal" : "bg-muted-foreground/50"}`} />
           <span className="label text-bitcoin">TOON STUDIO</span>
@@ -187,7 +187,7 @@ function ToonPage() {
         <span className="hidden h-4 w-px bg-border sm:block" />
         <span className="truncate text-foreground" title={episode.title}>{episode.title}</span>
         <span className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">{episode.scenes.length} SCENES · {total.toFixed(0)}s</span>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="flex w-full items-center gap-1 sm:ml-auto sm:w-auto">
           {(["16:9", "9:16"] as const).map((a) => (
             <button key={a} aria-pressed={episode.aspect === a} disabled={recording} onClick={() => load({ ...episode, aspect: a })}
               className={`rounded px-2 py-1 ${episode.aspect === a ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{a === "16:9" ? "▭ 16:9" : "▯ 9:16"}</button>
@@ -196,16 +196,16 @@ function ToonPage() {
         </div>
       </header>
 
-      <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_440px]">
+      <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(0,1fr)_440px]">
         {/* Monitor column */}
         <div className="min-w-0 space-y-3">
-          <section className="studio-panel p-2">
+          <section className="studio-panel min-w-0 overflow-hidden p-2">
             <div className="mb-2 flex items-center justify-between px-1 font-mono text-[10px] text-muted-foreground">
               <span>PROGRAM MONITOR · SCENE {cur + 1}/{episode.scenes.length} · {episode.scenes[cur]?.shot.toUpperCase()}</span>
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} /> GUIDES</label>
             </div>
-            <div className="studio-monitor grid place-items-center rounded">
-              <div ref={stageRef} className={`relative w-full overflow-hidden ${vertical ? "aspect-[9/16] max-h-[70vh] w-auto" : "aspect-video"}`} style={vertical ? { height: "70vh" } : undefined}>
+            <div className="studio-monitor flex min-w-0 justify-center overflow-hidden rounded">
+              <div ref={stageRef} className={`relative w-full max-w-full overflow-hidden ${vertical ? "aspect-[9/16] max-h-[70vh] w-auto" : "aspect-video"}`} style={vertical ? { height: "70vh" } : undefined}>
                 <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
                   <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
                     <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
@@ -226,15 +226,15 @@ function ToonPage() {
               <button aria-label={playing ? "Pause" : "Play"} className="studio-key studio-key-main" disabled={recording} onClick={() => { if (time >= total) setTime(0); setPlaying((p) => !p); }}>{playing ? "❚❚" : "▶"}</button>
               <button aria-label="Forward one second" className="studio-key" disabled={recording} onClick={() => { setPlaying(false); setTime((t) => Math.min(total, t + 1)); }}>▶▶</button>
               <span className="studio-timecode">{tc(time)} <span className="text-muted-foreground">/ {tc(total)}</span></span>
-              <button className="studio-key ml-auto" disabled={recording} onClick={() => setMuted((m) => !m)}>{muted ? "🔇 MUTED" : "🔊 SOUND"}</button>
+              <button className="studio-key sm:ml-auto" disabled={recording} onClick={() => setMuted((m) => !m)}>{muted ? "🔇 MUTED" : "🔊 SOUND"}</button>
             </div>
           </section>
 
           {/* Timeline */}
           <section className="studio-panel p-2 font-mono text-[10px]">
             <div className="mb-1 flex justify-between px-1 text-muted-foreground"><span>TIMELINE</span><span>CLICK A CLIP TO JUMP</span></div>
-            <div className="relative">
-              <div className="flex h-12 gap-px overflow-hidden rounded">
+            <div className="relative overflow-x-auto pb-1"><div className="relative min-w-full" style={{ width: `max(100%, ${episode.scenes.length * 84}px)` }}>
+              <div className="flex h-12 gap-px rounded">
                 {episode.scenes.map((s, i) => (
                   <button key={i} onClick={() => { setPlaying(false); setTime(episode.scenes.slice(0, i).reduce((a, x) => a + x.duration, 0) + 0.01); }}
                     style={{ flexGrow: s.duration, flexBasis: 0 }}
@@ -245,7 +245,7 @@ function ToonPage() {
                 ))}
               </div>
               <div className="pointer-events-none absolute -bottom-1 -top-1 w-0.5 bg-bitcoin" style={{ left: `${total ? (time / total) * 100 : 0}%` }} />
-            </div>
+            </div></div>
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="mt-2 w-full" aria-label="Timeline" />
           </section>
@@ -253,14 +253,14 @@ function ToonPage() {
         </div>
 
         {/* Inspector */}
-        <aside className="studio-panel flex min-h-0 flex-col lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)]">
-          <nav className="flex flex-wrap gap-px border-b border-border p-1 font-mono text-[10px]">
+        <aside className="studio-panel flex min-h-0 min-w-0 flex-col lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)]">
+          <nav className="flex gap-px overflow-x-auto border-b border-border p-1 font-mono text-[10px]">
             {TABS.map(([id, label]) => (
               <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id}
-                className={`flex-1 rounded px-2 py-1.5 ${tab === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{label}</button>
+                className={`flex-1 shrink-0 whitespace-nowrap rounded px-2.5 py-2 ${tab === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{label}</button>
             ))}
           </nav>
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-2 sm:p-3">
             {tab === "direct" && (
               <>
                 <StageDirector episode={episode} time={time} disabled={recording} onChange={edit} />
