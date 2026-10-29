@@ -354,16 +354,31 @@ function ForgePage() {
   const setHover = useCallback((c: [number, number, number] | null) => setHoverRaw((p) => (p && c && p[0] === c[0] && p[1] === c[1] && p[2] === c[2]) || (!p && !c) ? p : c), []);
   const [guide, setGuide] = useState(false);
   const [full, setFull] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [proj, setProj] = useState<"persp" | "ortho">("persp");
   const [view, setView] = useState<{ id: ViewId; n: number }>({ id: "iso", n: 0 });
   const pickView = (id: ViewId) => setView((v) => ({ id, n: v.n + 1 }));
   useEffect(() => {
-    if (!full) return;
+    const stage = stageRef.current;
+    if (!full) {
+      if (stage && document.fullscreenElement === stage) void document.exitFullscreen().catch(() => {});
+      return;
+    }
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFull(false); };
     window.addEventListener("keydown", onKey);
-    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+    // Native fullscreen where the browser allows it; the fixed-inset stage class
+    // on the canvas container is the fallback where element fullscreen is refused
+    // (e.g. iOS Safari), so the builder always actually fills the screen.
+    void stage?.requestFullscreen().catch(() => {});
+    const onFsChange = () => { if (!document.fullscreenElement) setFull(false); };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("fullscreenchange", onFsChange);
+    };
   }, [full]);
   const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
   const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
