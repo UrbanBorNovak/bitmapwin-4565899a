@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from "react";
 import { PUZZLE_71, hash160Of } from "@/lib/puzzle-sweep";
 import { claimSliceFn, reportSliceFn } from "@/lib/puzzle-pool.functions";
+import { canaryProof } from "@/lib/puzzle-pool";
 
 export const LOTTERY_POWER = [
   { id: "ECO", duty: 0.15 },
@@ -49,7 +50,7 @@ function ensureWorker() {
       recent = recent.filter((x) => now - x.t < 5000);
       set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / 5) });
     } else if (m.type === "slice") set({ slice: m.startHex });
-    else if (m.type === "slice-done") void finishSlice(m.offset, m.hash);
+    else if (m.type === "slice-done") void finishSlice(m.offset, m.hash, m.canaryKeys ?? []);
     else if (m.type === "found") {
       localStorage.setItem(FOUND_KEY, m.keyHex);
       const blob = new Blob([`PUZZLE #71 KEY\n${m.keyHex}\n${new Date().toISOString()}\n`], { type: "text/plain" });
@@ -62,7 +63,7 @@ function ensureWorker() {
   return worker;
 }
 
-function startWorker(slice?: { startHex: string; size: number }) {
+function startWorker(slice?: { startHex: string; size: number; canaries: string[] }) {
   ensureWorker().postMessage({
     type: "start", startHex: PUZZLE_71.startHex, endHex: PUZZLE_71.endHex,
     target: Array.from(hash160Of(PUZZLE_71.address)), duty: dutyOf(state.power), slice,
@@ -77,15 +78,15 @@ async function nextSlice() {
     if (!r.ok) { set({ poolMsg: r.error }); setTimeout(nextSlice, 60_000); return; }
     lease = { index: r.index, token: r.token };
     set({ poolMsg: `SCANNING SLICE #${r.index}` });
-    if (state.on) startWorker({ startHex: r.startHex, size: r.size });
+    if (state.on) startWorker({ startHex: r.startHex, size: r.size, canaries: r.canaryHash160 });
   } catch { set({ poolMsg: "POOL OFFLINE — RETRYING" }); setTimeout(nextSlice, 30_000); }
 }
 
-async function finishSlice(offset: number, hash: string) {
+async function finishSlice(offset: number, hash: string, canaryKeys: string[]) {
   const l = lease; lease = null;
   if (l) {
     try {
-      const r = await reportSliceFn({ data: { ...l, offset, hash } });
+      const r = await reportSliceFn({ data: { ...l, offset, hash, canaryProof: canaryProof(canaryKeys) } });
       if (r.ok) {
         const done = state.poolDone + 1;
         localStorage.setItem(POOL_DONE_KEY, String(done));

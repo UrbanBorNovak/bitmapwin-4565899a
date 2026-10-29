@@ -37,6 +37,7 @@ async function run(m: Start) {
   let P = G.multiply(k);
   let best: Uint8Array | null = null, bestOff = 0n;
   const canaries = new Set(pool?.canaries ?? []);
+  const firstBytes = new Set([...canaries].map((c) => parseInt(c.slice(0, 2), 16)));
   const found: string[] = [];
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
@@ -52,7 +53,7 @@ async function run(m: Start) {
         }
         if (pool) {
           if (!best || less(h, best)) { best = h; bestOff = k - k0; }
-          if (canaries.size && h[0]! < 16 ? false : canaries.size > found.length && canaries.has(toHex(h))) found.push(k.toString(16).padStart(64, "0"));
+          if (firstBytes.has(h[0]!) && canaries.has(toHex(h))) found.push(k.toString(16).padStart(64, "0"));
         }
         P = P.add(G);
         k++;
