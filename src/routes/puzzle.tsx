@@ -99,6 +99,17 @@ function PuzzlePage() {
           {txid && <a className="mt-1 block text-accent underline" href={`https://mempool.space/tx/${txid}`} target="_blank" rel="noreferrer">VIEW ON MEMPOOL →</a>}
         </section>
       )}
+
+      <section className="mt-6 rounded border border-border bg-card/60 p-4 text-xs">
+        <p className="label text-accent">HOW PUZZLE #71 WORKS · NO SMART CONTRACT</p>
+        <ol className="mt-3 list-decimal space-y-2 pl-4 text-muted-foreground">
+          <li><span className="text-foreground">The prize is already on Bitcoin.</span> Since 2015 the bounty sits at a normal address. Its private key is known to lie in the 71-bit range above.</li>
+          <li><span className="text-foreground">Your browser buys free tickets.</span> It checks random keys in the background. Nothing is sent to us and scanning costs nothing.</li>
+          <li><span className="text-foreground">Whoever holds the key owns the coins.</span> A found key lets your own device sign the spend. No operator has to approve or pay anything.</li>
+          <li><span className="text-foreground">Fixed split, written in the transaction.</span> The sweep pays your wallet {100 - SWEEP_TREASURY_PERCENT}% (minus network fee) and the treasury {SWEEP_TREASURY_PERCENT}%. Anyone can check it on mempool.</li>
+        </ol>
+        <p className="mt-3 text-[11px] text-muted-foreground">Odds are about 1 in 1.18 × 10²¹ per range. Treat it as a free lottery ticket, not income.</p>
+      </section>
     </main>
   );
 }
