@@ -1920,3 +1920,16 @@
 .studio-clip { border-top: 2px solid color-mix(in oklch, var(--signal) 40%, transparent); background: color-mix(in oklch, var(--muted) 70%, transparent); color: var(--foreground); }
 .studio-clip:hover { background: var(--muted); }
 .studio-clip-on { border-top-color: var(--bitcoin); background: color-mix(in oklch, var(--bitcoin) 18%, var(--muted)); }
+
+/* Halloween event */
+.halloween-fog {
+  background: radial-gradient(ellipse at 15% 120%, color-mix(in oklab, var(--bitcoin) 22%, transparent), transparent 60%),
+    radial-gradient(ellipse at 90% -20%, color-mix(in oklab, var(--signal) 10%, transparent), transparent 55%);
+  animation: halloween-fog 9s ease-in-out infinite alternate;
+}
+.halloween-pumpkin { color: var(--bitcoin); text-shadow: 0 0 12px color-mix(in oklab, var(--bitcoin) 70%, transparent); animation: halloween-flicker 3.2s steps(1) infinite; }
+.halloween-bat { animation: halloween-bat 4s ease-in-out infinite; }
+@keyframes halloween-fog { from { opacity: .6 } to { opacity: 1 } }
+@keyframes halloween-flicker { 0%,100% { opacity: 1 } 47% { opacity: .55 } 50% { opacity: 1 } 82% { opacity: .75 } }
+@keyframes halloween-bat { 0%,100% { transform: translate(0,0) } 50% { transform: translate(14px,-8px) } }
+@media (prefers-reduced-motion: reduce) { .halloween-fog, .halloween-pumpkin, .halloween-bat { animation: none; } }

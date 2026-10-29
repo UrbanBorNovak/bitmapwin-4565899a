@@ -20,6 +20,7 @@ import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
 import { BlockChronicles } from "@/components/BlockChronicles";
 import { LivingBlockShowcase } from "@/components/LivingBlockShowcase";
+import { HalloweenBanner } from "@/components/HalloweenBanner";
 
 
 export const Route = createFileRoute("/")({
@@ -92,6 +93,9 @@ function Index() {
 
   return (
     <div className="pb-10">
+      <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
+        <HalloweenBanner />
+      </section>
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="grid overflow-hidden border border-border-strong lg:min-h-[560px] lg:grid-cols-12">
           <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-4 lg:order-1 lg:col-span-3 lg:border-r lg:border-t-0 lg:p-5">
