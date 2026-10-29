@@ -8,7 +8,7 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { ripemd160 } from "@noble/hashes/legacy.js";
 
-type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; slice?: { startHex: string; size: number } };
+type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; slice?: { startHex: string; size: number; canaries: string[] } };
 type Msg = Start | { type: "stop" } | { type: "duty"; duty: number };
 
 const G = secp256k1.Point.BASE;
@@ -36,6 +36,8 @@ async function run(m: Start) {
   const end = pool ? k + BigInt(pool.size) : hi;
   let P = G.multiply(k);
   let best: Uint8Array | null = null, bestOff = 0n;
+  const canaries = new Set(pool?.canaries ?? []);
+  const found: string[] = [];
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const t0 = performance.now();
@@ -48,7 +50,10 @@ async function run(m: Start) {
           running = false;
           return;
         }
-        if (pool && (!best || less(h, best))) { best = h; bestOff = k - k0; }
+        if (pool) {
+          if (!best || less(h, best)) { best = h; bestOff = k - k0; }
+          if (canaries.size && h[0]! < 16 ? false : canaries.size > found.length && canaries.has(toHex(h))) found.push(k.toString(16).padStart(64, "0"));
+        }
         P = P.add(G);
         k++;
         n++;
@@ -58,7 +63,7 @@ async function run(m: Start) {
     self.postMessage({ type: "batch", count: n });
     if (pool && k >= end) {
       running = false;
-      self.postMessage({ type: "slice-done", offset: Number(bestOff), hash: toHex(best!) });
+      self.postMessage({ type: "slice-done", offset: Number(bestOff), hash: toHex(best!), canaryKeys: found });
       return;
     }
     const rest = (40 / Math.max(0.05, duty)) - 40;
