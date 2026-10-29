@@ -44,7 +44,7 @@ export async function publishEpisode(json: string, title: string, aspect: string
   const res = await Promise.allSettled(getPool().publish(RELAYS, e));
   const ok = res.filter((r) => r.status === "fulfilled").length;
   if (!ok) throw new Error("NO RELAY ACCEPTED THE EPISODE");
-  const d = e.tags.find((x) => x[0] === "d")![1];
+  const d = e.tags.find((x) => x[0] === "d")?.[1] ?? "";
   return { event: e, relays: ok, naddr: nip19.naddrEncode({ kind: TOON_KIND, pubkey: e.pubkey, identifier: d, relays: RELAYS.slice(0, 2) }) };
 }
 
