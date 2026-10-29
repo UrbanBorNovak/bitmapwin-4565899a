@@ -90,7 +90,7 @@ export async function poolStats(pool: PoolId = "71") {
   const cutoff = Date.now() - LEASE_MS;
   let total = 0, active = 0;
   for (const r of rows ?? []) {
-    const c = heatCellOf(Number(r.slice_index));
+    const c = pool === "71" ? heatCellOf(Number(r.slice_index)) : Math.floor(Number(r.slice_index) / (Number(POOLS[pool].count) / HEAT_CELLS));
     if (r.done_at) { total++; per.set(r.worker, (per.get(r.worker) ?? 0) + 1); done[c] = (done[c] ?? 0) + 1; }
     else if (new Date(r.leased_at).getTime() > cutoff) { active++; open[c] = (open[c] ?? 0) + 1; }
   }
