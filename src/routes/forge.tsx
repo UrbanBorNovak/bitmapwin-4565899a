@@ -1042,8 +1042,9 @@ function ForgePage() {
         </aside>
 
         <div
+          ref={stageRef}
           data-testid="forge-dropzone"
-          className="relative order-first h-[460px] overflow-hidden rounded-lg border border-border bg-card/40 lg:order-none lg:h-[620px]"
+          className={`relative order-first overflow-hidden lg:order-none ${full ? "fixed inset-0 z-[70] h-full bg-background" : "h-[460px] rounded-lg border border-border bg-card/40 lg:h-[620px]"}`}
           onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setFileOver(true); } }}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFileOver(false); }}
           onDrop={(e) => { e.preventDefault(); setFileOver(false); const f = e.dataTransfer.files?.[0]; if (f) loadVoxelFile(f); }}
