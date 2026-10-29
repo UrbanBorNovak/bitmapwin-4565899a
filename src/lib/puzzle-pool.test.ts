@@ -44,3 +44,12 @@ describe("trap canaries", () => {
     expect(heatCellOf(Number(SLICE_COUNT) - 1)).toBe(HEAT_CELLS - 1);
   });
 });
+
+import { POOLS, poolSize, canaryOffsets as co } from "./puzzle-pool";
+describe("test pool", () => {
+  it("uses 65,536-key slices and an unreachable all-zero target", () => {
+    expect(poolSize("test")).toBe(65536n);
+    expect(POOLS.test.target).toBe("00".repeat(20));
+    expect(co("s", 1n, "t", poolSize("test")).every((o) => o < 65536n)).toBe(true);
+  });
+});

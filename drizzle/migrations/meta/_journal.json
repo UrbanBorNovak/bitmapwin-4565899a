@@ -267,6 +267,13 @@
       "when": 1793313599209,
       "tag": "0037_speed_bounty_atomic_round",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793314522298,
+      "tag": "0038_puzzle_test_slices",
+      "breakpoints": true
     }
   ]
 }

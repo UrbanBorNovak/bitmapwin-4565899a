@@ -9,7 +9,7 @@ const SCRIPT = `#!/usr/bin/env bash
 # bitmapwin.app Puzzle #71 pool rig — needs curl, jq, sha256sum.
 # WORKER=<your btc address>  SCANNER='<cmd using {start} {end} {targets} {out}>'
 set -euo pipefail
-API="\${API:-https://bitmapwin.app/api/public/puzzle/71}"
+API="\${API:-https://bitmapwin.app/api/public/puzzle/\${POOL:-71}}"
 : "\${WORKER:?set WORKER to your Bitcoin address}"
 : "\${SCANNER:?set SCANNER, e.g. 'myscanner --range {start}:{end} -i {targets} -o {out}'}"
 while true; do
