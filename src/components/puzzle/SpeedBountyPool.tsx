@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { joinSpeedBountyFn, speedBountyStateFn, submitDpsFn } from "@/lib/speed-bounty.functions";
+import { joinSpeedBountyFn, speedBountyIsAdminFn, speedBountyStateFn, startNextRoundFn, submitDpsFn } from "@/lib/speed-bounty.functions";
 
 type State = Awaited<ReturnType<typeof speedBountyStateFn>>;
 type Dp = { xHex: string; tame: boolean; dHex: string };
@@ -9,6 +9,9 @@ export function SpeedBountyPool() {
   const getState = useServerFn(speedBountyStateFn);
   const join = useServerFn(joinSpeedBountyFn);
   const submit = useServerFn(submitDpsFn);
+  const isAdmin = useServerFn(speedBountyIsAdminFn);
+  const nextRound = useServerFn(startNextRoundFn);
+  const [admin, setAdmin] = useState(false);
   const [st, setSt] = useState<State | null>(null);
   const [name, setName] = useState("");
   const [hunting, setHunting] = useState(false);
@@ -23,6 +26,7 @@ export function SpeedBountyPool() {
   useEffect(() => {
     setName(localStorage.getItem("kangaroo-hunter") || "");
     refresh();
+    isAdmin().then((r) => setAdmin(r.admin)).catch(() => setAdmin(false));
     const t = setInterval(refresh, 8000);
     return () => { clearInterval(t); worker.current?.terminate(); };
   }, []);
@@ -59,6 +63,13 @@ export function SpeedBountyPool() {
     w.postMessage({ type: "start", pubHex: r.bounty.pubHex, jumps: r.bounty.jumps, dpBits: r.bounty.dpBits, starts: r.starts });
     setHunting(true);
   }
+  async function startNext() {
+    if (!confirm("Close the current round and open a fresh unfunded test bounty?")) return;
+    stop();
+    const r = await nextRound().catch(() => ({ ok: false as const, error: "Admins only." }));
+    setMsg(r.ok ? "NEW ROUND OPEN" : r.error);
+    refresh();
+  }
   function stop() { worker.current?.terminate(); worker.current = null; setHunting(false); }
 
   const b = st?.bounty;
@@ -77,12 +88,12 @@ export function SpeedBountyPool() {
             The key was made on the server and thrown away; only its public key was kept. No prize — this is a test.
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-4">
-            <Cell k="STATUS" v={b.status === "solved" ? "SOLVED" : "OPEN"} />
+            <Cell k="STATUS" v={b.status.toUpperCase()} />
             <Cell k="POOL DPs" v={(st?.totalDps ?? 0).toLocaleString()} />
             <Cell k="POOL HOPS" v={`${(st?.totalSteps ?? 0).toLocaleString()} / ~${Math.round(expected).toLocaleString()}`} />
             <Cell k="LIVE HUNTERS" v={String(st?.hunters ?? 0)} />
           </div>
-          {b.status === "solved" ? (
+          {b.status !== "open" ? b.status !== "solved" ? <p className="mt-4 text-muted-foreground">Round closed.</p> : (
             <p className="mt-4 text-accent">WINNER {b.winnerName} · key 0x{b.solvedKeyHex} · checked against the public key on the server</p>
           ) : (
             <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -99,6 +110,9 @@ export function SpeedBountyPool() {
             </p>
           )}
           {msg && <p className="mt-3 text-accent">{msg}</p>}
+          {admin && (
+            <button onClick={startNext} className="mt-4 rounded border border-primary px-4 py-2 text-primary">[ ADMIN · START NEXT ROUND ]</button>
+          )}
           <div className="mt-5">
             <p className="text-xs text-muted-foreground">LEADERBOARD · RANKED BY SERVER-VERIFIED DPs</p>
             {(st?.board ?? []).length === 0 && <p className="mt-2 text-muted-foreground">No hunters yet.</p>}
@@ -111,6 +125,21 @@ export function SpeedBountyPool() {
               ))}
             </ol>
           </div>
+          {(st?.past ?? []).length > 0 && (
+            <div className="mt-5">
+              <p className="text-xs text-muted-foreground">PAST ROUNDS</p>
+              <ol className="mt-2 space-y-1 text-xs">
+                {st!.past.map((p) => (
+                  <li key={p.id} className="flex justify-between border-b border-border/50 py-1">
+                    <span>{p.label}</span>
+                    <span className="text-muted-foreground">
+                      {p.status === "solved" ? `${p.winnerName} · 0x${p.solvedKeyHex}` : p.status.toUpperCase()}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
         </>
       )}
     </section>
