@@ -76,12 +76,12 @@ function RangeHeatmap({ done, open, active }: { done: Record<string, number>; op
         <p className="label text-muted-foreground">#71 RANGE MAP · {HEAT_CELLS.toLocaleString()} CHUNKS · LIVE</p>
         <p className="text-[11px] text-muted-foreground">
           <span className="mr-1 inline-block h-2 w-2 bg-bitcoin" /> SCANNED
-          <span className="ml-3 mr-1 inline-block h-2 w-2 bg-accent" /> BEING SCANNED NOW ({active})
+          <span className="ml-3 mr-1 inline-block h-2 w-2 bg-signal" /> BEING SCANNED NOW ({active})
         </p>
       </div>
       <div className="mt-2 grid aspect-square w-full max-w-md gap-px bg-border p-px" style={{ gridTemplateColumns: `repeat(${HEAT_SIDE}, 1fr)` }}>
         {Array.from({ length: HEAT_CELLS }, (_, i) => (
-          <div key={i} title={`chunk ${i}`} className={open[i] ? "bg-accent" : done[i] ? "bg-bitcoin" : "bg-background"}
+          <div key={i} title={`chunk ${i}`} className={open[i] ? "bg-signal" : done[i] ? "bg-bitcoin" : "bg-background"}
             style={done[i] && !open[i] ? { opacity: Math.min(1, 0.4 + done[i] / 4) } : undefined} />
         ))}
       </div>
