@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PoolPanel } from "@/components/puzzle/PoolPanel";
+import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
 import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -90,6 +91,7 @@ function PuzzlePage() {
       </div>
 
       <PoolPanel />
+      <BlockHuntPanel />
       <a href="/speed-bounty" className="mt-4 block font-mono text-xs text-primary">→ KANGAROO SPEED BOUNTIES · race known-pubkey keys</a>
 
       {found && (

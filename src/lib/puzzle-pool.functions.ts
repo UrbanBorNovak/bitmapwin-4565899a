@@ -5,10 +5,12 @@ const poolOf = (p: unknown): PoolId => (typeof p === "string" && isPoolId(p) ? p
 
 /** Hand out an unscanned slice (with trap canaries) to a worker address. */
 export const claimSliceFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { worker: string; pool?: PoolId }) => ({ worker: String(d?.worker ?? "").trim(), pool: poolOf(d?.pool) }))
+  .inputValidator((d: { worker: string; pool?: PoolId; height?: number }) => ({
+    worker: String(d?.worker ?? "").trim(), pool: poolOf(d?.pool), height: d?.height === undefined ? undefined : Number(d.height),
+  }))
   .handler(async ({ data }) => {
     const { claimSlice } = await import("@/lib/puzzle-pool.server");
-    return claimSlice(data.worker, data.pool);
+    return claimSlice(data.worker, data.pool, data.height);
   });
 
 /** Mark a slice scanned after checking its canary proof. */
@@ -29,3 +31,17 @@ export const poolStatsFn = createServerFn({ method: "GET" })
     const { poolStats } = await import("@/lib/puzzle-pool.server");
     return poolStats(data.pool);
   });
+
+/** Where a BITMAP block's fixed slice sits and whether it is scouted. */
+export const blockSliceStatusFn = createServerFn({ method: "GET" })
+  .inputValidator((d: { height: number }) => ({ height: Number(d?.height) }))
+  .handler(async ({ data }) => {
+    const { blockSliceStatus } = await import("@/lib/puzzle-pool.server");
+    return blockSliceStatus(data.height);
+  });
+
+/** Recently scouted BITMAP blocks (badge feed). */
+export const scoutedBlocksFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { scoutedBlocks } = await import("@/lib/puzzle-pool.server");
+  return scoutedBlocks();
+});

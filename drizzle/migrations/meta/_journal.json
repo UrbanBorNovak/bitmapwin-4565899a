@@ -274,6 +274,13 @@
       "when": 1793314522298,
       "tag": "0038_puzzle_test_slices",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793316258160,
+      "tag": "0039_puzzle_slice_block_height",
+      "breakpoints": true
     }
   ]
 }

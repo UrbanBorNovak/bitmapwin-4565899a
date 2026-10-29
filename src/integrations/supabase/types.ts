@@ -4029,6 +4029,7 @@ export type Database = {
         Row: {
           best_hash: string | null
           best_offset: number | null
+          block_height: number | null
           done_at: string | null
           lease_token: string
           leased_at: string
@@ -4038,6 +4039,7 @@ export type Database = {
         Insert: {
           best_hash?: string | null
           best_offset?: number | null
+          block_height?: number | null
           done_at?: string | null
           lease_token: string
           leased_at?: string
@@ -4047,6 +4049,7 @@ export type Database = {
         Update: {
           best_hash?: string | null
           best_offset?: number | null
+          block_height?: number | null
           done_at?: string | null
           lease_token?: string
           leased_at?: string

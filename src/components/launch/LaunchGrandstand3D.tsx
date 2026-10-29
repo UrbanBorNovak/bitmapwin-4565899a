@@ -1,3 +1,5 @@
+import { scoutedBlocksFn } from "@/lib/puzzle-pool.functions";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { events as r3fEvents, useFrame, type RootState } from "@react-three/fiber";
 import * as THREE from "three";
@@ -355,14 +357,17 @@ function useSponsorImage(slide: SponsorSlide | null): HTMLImageElement | null {
 export const vipLine = (seat: number) => `★ NEW VIP PASS MINTED · SEAT #${seat} · GOLD RING ACTIVATED ★`;
 
 function Jumbotron({ seat, sponsors = [], vips = [] }: { seat: LaunchSeat | null; sponsors?: SponsorSlide[]; vips?: LaunchSeat[] }) {
+  const scoutQ = useQuery({ queryKey: ["scouted-blocks"], queryFn: () => scoutedBlocksFn(), refetchInterval: 60_000 });
+  const scouts = (scoutQ.data ?? []).slice(0, 5);
   const face = useFace(seat?.pixelId ?? "");
   const [tick, setTick] = useState(0);
-  const rotation = seat ? 0 : sponsors.length + vips.length;
+  const rotation = seat ? 0 : sponsors.length + vips.length + scouts.length;
   useEffect(() => { if (seat || !rotation) return; const t = setInterval(() => setTick((x) => x + 1), 8000); return () => clearInterval(t); }, [seat, rotation]);
   // Idle rotation: VIP celebrity cards first, then sponsors.
   const slot = !seat && rotation ? tick % rotation : -1;
   const vipCard = slot >= 0 && slot < vips.length ? vips[slot]! : null;
-  const ad = slot >= vips.length ? sponsors[slot - vips.length]! : null;
+  const ad = slot >= vips.length && slot < vips.length + sponsors.length ? sponsors[slot - vips.length]! : null;
+  const scout = slot >= vips.length + sponsors.length ? scouts[slot - vips.length - sponsors.length]! : null;
   const adImg = useSponsorImage(ad);
   const [scroll, setScroll] = useState(0);
   useEffect(() => { if (!vips.length) return; const t = setInterval(() => setScroll((x) => x + 1), 120); return () => clearInterval(t); }, [vips.length]);
@@ -392,6 +397,13 @@ function Jumbotron({ seat, sponsors = [], vips = [] }: { seat: LaunchSeat | null
       g.fillStyle = "#fbbf24"; g.fillText("GOLD RING ACTIVATED · ON BITCOIN", 20, 206);
       strip(); scan(); return;
     }
+    if (scout) {
+      g.strokeStyle = "#22d3ee"; g.lineWidth = 4; g.strokeRect(6, 6, 500, 220);
+      g.fillStyle = "#22d3ee"; g.font = "bold 20px monospace"; g.fillText("◆ SECTOR SCOUTED · PUZZLE #71 ◆", 20, 72);
+      g.fillStyle = "#f7931a"; g.font = "bold 56px monospace"; g.fillText(`${scout.height}.bitmap`.slice(0, 14), 20, 140);
+      g.fillStyle = "#cfd6df"; g.font = "18px monospace"; g.fillText("OWN KEYSPACE SLICE · 3/3 TRAP KEYS", 20, 180);
+      strip(); scan(); return;
+    }
     if (ad) {
       g.fillStyle = "#f7931a"; g.font = "bold 18px monospace"; g.fillText("● SPONSORED BROADCAST", 20, 64);
       if (adImg) { try { const k = Math.min(180 / adImg.width, 180 / adImg.height); g.drawImage(adImg, 492 - adImg.width * k, 48, adImg.width * k, adImg.height * k); } catch { /* tainted */ } }
@@ -409,7 +421,7 @@ function Jumbotron({ seat, sponsors = [], vips = [] }: { seat: LaunchSeat | null
       if (seat.heldBitmap !== null) { g.fillStyle = "#f7931a"; g.fillText(`FLAG ${seat.heldBitmap}.bitmap`, 20, 220); }
     } else g.fillText("TAP A BITMAPPER", 20, 170);
     strip(); scan();
-  }, [seat, canvas, tex, ad, adImg, vipCard, vips, scroll]);
+  }, [seat, canvas, tex, ad, adImg, vipCard, vips, scroll, scout]);
   return (
     <group position={[0, 0.82, 3.26]} scale={0.46}>
       <mesh><planeGeometry args={[5.2, 2.6]} /><meshBasicMaterial map={tex} toneMapped={false} /></mesh>
