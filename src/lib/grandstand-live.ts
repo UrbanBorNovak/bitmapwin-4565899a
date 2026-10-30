@@ -6,7 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
  * broadcast popcorn volleys and crowd reactions. Nothing is stored and nothing
  * here grants anything — peers' messages are cosmetic only.
  */
-export type Volley = { n: number; seat: number; local: boolean };
+export type Volley = { n: number; seat: number; local: boolean; seed: number };
+/** Same seed → same kernel arcs on every screen. */
+export function seededRng(seed: number) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
 export type ArenaReaction = "airhorn" | "cheer";
 const CHANNEL = "grandstand-arena";
 
@@ -20,8 +25,8 @@ export function useGrandstandLive(mySeat: number | null, onReaction?: (r: ArenaR
   const seatRef = useRef(mySeat); seatRef.current = mySeat;
   const lastSent = useRef(0);
 
-  const push = useCallback((seat: number, local: boolean) => {
-    setVolleys((v) => [...v.slice(-20), { n: ++n.current, seat, local }]);
+  const push = useCallback((seat: number, local: boolean, seed: number) => {
+    setVolleys((v) => [...v.slice(-20), { n: ++n.current, seat, local, seed }]);
   }, []);
 
   useEffect(() => {
@@ -34,7 +39,8 @@ export function useGrandstandLive(mySeat: number | null, onReaction?: (r: ArenaR
       setViewers(Math.max(1, Object.keys(st).length)); setLiveSeats(seats);
     })
       .on("broadcast", { event: "popcorn" }, ({ payload }) => {
-        const s = Number(payload?.seat); if (Number.isInteger(s) && s > 0 && s < 100_000) push(s, false);
+        const s = Number(payload?.seat), seed = Number(payload?.seed);
+        if (Number.isInteger(s) && s > 0 && s < 100_000 && Number.isInteger(seed)) push(s, false, seed);
       })
       .on("broadcast", { event: "react" }, ({ payload }) => {
         const k = payload?.kind; if (k === "airhorn" || k === "cheer") react.current?.(k);
@@ -47,8 +53,9 @@ export function useGrandstandLive(mySeat: number | null, onReaction?: (r: ArenaR
   useEffect(() => { void ch.current?.track({ seat: mySeat }); }, [mySeat]);
 
   const throwPopcorn = useCallback(() => {
-    if (!mySeat) return; push(mySeat, true);
-    void ch.current?.send({ type: "broadcast", event: "popcorn", payload: { seat: mySeat } });
+    if (!mySeat) return;
+    const seed = Math.floor(Math.random() * 2 ** 31); push(mySeat, true, seed);
+    void ch.current?.send({ type: "broadcast", event: "popcorn", payload: { seat: mySeat, seed } });
   }, [mySeat, push]);
   const sendReaction = useCallback((kind: ArenaReaction) => {
     const now = Date.now(); if (now - lastSent.current < 1500) return; lastSent.current = now;
