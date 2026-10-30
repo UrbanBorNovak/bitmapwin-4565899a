@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { PUZZLE_71 } from "@/lib/puzzle-sweep";
+import { KeyVaultPanel } from "@/components/puzzle/KeyVaultPanel";
 import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryToggle, useLottery } from "@/lib/bitmap-lottery";
 
 const fmtRate = (r: number) => (r >= 1000 ? `${(r / 1000).toFixed(1)}k` : String(r));
@@ -12,6 +13,7 @@ export function BitmapLotteryWidget() {
   const path = useRouterState({ select: (x) => x.location.pathname });
   const [open, setOpen] = useState(false);
   useEffect(() => { lotteryBoot(); }, []);
+  useEffect(() => { if (s.found) setOpen(true); }, [s.found]);
   const jackpot = useQuery({
     queryKey: ["lottery-jackpot"], staleTime: 300_000, retry: 0,
     queryFn: async () => {
@@ -25,7 +27,7 @@ export function BitmapLotteryWidget() {
   return (
     <div className="fixed bottom-20 right-3 z-50 font-mono text-xs sm:bottom-4" data-no-translate={false}>
       {open && (
-        <div className="mb-2 w-72 rounded border border-border bg-background/85 p-3 shadow-lg backdrop-blur-md">
+        <div className="mb-2 max-h-[70vh] w-72 overflow-y-auto rounded border border-border bg-background/85 p-3 shadow-lg backdrop-blur-md">
           <div className="flex items-center justify-between">
             <span className="label text-accent">BITMAP LOTTERY</span>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground" aria-label="Close lottery panel">×</button>
@@ -48,6 +50,7 @@ export function BitmapLotteryWidget() {
           <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
             The prize is real BTC already sitting on Bitcoin since 2015. No smart contract is needed: whoever finds the key signs the spend on their own device, 80% to you and 20% to the treasury (half of that is pledged to pool contributors). Odds are astronomically low, so treat it as a free lottery ticket. Keys never leave this device. No BIT is paid.
           </p>
+          <div className="mt-3"><KeyVaultPanel compact /></div>
           <Link to="/puzzle" onClick={() => setOpen(false)} className="mt-2 block text-accent underline">OPEN SWEEP TERMINAL →</Link>
         </div>
       )}

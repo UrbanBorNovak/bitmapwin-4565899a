@@ -1,6 +1,7 @@
 /**
  * Puzzle secrets (a found private key, a signed sweep) live ONLY in page
- * memory. They are never written to localStorage/sessionStorage/IndexedDB,
+ * memory. They are never written in readable form to browser storage (the only
+ * stored copy is the passphrase-encrypted backup in key-vault.ts),
  * never logged, and every message shown or reported is passed through
  * redactSecrets first. A backup file is written only when the finder clicks.
  */

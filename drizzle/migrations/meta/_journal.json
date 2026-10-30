@@ -302,6 +302,13 @@
       "when": 1793328866295,
       "tag": "0042_restrict_public_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793398518453,
+      "tag": "0043_lock_launch_seat_wear",
+      "breakpoints": true
     }
   ]
 }
