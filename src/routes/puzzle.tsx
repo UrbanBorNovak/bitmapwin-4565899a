@@ -8,6 +8,7 @@ import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop,
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
 import { PUZZLE_71, SLIPSTREAM, SWEEP_TREASURY_PERCENT, buildSweep, hash160Of, keyMatches, slipstreamFeeRate, slipstreamStatusUrl, submitSlipstream } from "@/lib/puzzle-sweep";
+import { KeyVaultPanel } from "@/components/puzzle/KeyVaultPanel";
 import { CONFIRM_PHRASE, confirmMatches, downloadKeyBackup, guardUnload, safeError } from "@/lib/puzzle-secret";
 
 export const Route = createFileRoute("/puzzle")({
