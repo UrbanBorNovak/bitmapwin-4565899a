@@ -13,6 +13,8 @@ export function BitmapLotteryWidget() {
   const path = useRouterState({ select: (x) => x.location.pathname });
   const [open, setOpen] = useState(false);
   useEffect(() => { lotteryBoot(); }, []);
+  const [gpuOk, setGpuOk] = useState(false);
+  useEffect(() => setGpuOk(webgpuAvailable()), []);
   useEffect(() => { if (s.found) setOpen(true); }, [s.found]);
   const jackpot = useQuery({
     queryKey: ["lottery-jackpot"], staleTime: 300_000, retry: 0,
