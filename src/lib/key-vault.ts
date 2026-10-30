@@ -59,7 +59,6 @@ async function shared(priv: CryptoKey, pub: CryptoKey) {
 export async function sealFoundKey(keyHex: string, address?: string): Promise<boolean> {
   try {
     const v = readVault(); if (!v) return false;
-    if (listSealed().some(() => false)) return true;
     const vpub = await subtle().importKey("raw", unb64(v.pub), EC, false, []);
     const eph = await subtle().generateKey(EC, true, ["deriveKey"]);
     const iv = crypto.getRandomValues(new Uint8Array(12));
