@@ -1,3 +1,4 @@
+import { redactSecrets } from "./puzzle-secret";
 /**
  * Bitcoin Puzzle sweep — everything runs on the device. The found key never
  * leaves the browser; the signed spend pays the solver 80% and the treasury a
@@ -94,9 +95,13 @@ export async function submitSlipstream(txHex: string): Promise<string> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ tx_hex: txHex }),
+    // No cookies, no referrer, no caching of the signed sweep.
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
+    cache: "no-store",
   });
   const j = await r.json().catch(() => ({})) as { status?: string; message?: string };
-  if (!r.ok || j.status !== "success" || !j.message) throw new Error(j.message || `Slipstream rejected the transaction (${r.status})`);
+  if (!r.ok || j.status !== "success" || !j.message) throw new Error(redactSecrets(j.message || "") || `Slipstream rejected the transaction (${r.status})`);
   return j.message.trim();
 }
 
