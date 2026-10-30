@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { PUZZLE_71, hash160Of } from "@/lib/puzzle-sweep";
-import { FOUND_KEY, chime, nearTier } from "@/lib/bitmap-lottery";
+import { FOUND_KEY, FULL_HASH_CHARS, chime, nearTier, ticketWinChance } from "@/lib/bitmap-lottery";
 
 /**
  * Bitcoin Golden Ticket: one free scratchcard per device per day. The ticket's
@@ -13,6 +13,25 @@ const TICKET_KEYS = 250_000;
 const DAY_KEY = "bitmap.ticket.day";
 const SALT_KEY = "bitmap.ticket.salt";
 const hexOf = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+
+/** Plain-language odds, e.g. "1 IN ~9.4 QUADRILLION". */
+function oddsText(p: number) {
+  if (!(p > 0)) return "—";
+  const oneIn = 1 / p;
+  const units: [number, string][] = [[1e18, "QUINTILLION"], [1e15, "QUADRILLION"], [1e12, "TRILLION"],
+    [1e9, "BILLION"], [1e6, "MILLION"], [1e3, "THOUSAND"]];
+  const u = units.find(([m]) => oneIn >= m);
+  return u ? `1 IN ~${(oneIn / u[0]).toFixed(1)} ${u[1]}` : `1 IN ${Math.round(oneIn).toLocaleString()}`;
+}
+
+/** The disclosure both panels must always state, in plain words. */
+function OddsNote({ text }: { text: string }) {
+  return (
+    <p className="mt-2 rounded border border-destructive/40 bg-destructive/5 px-2 py-1.5 text-[10px] leading-relaxed text-foreground">
+      {text}
+    </p>
+  );
+}
 
 type Ticket = { block: number; hash: string; startHex: string };
 type Saved = { day: string; ticket: Ticket; best: number; done: boolean };
@@ -106,7 +125,9 @@ export function GoldenTicket() {
         <p className="label text-bitcoin">BITCOIN GOLDEN TICKET · DAILY</p>
         <p className="text-muted-foreground">1 FREE TICKET / DAY</p>
       </div>
-      <p className="mt-2 text-muted-foreground">Your ticket is cut from today's newest Bitcoin block. Scratch it, then run its {TICKET_KEYS.toLocaleString()} keys. The more of the prize address your best key matches, the higher your tier.</p>
+      <OddsNote text="TIERS PAY NOTHING. A TIER DOES NOT IMPROVE YOUR ODDS. A PREFIX MATCH IS LUCK ON THE KEYS YOU ALREADY TRIED — IT DOES NOT MEAN THE FULL KEY IS GETTING CLOSER." />
+      <p className="mt-2 text-muted-foreground">Your ticket is cut from today's newest Bitcoin block. Scratch it, then run its {TICKET_KEYS.toLocaleString()} keys. The more of the prize address your best key matches, the higher your tier — that is all a tier measures.</p>
+      <p className="mt-1 text-[10px] text-muted-foreground">This ticket checks {TICKET_KEYS.toLocaleString()} keys out of the whole #71 range, so its chance of holding the key is {oddsText(ticketWinChance(TICKET_KEYS))}. That number never moves: no tier, streak or near miss makes it better.</p>
       {err && <p className="mt-3 text-destructive">{err}</p>}
       {ticket && (
         <div className="relative mt-4 overflow-hidden rounded border border-bitcoin/50 bg-background p-4" style={{ minHeight: 120 }}>
@@ -129,11 +150,19 @@ export function GoldenTicket() {
               <p className="mt-2 text-muted-foreground">{running ? `SCANNING ${Math.round(progress * 100)}%` : "TICKET USED · NEXT ONE TOMORROW"}</p>
             </>
           )}
+          {done && best === 0 && (
+            <OddsNote text="NO MATCH ON THESE KEYS. NOTHING WAS WON AND NOTHING IS OWED — THE KEYS WERE SIMPLY NOT THE ONE. YOUR NEXT TICKET HAS THE SAME ODDS AS THIS ONE." />
+          )}
           {best > 0 && (
-            <p className="display mt-2 text-lg">
-              <span className={best >= 5 ? "text-bitcoin" : "text-accent"}>{tier.id}</span>
-              <span className="ml-2 text-xs text-muted-foreground">{best} CHARACTERS MATCHED · 1 IN {tier.odds.toLocaleString()}</span>
-            </p>
+            <div className="mt-2">
+              <p className="display text-lg">
+                <span className={best >= 5 ? "text-bitcoin" : "text-accent"}>{tier.id}</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {best} OF {FULL_HASH_CHARS} CHARACTERS MATCHED · THAT COINCIDENCE IS 1 IN {tier.odds.toLocaleString()} PER KEY
+                </span>
+              </p>
+              <OddsNote text="This is the odds of that coincidence on a single key, not the odds of winning. Matching characters does not make the next key any more likely to win and does not narrow the search for the private key — every key is a fresh, independent try. Tiers pay nothing. Only the exact key wins the 7.10 BTC." />
+            </div>
           )}
         </div>
       )}
@@ -151,7 +180,8 @@ export function NearMissFeed({ nears, bestNear }: { nears: { nibbles: number; ha
         <p className="text-muted-foreground">BEST EVER: <span className="text-bitcoin">{bestNear ? `${nearTier(bestNear).id} (${bestNear})` : "—"}</span></p>
       </div>
       <p className="mt-1 text-[10px] text-muted-foreground" data-no-translate>TARGET {target}</p>
-      {nears.length === 0 ? <p className="mt-2 text-muted-foreground">Turn the lottery on — keys that share 4+ starting characters with the prize show up here.</p> : (
+      <OddsNote text="A near miss is a coincidence on one key, not a clue and not progress. Nobody here is closer to the private key than before, no row pays anything, and none of them improves anyone's odds." />
+      {nears.length === 0 ? <p className="mt-2 text-muted-foreground">Turn the lottery on — keys that happen to share 4+ starting characters with the prize address show up here.</p> : (
         <ul className="mt-2 space-y-1" data-no-translate>
           {nears.map((n) => (
             <li key={n.at + n.hash} className="flex gap-2 animate-in fade-in">
@@ -161,6 +191,7 @@ export function NearMissFeed({ nears, bestNear }: { nears: { nibbles: number; ha
           ))}
         </ul>
       )}
+      <p className="mt-2 text-[10px] text-muted-foreground">Each row is one key whose Hash160 happened to start like the prize address. The rest of the address is still unmatched, so none of these keys is the key.</p>
     </section>
   );
 }
