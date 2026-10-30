@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { PoolPanel } from "@/components/puzzle/PoolPanel";
 import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
-import { CommunityRecord } from "@/components/puzzle/CommunityRecord";
+import { CommunityRecord } from "../components/puzzle/CommunityRecord";
 import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
