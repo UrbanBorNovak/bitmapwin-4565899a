@@ -180,6 +180,7 @@ import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/publ
 import { Route as ApiPublicOgBitmapBlockRouteImport } from './routes/api/public/og.bitmap.$block'
 import { Route as ApiPublicPuzzlePoolRangeRouteImport } from './routes/api/public/puzzle.$pool.range'
 import { Route as ApiPublicPuzzlePoolShareRouteImport } from './routes/api/public/puzzle.$pool.share'
+import { Route as ApiPublicPuzzle71RigDotps1RouteImport } from './routes/api/public/puzzle.71.rig[.]ps1'
 import { Route as ApiPublicPuzzle71RigDotshRouteImport } from './routes/api/public/puzzle.71.rig[.]sh'
 
 const IndexRoute = IndexRouteImport.update({
@@ -1044,6 +1045,12 @@ const ApiPublicPuzzlePoolShareRoute =
     path: '/public/puzzle/$pool/share',
     getParentRoute: () => ApiRoute,
   } as any)
+const ApiPublicPuzzle71RigDotps1Route =
+  ApiPublicPuzzle71RigDotps1RouteImport.update({
+    id: '/public/puzzle/71/rig.ps1',
+    path: '/public/puzzle/71/rig.ps1',
+    getParentRoute: () => ApiRoute,
+  } as any)
 const ApiPublicPuzzle71RigDotshRoute =
   ApiPublicPuzzle71RigDotshRouteImport.update({
     id: '/public/puzzle/71/rig.sh',
@@ -1223,6 +1230,7 @@ export interface FileRoutesByFullPath {
   '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
   '/api/public/puzzle/$pool/range': typeof ApiPublicPuzzlePoolRangeRoute
   '/api/public/puzzle/$pool/share': typeof ApiPublicPuzzlePoolShareRoute
+  '/api/public/puzzle/71/rig.ps1': typeof ApiPublicPuzzle71RigDotps1Route
   '/api/public/puzzle/71/rig.sh': typeof ApiPublicPuzzle71RigDotshRoute
 }
 export interface FileRoutesByTo {
@@ -1393,6 +1401,7 @@ export interface FileRoutesByTo {
   '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
   '/api/public/puzzle/$pool/range': typeof ApiPublicPuzzlePoolRangeRoute
   '/api/public/puzzle/$pool/share': typeof ApiPublicPuzzlePoolShareRoute
+  '/api/public/puzzle/71/rig.ps1': typeof ApiPublicPuzzle71RigDotps1Route
   '/api/public/puzzle/71/rig.sh': typeof ApiPublicPuzzle71RigDotshRoute
 }
 export interface FileRoutesById {
@@ -1568,6 +1577,7 @@ export interface FileRoutesById {
   '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
   '/api/public/puzzle/$pool/range': typeof ApiPublicPuzzlePoolRangeRoute
   '/api/public/puzzle/$pool/share': typeof ApiPublicPuzzlePoolShareRoute
+  '/api/public/puzzle/71/rig.ps1': typeof ApiPublicPuzzle71RigDotps1Route
   '/api/public/puzzle/71/rig.sh': typeof ApiPublicPuzzle71RigDotshRoute
 }
 export interface FileRouteTypes {
@@ -1744,6 +1754,7 @@ export interface FileRouteTypes {
     | '/api/public/og/bitmap/$block'
     | '/api/public/puzzle/$pool/range'
     | '/api/public/puzzle/$pool/share'
+    | '/api/public/puzzle/71/rig.ps1'
     | '/api/public/puzzle/71/rig.sh'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1914,6 +1925,7 @@ export interface FileRouteTypes {
     | '/api/public/og/bitmap/$block'
     | '/api/public/puzzle/$pool/range'
     | '/api/public/puzzle/$pool/share'
+    | '/api/public/puzzle/71/rig.ps1'
     | '/api/public/puzzle/71/rig.sh'
   id:
     | '__root__'
@@ -2088,6 +2100,7 @@ export interface FileRouteTypes {
     | '/api/public/og/bitmap/$block'
     | '/api/public/puzzle/$pool/range'
     | '/api/public/puzzle/$pool/share'
+    | '/api/public/puzzle/71/rig.ps1'
     | '/api/public/puzzle/71/rig.sh'
   fileRoutesById: FileRoutesById
 }
@@ -3416,6 +3429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPuzzlePoolShareRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/puzzle/71/rig.ps1': {
+      id: '/api/public/puzzle/71/rig.ps1'
+      path: '/public/puzzle/71/rig.ps1'
+      fullPath: '/api/public/puzzle/71/rig.ps1'
+      preLoaderRoute: typeof ApiPublicPuzzle71RigDotps1RouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/puzzle/71/rig.sh': {
       id: '/api/public/puzzle/71/rig.sh'
       path: '/public/puzzle/71/rig.sh'
@@ -3457,6 +3477,7 @@ interface ApiRouteChildren {
   ApiPublicOgBitmapBlockRoute: typeof ApiPublicOgBitmapBlockRoute
   ApiPublicPuzzlePoolRangeRoute: typeof ApiPublicPuzzlePoolRangeRoute
   ApiPublicPuzzlePoolShareRoute: typeof ApiPublicPuzzlePoolShareRoute
+  ApiPublicPuzzle71RigDotps1Route: typeof ApiPublicPuzzle71RigDotps1Route
   ApiPublicPuzzle71RigDotshRoute: typeof ApiPublicPuzzle71RigDotshRoute
 }
 
@@ -3478,6 +3499,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicOgBitmapBlockRoute: ApiPublicOgBitmapBlockRoute,
   ApiPublicPuzzlePoolRangeRoute: ApiPublicPuzzlePoolRangeRoute,
   ApiPublicPuzzlePoolShareRoute: ApiPublicPuzzlePoolShareRoute,
+  ApiPublicPuzzle71RigDotps1Route: ApiPublicPuzzle71RigDotps1Route,
   ApiPublicPuzzle71RigDotshRoute: ApiPublicPuzzle71RigDotshRoute,
 }
 
