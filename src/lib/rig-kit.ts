@@ -63,8 +63,8 @@ export const PS_RIG = `# bitmapwin.app Puzzle #71 pool rig — Windows PowerShel
 $ErrorActionPreference = "Stop"
 $pool = if ($env:POOL) { $env:POOL } else { "71" }
 $api = if ($env:API) { $env:API } else { "https://bitmapwin.app/api/public/puzzle/$pool" }
-if (-not $env:WORKER) { throw "set `$env:WORKER to your Bitcoin address" }
-if (-not $env:SCANNER) { throw "set `$env:SCANNER to your scanner command" }
+if (-not $env:WORKER) { throw "set WORKER to your Bitcoin address" }
+if (-not $env:SCANNER) { throw "set SCANNER to your scanner command" }
 while ($true) {
   try { $L = Invoke-RestMethod "$api/range?worker=$($env:WORKER)" } catch { Write-Host "lease failed, retry in 60s"; Start-Sleep 60; continue }
   $T = New-TemporaryFile; $O = New-TemporaryFile
