@@ -1,0 +1,27 @@
+# BitmapWin
+
+> Bitcoin-native worlds built on BITMAP: every Bitcoin block is a piece of land you can look up, trade, build on and walk through in 3D, using only on-chain data.
+
+BitmapWin reads BITMAP ownership, inscriptions and sales directly from Bitcoin (ordinals.com and an on-chain block index). Five pillars: WORLD (The Oasis 3D map), LAND (BITMAP pages and marketplace), EXPERIENCES (Extenders and Biternam rooms), IDENTITY (Passport and wallet-signed seats) and CREATION (Land Forge voxel studio and Toon Studio).
+
+## Pages
+
+- [Home](https://bitmapwin.app/): Overview, live blocks and recent on-chain BITMAP trades.
+- [The Oasis](https://bitmapwin.app/oasis): Shared 3D world where every Bitcoin block is a district.
+- [Map](https://bitmapwin.app/map): Atlas of BITMAP districts.
+- [Marketplace](https://bitmapwin.app/marketplace): Wallet-signed BITMAP trades with confirmed sale history.
+- [Example BITMAP page](https://bitmapwin.app/bitmap/0): Ownership, traits and history for block 0.
+- [Collections](https://bitmapwin.app/collections): BITMAP clubs and collections.
+- [Land Forge](https://bitmapwin.app/forge): Build voxel structures and inscribe them onto your BITMAP.
+- [Biternam](https://bitmapwin.app/biternam): Interactive rooms and puzzles.
+- [Launch Grandstand](https://bitmapwin.app/launch): Wallet-signed seats for Bitmappers.
+- [Puzzle #71 pool](https://bitmapwin.app/puzzle): Browser scanning pool for Bitcoin Puzzle #71; found keys stay on the device.
+- [Speed Bounties](https://bitmapwin.app/speed-bounty): Pollard's Kangaroo key races in the browser.
+
+## Docs
+
+- [Docs](https://bitmapwin.app/docs): How BitmapWin works.
+- [Land 101](https://bitmapwin.app/land-101): What a BITMAP is.
+- [Agents and MCP](https://bitmapwin.app/docs/agents): Connect AI agents such as Grok.
+- [API](https://bitmapwin.app/api): Public endpoints.
+- [SDK](https://bitmapwin.app/sdk): Build Extenders.
