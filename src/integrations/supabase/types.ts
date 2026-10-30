@@ -4025,6 +4025,27 @@ export type Database = {
         }
         Relationships: []
       }
+      puzzle_near_records: {
+        Row: {
+          found_at: string
+          hash: string
+          id: string
+          nibbles: number
+        }
+        Insert: {
+          found_at?: string
+          hash: string
+          id?: string
+          nibbles: number
+        }
+        Update: {
+          found_at?: string
+          hash?: string
+          id?: string
+          nibbles?: number
+        }
+        Relationships: []
+      }
       puzzle_pool_slices: {
         Row: {
           best_hash: string | null

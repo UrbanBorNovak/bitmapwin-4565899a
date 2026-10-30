@@ -96,6 +96,7 @@ function ensureWorker() {
       const best = Math.max(state.bestNear, m.nibbles);
       if (best > state.bestNear) localStorage.setItem(BEST_NEAR_KEY, String(best));
       if (m.nibbles >= 5) chime(m.nibbles);
+      if (m.keyHex && m.nibbles >= 5) void import("./puzzle-record.functions").then((f) => f.submitNearRecordFn({ data: { keyHex: m.keyHex } })).catch(() => {});
       set({ bestNear: best, nears: [{ nibbles: m.nibbles, hash: m.hash, at: Date.now() }, ...state.nears].slice(0, 12) });
     } else if (m.type === "slice") set({ slice: m.startHex });
     else if (m.type === "slice-done") void finishSlice(m.offset, m.hash, m.canaryKeys ?? []);

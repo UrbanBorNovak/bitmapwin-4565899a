@@ -57,7 +57,7 @@ async function run(m: Start) {
           const hx = toHex(h);
           let nib = 0;
           while (nib < 40 && hx[nib] === tgtHex[nib]) nib++;
-          if (nib >= nearMin) self.postMessage({ type: "near", nibbles: nib, hash: hx });
+          if (nib >= nearMin) self.postMessage({ type: "near", nibbles: nib, hash: hx, keyHex: nib >= 5 ? k.toString(16).padStart(64, "0") : undefined });
         }
         if (pool) {
           if (!best || less(h, best)) { best = h; bestOff = k - k0; }
