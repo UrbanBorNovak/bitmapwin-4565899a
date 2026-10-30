@@ -23,3 +23,11 @@ describe("puzzle sweep", () => {
     expect(hash160Of(PUZZLE_71.address).length).toBe(20);
   });
 });
+
+import { sweepFeeRate } from "./puzzle-sweep";
+import * as sweepMod from "./puzzle-sweep";
+describe("slipstream-only sweep", () => {
+  it("pads Slipstream's rate by 25%", () => { expect(sweepFeeRate(8)).toBe(10); });
+  it("never goes below 2 sat/vB", () => { expect(sweepFeeRate(0)).toBe(2); expect(sweepFeeRate(NaN)).toBe(2); });
+  it("has no public-mempool broadcast", () => { expect("broadcast" in sweepMod).toBe(false); });
+});
