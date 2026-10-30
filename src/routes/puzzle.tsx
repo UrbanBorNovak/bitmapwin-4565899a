@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PoolPanel } from "@/components/puzzle/PoolPanel";
 import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
@@ -88,56 +88,80 @@ function PuzzlePage() {
   }
 
   const keyspace = 2 ** 70;
+  const SPEED_NAMES = ["Gentle", "Normal", "Turbo", "Max"];
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 font-mono">
-      <p className="label text-accent">BITCOIN PUZZLE RIG</p>
-      <h1 className="display mt-2 text-3xl">BITMAP LOTTERY · PUZZLE #71</h1>
-      <p className="mt-3 text-sm text-muted-foreground">
-        Your browser checks random keys from the #71 range in the background. Keys and any find stay on this device.
-        Honest odds: the range holds about 1.18 sextillion keys — a browser will almost certainly never find it. This is a lottery ticket, not income.
-      </p>
-
-      <CommunityRecord />
-
-      <section className="mt-6 grid gap-3 sm:grid-cols-4">
-        <Stat label="BOUNTY" value={balance == null ? "…" : `${(balance / 1e8).toFixed(2)} BTC`} accent />
-        <Stat label="SPEED" value={`${(rate / 1000).toFixed(1)} kKEYS/s`} />
-        <Stat label="CHECKED HERE" value={scanned.toLocaleString()} />
-        <Stat label="SHARE OF RANGE" value={`${((scanned / keyspace) * 100).toExponential(2)}%`} />
+    <main className="mx-auto max-w-3xl px-4 py-10">
+      <section className="text-center">
+        <p className="label text-accent">BITCOIN TREASURE HUNT</p>
+        <h1 className="display mt-2 text-4xl">
+          Win <span className="text-bitcoin">{balance == null ? "7.10" : (balance / 1e8).toFixed(2)} BTC</span>
+        </h1>
+        <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
+          A Bitcoin treasure chest has been locked since 2015. Your computer tries free keys to open it. It's free, and everything stays on your device.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">Winning is extremely unlikely. Think of it as a free lottery ticket.</p>
       </section>
 
-      <div className="mt-4 rounded border border-border bg-card/60 p-4 text-xs">
-        <p className="text-muted-foreground">TARGET <span className="text-foreground" data-no-translate>{PUZZLE_71.address}</span></p>
-        <p className="mt-1 text-muted-foreground">RANGE <span data-no-translate>0x{PUZZLE_71.startHex} – 0x{PUZZLE_71.endHex}</span></p>
-        {slice && <p className="mt-1 text-muted-foreground">SLICE <span className="text-accent" data-no-translate>0x{slice}</span></p>}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {DUTIES.map((d) => (
-            <button key={d.id} onClick={() => setDuty(d.id)} className={`rounded border px-3 py-1 ${duty === d.id ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{d.id}</button>
-          ))}
-          <button onClick={on ? stop : start} disabled={!!found} className="ml-auto rounded bg-primary px-4 py-1 text-primary-foreground disabled:opacity-50">
-            {on ? "[ STOP ]" : "[ TURN LOTTERY ON ]"}
+      <ol className="mt-8 space-y-4">
+        <StepCard n={1} title="Turn it on">
+          <button onClick={on ? stop : start} disabled={!!found} className="w-full rounded-lg bg-primary px-6 py-4 font-mono text-lg text-primary-foreground disabled:opacity-50">
+            {on ? "■ STOP HUNTING" : "▶ START HUNTING"}
           </button>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="label text-muted-foreground">ENGINE</span>
-          <button onClick={() => lotterySetEngine("CPU")} className={`rounded border px-3 py-1 ${lot.engine === "CPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>CPU WORKER</button>
-          <button onClick={() => lotterySetEngine("GPU")} disabled={!gpuOk} className={`rounded border px-3 py-1 disabled:opacity-40 ${lot.engine === "GPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>WEBGPU · EXPERIMENTAL</button>
-          <span className="text-[11px] text-muted-foreground" data-no-translate>
-            {lot.gpuStatus === "testing" && "GPU SELF-TEST…"}
-            {lot.gpuStatus === "ok" && lot.engine === "GPU" && `GPU OK · ${lot.gpuNote}`}
-            {lot.gpuStatus === "failed" && `GPU OFF · ${lot.gpuNote} · USING CPU`}
-          </span>
-        </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">WebGPU runs on your graphics card in Chrome/Edge desktop. It must pass a self-test against the CPU first, and every find is re-checked on the CPU. Native GPU rigs (below) are still far faster.</p>
-        <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
-      </div>
+          <p className="mt-3 text-sm text-muted-foreground">How hard should your computer work?</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DUTIES.map((d, i) => (
+              <button key={d.id} onClick={() => setDuty(d.id)} className={`rounded-full border px-4 py-1.5 text-sm ${duty === d.id ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{SPEED_NAMES[i] ?? d.id}</button>
+            ))}
+          </div>
+        </StepCard>
 
-      <NearMissFeed nears={lot.nears} bestNear={lot.bestNear} />
-      <GoldenTicket />
-      <PoolPanel />
-      <BlockHuntPanel />
-      <div className="mt-4"><KeyVaultPanel /></div>
-      <a href="/speed-bounty" className="mt-4 block font-mono text-xs text-primary">→ KANGAROO SPEED BOUNTIES · race known-pubkey keys</a>
+        <StepCard n={2} title="Watch it count">
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="Keys tried" value={scanned.toLocaleString()} />
+            <Stat label="Keys per second" value={Math.round(rate).toLocaleString()} />
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">{on ? "Hunting… you can use the rest of the site while this runs." : "Press Start to begin."}</p>
+        </StepCard>
+
+        <StepCard n={3} title="If you win">
+          <p className="text-sm text-muted-foreground">
+            A big gold box appears on this page. Connect your wallet and follow the steps. You get {100 - SWEEP_TREASURY_PERCENT}%, and the bitmapwin treasury gets {SWEEP_TREASURY_PERCENT}%.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Tip: set a backup password under "Advanced" so a win is never lost if the tab closes.</p>
+        </StepCard>
+      </ol>
+
+      <details className="mt-8 rounded-lg border border-border bg-card/60 p-4 font-mono">
+        <summary className="cursor-pointer text-sm text-accent">🛠 ADVANCED TOOLS (for experts)</summary>
+        <CommunityRecord />
+        <section className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Stat label="SHARE OF RANGE" value={`${((scanned / keyspace) * 100).toExponential(2)}%`} />
+          <Stat label="BOUNTY" value={balance == null ? "…" : `${(balance / 1e8).toFixed(8)} BTC`} accent />
+        </section>
+        <div className="mt-4 rounded border border-border bg-card/60 p-4 text-xs">
+          <p className="text-muted-foreground">TARGET <span className="text-foreground" data-no-translate>{PUZZLE_71.address}</span></p>
+          <p className="mt-1 text-muted-foreground">RANGE <span data-no-translate>0x{PUZZLE_71.startHex} – 0x{PUZZLE_71.endHex}</span></p>
+          {slice && <p className="mt-1 text-muted-foreground">SLICE <span className="text-accent" data-no-translate>0x{slice}</span></p>}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="label text-muted-foreground">ENGINE</span>
+            <button onClick={() => lotterySetEngine("CPU")} className={`rounded border px-3 py-1 ${lot.engine === "CPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>CPU WORKER</button>
+            <button onClick={() => lotterySetEngine("GPU")} disabled={!gpuOk} className={`rounded border px-3 py-1 disabled:opacity-40 ${lot.engine === "GPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>WEBGPU · EXPERIMENTAL</button>
+            <span className="text-[11px] text-muted-foreground" data-no-translate>
+              {lot.gpuStatus === "testing" && "GPU SELF-TEST…"}
+              {lot.gpuStatus === "ok" && lot.engine === "GPU" && `GPU OK · ${lot.gpuNote}`}
+              {lot.gpuStatus === "failed" && `GPU OFF · ${lot.gpuNote} · USING CPU`}
+            </span>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">WebGPU runs on your graphics card in Chrome/Edge desktop. It must pass a self-test against the CPU first, and every find is re-checked on the CPU. Native GPU rigs are still far faster.</p>
+          <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
+        </div>
+        <div className="mt-4"><KeyVaultPanel /></div>
+        <NearMissFeed nears={lot.nears} bestNear={lot.bestNear} />
+        <GoldenTicket />
+        <PoolPanel />
+        <BlockHuntPanel />
+        <a href="/speed-bounty" className="mt-4 block text-xs text-primary">→ KANGAROO SPEED BOUNTIES · race known-pubkey keys</a>
+      </details>
 
       {found && (
         <section className="mt-6 rounded border border-primary p-4 text-xs">
@@ -198,5 +222,17 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
       <p className="label text-muted-foreground">{label}</p>
       <p className={`display mt-1 text-base ${accent ? "text-bitcoin" : ""}`}>{value}</p>
     </div>
+  );
+}
+
+function StepCard({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <li className="rounded-lg border border-border bg-card/60 p-5">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="display flex h-9 w-9 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground">{n}</span>
+        <h2 className="display text-xl">{title}</h2>
+      </div>
+      {children}
+    </li>
   );
 }
