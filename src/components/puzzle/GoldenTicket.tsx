@@ -104,7 +104,7 @@ export function GoldenTicket() {
       const m = e.data;
       if (m.type === "batch") { n += m.count; setProgress(Math.min(1, n / TICKET_KEYS)); }
       else if (m.type === "near" && m.nibbles > b) { b = m.nibbles; setBest(b); if (b >= 4) chime(b); }
-      else if (m.type === "found") { localStorage.setItem(lotteryFound, m.keyHex); finish(b); w.terminate(); }
+      else if (m.type === "found") { lotteryFound(m.keyHex); finish(b); w.terminate(); }
       else if (m.type === "slice-done") { finish(b); w.terminate(); }
     };
     w.postMessage({ type: "start", startHex: PUZZLE_71.startHex, endHex: PUZZLE_71.endHex,
