@@ -43,9 +43,16 @@ export async function claimSlice(worker: string, pool: PoolId = "71", height?: n
   const db = await admin();
   const since = new Date(Date.now() - LEASE_MS).toISOString();
   const table = TABLE[pool];
-  const { count } = await db.from(table).select("slice_index", { count: "exact", head: true })
-    .eq("worker", worker).is("done_at", null).gte("leased_at", since);
-  if ((count ?? 0) >= MAX_OPEN_LEASES) return { ok: false, error: "Too many open slices for this address — finish one first." };
+  // Over the cap, the oldest unfinished leases of this address are released
+  // (marked expired) so switching blocks or reloading never locks the address.
+  const { data: open } = await db.from(table).select("slice_index, leased_at")
+    .eq("worker", worker).is("done_at", null).gte("leased_at", since).order("leased_at", { ascending: true });
+  const excess = (open?.length ?? 0) - (MAX_OPEN_LEASES - 1);
+  if (excess > 0) {
+    const stale = new Date(Date.now() - LEASE_MS - 1000).toISOString();
+    await db.from(table as "puzzle_pool_slices").update({ leased_at: stale })
+      .in("slice_index", open!.slice(0, excess).map((r) => Number(r.slice_index))).eq("worker", worker).is("done_at", null);
+  }
   if (height !== undefined && (pool !== "71" || !isBlockHeight(height))) return { ok: false, error: "Enter a valid block height" };
   for (let i = 0; i < 5; i++) {
     const idx = height !== undefined ? cartographicSlice(height).index : randomIndex(POOLS[pool].count);
@@ -53,12 +60,15 @@ export async function claimSlice(worker: string, pool: PoolId = "71", height?: n
     const { error } = await db.from(table as "puzzle_pool_slices").insert({ slice_index: Number(idx), worker, lease_token: token, ...(height !== undefined ? { block_height: height } : {}) });
     if (error) {
       if (height === undefined) continue;
-      // Block slices are fixed: re-lease only an unfinished, expired lease.
-      const { data: row } = await db.from(table).select("done_at, leased_at").eq("slice_index", Number(idx)).maybeSingle();
+      // Block slices are fixed: re-lease an unfinished lease that expired or is this address's own.
+      const { data: row } = await db.from(table).select("done_at, leased_at, worker").eq("slice_index", Number(idx)).maybeSingle();
       if (row?.done_at) return { ok: false, error: `${height}.bitmap is already scouted` };
-      if (row && new Date(row.leased_at).getTime() > Date.now() - LEASE_MS) return { ok: false, error: `${height}.bitmap is being scanned right now` };
-      const { data: up } = await db.from(table as "puzzle_pool_slices").update({ worker, lease_token: token, leased_at: new Date().toISOString(), block_height: height })
-        .eq("slice_index", Number(idx)).is("done_at", null).lt("leased_at", since).select("slice_index");
+      const mine = row?.worker === worker;
+      if (row && !mine && new Date(row.leased_at).getTime() > Date.now() - LEASE_MS) return { ok: false, error: `${height}.bitmap is being scanned right now` };
+      let q = db.from(table as "puzzle_pool_slices").update({ worker, lease_token: token, leased_at: new Date().toISOString(), block_height: height })
+        .eq("slice_index", Number(idx)).is("done_at", null);
+      q = mine ? q.eq("worker", worker) : q.lt("leased_at", since);
+      const { data: up } = await q.select("slice_index");
       if (!up?.length) return { ok: false, error: "Pool busy, try again." };
     }
     const h = canaryKeys(secret(pool), idx, token, pool).map(hash160OfKey);

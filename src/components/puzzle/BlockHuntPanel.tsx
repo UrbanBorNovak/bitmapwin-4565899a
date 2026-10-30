@@ -60,7 +60,7 @@ export function BlockHuntPanel() {
       )}
       {busy && <p className="mt-2 text-muted-foreground">16.7M keys — usually 10–20 minutes. Keep this tab open.</p>}
       {busy && prog && <ScanProgress done={prog.done} size={prog.size} rate={prog.rate} />}
-      {!busy && s?.status === "scanning" && <p className="mt-2 text-muted-foreground">Someone is scanning this block right now. If it was you and you left the page, it frees up within 20 minutes.</p>}
+      {!busy && s?.status === "scanning" && <p className="mt-2 text-muted-foreground">Someone is scanning this block right now. If it was you and you left the page, it frees up within 3 hours — or scout it again from the same address to resume.</p>}
       {msg && <p className="mt-2 font-mono text-accent">{msg}</p>}
       {!!scouted.data?.length && (
         <p className="mt-3 font-mono text-[11px] text-muted-foreground" data-no-translate>
