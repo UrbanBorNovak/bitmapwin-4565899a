@@ -18,7 +18,7 @@ async function heightsFrom(table: "trades" | "offers" | "bitmap_forge_builds", o
   return out;
 }
 
-const MAIN_PAGES = ["/tools", "/forge", "/toon", "/watch", "/mint", "/breed", "/guardians", "/guardians-guide", "/church", "/store-kit", "/co-forge", "/tiny-studio", "/bot", "/clips", "/traits", "/kennels", "/explore", "/experiences", "/extenders", "/history", "/builders", "/cities", "/world-stats", "/trading-post", "/ranks", "/codex", "/genesis-ranks", "/novelty"];
+const MAIN_PAGES = ["/tools", "/forge", "/toon", "/watch", "/mint", "/breed", "/guardians", "/guardians-guide", "/church", "/store-kit", "/co-forge", "/tiny-studio", "/bot", "/clips", "/traits", "/kennels", "/explore", "/experiences", "/extenders", "/history", "/builders", "/cities", "/world-stats", "/trading-post", "/ranks", "/codex", "/genesis-ranks", "/novelty", "/puzzle", "/speed-bounty", "/launch", "/stand", "/charge", "/docs/agents", "/colony", "/shord", "/biternam", "/xmas", "/marketplace"];
 
 const BASE_URL = "https://bitmapwin.app";
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const bitmapHeights = [...new Set([...traded, ...listed, ...built])].sort((a, b) => a - b);
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "daily", priority: "1.0" },
-          { path: "/marketplace", changefreq: "hourly", priority: "0.9" },
+
           { path: "/map", changefreq: "hourly", priority: "0.9" },
           { path: "/oasis", changefreq: "daily", priority: "0.8" },
           { path: "/collections", changefreq: "daily", priority: "0.8" },
