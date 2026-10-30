@@ -3,7 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { PUZZLE_71 } from "@/lib/puzzle-sweep";
 import { KeyVaultPanel } from "@/components/puzzle/KeyVaultPanel";
-import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryToggle, useLottery } from "@/lib/bitmap-lottery";
+import { LOTTERY_POWER, lotteryBoot, lotterySetEngine, lotterySetPower, webgpuAvailable, lotteryToggle, useLottery } from "@/lib/bitmap-lottery";
 
 const fmtRate = (r: number) => (r >= 1000 ? `${(r / 1000).toFixed(1)}k` : String(r));
 
@@ -47,6 +47,17 @@ export function BitmapLotteryWidget() {
               </button>
             ))}
           </div>
+          <div className="mt-2 flex gap-1">
+            {(["CPU", "GPU"] as const).map((e) => (
+              <button key={e} onClick={() => lotterySetEngine(e)} disabled={e === "GPU" && !gpuOk}
+                className={`flex-1 rounded border px-1 py-1 text-[10px] disabled:opacity-40 ${s.engine === e ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>
+                {e === "CPU" ? "CPU" : "WEBGPU · BETA"}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 truncate text-[10px] text-muted-foreground" data-no-translate>
+            {s.gpuStatus === "testing" ? "GPU SELF-TEST…" : s.gpuStatus === "ok" && s.engine === "GPU" ? `GPU OK · ${s.gpuNote}` : s.gpuStatus === "failed" ? `GPU OFF · ${s.gpuNote} · USING CPU` : gpuOk ? "ENGINE · " + s.engine : "WEBGPU NOT SUPPORTED HERE · CPU"}
+          </p>
           <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
             The prize is real BTC already sitting on Bitcoin since 2015. No smart contract is needed: whoever finds the key signs the spend on their own device, 80% to you and 20% to the treasury (half of that is pledged to pool contributors). Odds are astronomically low, so treat it as a free lottery ticket. Keys never leave this device. No BIT is paid.
           </p>
