@@ -1,0 +1,12 @@
+REVOKE SELECT ON public.broadcast_sponsorships FROM anon, authenticated, PUBLIC;
+GRANT SELECT (id, slot, title, handle, media_kind, media, starts_at, ends_at, created_at) ON public.broadcast_sponsorships TO anon, authenticated;
+COMMENT ON TABLE public.broadcast_sponsorships IS 'Public: slide content and schedule. Private (server only): payer_address, pay_txid, paid_sats.';
+REVOKE SELECT ON public.launch_seat_wear FROM anon, authenticated, PUBLIC;
+GRANT SELECT (address, slot, item, created_at) ON public.launch_seat_wear TO anon, authenticated;
+COMMENT ON TABLE public.launch_seat_wear IS 'Public: what each seat wears. Private (server only): id, price_bit spend history.';
+REVOKE SELECT ON public.launch_seats FROM anon, authenticated, PUBLIC;
+GRANT SELECT (seat_number, address, pixel_id, pixel_source, held_bitmap, created_at, ticket_inscription_id, club_hair, club_proof, x_handle, status_note) ON public.launch_seats TO anon, authenticated;
+COMMENT ON TABLE public.launch_seats IS 'Public Grandstand roster: wallet address, avatar, flag, ticket, chain club proof, self-chosen X handle/status. Private: club_checked_at.';
+COMMENT ON TABLE public.stand_seats IS 'Intentionally public: BW-STAND-1 seat proofs (address, BIP-322 signature, BITMAP) so any site can re-verify.';
+COMMENT ON TABLE public.collection_trades IS 'Intentionally public: confirmed on-chain trade facts already visible on Bitcoin.';
+COMMENT ON TABLE public.biternam_chapters IS 'Public: block_height, title, quote, owner_address. set_by (account id) has no browser column grant.';
