@@ -5,6 +5,7 @@ import { events as r3fEvents, useFrame, type RootState } from "@react-three/fibe
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import type { Volley } from "@/lib/grandstand-live";
 import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
 import { StageStreamPlayer } from "@/components/launch/StageStreamPlayer";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
@@ -489,9 +490,9 @@ function StageVideo() {
 
 export type GrandstandView = "diorama" | "stage" | "seat";
 
-export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null, sponsors = [], popcornThrows = 0, onPopcornHit, onDeselect }: {
+export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick, focusSeat, view = "diorama", mySeat = null, sponsors = [], volleys = [], liveSeats, onPopcornHit, onDeselect }: {
   seats: LaunchSeat[]; myAddress: string | null; selected: number | null; onPick: (s: LaunchSeat) => void; focusSeat: number | null;
-  view?: GrandstandView; mySeat?: number | null; sponsors?: SponsorSlide[]; popcornThrows?: number; onPopcornHit?: () => void; onDeselect?: () => void;
+  view?: GrandstandView; mySeat?: number | null; sponsors?: SponsorSlide[]; volleys?: Volley[]; liveSeats?: Set<number>; onPopcornHit?: () => void; onDeselect?: () => void;
 }) {
   const picked = seats.find((s) => s.seat === selected) ?? null;
   const vips = useMemo(() => seats.filter((s) => s.ticketId), [seats]);
@@ -510,7 +511,8 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
       <StageVideo />
       {STAFF.map((c, i) => <StaffWalker key={c.id} id={c.id} name={c.name} ins={c.ins} i={i} talking={talking === c.id} onTalk={setTalking} />)}
       <BackstageDoor />
-      <PopcornLayer throws={popcornThrows} fromSeat={mySeat} onHit={onPopcornHit} />
+      <PopcornLayer volleys={volleys} onHit={onPopcornHit} />
+      {liveSeats && [...liveSeats].map((n) => <LiveMarker key={n} seat={n} />)}
       {seats.map((s) => (
         <Bitmapper key={s.seat} seat={s} mine={!!myAddress && s.address.toLowerCase() === myAddress.toLowerCase()} selected={selected === s.seat} onPick={onPick} />
       ))}
@@ -518,28 +520,36 @@ export default function LaunchGrandstand3D({ seats, myAddress, selected, onPick,
   );
 }
 
-type Kernel = { p: THREE.Vector3; v: THREE.Vector3; rot: THREE.Euler; spin: THREE.Vector3; t: number; hit: boolean; bounces: number; rest: boolean };
+type Kernel = { p: THREE.Vector3; v: THREE.Vector3; rot: THREE.Euler; spin: THREE.Vector3; t: number; hit: boolean; bounces: number; rest: boolean; local?: boolean };
 const GRAV = 9.8, DRAG = 0.35, RESTITUTION = 0.45, FLOOR_Y = 0.05, KERNEL_LIFE = 6;
 /** Popcorn throws: ballistic kernels with drag and tumble arc from the thrower's seat; screen hits splat, slide, drop and bounce on the floor. */
-function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: number | null; onHit?: (() => void) | undefined }) {
+/** Pulsing cyan beacon over a seat whose holder is watching right now (presence only). */
+function LiveMarker({ seat }: { seat: number }) {
+  const m = useRef<THREE.Mesh>(null);
+  const [x, y, z] = seatPos(seat);
+  useFrame(({ clock }) => { if (m.current) m.current.position.y = y + 2.3 + Math.sin(clock.elapsedTime * 3 + seat) * 0.12; });
+  return <mesh ref={m} position={[x, y + 2.3, z]}><octahedronGeometry args={[0.16, 0]} /><meshBasicMaterial color="#22d3ee" /></mesh>;
+}
+function PopcornLayer({ volleys, onHit }: { volleys: Volley[]; onHit?: (() => void) | undefined }) {
   const N = 60;
   const mesh = useRef<THREE.InstancedMesh>(null);
   const ks = useRef<Kernel[]>([]);
-  const last = useRef(throws);
+  const last = useRef(0);
   const o = useMemo(() => new THREE.Object3D(), []);
   const h = (SCREEN_W * 9) / 16;
   useFrame((_, raw) => {
     const d = Math.min(raw, 0.05);
-    if (throws !== last.current && fromSeat) {
-      last.current = throws;
-      const [x, y, z] = seatPos(fromSeat);
+    for (const vol of volleys) {
+      if (vol.n <= last.current) continue;
+      last.current = vol.n;
+      const [x, y, z] = seatPos(vol.seat);
       for (let i = 0; i < 6; i++) {
         const p = new THREE.Vector3(x * 0.94, y + 1.4, z * 0.94);
         const aim = new THREE.Vector3((Math.random() - 0.5) * SCREEN_W * 0.8, SCREEN_Y + 0.6 + Math.random() * (h - 1.2), SCREEN_Z + 0.08);
         const T = 1.3 + Math.random() * 0.3;
         // Solve launch velocity for a drag-free arc; drag makes some fall short for real.
         const v = aim.sub(p).divideScalar(T); v.y += 0.5 * GRAV * T; v.multiplyScalar(1 + DRAG * T * 0.5);
-        ks.current.push({ p, v, rot: new THREE.Euler(), spin: new THREE.Vector3((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18), t: 0, hit: false, bounces: 0, rest: false });
+        ks.current.push({ p, v, rot: new THREE.Euler(), spin: new THREE.Vector3((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18), t: 0, hit: false, bounces: 0, rest: false, local: vol.local });
       }
       ks.current = ks.current.slice(-N);
     }
@@ -553,7 +563,7 @@ function PopcornLayer({ throws, fromSeat, onHit }: { throws: number; fromSeat: n
         k.p.addScaledVector(k.v, d);
         k.rot.x += k.spin.x * d; k.rot.y += k.spin.y * d; k.rot.z += k.spin.z * d;
         if (!k.hit && k.p.z <= SCREEN_Z + 0.08 && Math.abs(k.p.x) < SCREEN_W / 2 && k.p.y > SCREEN_Y && k.p.y < SCREEN_Y + h) {
-          k.hit = true; k.t = 0; k.p.z = SCREEN_Z + 0.1; onHit?.();
+          k.hit = true; k.t = 0; k.p.z = SCREEN_Z + 0.1; if (k.local) onHit?.();
           k.v.set(k.v.x * 0.15, 0, Math.abs(k.v.z) * 0.12); k.spin.multiplyScalar(0.2);
         }
         if (k.p.y <= FLOOR_Y && k.v.y < 0) {
