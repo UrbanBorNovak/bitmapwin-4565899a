@@ -54,9 +54,7 @@ export function GoldenTicket() {
     const c = canvas.current;
     if (!c || scratched) return;
     const ctx = c.getContext("2d")!;
-    const css = getComputedStyle(document.documentElement);
-    ctx.fillStyle = `oklch(${css.getPropertyValue("--bitcoin-l") || "0.72 0.17 60"})`;
-    ctx.fillStyle = "hsl(38 90% 55%)";
+    ctx.fillStyle = getComputedStyle(c).color || "orange";
     ctx.fillRect(0, 0, c.width, c.height);
     ctx.fillStyle = "rgba(0,0,0,0.55)";
     ctx.font = "bold 18px monospace";
@@ -117,7 +115,7 @@ export function GoldenTicket() {
           <p className="display mt-2 break-all text-lg text-bitcoin" data-no-translate>0x{ticket.startHex}</p>
           {!scratched && (
             <canvas ref={canvas} width={600} height={160} onPointerMove={scratch} onPointerDown={scratch}
-              className="absolute inset-0 h-full w-full cursor-grab touch-none" aria-label="Scratch to reveal your ticket" />
+              className="absolute inset-0 h-full w-full cursor-grab touch-none text-bitcoin" aria-label="Scratch to reveal your ticket" />
           )}
         </div>
       )}
