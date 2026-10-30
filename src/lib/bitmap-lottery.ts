@@ -1,3 +1,4 @@
+import { setWakeLock } from "@/lib/wake-lock";
 import { guardUnload } from "@/lib/puzzle-secret";
 import { sealFoundKey } from "@/lib/key-vault";
 import { takeLegacyStoredKey } from "@/lib/puzzle-secret";
