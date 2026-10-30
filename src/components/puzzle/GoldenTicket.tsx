@@ -69,11 +69,11 @@ export function GoldenTicket() {
     const x = ((e.clientX - r.left) / r.width) * c.width, y = ((e.clientY - r.top) / r.height) * c.height;
     const ctx = c.getContext("2d")!;
     ctx.globalCompositeOperation = "destination-out";
-    ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 34, 0, Math.PI * 2); ctx.fill();
     const px = ctx.getImageData(0, 0, c.width, c.height).data;
     let clear = 0;
     for (let i = 3; i < px.length; i += 64) if (px[i] === 0) clear++;
-    if (clear / (px.length / 64) > 0.55) setScratched(true);
+    if (clear / (px.length / 64) > 0.4) setScratched(true);
   }
 
   function run() {
@@ -117,6 +117,7 @@ export function GoldenTicket() {
             <canvas ref={canvas} width={600} height={160} onPointerMove={scratch} onPointerDown={scratch}
               className="absolute inset-0 h-full w-full cursor-grab touch-none text-bitcoin" aria-label="Scratch to reveal your ticket" />
           )}
+          {!scratched && <button onClick={() => setScratched(true)} className="absolute bottom-1 right-2 text-[10px] text-background underline">REVEAL</button>}
         </div>
       )}
       {scratched && (
