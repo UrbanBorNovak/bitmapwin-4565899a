@@ -1,4 +1,5 @@
 import { RgbBadge } from "@/components/RgbBadge";
+import { useGrandstandLive } from "@/lib/grandstand-live";
 import { StreamTheaterButton } from "@/components/launch/StreamTheater";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
@@ -76,7 +77,6 @@ function LaunchPage() {
   const [view, setView] = useState<GrandstandView>("diorama");
   const [tipOpen, setTipOpen] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
-  const [throws, setThrows] = useState(0);
   const [hits, setHits] = useState(0);
   useEffect(() => () => { stopCafeMusic(); stopCrowd(); }, []);
   const { seat: seatParam } = Route.useSearch();
@@ -108,6 +108,7 @@ function LaunchPage() {
   const active = wallet ?? session;
   const myAddr = active?.ordinalsAddress ?? null;
   const mine = myAddr ? seats.find((s) => s.address.toLowerCase() === myAddr.toLowerCase()) ?? null : null;
+  const live = useGrandstandLive(mine?.seat ?? null, (r) => playArena(r));
   const count = seats.length;
   const sponsorQ = useQuery({ queryKey: ["sponsor-slides"], queryFn: () => listSponsorSlidesFn(), refetchInterval: 300_000 });
   const stageAds = (sponsorQ.data?.slides ?? []).filter((x) => slotLive(x, "launch", Date.now()));
@@ -259,7 +260,7 @@ function LaunchPage() {
           <Suspense fallback={null}>
             <Grandstand seats={seats} myAddress={myAddr} selected={picked?.seat ?? null} focusSeat={focus}
               view={view} mySeat={mine?.seat ?? null} sponsors={stageAds} onPick={(s) => pickSeat(s)}
-              onDeselect={() => picked && closeInspect()} popcornThrows={throws} onPopcornHit={() => { setHits((h) => h + 1); playArena("splat"); }} />
+              onDeselect={() => picked && closeInspect()} volleys={live.volleys} liveSeats={live.liveSeats} onPopcornHit={() => { setHits((h) => h + 1); playArena("splat"); }} />
           </Suspense>
         </ClientOnly>
         <div className="pointer-events-none absolute left-3 top-3 z-20 font-mono text-[10px] text-signal">
@@ -291,9 +292,11 @@ function LaunchPage() {
           <button className={`glass-panel rounded border px-2 py-1 ${musicOn ? "border-bitcoin text-bitcoin" : "border-border"}`}
             onClick={() => { if (musicOn) { stopCafeMusic(); stopCrowd(); } else { startCafeMusic("arcade"); startCrowd(); playArena("cheer"); } setMusicOn(!musicOn); }}>[♪ SOUND: {musicOn ? "ON" : "OFF"}]</button>
           <StreamTheaterButton />
-          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => playArena("airhorn")}>[📯 AIRHORN]</button>
+          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => { playArena("airhorn"); live.sendReaction("airhorn"); }}>[📯 AIRHORN]</button>
+          <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => { playArena("cheer"); live.sendReaction("cheer"); }}>[🙌 CHEER]</button>
+          <span className="glass-panel rounded border border-signal/60 px-2 py-1 text-signal">● {live.viewers} WATCHING LIVE</span>
           {mine?.owned?.includes("popcorn") ? (
-            <button className="glass-panel rounded border border-bitcoin px-2 py-1 text-bitcoin" onClick={() => { playArena("whoosh"); setThrows((t) => t + 1); }}>[🍿 THROW POPCORN · HITS {hits}]</button>
+            <button className="glass-panel rounded border border-bitcoin px-2 py-1 text-bitcoin" onClick={() => { playArena("whoosh"); live.throwPopcorn(); }}>[🍿 THROW POPCORN · HITS {hits}]</button>
           ) : mine ? <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">BUY POPCORN AT YOUR SEAT TO TOSS IT AT THE SCREEN</span> : null}
         </div>
         {picked && (
