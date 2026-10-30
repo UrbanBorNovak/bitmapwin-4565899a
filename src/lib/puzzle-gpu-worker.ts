@@ -137,7 +137,8 @@ async function run(m: Start) {
   const end = pool ? k + BigInt(pool.size) : hi;
   let best: string | null = null, bestOff = 0n;
   const foundCanaries: string[] = [];
-  let steps = 4;
+  const MAX_STEPS = 64;
+  let steps = 2;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const remain = end - k;
@@ -177,8 +178,11 @@ async function run(m: Start) {
       return;
     }
     if (!pool && k >= hi) k = randomIn(lo, hi);
-    // keep each dispatch near 40ms so the OS GPU watchdog never trips
-    if (ms < 25 && steps < 512) steps *= 2; else if (ms > 80 && steps > 1) steps = Math.max(1, steps >> 1);
+    // Keep each dispatch short (~10–20ms) and capped so the OS GPU watchdog
+    // (Windows TDR / macOS) never resets the device, even while video plays.
+    if (ms > 30 && steps > 1) steps = Math.max(1, steps >> 2);
+    else if (ms > 20 && steps > 1) steps = Math.max(1, steps >> 1);
+    else if (ms < 8 && steps < MAX_STEPS) steps = Math.min(MAX_STEPS, steps * 2);
     const rest = ms / Math.max(0.05, duty) - ms;
     await new Promise((r) => setTimeout(r, rest));
   }
