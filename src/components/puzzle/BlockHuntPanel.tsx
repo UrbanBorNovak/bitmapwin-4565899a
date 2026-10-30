@@ -5,7 +5,8 @@ import { blockSliceStatusFn, scoutedBlocksFn } from "@/lib/puzzle-pool.functions
 import { runBlockSlice } from "@/lib/puzzle-test-run";
 import { isWorkerAddress } from "@/lib/puzzle-pool";
 import { isBlockHeight } from "@/lib/puzzle-cartographic";
-import { FOUND_KEY } from "@/lib/bitmap-lottery";
+import { safeError } from "@/lib/puzzle-secret";
+import { lotteryFound } from "@/lib/bitmap-lottery";
 import { useWalletSession } from "@/lib/wallet-session";
 import { ScanProgress } from "./ScanProgress";
 
@@ -28,16 +29,11 @@ export function BlockHuntPanel() {
   async function scout() {
     setBusy(true); setMsg(null); setProg(null);
     try {
-      const r = await runBlockSlice(addr.trim(), h, setMsg, (k) => {
-        localStorage.setItem(FOUND_KEY, k);
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob([`PUZZLE #71 KEY\n${k}\n`], { type: "text/plain" }));
-        a.download = "puzzle71-key.txt"; a.click();
-      }, setProg);
+      const r = await runBlockSlice(addr.trim(), h, setMsg, (k) => lotteryFound(k), setProg);
       setMsg(r.message);
       void qc.invalidateQueries({ queryKey: ["block-slice", h] });
       void qc.invalidateQueries({ queryKey: ["scouted-blocks"] });
-    } catch (e) { setMsg(e instanceof Error ? e.message : "Scan failed"); }
+    } catch (e) { setMsg(safeError(e)); }
     setBusy(false);
   }
 
