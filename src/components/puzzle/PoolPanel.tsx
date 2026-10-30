@@ -8,6 +8,7 @@ import { runTestSlice } from "@/lib/puzzle-test-run";
 import { HEAT_CELLS, HEAT_CELL_SLICES, HEAT_SIDE, SLICE_COUNT, SLICE_SIZE, isWorkerAddress } from "@/lib/puzzle-pool";
 import { POOL_DIVIDEND_PERCENT, PUZZLE_71 } from "@/lib/puzzle-sweep";
 import { useWalletSession } from "@/lib/wallet-session";
+import { SCANNER_PRESETS, buildKit } from "@/lib/rig-kit";
 
 const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-6)}`;
 
@@ -83,6 +84,7 @@ export function PoolPanel() {
 
       <TestPool addr={lot.poolWorker ?? addr} />
 
+      <RigLaunchKit worker={addr} />
       <RigApi />
 
       <p className="mt-3 text-[11px] text-muted-foreground">
@@ -134,6 +136,55 @@ function TestPool({ addr }: { addr: string }) {
         {status && <span data-testid="test-status" className={status.startsWith("CREDITED") ? "text-signal" : "text-muted-foreground"}>{status}</span>}
         {stats.data && <span className="ml-auto text-[11px] text-muted-foreground">TEST SLICES DONE: <span data-testid="test-done">{stats.data.slices}</span></span>}
       </div>
+    </div>
+  );
+}
+
+function RigLaunchKit({ worker }: { worker: string }) {
+  const [os, setOs] = useState<"linux" | "windows">("linux");
+  const [preset, setPreset] = useState("bitcrack");
+  const [pool, setPool] = useState<"71" | "test">("test");
+  const [copied, setCopied] = useState(false);
+  const p = SCANNER_PRESETS.find((x) => x.id === preset) ?? SCANNER_PRESETS[0]!;
+  const [cmd, setCmd] = useState(p.linux);
+  useEffect(() => setCmd(os === "windows" ? p.windows : p.linux), [os, p]);
+  const ok = isWorkerAddress(worker);
+  const file = os === "windows" ? "swarm-rig.ps1" : "swarm-rig.sh";
+  const run = os === "windows" ? `powershell -ExecutionPolicy Bypass -File .\\${file}` : `chmod +x ${file} && ./${file}`;
+  const download = () => {
+    const blob = new Blob([buildKit(os, worker, cmd, pool)], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = file;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const tab = (on: boolean) => `rounded border px-2 py-1 ${on ? "border-primary text-primary" : "border-border text-muted-foreground"}`;
+  return (
+    <div className="mt-4 border border-primary/40 p-3">
+      <p className="label text-primary">GPU RIG LAUNCH KIT · 1-CLICK</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">Download a script with your address and scanner already set. Run it next to your scanner program.</p>
+      <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+        <button className={tab(os === "linux")} onClick={() => setOs("linux")}>LINUX / MAC</button>
+        <button className={tab(os === "windows")} onClick={() => setOs("windows")}>WINDOWS</button>
+        <span className="mx-1 text-border">|</span>
+        {SCANNER_PRESETS.map((s) => (
+          <button key={s.id} className={tab(preset === s.id)} onClick={() => setPreset(s.id)}>{s.label}</button>
+        ))}
+        <span className="mx-1 text-border">|</span>
+        <button className={tab(pool === "test")} onClick={() => setPool("test")}>PRACTICE POOL</button>
+        <button className={tab(pool === "71")} onClick={() => setPool("71")}>#71 POOL</button>
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">{p.note}</p>
+      <label className="mt-2 block text-[11px] text-muted-foreground">SCANNER COMMAND</label>
+      <input value={cmd} onChange={(e) => setCmd(e.target.value)} className="mt-1 w-full border border-border bg-background px-2 py-1 font-mono text-[11px]" data-no-translate />
+      <p className="mt-2 text-[11px] text-muted-foreground">WORKER: <span className="font-mono" data-no-translate>{ok ? worker : "enter your address above first"}</span></p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button disabled={!ok} onClick={download} className="rounded border border-primary px-3 py-1 text-primary disabled:opacity-50">[ DOWNLOAD {file.toUpperCase()} ]</button>
+        <button onClick={() => { navigator.clipboard.writeText(run); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="rounded border border-border px-3 py-1 text-muted-foreground">{copied ? "COPIED" : "[ COPY RUN COMMAND ]"}</button>
+      </div>
+      <pre className="mt-2 overflow-x-auto bg-background p-2 text-[11px]" data-no-translate>{run}</pre>
+      <p className="mt-2 text-[11px] text-muted-foreground">{os === "linux" ? "Needs curl, jq and sha256sum." : "Needs only built-in PowerShell."} Try the practice pool first. If a 4th key turns up it may be the prize: the script saves it to found-&lt;slice&gt;.txt on your computer and never uploads it. Scanner flags differ between versions, so check yours.</p>
     </div>
   );
 }
