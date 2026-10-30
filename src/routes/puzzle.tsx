@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PoolPanel } from "@/components/puzzle/PoolPanel";
+import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
 import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
@@ -90,6 +91,8 @@ function PuzzlePage() {
         <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
       </div>
 
+      <NearMissFeed nears={lot.nears} bestNear={lot.bestNear} />
+      <GoldenTicket />
       <PoolPanel />
       <BlockHuntPanel />
       <a href="/speed-bounty" className="mt-4 block font-mono text-xs text-primary">→ KANGAROO SPEED BOUNTIES · race known-pubkey keys</a>
