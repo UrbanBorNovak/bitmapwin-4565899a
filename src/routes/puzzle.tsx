@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PoolPanel } from "@/components/puzzle/PoolPanel";
 import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
@@ -222,5 +222,17 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
       <p className="label text-muted-foreground">{label}</p>
       <p className={`display mt-1 text-base ${accent ? "text-bitcoin" : ""}`}>{value}</p>
     </div>
+  );
+}
+
+function StepCard({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <li className="rounded-lg border border-border bg-card/60 p-5">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="display flex h-9 w-9 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground">{n}</span>
+        <h2 className="display text-xl">{title}</h2>
+      </div>
+      {children}
+    </li>
   );
 }
