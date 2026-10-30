@@ -40,7 +40,7 @@ export function KeyVaultPanel({ compact = false }: { compact?: boolean }) {
     setMsg(null);
     try {
       const keys = await openSealed(pass); setPass("");
-      if (keys.length && !found) lotteryFound(keys[keys.length - 1]);
+      if (keys.length && !found) lotteryFound(keys[keys.length - 1]!);
       setMsg(`Unlocked ${keys.length} backup(s). The key is loaded in this tab — open the sweep terminal.`);
     } catch (e) { setMsg(safeError(e)); }
   };
