@@ -1,4 +1,5 @@
 import { RgbBadge } from "@/components/RgbBadge";
+import { StreamTheaterButton } from "@/components/launch/StreamTheater";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -289,6 +290,7 @@ function LaunchPage() {
           {count === 0 && <span className="glass-panel rounded border border-border px-2 py-1 text-muted-foreground">EMPTY SEATS — BE THE FIRST BITMAPPER</span>}
           <button className={`glass-panel rounded border px-2 py-1 ${musicOn ? "border-bitcoin text-bitcoin" : "border-border"}`}
             onClick={() => { if (musicOn) { stopCafeMusic(); stopCrowd(); } else { startCafeMusic("arcade"); startCrowd(); playArena("cheer"); } setMusicOn(!musicOn); }}>[♪ SOUND: {musicOn ? "ON" : "OFF"}]</button>
+          <StreamTheaterButton />
           <button className="glass-panel rounded border border-border px-2 py-1" onClick={() => playArena("airhorn")}>[📯 AIRHORN]</button>
           {mine?.owned?.includes("popcorn") ? (
             <button className="glass-panel rounded border border-bitcoin px-2 py-1 text-bitcoin" onClick={() => { playArena("whoosh"); setThrows((t) => t + 1); }}>[🍿 THROW POPCORN · HITS {hits}]</button>
