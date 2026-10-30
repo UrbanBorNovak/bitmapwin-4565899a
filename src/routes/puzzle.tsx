@@ -7,6 +7,7 @@ import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop,
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
 import { PUZZLE_71, SLIPSTREAM, SWEEP_TREASURY_PERCENT, buildSweep, hash160Of, keyMatches, slipstreamFeeRate, slipstreamStatusUrl, submitSlipstream } from "@/lib/puzzle-sweep";
+import { CONFIRM_PHRASE, confirmMatches, downloadKeyBackup, guardUnload, safeError } from "@/lib/puzzle-secret";
 
 export const Route = createFileRoute("/puzzle")({
   head: () => ({
@@ -32,7 +33,11 @@ function PuzzlePage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [txid, setTxid] = useState<string | null>(null);
-  const [signedHex, setSignedHex] = useState<string | null>(null);
+  // Signed sweep lives only in component memory; never stored or logged.
+  const [signed, setSigned] = useState<{ hex: string; player: bigint; treasury: bigint; fee: bigint; feeRate: number } | null>(null);
+  const [ack, setAck] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     lotteryBoot();
@@ -45,21 +50,36 @@ function PuzzlePage() {
   const start = lotteryStart;
   const stop = lotteryStop;
 
-  async function sweep() {
+  useEffect(() => { guardUnload(!!found && !txid); return () => guardUnload(false); }, [found, txid]);
+
+  /** Step 1: sign on the device. Nothing leaves the browser. */
+  async function sign() {
     if (!found || !wallet) return;
+    setBusy(true);
     try {
       setStatus("CHECKING KEY…");
       const priv = hex.decode(found);
-      if (!keyMatches(priv, hash160Of(PUZZLE_71.address))) throw new Error("Stored key does not unlock puzzle #71");
+      if (!keyMatches(priv, hash160Of(PUZZLE_71.address))) throw new Error("This key does not unlock puzzle #71");
       setStatus("READING SLIPSTREAM FEE RATE…");
       const feeRate = await slipstreamFeeRate();
       setStatus("SIGNING ON THIS DEVICE…");
       const tx = await buildSweep({ priv, puzzleAddress: PUZZLE_71.address, payTo: wallet.paymentAddress, feeRate });
-      setSignedHex(tx.hex);
+      setSigned({ hex: tx.hex, player: tx.player, treasury: tx.treasury, fee: tx.fee, feeRate });
+      setStatus("SIGNED · NOT SENT. REVIEW AND CONFIRM BELOW.");
+    } catch (e) { setStatus(`FAILED: ${safeError(e)}`); }
+    finally { setBusy(false); }
+  }
+
+  /** Step 2: only after explicit confirmation. */
+  async function submit() {
+    if (!signed || !ack || !confirmMatches(typed)) return;
+    setBusy(true);
+    try {
       setStatus("SUBMITTING PRIVATELY TO MARA SLIPSTREAM…");
-      setTxid(await submitSlipstream(tx.hex));
-      setStatus(`QUEUED WITH MARA · NOT IN PUBLIC MEMPOOL · WAIT FOR A MARA BLOCK · YOU ${(Number(tx.player) / 1e8).toFixed(8)} BTC · TREASURY ${(Number(tx.treasury) / 1e8).toFixed(8)} BTC`);
-    } catch (e) { setStatus(`FAILED: ${(e as Error).message}`); }
+      setTxid(await submitSlipstream(signed.hex));
+      setStatus("QUEUED WITH MARA · NOT IN PUBLIC MEMPOOL · WAIT FOR A MARA BLOCK");
+    } catch (e) { setStatus(`FAILED: ${safeError(e)}`); }
+    finally { setBusy(false); }
   }
 
   const keyspace = 2 ** 70;
@@ -102,8 +122,9 @@ function PuzzlePage() {
 
       {found && (
         <section className="mt-6 rounded border border-primary p-4 text-xs">
-          <p className="display text-lg text-primary">KEY FOUND — SAVED ON THIS DEVICE</p>
-          <p className="mt-2 text-muted-foreground">A backup file was downloaded. The sweep pays your wallet {100 - SWEEP_TREASURY_PERCENT}% (minus network fee) and the bitmapwin treasury {SWEEP_TREASURY_PERCENT}%.</p>
+          <p className="display text-lg text-primary">KEY FOUND — HELD IN THIS TAB ONLY</p>
+          <p className="mt-2 text-muted-foreground">The key is not saved anywhere: not in the browser, not on our servers. Closing or reloading this tab loses it unless you save a backup file. The sweep pays your wallet {100 - SWEEP_TREASURY_PERCENT}% (minus network fee) and the bitmapwin treasury {SWEEP_TREASURY_PERCENT}%.</p>
+          <button onClick={() => downloadKeyBackup(found)} className="mt-2 rounded border border-primary px-3 py-1 text-primary">[ SAVE KEY BACKUP FILE ]</button>
           <div className="mt-2 rounded border border-destructive p-2 text-muted-foreground">
             <p className="text-destructive">NEVER BROADCAST THIS PUBLICLY.</p>
             <p className="mt-1">Signing reveals the public key. Bots watching the public mempool recover a puzzle key in seconds and replace your transaction — this is how #66 and #69 were stolen in 2024. Disabling RBF, a huge fee or an accelerator do not help.</p>
@@ -111,15 +132,29 @@ function PuzzlePage() {
             <p className="mt-1">Limit: MARA sees the transaction first. You are trusting their reputation instead of a bot's restraint.</p>
           </div>
           <p className="mt-2">PAY TO: <span data-no-translate>{wallet?.paymentAddress ?? "CONNECT A WALLET FIRST"}</span></p>
-          <button onClick={sweep} disabled={!wallet || !!txid} className="mt-3 rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">[ SIGN & SUBMIT PRIVATELY · MARA SLIPSTREAM ]</button>
-          {status && <p className="mt-2">{status}</p>}
-          {signedHex && !txid && (
-            <div className="mt-2">
-              <p className="text-muted-foreground">Signed hex (paste only at slipstream.mara.com):</p>
-              <textarea readOnly value={signedHex} className="mt-1 h-20 w-full rounded border border-border bg-background p-1 text-[10px]" data-no-translate />
-              <a className="text-accent underline" href={SLIPSTREAM} target="_blank" rel="noreferrer">OPEN SLIPSTREAM →</a>
+          {!signed && <button onClick={sign} disabled={!wallet || busy} className="mt-3 rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">[ 1 · SIGN SWEEP ON THIS DEVICE ]</button>}
+          {signed && !txid && (
+            <div className="mt-3 rounded border border-primary p-3">
+              <p className="label text-primary">2 · CONFIRM PRIVATE SUBMISSION</p>
+              <ul className="mt-2 space-y-1 text-muted-foreground">
+                <li>YOU RECEIVE <span className="text-foreground" data-no-translate>{(Number(signed.player) / 1e8).toFixed(8)} BTC</span> → <span data-no-translate>{wallet?.paymentAddress}</span></li>
+                <li>TREASURY <span className="text-foreground" data-no-translate>{(Number(signed.treasury) / 1e8).toFixed(8)} BTC</span> · FEE <span data-no-translate>{Number(signed.fee).toLocaleString()} sats ({signed.feeRate} sat/vB)</span></li>
+                <li>SENT ONLY TO MARA SLIPSTREAM. Nothing is sent until you confirm.</li>
+              </ul>
+              <label className="mt-2 flex items-center gap-2"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I understand MARA sees this transaction and I may wait many hours.</label>
+              <p className="mt-2 text-muted-foreground">Type <span className="text-foreground" data-no-translate>{CONFIRM_PHRASE}</span> to confirm:</p>
+              <input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" className="mt-1 w-full rounded border border-border bg-background px-2 py-1" data-no-translate />
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button onClick={submit} disabled={!ack || !confirmMatches(typed) || busy} className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">[ SUBMIT TO MARA SLIPSTREAM ]</button>
+                <button onClick={() => { setSigned(null); setAck(false); setTyped(""); setStatus("SIGNED SWEEP DISCARDED"); }} className="rounded border border-border px-4 py-2">[ CANCEL ]</button>
+              </div>
+              <details className="mt-2"><summary className="cursor-pointer text-muted-foreground">Manual route: show signed hex (paste only at slipstream.mara.com)</summary>
+                <textarea readOnly value={signed.hex} className="mt-1 h-20 w-full rounded border border-border bg-background p-1 text-[10px]" data-no-translate />
+                <a className="text-accent underline" href={SLIPSTREAM} target="_blank" rel="noreferrer">OPEN SLIPSTREAM →</a>
+              </details>
             </div>
           )}
+          {status && <p className="mt-2">{status}</p>}
           {txid && <a className="mt-1 block text-accent underline" href={slipstreamStatusUrl(txid)} target="_blank" rel="noreferrer">TRACK ON SLIPSTREAM →</a>}
         </section>
       )}

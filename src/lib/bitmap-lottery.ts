@@ -1,3 +1,4 @@
+import { takeLegacyStoredKey } from "@/lib/puzzle-secret";
 /**
  * Bitmap Lottery: one site-wide background scanner for Bitcoin Puzzle #71.
  * Lives outside React so it keeps running across page changes. Device-only,
@@ -68,7 +69,8 @@ let lease: { index: string; token: string } | null = null;
 
 const ON_KEY = "bitmap.lottery.on";
 const POWER_KEY = "bitmap.lottery.power";
-export const FOUND_KEY = "bitmap.puzzle.found";
+/** Report a key found by another scanner on this page; held in memory only. */
+export function lotteryFound(keyHex: string) { set({ found: keyHex, on: false, rate: 0 }); }
 
 let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0, nears: [], bestNear: 0 };
 const listeners = new Set<() => void>();
@@ -98,10 +100,6 @@ function ensureWorker() {
     } else if (m.type === "slice") set({ slice: m.startHex });
     else if (m.type === "slice-done") void finishSlice(m.offset, m.hash, m.canaryKeys ?? []);
     else if (m.type === "found") {
-      localStorage.setItem(FOUND_KEY, m.keyHex);
-      const blob = new Blob([`PUZZLE #71 KEY\n${m.keyHex}\n${new Date().toISOString()}\n`], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob); a.download = "puzzle71-key.txt"; a.click();
       localStorage.setItem(ON_KEY, "0");
       set({ found: m.keyHex, on: false, rate: 0 });
     }
@@ -177,7 +175,7 @@ export function lotteryBoot() {
   if (booted || typeof window === "undefined") return;
   booted = true;
   const power = localStorage.getItem(POWER_KEY) as LotteryPower | null;
-  const found = localStorage.getItem(FOUND_KEY);
+  const found = state.found ?? takeLegacyStoredKey();
   set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
     poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0,
     bestNear: Number(localStorage.getItem(BEST_NEAR_KEY) ?? 0) || 0 });
