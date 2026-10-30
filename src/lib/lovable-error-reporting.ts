@@ -1,3 +1,5 @@
+import { redactSecrets } from "./puzzle-secret";
+
 type LovableErrorOptions = {
   mechanism?: "manual" | "onerror" | "unhandledrejection" | "react_error_boundary";
   handled?: boolean;
@@ -25,7 +27,10 @@ declare global {
 
 export function reportLovableError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
-  window.__lovableEvents?.captureException?.(
+  // Puzzle pages can hold a found key or a signed sweep in memory: never hand the
+  // raw error object to telemetry there, and black out key/tx-like text everywhere.
+  const sensitive = window.location.pathname.startsWith("/puzzle") || window.location.pathname.startsWith("/speed-bounty");
+  if (!sensitive) window.__lovableEvents?.captureException?.(
     error,
     {
       source: "react_error_boundary",
@@ -49,9 +54,9 @@ export function reportLovableError(error: unknown, context: Record<string, unkno
       : error instanceof Error
         ? error.message
         : String(error);
-  const stack = error instanceof Error ? error.stack : undefined;
+  const stack = !sensitive && error instanceof Error && error.stack ? redactSecrets(error.stack) : undefined;
   window.__lovableReportRuntimeError?.({
-    message,
+    message: redactSecrets(message),
     ...(stack !== undefined && { stack }),
     filename: window.location.pathname,
   });
