@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SwarmStinger } from "@/components/brand/BrandMarks";
 import { useQuery } from "@tanstack/react-query";
 import { lotterySetPool, lotteryStart, useLottery } from "@/lib/bitmap-lottery";
 import { ScanProgress } from "./ScanProgress";
@@ -21,7 +22,13 @@ export function PoolPanel() {
 
   return (
     <section className="mt-6 rounded border border-accent/40 bg-card/60 p-4 text-xs">
-      <p className="label text-accent">SHARED SCANNING POOL</p>
+      <div className="flex items-center gap-3">
+        <SwarmStinger className="size-12 shrink-0" />
+        <div>
+          <p className="label text-accent">SHARED SCANNING POOL</p>
+          <p className="display text-sm text-foreground">THE SWARM</p>
+        </div>
+      </div>
       <p className="mt-2 text-muted-foreground">
         The site splits #71 into {SLICE_COUNT.toLocaleString()} slices of {Number(SLICE_SIZE).toLocaleString()} keys and hands each visitor an unused one, so no two browsers repeat work.
         Every slice hides 3 secret trap keys at random spots. A slice only counts when the scanner returns all three. That is strong evidence of scanning, but not a guarantee that every key in the slice was checked.
