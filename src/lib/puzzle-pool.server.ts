@@ -43,9 +43,16 @@ export async function claimSlice(worker: string, pool: PoolId = "71", height?: n
   const db = await admin();
   const since = new Date(Date.now() - LEASE_MS).toISOString();
   const table = TABLE[pool];
-  const { count } = await db.from(table).select("slice_index", { count: "exact", head: true })
-    .eq("worker", worker).is("done_at", null).gte("leased_at", since);
-  if ((count ?? 0) >= MAX_OPEN_LEASES) return { ok: false, error: "Too many open slices for this address — finish one first." };
+  // Over the cap, the oldest unfinished leases of this address are released
+  // (marked expired) so switching blocks or reloading never locks the address.
+  const { data: open } = await db.from(table).select("slice_index, leased_at")
+    .eq("worker", worker).is("done_at", null).gte("leased_at", since).order("leased_at", { ascending: true });
+  const excess = (open?.length ?? 0) - (MAX_OPEN_LEASES - 1);
+  if (excess > 0) {
+    const stale = new Date(Date.now() - LEASE_MS - 1000).toISOString();
+    await db.from(table as "puzzle_pool_slices").update({ leased_at: stale })
+      .in("slice_index", open!.slice(0, excess).map((r) => Number(r.slice_index))).eq("worker", worker).is("done_at", null);
+  }
   if (height !== undefined && (pool !== "71" || !isBlockHeight(height))) return { ok: false, error: "Enter a valid block height" };
   for (let i = 0; i < 5; i++) {
     const idx = height !== undefined ? cartographicSlice(height).index : randomIndex(POOLS[pool].count);
