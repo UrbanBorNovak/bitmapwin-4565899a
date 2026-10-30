@@ -8,7 +8,7 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { ripemd160 } from "@noble/hashes/legacy.js";
 
-type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; slice?: { startHex: string; size: number; canaries: string[] } };
+type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; nearMin?: number; slice?: { startHex: string; size: number; canaries: string[] } };
 type Msg = Start | { type: "stop" } | { type: "duty"; duty: number };
 
 const G = secp256k1.Point.BASE;
@@ -39,6 +39,8 @@ async function run(m: Start) {
   const canaries = new Set(pool?.canaries ?? []);
   const firstBytes = new Set([...canaries].map((c) => parseInt(c.slice(0, 2), 16)));
   const found: string[] = [];
+  const nearMin = m.nearMin ?? 4;
+  const tgtHex = toHex(target);
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const t0 = performance.now();
@@ -50,6 +52,12 @@ async function run(m: Start) {
           self.postMessage({ type: "found", keyHex: k.toString(16).padStart(64, "0") });
           running = false;
           return;
+        }
+        if (h[0] === target[0]) {
+          const hx = toHex(h);
+          let nib = 0;
+          while (nib < 40 && hx[nib] === tgtHex[nib]) nib++;
+          if (nib >= nearMin) self.postMessage({ type: "near", nibbles: nib, hash: hx });
         }
         if (pool) {
           if (!best || less(h, best)) { best = h; bestOff = k - k0; }

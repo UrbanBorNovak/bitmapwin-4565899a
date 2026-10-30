@@ -22,7 +22,32 @@ export type LotteryState = {
   poolWorker: string | null; poolDone: number; poolMsg: string | null;
   /** Keys checked in the current pool slice, and that slice's size (0 = none). */
   poolScanned: number; poolSize: number;
+  /** Near-miss Hash160 prefix hits this session (newest first) and best ever on this device. */
+  nears: NearMiss[]; bestNear: number;
 };
+export type NearMiss = { nibbles: number; hash: string; at: number };
+const BEST_NEAR_KEY = "bitmap.lottery.bestNear";
+/** Hex characters matching the target's Hash160 → near-miss tier. */
+export function nearTier(n: number) {
+  if (n >= 7) return { id: "DIAMOND", odds: 16 ** n };
+  if (n >= 6) return { id: "GOLD", odds: 16 ** n };
+  if (n >= 5) return { id: "SILVER", odds: 16 ** n };
+  if (n >= 4) return { id: "BRONZE", odds: 16 ** n };
+  return { id: "DUST", odds: 16 ** n };
+}
+export function chime(n: number) {
+  try {
+    const ctx = new AudioContext();
+    const notes = [523, 659, 784, 1047].slice(0, Math.min(4, Math.max(1, n - 2)));
+    notes.forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "square"; o.frequency.value = f; g.gain.value = 0.04;
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + i * 0.09); o.stop(ctx.currentTime + i * 0.09 + 0.08);
+    });
+    setTimeout(() => void ctx.close(), 800);
+  } catch { /* no audio */ }
+}
 const POOL_KEY = "bitmap.pool.worker";
 const POOL_DONE_KEY = "bitmap.pool.done";
 let lease: { index: string; token: string } | null = null;
@@ -31,7 +56,7 @@ const ON_KEY = "bitmap.lottery.on";
 const POWER_KEY = "bitmap.lottery.power";
 export const FOUND_KEY = "bitmap.puzzle.found";
 
-let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0 };
+let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0, nears: [], bestNear: 0 };
 const listeners = new Set<() => void>();
 let worker: Worker | null = null;
 let recent: { t: number; n: number }[] = [];
@@ -51,6 +76,11 @@ function ensureWorker() {
       recent.push({ t: now, n: m.count });
       recent = recent.filter((x) => now - x.t < 5000);
       set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / 5), poolScanned: lease ? state.poolScanned + m.count : state.poolScanned });
+    } else if (m.type === "near") {
+      const best = Math.max(state.bestNear, m.nibbles);
+      if (best > state.bestNear) localStorage.setItem(BEST_NEAR_KEY, String(best));
+      if (m.nibbles >= 5) chime(m.nibbles);
+      set({ bestNear: best, nears: [{ nibbles: m.nibbles, hash: m.hash, at: Date.now() }, ...state.nears].slice(0, 12) });
     } else if (m.type === "slice") set({ slice: m.startHex });
     else if (m.type === "slice-done") void finishSlice(m.offset, m.hash, m.canaryKeys ?? []);
     else if (m.type === "found") {
@@ -135,7 +165,8 @@ export function lotteryBoot() {
   const power = localStorage.getItem(POWER_KEY) as LotteryPower | null;
   const found = localStorage.getItem(FOUND_KEY);
   set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
-    poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0 });
+    poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0,
+    bestNear: Number(localStorage.getItem(BEST_NEAR_KEY) ?? 0) || 0 });
   if (!found && localStorage.getItem(ON_KEY) === "1") lotteryStart();
 }
 
