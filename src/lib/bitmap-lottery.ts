@@ -1,3 +1,4 @@
+import { guardUnload } from "@/lib/puzzle-secret";
 import { takeLegacyStoredKey } from "@/lib/puzzle-secret";
 /**
  * Bitmap Lottery: one site-wide background scanner for Bitcoin Puzzle #71.
@@ -71,7 +72,7 @@ let lease: { index: string; token: string } | null = null;
 const ON_KEY = "bitmap.lottery.on";
 const POWER_KEY = "bitmap.lottery.power";
 /** Report a key found by another scanner on this page; held in memory only. */
-export function lotteryFound(keyHex: string) { set({ found: keyHex, on: false, rate: 0 }); }
+export function lotteryFound(keyHex: string) { set({ found: keyHex, on: false, rate: 0 }); guardUnload(true); }
 
 let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0, nears: [], bestNear: 0 };
 const listeners = new Set<() => void>();
@@ -104,6 +105,7 @@ function ensureWorker() {
     else if (m.type === "found") {
       localStorage.setItem(ON_KEY, "0");
       set({ found: m.keyHex, on: false, rate: 0 });
+      guardUnload(true); // site-wide: warn before closing on any page
     }
   };
   return worker;
@@ -181,6 +183,7 @@ export function lotteryBoot() {
   set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
     poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0,
     bestNear: Number(localStorage.getItem(BEST_NEAR_KEY) ?? 0) || 0 });
+  if (found) guardUnload(true);
   if (!found && localStorage.getItem(ON_KEY) === "1") lotteryStart();
 }
 

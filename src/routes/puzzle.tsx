@@ -51,7 +51,8 @@ function PuzzlePage() {
   const start = lotteryStart;
   const stop = lotteryStop;
 
-  useEffect(() => { guardUnload(!!found && !txid); return () => guardUnload(false); }, [found, txid]);
+  // No cleanup: the found-key guard must outlive this page (the lottery runs site-wide).
+  useEffect(() => { guardUnload(!!found && !txid); }, [found, txid]);
 
   /** Step 1: sign on the device. Nothing leaves the browser. */
   async function sign() {
