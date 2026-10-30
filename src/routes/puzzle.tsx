@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PoolPanel } from "@/components/puzzle/PoolPanel";
 import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
+import { CommunityRecord } from "@/components/puzzle/CommunityRecord";
 import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -91,6 +92,8 @@ function PuzzlePage() {
         Your browser checks random keys from the #71 range in the background. Keys and any find stay on this device.
         Honest odds: the range holds about 1.18 sextillion keys — a browser will almost certainly never find it. This is a lottery ticket, not income.
       </p>
+
+      <CommunityRecord />
 
       <section className="mt-6 grid gap-3 sm:grid-cols-4">
         <Stat label="BOUNTY" value={balance == null ? "…" : `${(balance / 1e8).toFixed(2)} BTC`} accent />
