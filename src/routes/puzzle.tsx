@@ -33,7 +33,11 @@ function PuzzlePage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [txid, setTxid] = useState<string | null>(null);
-  const [signedHex, setSignedHex] = useState<string | null>(null);
+  // Signed sweep lives only in component memory; never stored or logged.
+  const [signed, setSigned] = useState<{ hex: string; player: bigint; treasury: bigint; fee: bigint; feeRate: number } | null>(null);
+  const [ack, setAck] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     lotteryBoot();
