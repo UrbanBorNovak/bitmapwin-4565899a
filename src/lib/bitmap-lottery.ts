@@ -1,3 +1,4 @@
+import { setWakeLock } from "@/lib/wake-lock";
 import { guardUnload } from "@/lib/puzzle-secret";
 import { sealFoundKey } from "@/lib/key-vault";
 import { takeLegacyStoredKey } from "@/lib/puzzle-secret";
@@ -89,7 +90,7 @@ let recent: { t: number; n: number }[] = [];
 let booted = false;
 
 const SERVER: LotteryState = state;
-function set(p: Partial<LotteryState>) { state = { ...state, ...p }; listeners.forEach((l) => l()); }
+function set(p: Partial<LotteryState>) { state = { ...state, ...p }; setWakeLock(state.on); listeners.forEach((l) => l()); }
 const dutyOf = (p: LotteryPower) => LOTTERY_POWER.find((x) => x.id === p)!.duty;
 
 function ensureWorker() {
