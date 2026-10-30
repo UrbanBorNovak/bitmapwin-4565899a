@@ -4,7 +4,7 @@ import { PoolPanel } from "@/components/puzzle/PoolPanel";
 import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
 import { CommunityRecord } from "@/components/puzzle/CommunityRecord";
-import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
+import { LOTTERY_POWER, lotteryBoot, lotterySetEngine, lotterySetPower, webgpuAvailable, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
 import { PUZZLE_71, SLIPSTREAM, SWEEP_TREASURY_PERCENT, buildSweep, hash160Of, keyMatches, slipstreamFeeRate, slipstreamStatusUrl, submitSlipstream } from "@/lib/puzzle-sweep";
@@ -28,6 +28,8 @@ export const Route = createFileRoute("/puzzle")({
 function PuzzlePage() {
   const wallet = useWalletSession();
   const lot = useLottery();
+  const [gpuOk, setGpuOk] = useState(false);
+  useEffect(() => setGpuOk(webgpuAvailable()), []);
   const { on, scanned, rate, slice, found } = lot;
   const duty = lot.power;
   const setDuty = lotterySetPower;
@@ -116,6 +118,17 @@ function PuzzlePage() {
             {on ? "[ STOP ]" : "[ TURN LOTTERY ON ]"}
           </button>
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="label text-muted-foreground">ENGINE</span>
+          <button onClick={() => lotterySetEngine("CPU")} className={`rounded border px-3 py-1 ${lot.engine === "CPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>CPU WORKER</button>
+          <button onClick={() => lotterySetEngine("GPU")} disabled={!gpuOk} className={`rounded border px-3 py-1 disabled:opacity-40 ${lot.engine === "GPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>WEBGPU · EXPERIMENTAL</button>
+          <span className="text-[11px] text-muted-foreground" data-no-translate>
+            {lot.gpuStatus === "testing" && "GPU SELF-TEST…"}
+            {lot.gpuStatus === "ok" && lot.engine === "GPU" && `GPU OK · ${lot.gpuNote}`}
+            {lot.gpuStatus === "failed" && `GPU OFF · ${lot.gpuNote} · USING CPU`}
+          </span>
+        </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">WebGPU runs on your graphics card in Chrome/Edge desktop. It must pass a self-test against the CPU first, and every find is re-checked on the CPU. Native GPU rigs (below) are still far faster.</p>
         <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
       </div>
 

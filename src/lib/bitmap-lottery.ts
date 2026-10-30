@@ -28,7 +28,13 @@ export type LotteryState = {
   poolScanned: number; poolSize: number;
   /** Near-miss Hash160 prefix hits this session (newest first) and best ever on this device. */
   nears: NearMiss[]; bestNear: number;
+  /** Scanner engine: CPU worker or experimental WebGPU (falls back to CPU on any failure). */
+  engine: LotteryEngine; gpuStatus: "idle" | "testing" | "ok" | "failed"; gpuNote: string | null;
 };
+export type LotteryEngine = "CPU" | "GPU";
+const ENGINE_KEY = "bitmap.lottery.engine";
+/** True when the browser exposes WebGPU at all (a GPU may still be refused). */
+export function webgpuAvailable() { return typeof navigator !== "undefined" && "gpu" in navigator; }
 export type NearMiss = { nibbles: number; hash: string; at: number };
 const BEST_NEAR_KEY = "bitmap.lottery.bestNear";
 /** A Hash160 is 40 hex characters; only all 40 matching is the prize key. */
@@ -75,9 +81,10 @@ const POWER_KEY = "bitmap.lottery.power";
 /** Report a key found by another scanner on this page; held in memory only. */
 export function lotteryFound(keyHex: string) { set({ found: keyHex, on: false, rate: 0 }); guardUnload(true); void sealFoundKey(keyHex); }
 
-let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0, nears: [], bestNear: 0 };
+let state: LotteryState = { on: false, power: "ECO", scanned: 0, rate: 0, slice: null, found: null, poolWorker: null, poolDone: 0, poolMsg: null, poolScanned: 0, poolSize: 0, nears: [], bestNear: 0, engine: "CPU", gpuStatus: "idle", gpuNote: null };
 const listeners = new Set<() => void>();
 let worker: Worker | null = null;
+let lastStart: Record<string, unknown> | null = null;
 let recent: { t: number; n: number }[] = [];
 let booted = false;
 
@@ -87,10 +94,18 @@ const dutyOf = (p: LotteryPower) => LOTTERY_POWER.find((x) => x.id === p)!.duty;
 
 function ensureWorker() {
   if (worker) return worker;
-  worker = new Worker(new URL("./puzzle-worker.ts", import.meta.url), { type: "module" });
+  worker = state.engine === "GPU"
+    ? new Worker(new URL("./puzzle-gpu-worker.ts", import.meta.url), { type: "module" })
+    : new Worker(new URL("./puzzle-worker.ts", import.meta.url), { type: "module" });
   worker.onmessage = (e) => {
     const m = e.data;
-    if (m.type === "batch") {
+    if (m.type === "gpu-ready") set({ gpuStatus: "ok", gpuNote: String(m.name ?? "WebGPU") });
+    else if (m.type === "gpu-fail") {
+      // fall back to the CPU worker, resuming the same job
+      worker?.terminate(); worker = null;
+      set({ engine: "CPU", gpuStatus: "failed", gpuNote: String(m.reason ?? "GPU error") });
+      if (state.on && lastStart) ensureWorker().postMessage(lastStart);
+    } else if (m.type === "batch") {
       const now = performance.now();
       recent.push({ t: now, n: m.count });
       recent = recent.filter((x) => now - x.t < 5000);
@@ -114,10 +129,12 @@ function ensureWorker() {
 }
 
 function startWorker(slice?: { startHex: string; size: number; canaries: string[] }) {
-  ensureWorker().postMessage({
+  lastStart = {
     type: "start", startHex: PUZZLE_71.startHex, endHex: PUZZLE_71.endHex,
     target: Array.from(hash160Of(PUZZLE_71.address)), duty: dutyOf(state.power), slice,
-  });
+  };
+  if (state.engine === "GPU" && state.gpuStatus !== "ok") set({ gpuStatus: "testing", gpuNote: null });
+  ensureWorker().postMessage(lastStart);
 }
 
 async function nextSlice() {
@@ -176,13 +193,25 @@ export function lotterySetPower(power: LotteryPower) {
   set({ power });
 }
 
+/** Switch engine; restarts the current job on the new engine. */
+export function lotterySetEngine(engine: LotteryEngine) {
+  if (engine === state.engine) return;
+  const wasOn = state.on;
+  if (wasOn) lotteryStop();
+  worker?.terminate(); worker = null;
+  localStorage.setItem(ENGINE_KEY, engine);
+  set({ engine, gpuStatus: engine === "GPU" ? "idle" : state.gpuStatus, gpuNote: engine === "GPU" ? null : state.gpuNote });
+  if (wasOn) lotteryStart();
+}
+
 /** Restore the saved choice once in the browser. */
 export function lotteryBoot() {
   if (booted || typeof window === "undefined") return;
   booted = true;
   const power = localStorage.getItem(POWER_KEY) as LotteryPower | null;
   const found = state.found ?? takeLegacyStoredKey();
-  set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
+  const engine: LotteryEngine = localStorage.getItem(ENGINE_KEY) === "GPU" && webgpuAvailable() ? "GPU" : "CPU";
+  set({ engine, power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
     poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0,
     bestNear: Number(localStorage.getItem(BEST_NEAR_KEY) ?? 0) || 0 });
   if (found) guardUnload(true);
