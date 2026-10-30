@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { walletQuery } from "@/lib/wallet";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { blockSliceStatusFn, scoutedBlocksFn } from "@/lib/puzzle-pool.functions";
 import { runBlockSlice } from "@/lib/puzzle-test-run";
@@ -53,6 +54,7 @@ export function BlockHuntPanel() {
           {busy ? "[ SCANNING… ]" : `[ SCOUT ${valid ? h : "BLOCK"} ]`}
         </button>
       </div>
+      <HeldBitmapPicker ordinals={wallet?.ordinalsAddress ?? ""} current={valid ? h : null} scouted={new Set((scouted.data ?? []).map((b) => b.height))} onPick={(v) => setInput(`${v}.bitmap`)} />
       {s && (
         <div className="mt-3 font-mono text-[11px]" data-no-translate>
           <p>SLICE #{s.index} · {s.status === "scouted" ? "✓ SCOUTED" : s.status === "scanning" ? "BEING SCANNED" : "OPEN"}</p>
@@ -70,5 +72,27 @@ export function BlockHuntPanel() {
         </p>
       )}
     </section>
+  );
+}
+
+/** Lists every BITMAP held by the connected wallet (live ord index) as one-click hunt targets. */
+function HeldBitmapPicker({ ordinals, current, scouted, onPick }: { ordinals: string; current: number | null; scouted: Set<number>; onPick: (h: number) => void }) {
+  const snap = useQuery({ ...walletQuery(ordinals), enabled: ordinals !== "" });
+  const held = useMemo(() => [...new Set((snap.data?.utxos ?? []).flatMap((u) => u.inscriptions.map((i) => i.bitmapHeight).filter((x): x is number => x !== null)))].sort((a, b) => a - b), [snap.data]);
+  if (!ordinals) return <p className="mt-3 text-muted-foreground">Connect your wallet to list your own BITMAPs here.</p>;
+  return (
+    <div className="mt-3">
+      <p className="label text-muted-foreground">YOUR BITMAPS {snap.isLoading ? "· SCANNING WALLET…" : `· ${held.length}`}</p>
+      {!snap.isLoading && held.length === 0 && <p className="mt-1 text-muted-foreground">No BITMAPs found in this wallet.</p>}
+      {held.length > 0 && (
+        <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto" data-no-translate>
+          {held.map((v) => (
+            <button key={v} onClick={() => onPick(v)} className={`rounded border px-2 py-0.5 font-mono text-[11px] ${current === v ? "border-primary bg-primary/20 text-primary" : "border-border hover:border-primary/60"}`}>
+              {v}.bitmap{scouted.has(v) ? " ✓" : ""}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
