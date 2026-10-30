@@ -142,10 +142,10 @@ function TestPool({ addr }: { addr: string }) {
 
 function RigLaunchKit({ worker }: { worker: string }) {
   const [os, setOs] = useState<"linux" | "windows">("linux");
-  const [preset, setPreset] = useState(SCANNER_PRESETS[0].id);
+  const [preset, setPreset] = useState("bitcrack");
   const [pool, setPool] = useState<"71" | "test">("test");
   const [copied, setCopied] = useState(false);
-  const p = SCANNER_PRESETS.find((x) => x.id === preset) ?? SCANNER_PRESETS[0];
+  const p = SCANNER_PRESETS.find((x) => x.id === preset) ?? SCANNER_PRESETS[0]!;
   const [cmd, setCmd] = useState(p.linux);
   useEffect(() => setCmd(os === "windows" ? p.windows : p.linux), [os, p]);
   const ok = isWorkerAddress(worker);
