@@ -27,13 +27,27 @@ export type LotteryState = {
 };
 export type NearMiss = { nibbles: number; hash: string; at: number };
 const BEST_NEAR_KEY = "bitmap.lottery.bestNear";
-/** Hex characters matching the target's Hash160 → near-miss tier. */
+/** A Hash160 is 40 hex characters; only all 40 matching is the prize key. */
+export const FULL_HASH_CHARS = 40;
+/** Hex characters matching the target's Hash160 → near-miss tier. No tier pays or improves odds. */
 export function nearTier(n: number) {
-  if (n >= 7) return { id: "DIAMOND", odds: 16 ** n };
-  if (n >= 6) return { id: "GOLD", odds: 16 ** n };
-  if (n >= 5) return { id: "SILVER", odds: 16 ** n };
-  if (n >= 4) return { id: "BRONZE", odds: 16 ** n };
-  return { id: "DUST", odds: 16 ** n };
+  if (n >= 7) return { id: "DIAMOND", odds: 16 ** n, pays: false };
+  if (n >= 6) return { id: "GOLD", odds: 16 ** n, pays: false };
+  if (n >= 5) return { id: "SILVER", odds: 16 ** n, pays: false };
+  if (n >= 4) return { id: "BRONZE", odds: 16 ** n, pays: false };
+  return { id: "DUST", odds: 16 ** n, pays: false };
+}
+/** Only an exact Hash160 wins — a 39-character prefix is not the key. */
+export function isFullMatch(hashHex: string, targetHex: string) {
+  return hashHex.length === FULL_HASH_CHARS && hashHex === targetHex;
+}
+/**
+ * Chance a scan of `keys` keys holds the prize key: keys ÷ keys in the #71 range.
+ * Tiers and near misses never enter it — every key is an independent draw.
+ */
+export function ticketWinChance(keys: number) {
+  const lo = BigInt("0x" + PUZZLE_71.startHex), hi = BigInt("0x" + PUZZLE_71.endHex);
+  return Number((BigInt(keys) * 10n ** 24n) / (hi - lo + 1n)) / 1e24;
 }
 export function chime(n: number) {
   try {
