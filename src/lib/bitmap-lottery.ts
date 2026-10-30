@@ -183,6 +183,7 @@ export function lotteryBoot() {
   set({ power: LOTTERY_POWER.some((p) => p.id === power) ? power! : "ECO", found,
     poolWorker: localStorage.getItem(POOL_KEY), poolDone: Number(localStorage.getItem(POOL_DONE_KEY) ?? 0) || 0,
     bestNear: Number(localStorage.getItem(BEST_NEAR_KEY) ?? 0) || 0 });
+  if (found) guardUnload(true);
   if (!found && localStorage.getItem(ON_KEY) === "1") lotteryStart();
 }
 
