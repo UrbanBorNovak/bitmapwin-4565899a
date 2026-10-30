@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SwarmStinger } from "@/components/brand/BrandMarks";
 import { useQuery } from "@tanstack/react-query";
 import { lotterySetPool, lotteryStart, useLottery } from "@/lib/bitmap-lottery";
 import { ScanProgress } from "./ScanProgress";
