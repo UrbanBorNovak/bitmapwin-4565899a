@@ -542,16 +542,16 @@ function PopcornLayer({ volleys, onHit }: { volleys: Volley[]; onHit?: (() => vo
     for (const vol of volleys) {
       if (vol.n <= last.current) continue;
       last.current = vol.n;
-      const [x, y, z] = seatPos(vol.seat); const rnd = seededRng(vol.seed);
-      if (import.meta.env.DEV) { const w = window as unknown as { __popcorn?: unknown[] }; (w.__popcorn ??= []).push({ seat: vol.seat, seed: vol.seed, local: vol.local }); }
+      const [x, y, z] = seatPos(vol.seat); const rnd = seededRng(vol.seed); const aims: number[][] = [];
       for (let i = 0; i < 6; i++) {
         const p = new THREE.Vector3(x * 0.94, y + 1.4, z * 0.94);
-        const aim = new THREE.Vector3((rnd() - 0.5) * SCREEN_W * 0.8, SCREEN_Y + 0.6 + rnd() * (h - 1.2), SCREEN_Z + 0.08);
+        const aim = new THREE.Vector3((rnd() - 0.5) * SCREEN_W * 0.8, SCREEN_Y + 0.6 + rnd() * (h - 1.2), SCREEN_Z + 0.08); aims.push([+aim.x.toFixed(3), +aim.y.toFixed(3)]);
         const T = 1.3 + rnd() * 0.3;
         // Solve launch velocity for a drag-free arc; drag makes some fall short for real.
         const v = aim.sub(p).divideScalar(T); v.y += 0.5 * GRAV * T; v.multiplyScalar(1 + DRAG * T * 0.5);
         ks.current.push({ p, v, rot: new THREE.Euler(), spin: new THREE.Vector3((rnd() - 0.5) * 18, (rnd() - 0.5) * 18, (rnd() - 0.5) * 18), t: 0, hit: false, bounces: 0, rest: false, local: vol.local });
       }
+      if (import.meta.env.DEV) { const w = window as unknown as { __popcorn?: unknown[] }; (w.__popcorn ??= []).push({ seat: vol.seat, seed: vol.seed, local: vol.local, aims }); }
       ks.current = ks.current.slice(-N);
     }
     const im = mesh.current; if (!im) return;
