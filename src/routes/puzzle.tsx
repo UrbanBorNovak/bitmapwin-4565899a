@@ -123,12 +123,13 @@ function PuzzlePage() {
       <GoldenTicket />
       <PoolPanel />
       <BlockHuntPanel />
+      <div className="mt-4"><KeyVaultPanel /></div>
       <a href="/speed-bounty" className="mt-4 block font-mono text-xs text-primary">→ KANGAROO SPEED BOUNTIES · race known-pubkey keys</a>
 
       {found && (
         <section className="mt-6 rounded border border-primary p-4 text-xs">
           <p className="display text-lg text-primary">KEY FOUND — HELD IN THIS TAB ONLY</p>
-          <p className="mt-2 text-muted-foreground">The key is not saved anywhere: not in the browser, not on our servers. Closing or reloading this tab loses it unless you save a backup file. The sweep pays your wallet {100 - SWEEP_TREASURY_PERCENT}% (minus network fee) and the bitmapwin treasury {SWEEP_TREASURY_PERCENT}%.</p>
+          <p className="mt-2 text-muted-foreground">The key never goes to our servers. Unless you set a backup passphrase (see ENCRYPTED KEY BACKUP), it is only in this tab and closing or reloading loses it. A plain backup file is unencrypted — keep it offline. The sweep pays your wallet {100 - SWEEP_TREASURY_PERCENT}% (minus network fee) and the bitmapwin treasury {SWEEP_TREASURY_PERCENT}%.</p>
           <button onClick={() => downloadKeyBackup(found)} className="mt-2 rounded border border-primary px-3 py-1 text-primary">[ SAVE KEY BACKUP FILE ]</button>
           <div className="mt-2 rounded border border-destructive p-2 text-muted-foreground">
             <p className="text-destructive">NEVER BROADCAST THIS PUBLICLY.</p>
