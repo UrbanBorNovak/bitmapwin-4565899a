@@ -46,7 +46,7 @@ export function BlockHuntPanel() {
       <div className="mt-3 flex flex-wrap gap-2">
         <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="208.bitmap" className="w-36 rounded border border-border bg-background px-2 py-1 font-mono" />
         <input value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="your BTC address" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 font-mono" data-no-translate />
-        <button onClick={scout} disabled={busy || !valid || !isWorkerAddress(addr.trim()) || s?.status !== "open"} className="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50">
+        <button onClick={scout} disabled={busy || !valid || !isWorkerAddress(addr.trim()) || !s || s.status === "scouted"} className="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50">
           {busy ? "[ SCANNING… ]" : `[ SCOUT ${valid ? h : "BLOCK"} ]`}
         </button>
       </div>
