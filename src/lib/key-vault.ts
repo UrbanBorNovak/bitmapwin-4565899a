@@ -18,7 +18,7 @@ export const VAULT_MIN_PASS = 10;
 export const DELETE_PHRASE = "DELETE MY BACKUP";
 
 type Vault = { pub: string; salt: string; iv: string; wrapped: string };
-export type SealedBackup = { at: string; address?: string; epk: string; iv: string; ct: string };
+export type SealedBackup = { at: string; address?: string | undefined; epk: string; iv: string; ct: string };
 
 const b64 = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b instanceof Uint8Array ? b : new Uint8Array(b))));
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
