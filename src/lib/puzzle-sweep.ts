@@ -69,10 +69,35 @@ export async function buildSweep(p: { priv: Uint8Array; puzzleAddress: string; p
   return { hex: tx.hex, total, fee, player, treasury };
 }
 
-export async function broadcast(txHex: string): Promise<string> {
-  const ends = [`${MEMPOOL}/tx`, "https://blockstream.info/api/tx"];
-  const results = await Promise.allSettled(ends.map((u) => fetch(u, { method: "POST", body: txHex }).then(async (r) => { const t = await r.text(); if (!r.ok) throw new Error(t); return t; })));
-  const ok = results.find((r) => r.status === "fulfilled") as PromiseFulfilledResult<string> | undefined;
-  if (!ok) throw new Error((results[0] as PromiseRejectedResult).reason?.message ?? "Broadcast failed");
-  return ok.value.trim();
+/**
+ * Puzzle sweeps NEVER go to the public mempool: a spend reveals the public
+ * key, and Kangaroo bots re-derive a puzzle key in seconds and replace the tx
+ * (#66/#69, Sept 2024). Sweeps are submitted only to MARA Slipstream, which
+ * keeps the raw hex out of public relay until MARA mines it.
+ */
+export const SLIPSTREAM = "https://slipstream.mara.com";
+
+/** Fee rate (sat/vB) Slipstream will accept now, with a small safety margin. */
+export async function slipstreamFeeRate(): Promise<number> {
+  const r = await fetch(`${SLIPSTREAM}/api/rates`).then((x) => x.json()) as { slipstream_rate?: number; effective_rate?: number };
+  return sweepFeeRate(Number(r.slipstream_rate ?? r.effective_rate ?? 0));
 }
+
+/** Pad Slipstream's quoted rate by 25% (never below 2 sat/vB) so the tx isn't stranded if rates rise. */
+export function sweepFeeRate(slipstreamRate: number): number {
+  return Math.max(2, Math.ceil((Number.isFinite(slipstreamRate) ? slipstreamRate : 0) * 1.25));
+}
+
+/** Private submission only. There is deliberately no public-mempool fallback. */
+export async function submitSlipstream(txHex: string): Promise<string> {
+  const r = await fetch(`${SLIPSTREAM}/api/transactions`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ tx_hex: txHex }),
+  });
+  const j = await r.json().catch(() => ({})) as { status?: string; message?: string };
+  if (!r.ok || j.status !== "success" || !j.message) throw new Error(j.message || `Slipstream rejected the transaction (${r.status})`);
+  return j.message.trim();
+}
+
+export const slipstreamStatusUrl = (txid: string) => `${SLIPSTREAM}/status?txid=${txid}`;

@@ -6,7 +6,7 @@ import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
 import { LOTTERY_POWER, lotteryBoot, lotterySetPower, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
-import { PUZZLE_71, SWEEP_TREASURY_PERCENT, broadcast, buildSweep, hash160Of, keyMatches } from "@/lib/puzzle-sweep";
+import { PUZZLE_71, SLIPSTREAM, SWEEP_TREASURY_PERCENT, buildSweep, hash160Of, keyMatches, slipstreamFeeRate, slipstreamStatusUrl, submitSlipstream } from "@/lib/puzzle-sweep";
 
 export const Route = createFileRoute("/puzzle")({
   head: () => ({
@@ -32,6 +32,7 @@ function PuzzlePage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [txid, setTxid] = useState<string | null>(null);
+  const [signedHex, setSignedHex] = useState<string | null>(null);
 
   useEffect(() => {
     lotteryBoot();
@@ -50,12 +51,14 @@ function PuzzlePage() {
       setStatus("CHECKING KEY…");
       const priv = hex.decode(found);
       if (!keyMatches(priv, hash160Of(PUZZLE_71.address))) throw new Error("Stored key does not unlock puzzle #71");
-      const fees = await fetch("https://mempool.space/api/v1/fees/recommended").then((r) => r.json());
+      setStatus("READING SLIPSTREAM FEE RATE…");
+      const feeRate = await slipstreamFeeRate();
       setStatus("SIGNING ON THIS DEVICE…");
-      const tx = await buildSweep({ priv, puzzleAddress: PUZZLE_71.address, payTo: wallet.paymentAddress, feeRate: Math.ceil(fees.fastestFee * 1.5) });
-      setStatus("BROADCASTING…");
-      setTxid(await broadcast(tx.hex));
-      setStatus(`SENT · YOU ${(Number(tx.player) / 1e8).toFixed(8)} BTC · TREASURY ${(Number(tx.treasury) / 1e8).toFixed(8)} BTC`);
+      const tx = await buildSweep({ priv, puzzleAddress: PUZZLE_71.address, payTo: wallet.paymentAddress, feeRate });
+      setSignedHex(tx.hex);
+      setStatus("SUBMITTING PRIVATELY TO MARA SLIPSTREAM…");
+      setTxid(await submitSlipstream(tx.hex));
+      setStatus(`QUEUED WITH MARA · NOT IN PUBLIC MEMPOOL · WAIT FOR A MARA BLOCK · YOU ${(Number(tx.player) / 1e8).toFixed(8)} BTC · TREASURY ${(Number(tx.treasury) / 1e8).toFixed(8)} BTC`);
     } catch (e) { setStatus(`FAILED: ${(e as Error).message}`); }
   }
 
@@ -101,11 +104,23 @@ function PuzzlePage() {
         <section className="mt-6 rounded border border-primary p-4 text-xs">
           <p className="display text-lg text-primary">KEY FOUND — SAVED ON THIS DEVICE</p>
           <p className="mt-2 text-muted-foreground">A backup file was downloaded. The sweep pays your wallet {100 - SWEEP_TREASURY_PERCENT}% (minus network fee) and the bitmapwin treasury {SWEEP_TREASURY_PERCENT}%.</p>
-          <p className="mt-2 text-muted-foreground">Warning: broadcasting reveals the key's public half; bots can then race to replace your transaction. Consider submitting through a private miner service instead.</p>
+          <div className="mt-2 rounded border border-destructive p-2 text-muted-foreground">
+            <p className="text-destructive">NEVER BROADCAST THIS PUBLICLY.</p>
+            <p className="mt-1">Signing reveals the public key. Bots watching the public mempool recover a puzzle key in seconds and replace your transaction — this is how #66 and #69 were stolen in 2024. Disabling RBF, a huge fee or an accelerator do not help.</p>
+            <p className="mt-1">This sweep goes only to MARA Slipstream, which keeps it out of the public mempool until MARA mines a block: about 3.5 hours on average, up to 16+ hours. Do not panic and paste it into a block explorer while you wait.</p>
+            <p className="mt-1">Limit: MARA sees the transaction first. You are trusting their reputation instead of a bot's restraint.</p>
+          </div>
           <p className="mt-2">PAY TO: <span data-no-translate>{wallet?.paymentAddress ?? "CONNECT A WALLET FIRST"}</span></p>
-          <button onClick={sweep} disabled={!wallet || !!txid} className="mt-3 rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">[ SIGN & BROADCAST SWEEP ]</button>
+          <button onClick={sweep} disabled={!wallet || !!txid} className="mt-3 rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">[ SIGN & SUBMIT PRIVATELY · MARA SLIPSTREAM ]</button>
           {status && <p className="mt-2">{status}</p>}
-          {txid && <a className="mt-1 block text-accent underline" href={`https://mempool.space/tx/${txid}`} target="_blank" rel="noreferrer">VIEW ON MEMPOOL →</a>}
+          {signedHex && !txid && (
+            <div className="mt-2">
+              <p className="text-muted-foreground">Signed hex (paste only at slipstream.mara.com):</p>
+              <textarea readOnly value={signedHex} className="mt-1 h-20 w-full rounded border border-border bg-background p-1 text-[10px]" data-no-translate />
+              <a className="text-accent underline" href={SLIPSTREAM} target="_blank" rel="noreferrer">OPEN SLIPSTREAM →</a>
+            </div>
+          )}
+          {txid && <a className="mt-1 block text-accent underline" href={slipstreamStatusUrl(txid)} target="_blank" rel="noreferrer">TRACK ON SLIPSTREAM →</a>}
         </section>
       )}
 
