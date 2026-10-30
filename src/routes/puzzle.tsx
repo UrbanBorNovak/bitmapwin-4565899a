@@ -28,6 +28,8 @@ export const Route = createFileRoute("/puzzle")({
 function PuzzlePage() {
   const wallet = useWalletSession();
   const lot = useLottery();
+  const [gpuOk, setGpuOk] = useState(false);
+  useEffect(() => setGpuOk(webgpuAvailable()), []);
   const { on, scanned, rate, slice, found } = lot;
   const duty = lot.power;
   const setDuty = lotterySetPower;
@@ -119,7 +121,7 @@ function PuzzlePage() {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="label text-muted-foreground">ENGINE</span>
           <button onClick={() => lotterySetEngine("CPU")} className={`rounded border px-3 py-1 ${lot.engine === "CPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>CPU WORKER</button>
-          <button onClick={() => lotterySetEngine("GPU")} disabled={!webgpuAvailable()} className={`rounded border px-3 py-1 disabled:opacity-40 ${lot.engine === "GPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>WEBGPU · EXPERIMENTAL</button>
+          <button onClick={() => lotterySetEngine("GPU")} disabled={!gpuOk} className={`rounded border px-3 py-1 disabled:opacity-40 ${lot.engine === "GPU" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>WEBGPU · EXPERIMENTAL</button>
           <span className="text-[11px] text-muted-foreground" data-no-translate>
             {lot.gpuStatus === "testing" && "GPU SELF-TEST…"}
             {lot.gpuStatus === "ok" && lot.engine === "GPU" && `GPU OK · ${lot.gpuNote}`}
