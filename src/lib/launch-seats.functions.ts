@@ -70,7 +70,7 @@ export const listLaunchSeatsFn = createServerFn({ method: "GET" }).handler(async
   for (const s of seats) s.gear = seatGear(s.seat, s.heldBitmap, tamers.has(s.address), builders.has(s.address));
   try {
     const { wornFrom } = await import("@/lib/launch-seats");
-    const { data: wear } = await sb.from("launch_seat_wear").select("address,slot,item,created_at").order("created_at", { ascending: false }).limit(5000);
+    const { data: wear } = await (await import("@/integrations/supabase/client.server")).supabaseAdmin.from("launch_seat_wear").select("address,slot,item,created_at").order("created_at", { ascending: false }).limit(5000);
     const by = new Map<string, { slot: string; item: string }[]>();
     for (const w of wear ?? []) { const k = w.address.toLowerCase(); by.set(k, [...(by.get(k) ?? []), w]); }
     for (const s of seats) { const rows = by.get(s.address.toLowerCase()) ?? []; const w = wornFrom(rows); s.hat = w.hat; s.food = w.food; s.owned = rows.map((r) => r.item); }
