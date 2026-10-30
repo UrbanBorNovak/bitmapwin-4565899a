@@ -109,7 +109,9 @@ function ensureWorker() {
       const now = performance.now();
       recent.push({ t: now, n: m.count });
       recent = recent.filter((x) => now - x.t < 5000);
-      set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / 5), poolScanned: lease ? state.poolScanned + m.count : state.poolScanned });
+      // divide by the real window covered, so the speed doesn't sag or spike
+      const span = Math.max(1000, now - (recent[0]?.t ?? now) + 40) / 1000;
+      set({ scanned: state.scanned + m.count, rate: Math.round(recent.reduce((a, b) => a + b.n, 0) / span), poolScanned: lease ? state.poolScanned + m.count : state.poolScanned });
     } else if (m.type === "near") {
       const best = Math.max(state.bestNear, m.nibbles);
       if (best > state.bestNear) localStorage.setItem(BEST_NEAR_KEY, String(best));
