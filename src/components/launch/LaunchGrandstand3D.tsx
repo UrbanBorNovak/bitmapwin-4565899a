@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { GENESIS_BROADCASTER as G } from "@/lib/genesis-broadcaster";
+import { StageStreamPlayer } from "@/components/launch/StageStreamPlayer";
 import { resolvePixelTexture } from "@/lib/pixel-texture";
 import { hairFor, seatPlace, type LaunchSeat } from "@/lib/launch-seats";
 import { CREW_PIXEL_AVATAR } from "@/lib/biternam-quests";
@@ -477,7 +478,7 @@ function StageVideo() {
       ))}
       {front && <SafeHtml transform distanceFactor={400} position={[0, 0, 0.005]} scale={w / 640} zIndexRange={[1, 0]} style={{ backfaceVisibility: "hidden" }}>
         <div style={{ width: 640, height: 360, background: "#000", position: "relative", overflow: "hidden", font: "12px monospace" }}>
-          <iframe src={G.embedUrl} title="Elevated Dabber live on bitmap.stream" width={640} height={360} style={{ border: 0, display: "block" }} allow="autoplay; fullscreen" />
+          <StageStreamPlayer />
           <div style={{ position: "absolute", top: 6, left: 10, color: "#f7931a", pointerEvents: "none", textShadow: "0 0 4px #000" }}>● LIVE · @{G.handle} · {G.channelHeight}.BITMAP</div>
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 2px, transparent 2px 4px)" }} />
         </div>
