@@ -129,14 +129,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Explore, discover and trade Bitcoin Bitmap digital land.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://bitmapwin.app/social-card.jpg" },
+      { property: "og:site_name", content: "BitmapWin" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://bitmapwin.app/social-card.jpg" },
       { name: "theme-color", content: "#F7931A" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "BitmapWin" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "BitmapWin",
+          url: "https://bitmapwin.app",
+          applicationCategory: "GameApplication",
+          operatingSystem: "Web browser",
+          description:
+            "Bitcoin-native worlds built on BITMAP blocks: a 3D world, on-chain BITMAP lookups and trades, a voxel Land Forge and a browser Puzzle #71 scanning pool.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        }),
+      },
     ],
     links: [
       {
