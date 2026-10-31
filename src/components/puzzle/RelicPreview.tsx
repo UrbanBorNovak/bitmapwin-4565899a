@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+import { ClientOnly } from "@tanstack/react-router";
+const RelicBadge3D = lazy(() => import("./RelicBadge3D"));
 import { useQuery } from "@tanstack/react-query";
 import type { NearMiss } from "@/lib/bitmap-lottery";
 import { nearProofFn } from "@/lib/puzzle-record.functions";
@@ -47,6 +49,13 @@ function RelicCard({ find }: { find: NearMiss }) {
         </p>
       </div>
       <p className="mt-1 break-all font-mono" data-no-translate><span className="text-bitcoin">{find.hash.slice(0, find.nibbles)}</span><span className="text-muted-foreground">{find.hash.slice(find.nibbles)}</span></p>
+
+      <ClientOnly fallback={<div className="mt-3 h-64 rounded border border-border" />}>
+        <Suspense fallback={<div className="mt-3 h-64 rounded border border-border" />}>
+          <div className="mt-3"><RelicBadge3D draft={draft} /></div>
+        </Suspense>
+      </ClientOnly>
+      <p className="mt-1 text-[10px] text-muted-foreground">Tilt with your pointer · click to flip.</p>
 
       <label className="mt-3 flex flex-wrap items-center gap-2">
         <span className="label text-muted-foreground">BITMAP</span>
