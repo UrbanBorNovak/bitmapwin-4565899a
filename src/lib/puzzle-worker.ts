@@ -4,15 +4,12 @@
  * range; pool mode scans exactly one server-assigned slice and reports the
  * key with the lowest Hash160 as proof. Duty cycle (0..1) leaves CPU for 3D.
  */
-import { secp256k1 } from "@noble/curves/secp256k1.js";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { ripemd160 } from "@noble/hashes/legacy.js";
 import { makeWalker, BATCH } from "./puzzle-batch";
+import { hash160At, matchNibbles } from "./puzzle-hash160";
 
 type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; nearMin?: number; slice?: { startHex: string; size: number; canaries: string[] } };
 type Msg = Start | { type: "stop" } | { type: "duty"; duty: number };
 
-const G = secp256k1.Point.BASE;
 let running = false;
 let duty = 0.5;
 
@@ -41,7 +38,6 @@ async function run(m: Start) {
   const firstBytes = new Set([...canaries].map((c) => parseInt(c.slice(0, 2), 16)));
   const found: string[] = [];
   const nearMin = m.nearMin ?? 4;
-  const tgtHex = toHex(target);
   const t0b = target[0]!;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
@@ -53,21 +49,19 @@ async function run(m: Start) {
       W.next(cnt);
       const pubs = W.pubs;
       for (let i = 0; i < cnt; i++, k++) {
-        const h = ripemd160(sha256(pubs.subarray(i * 33, i * 33 + 33)));
+        const h = hash160At(pubs, i * 33); // shared buffer, copy to keep
         // early reject: 255 of 256 hashes miss on byte 0
         if (h[0] === t0b) {
-          if (h.every((b, j) => b === target[j])) {
+          const nib = matchNibbles(h, target);
+          if (nib === 40) {
             self.postMessage({ type: "found", keyHex: k.toString(16).padStart(64, "0") });
             running = false;
             return;
           }
-          const hx = toHex(h);
-          let nib = 0;
-          while (nib < 40 && hx[nib] === tgtHex[nib]) nib++;
-          if (nib >= nearMin) self.postMessage({ type: "near", nibbles: nib, hash: hx, keyHex: nib >= 5 ? k.toString(16).padStart(64, "0") : undefined });
+          if (nib >= nearMin) self.postMessage({ type: "near", nibbles: nib, hash: toHex(h), keyHex: nib >= 5 ? k.toString(16).padStart(64, "0") : undefined });
         }
         if (pool) {
-          if (!best || less(h, best)) { best = h; bestOff = k - k0; }
+          if (!best || less(h, best)) { best = h.slice(); bestOff = k - k0; }
           if (firstBytes.has(h[0]!) && canaries.has(toHex(h))) found.push(k.toString(16).padStart(64, "0"));
         }
       }
