@@ -42,24 +42,19 @@ export function makeWalker(k0: bigint) {
     pubs,
     get key() { return k; },
     next(n: number) {
-      if (!B) { // k0 === 1: fall back to plain points for this batch
+      const plain = !B || TX.slice(0, n).some((x) => x === B!.x);
+      if (plain) { // k0 === 1 or B == ±(i+1)·G (vanishingly rare): plain points
         let Q = G.multiply(k);
         for (let i = 0; i < n; i++) { pubs.set(Q.toBytes(true), i * 33); Q = Q.add(G); }
         B = G.multiply(k + BigInt(n) - 1n).toAffine(); k += BigInt(n); return;
       }
-      const bx = B.x, by = B.y;
+      const bx = B!.x, by = B!.y;
       let run = 1n;
       for (let i = 0; i < n; i++) { const di = mod(TX[i]! - bx); d[i] = di; acc[i] = run; run = (run * di) % P; }
       let iv = inv(run);
       let lx = 0n, ly = 0n;
       for (let i = n - 1; i >= 0; i--) {
         const di = d[i]!;
-        if (di === 0n) { // B == ±(i+1)·G — vanishingly rare; do it directly
-          const a = G.multiply(k + BigInt(i)).toAffine();
-          pubs[i * 33] = a.y & 1n ? 3 : 2; writeX(a.x, pubs, i * 33 + 1);
-          if (i === n - 1) { lx = a.x; ly = a.y; }
-          continue;
-        }
         const invi = (iv * acc[i]!) % P;
         iv = (iv * di) % P;
         const lam = mod((TY[i]! - by) * invi);
