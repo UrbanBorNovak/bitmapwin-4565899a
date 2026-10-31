@@ -34,26 +34,32 @@ async function run(m: Start) {
   let k = pool ? BigInt("0x" + pool.startHex) : randomIn(lo, hi);
   const k0 = k;
   const end = pool ? k + BigInt(pool.size) : hi;
-  let P = G.multiply(k);
+  let W = makeWalker(k);
   let best: Uint8Array | null = null, bestOff = 0n;
   const canaries = new Set(pool?.canaries ?? []);
   const firstBytes = new Set([...canaries].map((c) => parseInt(c.slice(0, 2), 16)));
   const found: string[] = [];
   const nearMin = m.nearMin ?? 4;
   const tgtHex = toHex(target);
+  const t0b = target[0]!;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const t0 = performance.now();
     let n = 0;
     while (performance.now() - t0 < 40 && k < end) {
-      for (let i = 0; i < 64 && k < end; i++) {
-        const h = ripemd160(sha256(P.toBytes(true)));
-        if (h[0] === target[0] && h.every((b, j) => b === target[j])) {
-          self.postMessage({ type: "found", keyHex: k.toString(16).padStart(64, "0") });
-          running = false;
-          return;
-        }
-        if (h[0] === target[0]) {
+      const left = end - k;
+      const cnt = left < BigInt(BATCH) ? Number(left) : BATCH;
+      W.next(cnt);
+      const pubs = W.pubs;
+      for (let i = 0; i < cnt; i++, k++) {
+        const h = ripemd160(sha256(pubs.subarray(i * 33, i * 33 + 33)));
+        // early reject: 255 of 256 hashes miss on byte 0
+        if (h[0] === t0b) {
+          if (h.every((b, j) => b === target[j])) {
+            self.postMessage({ type: "found", keyHex: k.toString(16).padStart(64, "0") });
+            running = false;
+            return;
+          }
           const hx = toHex(h);
           let nib = 0;
           while (nib < 40 && hx[nib] === tgtHex[nib]) nib++;
@@ -63,11 +69,9 @@ async function run(m: Start) {
           if (!best || less(h, best)) { best = h; bestOff = k - k0; }
           if (firstBytes.has(h[0]!) && canaries.has(toHex(h))) found.push(k.toString(16).padStart(64, "0"));
         }
-        P = P.add(G);
-        k++;
-        n++;
       }
-      if (!pool && k >= hi) { k = randomIn(lo, hi); P = G.multiply(k); }
+      n += cnt;
+      if (!pool && k >= hi) { k = randomIn(lo, hi); W = makeWalker(k); }
     }
     self.postMessage({ type: "batch", count: n });
     if (pool && k >= end) {
