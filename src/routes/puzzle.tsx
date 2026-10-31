@@ -5,6 +5,7 @@ import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
 import { CommunityRecord } from "@/components/puzzle/CommunityRecord";
 import { HashStrip } from "@/components/puzzle/HashStrip";
+import { RelicPreview } from "@/components/puzzle/RelicPreview";
 import { LOTTERY_POWER, lotteryBoot, lotterySetEngine, lotterySetPower, webgpuAvailable, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -123,6 +124,7 @@ function PuzzlePage() {
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{on ? "Hunting… you can use the rest of the site while this runs." : "Press Start to begin."}</p>
           <HashStrip nears={lot.nears} bestNear={lot.bestNear} scanned={scanned} on={on} />
+          <RelicPreview nears={lot.nears} />
         </StepCard>
 
         <StepCard n={3} title="If you win">
