@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { RelicDraft } from "@/lib/puzzle-relic";
+import { RelicBadgeCore } from "./RelicBadgeCore";
 
 const ORANGE = "#f7931a", CYAN = "#22e1ff", DIM = "#1c2330", BODY = "#0d1118";
 
@@ -37,7 +38,6 @@ function faceTexture(d: RelicDraft, back: boolean) {
 function Medallion({ draft, flip }: { draft: RelicDraft; flip: React.MutableRefObject<boolean> }) {
   const group = useRef<THREE.Group>(null);
   const diodes = useRef<THREE.InstancedMesh>(null);
-  const core = useRef<THREE.Mesh>(null);
   const front = useMemo(() => faceTexture(draft, false), [draft]);
   const back = useMemo(() => faceTexture(draft, true), [draft]);
   useEffect(() => () => { front.dispose(); back.dispose(); }, [front, back]);
@@ -63,10 +63,8 @@ function Medallion({ draft, flip }: { draft: RelicDraft; flip: React.MutableRefO
     const target = (flip.current ? Math.PI : 0) + s.pointer.x * 0.5;
     g.rotation.y += (target - g.rotation.y) * (1 - Math.exp(-6 * d));
     g.rotation.x += (-s.pointer.y * 0.35 - g.rotation.x) * (1 - Math.exp(-6 * d));
-    if (core.current) core.current.rotation.y += d * 0.8;
   });
 
-  const hasLand = !!draft.bitmap;
   return (
     <group ref={group}>
       <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[2.1, 2.1, 0.22, 64]} /><meshStandardMaterial color={BODY} metalness={0.8} roughness={0.35} /></mesh>
