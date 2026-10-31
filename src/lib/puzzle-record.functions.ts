@@ -40,3 +40,16 @@ export const nearRecordsFn = createServerFn({ method: "GET" }).handler(async () 
   for (const r of rows ?? []) counts[r.nibbles] = (counts[r.nibbles] ?? 0) + 1;
   return { best: top?.[0] ?? null, counts };
 });
+
+/** Public read: is this exact Hash160 a server-verified near miss? Rows exist only after the server re-derived them from a key. */
+export const nearProofFn = createServerFn({ method: "GET" })
+  .inputValidator((d: { hash: string }) => ({ hash: String(d?.hash ?? "").toLowerCase() }))
+  .handler(async ({ data }) => {
+    if (!/^[0-9a-f]{40}$/.test(data.hash)) return { verified: false, nibbles: null, foundAt: null };
+    const { PUZZLE_71, hash160Of } = await import("@/lib/puzzle-sweep");
+    const tgt = Array.from(hash160Of(PUZZLE_71.address), (b) => b.toString(16).padStart(2, "0")).join("");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin.from("puzzle_near_records").select("nibbles, found_at").eq("hash", data.hash).maybeSingle();
+    if (!row || row.nibbles !== matchedChars(data.hash, tgt)) return { verified: false, nibbles: null, foundAt: null };
+    return { verified: true, nibbles: row.nibbles as number, foundAt: row.found_at as string };
+  });
