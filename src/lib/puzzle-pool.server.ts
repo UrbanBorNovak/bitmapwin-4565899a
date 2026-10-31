@@ -103,8 +103,9 @@ export async function reportSlice(d: { pool?: PoolId | undefined; index: string;
   return { ok: true as const };
 }
 
-export async function poolStats(pool: PoolId = "71") {
-  const db = await admin();
+/** `client` is injectable for tests; defaults to the server admin client. */
+export async function poolStats(pool: PoolId = "71", client?: unknown) {
+  const db = (client ?? await admin()) as Awaited<ReturnType<typeof admin>>;
   // The data API caps each read at 1,000 rows, so page through every slice.
   const rows: { slice_index: number; worker: string; done_at: string | null; leased_at: string }[] = [];
   for (let from = 0; from < 500_000; from += 1000) {
