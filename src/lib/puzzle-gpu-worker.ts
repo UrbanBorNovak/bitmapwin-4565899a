@@ -147,8 +147,8 @@ async function run(m: Start) {
   const end = pool ? k + BigInt(pool.size) : hi;
   let best: string | null = null, bestOff = 0n;
   const foundCanaries: string[] = [];
-  const MAX_STEPS = 1 + GPU_BATCH * 32;
-  let steps = 1 + GPU_BATCH;
+  const MAX_STEPS = 1 + GPU_BATCH * 32, MIN_STEPS = 1 + GPU_BATCH;
+  let steps = MIN_STEPS;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const remain = end - k;
@@ -192,9 +192,10 @@ async function run(m: Start) {
     if (!pool && k >= hi) k = randomIn(lo, hi);
     // Keep each dispatch short (~10–20ms) and capped so the OS GPU watchdog
     // (Windows TDR / macOS) never resets the device, even while video plays.
-    if (ms > 30 && steps > 1) steps = Math.max(1, steps >> 2);
-    else if (ms > 20 && steps > 1) steps = Math.max(1, steps >> 1);
-    else if (ms < 8 && steps < MAX_STEPS) steps = Math.min(MAX_STEPS, steps * 2);
+    // Never drop below one full shared-inversion batch, or the speedup is lost.
+    if (ms > 120) steps = Math.max(MIN_STEPS, steps >> 2);
+    else if (ms > 60) steps = Math.max(MIN_STEPS, steps >> 1);
+    else if (ms < 25 && steps < MAX_STEPS) steps = Math.min(MAX_STEPS, steps * 2);
     const rest = ms / Math.max(0.05, duty) - ms;
     await new Promise((r) => setTimeout(r, rest));
   }
