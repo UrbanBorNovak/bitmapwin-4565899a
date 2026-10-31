@@ -74,12 +74,7 @@ function Medallion({ draft, flip }: { draft: RelicDraft; flip: React.MutableRefO
       <mesh position-z={0.115}><circleGeometry args={[2.0, 64]} /><meshBasicMaterial map={front} /></mesh>
       <mesh position-z={-0.115} rotation-y={Math.PI}><circleGeometry args={[2.0, 64]} /><meshBasicMaterial map={back} /></mesh>
       <instancedMesh ref={diodes} args={[undefined, undefined, 40]}><boxGeometry args={[0.1, 0.18, 0.06]} /><meshBasicMaterial toneMapped={false} /></instancedMesh>
-      {hasLand && (
-        <mesh ref={core} position={[0, -0.55, 0.45]}>
-          <boxGeometry args={[0.42, 0.42, 0.42]} />
-          <meshStandardMaterial color={CYAN} emissive={CYAN} emissiveIntensity={0.5} wireframe={!draft.build} />
-        </mesh>
-      )}
+      <Suspense fallback={null}><RelicBadgeCore draft={draft} /></Suspense>
     </group>
   );
 }
