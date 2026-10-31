@@ -70,7 +70,7 @@ function Medallion({ draft, flip }: { draft: RelicDraft; flip: React.MutableRefO
   return (
     <group ref={group}>
       <mesh rotation-x={Math.PI / 2}><cylinderGeometry args={[2.1, 2.1, 0.22, 64]} /><meshStandardMaterial color={BODY} metalness={0.8} roughness={0.35} /></mesh>
-      <mesh rotation-x={Math.PI / 2}><torusGeometry args={[2.1, 0.06, 12, 64]} /><meshStandardMaterial color={ORANGE} emissive={ORANGE} emissiveIntensity={0.6} /></mesh>
+      <mesh><torusGeometry args={[2.1, 0.06, 12, 64]} /><meshStandardMaterial color={ORANGE} emissive={ORANGE} emissiveIntensity={0.6} /></mesh>
       <mesh position-z={0.115}><circleGeometry args={[2.0, 64]} /><meshBasicMaterial map={front} /></mesh>
       <mesh position-z={-0.115} rotation-y={Math.PI}><circleGeometry args={[2.0, 64]} /><meshBasicMaterial map={back} /></mesh>
       <instancedMesh ref={diodes} args={[undefined, undefined, 40]}><boxGeometry args={[0.1, 0.18, 0.06]} /><meshBasicMaterial toneMapped={false} /></instancedMesh>
