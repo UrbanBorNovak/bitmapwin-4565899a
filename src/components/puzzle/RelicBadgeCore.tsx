@@ -69,7 +69,7 @@ export function RelicBadgeCore({ draft }: { draft: RelicDraft }) {
               <ForgeBuild3D height={height} position={[0, 0, 0]} cell={TILE} />
             ) : (
               <>
-                <mesh position-y={0.25}><boxGeometry args={[TILE * 0.9, 0.5, TILE * 0.9]} /><meshBasicMaterial color={CYAN} wireframe transparent opacity={0.35} /></mesh>
+                <lineSegments position-y={0.25}><edgesGeometry args={[new THREE.BoxGeometry(TILE * 0.9, 0.5, TILE * 0.9)]} /><lineBasicMaterial color={CYAN} transparent opacity={0.5} /></lineSegments>
                 <Tag text="UNBUILT LAND" y={0.65} color={CYAN} />
               </>
             )}
