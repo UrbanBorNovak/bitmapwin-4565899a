@@ -7,6 +7,7 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { ripemd160 } from "@noble/hashes/legacy.js";
+import { makeWalker, BATCH } from "./puzzle-batch";
 
 type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; nearMin?: number; slice?: { startHex: string; size: number; canaries: string[] } };
 type Msg = Start | { type: "stop" } | { type: "duty"; duty: number };
