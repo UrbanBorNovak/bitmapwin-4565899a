@@ -10,7 +10,6 @@ import { hash160At, matchNibbles } from "./puzzle-hash160";
 type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; nearMin?: number; slice?: { startHex: string; size: number; canaries: string[] } };
 type Msg = Start | { type: "stop" } | { type: "duty"; duty: number };
 
-const G = secp256k1.Point.BASE;
 let running = false;
 let duty = 0.5;
 
@@ -39,7 +38,6 @@ async function run(m: Start) {
   const firstBytes = new Set([...canaries].map((c) => parseInt(c.slice(0, 2), 16)));
   const found: string[] = [];
   const nearMin = m.nearMin ?? 4;
-  const tgtHex = toHex(target);
   const t0b = target[0]!;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
