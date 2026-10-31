@@ -4,6 +4,7 @@ import { PoolPanel } from "@/components/puzzle/PoolPanel";
 import { GoldenTicket, NearMissFeed } from "@/components/puzzle/GoldenTicket";
 import { BlockHuntPanel } from "@/components/puzzle/BlockHuntPanel";
 import { CommunityRecord } from "@/components/puzzle/CommunityRecord";
+import { HashStrip } from "@/components/puzzle/HashStrip";
 import { LOTTERY_POWER, lotteryBoot, lotterySetEngine, lotterySetPower, webgpuAvailable, lotteryStart, lotteryStop, useLottery } from "@/lib/bitmap-lottery";
 import { hex } from "@scure/base";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -156,6 +157,7 @@ function PuzzlePage() {
           <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
         </div>
         <div className="mt-4"><KeyVaultPanel /></div>
+        <HashStrip nears={lot.nears} bestNear={lot.bestNear} scanned={scanned} on={on} />
         <NearMissFeed nears={lot.nears} bestNear={lot.bestNear} />
         <GoldenTicket />
         <PoolPanel />
