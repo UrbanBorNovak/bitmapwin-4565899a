@@ -8,7 +8,7 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { ripemd160 } from "@noble/hashes/legacy.js";
-import { GPU_THREADS, GPU_WG, PUZZLE_WGSL } from "./puzzle-gpu-shader";
+import { GPU_BATCH, GPU_HITS_WORDS, GPU_THREADS, GPU_WG, PUZZLE_WGSL } from "./puzzle-gpu-shader";
 
 type Slice = { startHex: string; size: number; canaries: string[] };
 type Start = { type: "start"; startHex: string; endHex: string; target: number[]; duty: number; nearMin?: number; slice?: Slice };
@@ -57,17 +57,24 @@ async function init(): Promise<Gpu> {
   const pipeline = await device.createComputePipelineAsync({ layout: "auto", compute: { module, entryPoint: "main" } });
   const U = (globalThis as any).GPUBufferUsage;
   const params = device.createBuffer({ size: 64 * 4, usage: U.STORAGE | U.COPY_DST });
-  const table = device.createBuffer({ size: GPU_THREADS * 16 * 4, usage: U.STORAGE | U.COPY_DST });
+  const table = device.createBuffer({ size: (GPU_THREADS + GPU_BATCH) * 16 * 4, usage: U.STORAGE | U.COPY_DST });
   const out = device.createBuffer({ size: GPU_THREADS * 8 * 4, usage: U.STORAGE | U.COPY_SRC });
-  const hits = device.createBuffer({ size: 17 * 4, usage: U.STORAGE | U.COPY_SRC | U.COPY_DST });
+  const hits = device.createBuffer({ size: GPU_HITS_WORDS * 4, usage: U.STORAGE | U.COPY_SRC | U.COPY_DST });
   const readOut = device.createBuffer({ size: GPU_THREADS * 8 * 4, usage: U.MAP_READ | U.COPY_DST });
-  const readHits = device.createBuffer({ size: 17 * 4, usage: U.MAP_READ | U.COPY_DST });
+  const readHits = device.createBuffer({ size: GPU_HITS_WORDS * 4, usage: U.MAP_READ | U.COPY_DST });
   // table[t] = (t+1)·G, affine
-  const tab = new Uint32Array(GPU_THREADS * 16);
+  // then step[i] = (i+1)·D with D = THREADS·G, shared by every thread's batch
+  const tab = new Uint32Array((GPU_THREADS + GPU_BATCH) * 16);
   let P = G;
   for (let t = 0; t < GPU_THREADS; t++) {
     const a = P.toAffine(); limbs(a.x, tab, t * 16); limbs(a.y, tab, t * 16 + 8);
     P = P.add(G);
+  }
+  const Dp = G.multiply(BigInt(GPU_THREADS));
+  let S = Dp;
+  for (let i = 0; i < GPU_BATCH; i++) {
+    const a = S.toAffine(); const at = (GPU_THREADS + i) * 16; limbs(a.x, tab, at); limbs(a.y, tab, at + 8);
+    S = S.add(Dp);
   }
   device.queue.writeBuffer(table, 0, tab);
   const bind = device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [
@@ -92,13 +99,13 @@ async function dispatch(g: Gpu, start: bigint, steps: number, limit: number, des
   canaries.slice(0, 3).forEach((c, i) => hashWords(c, p, 37 + i * 5));
   p[52] = Math.min(3, canaries.length); p[53] = steps; p[54] = limit;
   g.device.queue.writeBuffer(g.params, 0, p);
-  g.device.queue.writeBuffer(g.hits, 0, new Uint32Array(17));
+  g.device.queue.writeBuffer(g.hits, 0, new Uint32Array(GPU_HITS_WORDS));
   const enc = g.device.createCommandEncoder();
   const pass = enc.beginComputePass();
   pass.setPipeline(g.pipeline); pass.setBindGroup(0, g.bind);
   pass.dispatchWorkgroups(GPU_THREADS / GPU_WG); pass.end();
   enc.copyBufferToBuffer(g.out, 0, g.readOut, 0, GPU_THREADS * 32);
-  enc.copyBufferToBuffer(g.hits, 0, g.readHits, 0, 68);
+  enc.copyBufferToBuffer(g.hits, 0, g.readHits, 0, GPU_HITS_WORDS * 4);
   g.device.queue.submit([enc.finish()]);
   const MR = (globalThis as any).GPUMapMode.READ;
   await Promise.all([g.readOut.mapAsync(MR), g.readHits.mapAsync(MR)]);
@@ -106,16 +113,19 @@ async function dispatch(g: Gpu, start: bigint, steps: number, limit: number, des
   const hw = new Uint32Array(g.readHits.getMappedRange().slice(0));
   g.readOut.unmap(); g.readHits.unmap();
   const hitOffs = Array.from(hw.slice(1, 1 + Math.min(16, hw[0]!)));
-  return { out, hitOffs };
+  return { out, hitOffs, degenerate: hw[GPU_HITS_WORDS - 1] === 1 };
 }
 
 async function selfTest(g: Gpu) {
   const start = randomIn(1n << 70n, (1n << 71n) - 1n);
-  const offs = [0, GPU_THREADS + 1, 3 * GPU_THREADS + 777];
+  // spans a full shared-inversion batch plus a partial one
+  const steps = 2 + GPU_BATCH + 5;
+  const offs = [0, (1 + GPU_BATCH) * GPU_THREADS + 1, (steps - 1) * GPU_THREADS + GPU_THREADS - 1, 7 * GPU_THREADS + 777];
   const [t, ...c] = offs.map((o) => hash160(start + BigInt(o)));
-  const { out, hitOffs } = await dispatch(g, start, 4, GPU_THREADS * 4, t!, c);
+  const { out, hitOffs, degenerate } = await dispatch(g, start, steps, GPU_THREADS * steps, t!, c);
+  if (degenerate) throw new Error("self-test failed (degenerate batch)");
   const got = [...hitOffs].sort((a, b) => a - b);
-  if (got.join() !== offs.join()) throw new Error(`self-test failed (hits ${got.join() || "none"})`);
+  if (got.join() !== [...offs].sort((a, b) => a - b).join()) throw new Error(`self-test failed (hits ${got.join() || "none"})`);
   // spot-check a thread's lowest-hash proof
   const off = out[5 * 8 + 5]!;
   if (toHex(wordsToBytes(out, 5 * 8)) !== toHex(hash160(start + BigInt(off)))) throw new Error("self-test failed (hash mismatch)");
@@ -137,8 +147,8 @@ async function run(m: Start) {
   const end = pool ? k + BigInt(pool.size) : hi;
   let best: string | null = null, bestOff = 0n;
   const foundCanaries: string[] = [];
-  const MAX_STEPS = 64;
-  let steps = 2;
+  const MAX_STEPS = 1 + GPU_BATCH * 32, MIN_STEPS = 1 + GPU_BATCH;
+  let steps = MIN_STEPS;
   self.postMessage({ type: "slice", startHex: k.toString(16) });
   while (running) {
     const remain = end - k;
@@ -148,6 +158,8 @@ async function run(m: Start) {
     try { res = await dispatch(g, k, steps, limit, dest, canaryHashes); }
     catch (e) { running = false; self.postMessage({ type: "gpu-fail", reason: (e as Error).message }); return; }
     const ms = performance.now() - t0;
+    // a batch hit a point equal to ±i·D (only possible for tiny keys): redo on CPU
+    if (res.degenerate) { running = false; self.postMessage({ type: "gpu-fail", reason: "range not supported on GPU" }); return; }
     // CPU re-check of every hit
     for (const off of res.hitOffs) {
       const key = k + BigInt(off); const hx = toHex(hash160(key));
@@ -180,9 +192,10 @@ async function run(m: Start) {
     if (!pool && k >= hi) k = randomIn(lo, hi);
     // Keep each dispatch short (~10–20ms) and capped so the OS GPU watchdog
     // (Windows TDR / macOS) never resets the device, even while video plays.
-    if (ms > 30 && steps > 1) steps = Math.max(1, steps >> 2);
-    else if (ms > 20 && steps > 1) steps = Math.max(1, steps >> 1);
-    else if (ms < 8 && steps < MAX_STEPS) steps = Math.min(MAX_STEPS, steps * 2);
+    // Never drop below one full shared-inversion batch, or the speedup is lost.
+    if (ms > 120) steps = Math.max(MIN_STEPS, steps >> 2);
+    else if (ms > 60) steps = Math.max(MIN_STEPS, steps >> 1);
+    else if (ms < 25 && steps < MAX_STEPS) steps = Math.min(MAX_STEPS, steps * 2);
     const rest = ms / Math.max(0.05, duty) - ms;
     await new Promise((r) => setTimeout(r, rest));
   }

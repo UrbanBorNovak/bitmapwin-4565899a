@@ -12,6 +12,10 @@
  */
 export const GPU_THREADS = 4096;
 export const GPU_WG = 64;
+/** Keys per thread that share one modular inversion. */
+export const GPU_BATCH = 32;
+/** hits buffer: [count, off0..off15, degenerateFlag]. */
+export const GPU_HITS_WORDS = 18;
 
 export const PUZZLE_WGSL = /* wgsl */ `
 alias Fe = array<u32, 8>;
@@ -307,35 +311,80 @@ fn nibbles(h: array<u32, 5>) -> u32 {
   return n;
 }
 
+var<private> best: array<u32, 5>;
+var<private> bestOff: u32;
+var<private> nearNib: u32;
+var<private> nearOff: u32;
+
+fn visit(x: Fe, yodd: u32, off: u32) {
+  let h = ripemd_32(sha256_33(2u + yodd, x));
+  var hit = hashEq(h, 32u);
+  let ncan = params[52u];
+  for (var c = 0u; c < ncan; c++) { if (hashEq(h, 37u + c * 5u)) { hit = true; } }
+  if (hit) {
+    let k = atomicAdd(&hits[0], 1u);
+    if (k < 16u) { atomicStore(&hits[1u + k], off); }
+  }
+  if (hashLess(h, best)) { best = h; bestOff = off; }
+  if ((h[0] & 0xffu) == (params[32u] & 0xffu)) {
+    let n = nibbles(h);
+    if (n > nearNib) { nearNib = n; nearOff = off; }
+  }
+}
+
+fn isZero(a: Fe) -> bool {
+  var o = 0u; for (var i = 0; i < 8; i++) { o = o | a[i]; } return o == 0u;
+}
+
+// Step table: entry i = (i+1)·D, stored after the per-thread table.
+fn stepX(i: u32) -> Fe { var r: Fe; let b = (${GPU_THREADS}u + i) * 16u; for (var k = 0u; k < 8u; k++) { r[k] = table[b + k]; } return r; }
+fn stepY(i: u32) -> Fe { var r: Fe; let b = (${GPU_THREADS}u + i) * 16u + 8u; for (var k = 0u; k < 8u; k++) { r[k] = table[b + k]; } return r; }
+
 @compute @workgroup_size(${GPU_WG})
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let tid = gid.x;
   let threads = ${GPU_THREADS}u;
-  var B: Pt; var D: Pt; var T: Pt;
+  var B: Pt; var T: Pt;
   for (var i = 0u; i < 8u; i++) {
     B.x[i] = params[i]; B.y[i] = params[8u + i];
-    D.x[i] = params[16u + i]; D.y[i] = params[24u + i];
     T.x[i] = table[tid * 16u + i]; T.y[i] = table[tid * 16u + 8u + i];
   }
-  let ncan = params[52u]; let steps = params[53u]; let limit = params[54u];
-  var best = array<u32, 5>(0xffffffffu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xffffffffu);
-  var bestOff = 0xffffffffu; var nearNib = 0u; var nearOff = 0u;
-  var P = padd(B, T);
-  for (var j = 0u; j < steps; j++) {
-    let off = tid + j * threads;
-    if (off >= limit) { break; }
-    if (j > 0u) { P = padd(P, D); }
-    let h = ripemd_32(sha256_33(2u + (P.y[0] & 1u), P.x));
-    var hit = hashEq(h, 32u);
-    for (var c = 0u; c < ncan; c++) { if (hashEq(h, 37u + c * 5u)) { hit = true; } }
-    if (hit) {
-      let k = atomicAdd(&hits[0], 1u);
-      if (k < 16u) { atomicStore(&hits[1u + k], off); }
-    }
-    if (hashLess(h, best)) { best = h; bestOff = off; }
-    if ((h[0] & 0xffu) == (params[32u] & 0xffu)) {
-      let n = nibbles(h);
-      if (n > nearNib) { nearNib = n; nearOff = off; }
+  let steps = params[53u]; let limit = params[54u];
+  best = array<u32, 5>(0xffffffffu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xffffffffu);
+  bestOff = 0xffffffffu; nearNib = 0u; nearOff = 0u;
+  if (tid < limit) {
+    // key start+tid: one inversion, then batches of BATCH keys that share one
+    // inversion (Montgomery's trick): P_{j+i} = P_{j-1} + (i+1)·D.
+    var P = padd(B, T);
+    visit(P.x, P.y[0] & 1u, tid);
+    var acc: array<Fe, ${GPU_BATCH}>;
+    var j = 1u;
+    loop {
+      if (j >= steps || tid + j * threads >= limit) { break; }
+      let n = min(${GPU_BATCH}u, steps - j);
+      var run: Fe; run[0] = 1u;
+      for (var i = 0u; i < n; i++) {
+        let d = fsub(stepX(i), P.x);
+        if (isZero(d)) { atomicStore(&hits[17], 1u); }
+        acc[i] = run; run = fmul(run, d);
+      }
+      var iv = finv(run);
+      var last: Pt;
+      for (var ii = i32(n) - 1; ii >= 0; ii--) {
+        let i = u32(ii);
+        let tx = stepX(i);
+        let d = fsub(tx, P.x);
+        let invi = fmul(iv, acc[i]);
+        iv = fmul(iv, d);
+        let lam = fmul(fsub(stepY(i), P.y), invi);
+        let x3 = fsub(fsub(fmul(lam, lam), P.x), tx);
+        let y3 = fsub(fmul(lam, fsub(P.x, x3)), P.y);
+        if (i == n - 1u) { last = Pt(x3, y3); }
+        let off = tid + (j + i) * threads;
+        if (off < limit) { visit(x3, y3[0] & 1u, off); }
+      }
+      P = last;
+      j += n;
     }
   }
   let o = tid * 8u;
