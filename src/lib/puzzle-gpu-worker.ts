@@ -118,11 +118,14 @@ async function dispatch(g: Gpu, start: bigint, steps: number, limit: number, des
 
 async function selfTest(g: Gpu) {
   const start = randomIn(1n << 70n, (1n << 71n) - 1n);
-  const offs = [0, GPU_THREADS + 1, 3 * GPU_THREADS + 777];
+  // spans a full shared-inversion batch plus a partial one
+  const steps = 2 + GPU_BATCH + 5;
+  const offs = [0, (1 + GPU_BATCH) * GPU_THREADS + 1, (steps - 1) * GPU_THREADS + GPU_THREADS - 1, 7 * GPU_THREADS + 777];
   const [t, ...c] = offs.map((o) => hash160(start + BigInt(o)));
-  const { out, hitOffs } = await dispatch(g, start, 4, GPU_THREADS * 4, t!, c);
+  const { out, hitOffs, degenerate } = await dispatch(g, start, steps, GPU_THREADS * steps, t!, c);
+  if (degenerate) throw new Error("self-test failed (degenerate batch)");
   const got = [...hitOffs].sort((a, b) => a - b);
-  if (got.join() !== offs.join()) throw new Error(`self-test failed (hits ${got.join() || "none"})`);
+  if (got.join() !== [...offs].sort((a, b) => a - b).join()) throw new Error(`self-test failed (hits ${got.join() || "none"})`);
   // spot-check a thread's lowest-hash proof
   const off = out[5 * 8 + 5]!;
   if (toHex(wordsToBytes(out, 5 * 8)) !== toHex(hash160(start + BigInt(off)))) throw new Error("self-test failed (hash mismatch)");
@@ -155,6 +158,8 @@ async function run(m: Start) {
     try { res = await dispatch(g, k, steps, limit, dest, canaryHashes); }
     catch (e) { running = false; self.postMessage({ type: "gpu-fail", reason: (e as Error).message }); return; }
     const ms = performance.now() - t0;
+    // a batch hit a point equal to ±i·D (only possible for tiny keys): redo on CPU
+    if (res.degenerate) { running = false; self.postMessage({ type: "gpu-fail", reason: "range not supported on GPU" }); return; }
     // CPU re-check of every hit
     for (const off of res.hitOffs) {
       const key = k + BigInt(off); const hx = toHex(hash160(key));
