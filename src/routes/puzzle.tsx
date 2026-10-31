@@ -122,6 +122,7 @@ function PuzzlePage() {
             <Stat label="Keys per second" value={Math.round(rate).toLocaleString()} />
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{on ? "Hunting… you can use the rest of the site while this runs." : "Press Start to begin."}</p>
+          <HashStrip nears={lot.nears} bestNear={lot.bestNear} scanned={scanned} on={on} />
         </StepCard>
 
         <StepCard n={3} title="If you win">
@@ -157,7 +158,6 @@ function PuzzlePage() {
           <p className="mt-3 text-[11px] text-muted-foreground">Scanning pays no BIT — key counts reported by a browser can't be proven, so they never earn coins.</p>
         </div>
         <div className="mt-4"><KeyVaultPanel /></div>
-        <HashStrip nears={lot.nears} bestNear={lot.bestNear} scanned={scanned} on={on} />
         <NearMissFeed nears={lot.nears} bestNear={lot.bestNear} />
         <GoldenTicket />
         <PoolPanel />
