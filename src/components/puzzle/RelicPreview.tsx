@@ -6,12 +6,13 @@ import type { NearMiss } from "@/lib/bitmap-lottery";
 import { nearProofFn } from "@/lib/puzzle-record.functions";
 import { getForgeBuildFn } from "@/lib/forge.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
-import { RELIC_MIN_CHARS, qualifiesForRelic, relicDraft, relicSigningBlockers } from "@/lib/puzzle-relic";
+import { RELIC_MIN_CHARS, qualifiesForRelic, relicDraft, relicSigningBlockers, DEMO_RELIC, draftSigningBlockers } from "@/lib/puzzle-relic";
 
 const ORD = "https://ordinals.com";
 
 /** One relic preview per qualifying near miss this session. Preview only; signing is off. */
 export function RelicPreview({ nears }: { nears: NearMiss[] }) {
+  const [demo, setDemo] = useState(false);
   const finds = nears.filter((x) => qualifiesForRelic(x.nibbles));
   return (
     <section className="mt-6 rounded border border-bitcoin/50 bg-card/60 p-4 text-xs">
@@ -20,6 +21,8 @@ export function RelicPreview({ nears }: { nears: NearMiss[] }) {
       {finds.length === 0
         ? <p className="mt-3 text-muted-foreground">No qualifying find this session yet.</p>
         : <div className="mt-3 space-y-3">{finds.map((f) => <RelicCard key={f.hash} find={f} />)}</div>}
+      <button onClick={() => setDemo((v) => !v)} className="mt-3 rounded border border-accent px-3 py-1 text-accent">{demo ? "[ HIDE DEMO BADGE ]" : "[ SHOW DEMO BADGE ]"}</button>
+      {demo && <DemoCard />}
     </section>
   );
 }
@@ -87,6 +90,23 @@ function RelicCard({ find }: { find: NearMiss }) {
 
       <button disabled className="mt-3 rounded border border-border px-3 py-1 text-muted-foreground opacity-50">[ INSCRIBE RELIC · DISABLED ]</button>
       <ul className="mt-1 list-disc pl-4 text-[10px] text-muted-foreground">{blockers.map((r) => <li key={r}>{r}</li>)}</ul>
+    </div>
+  );
+}
+
+/** Sample badge, kept apart from real finds: never saved, never proof-checked, never signable. */
+function DemoCard() {
+  return (
+    <div className="mt-3 rounded border border-dashed border-accent p-3" data-relic-demo>
+      <p className="label text-accent">DEMO · SAMPLE DATA · NOT A REAL FIND</p>
+      <p className="mt-1 text-muted-foreground">This badge uses made-up values so you can try it. It is not in your finds and can't be inscribed.</p>
+      <ClientOnly fallback={<div className="mt-3 h-64 rounded border border-border" />}>
+        <Suspense fallback={<div className="mt-3 h-64 rounded border border-border" />}>
+          <div className="mt-3"><RelicBadge3D draft={DEMO_RELIC} /></div>
+        </Suspense>
+      </ClientOnly>
+      <p className="mt-1 text-[10px] text-muted-foreground">Tilt with your pointer · click to flip.</p>
+      <ul className="mt-2 list-disc pl-4 text-[10px] text-muted-foreground">{draftSigningBlockers(DEMO_RELIC).map((r) => <li key={r}>{r}</li>)}</ul>
     </div>
   );
 }

@@ -17,7 +17,7 @@ function faceTexture(d: RelicDraft, back: boolean) {
   g.fillStyle = d.proof === "server-verified" ? CYAN : "#7d8796";
   g.font = "bold 22px 'Space Mono', monospace";
   if (!back) {
-    g.fillText(d.proof === "server-verified" ? "★ SERVER-VERIFIED" : "PROOF PENDING", 256, 96);
+    g.fillText(d.demo ? "DEMO · NOT A REAL FIND" : d.proof === "server-verified" ? "★ SERVER-VERIFIED" : "PROOF PENDING", 256, 96);
     g.fillStyle = ORANGE; g.font = "bold 120px 'Space Grotesk', sans-serif"; g.fillText(d.match, 256, 230);
     g.fillStyle = "#c9d1dc"; g.font = "20px 'Space Mono', monospace"; g.fillText("MATCHED HASH160 CHARS", 256, 268);
     g.fillStyle = "#7d8796"; g.font = "18px 'Space Mono', monospace"; g.fillText(`${d.hash.slice(0, 20)}…`, 256, 400);
@@ -69,8 +69,8 @@ function Medallion({ draft, flip }: { draft: RelicDraft; flip: React.MutableRefO
   const hasLand = !!draft.bitmap;
   return (
     <group ref={group}>
-      <mesh rotation-x={Math.PI / 2}><cylinderGeometry args={[2.1, 2.1, 0.22, 64]} /><meshStandardMaterial color={BODY} metalness={0.8} roughness={0.35} /></mesh>
-      <mesh rotation-x={Math.PI / 2}><torusGeometry args={[2.1, 0.06, 12, 64]} /><meshStandardMaterial color={ORANGE} emissive={ORANGE} emissiveIntensity={0.6} /></mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[2.1, 2.1, 0.22, 64]} /><meshStandardMaterial color={BODY} metalness={0.8} roughness={0.35} /></mesh>
+      <mesh><torusGeometry args={[2.1, 0.06, 12, 64]} /><meshStandardMaterial color={ORANGE} emissive={ORANGE} emissiveIntensity={0.6} /></mesh>
       <mesh position-z={0.115}><circleGeometry args={[2.0, 64]} /><meshBasicMaterial map={front} /></mesh>
       <mesh position-z={-0.115} rotation-y={Math.PI}><circleGeometry args={[2.0, 64]} /><meshBasicMaterial map={back} /></mesh>
       <instancedMesh ref={diodes} args={[undefined, undefined, 40]}><boxGeometry args={[0.1, 0.18, 0.06]} /><meshBasicMaterial toneMapped={false} /></instancedMesh>
