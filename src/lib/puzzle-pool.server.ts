@@ -105,7 +105,14 @@ export async function reportSlice(d: { pool?: PoolId | undefined; index: string;
 
 export async function poolStats(pool: PoolId = "71") {
   const db = await admin();
-  const { data: rows } = await db.from(TABLE[pool]).select("slice_index, worker, done_at, leased_at").limit(50000);
+  // The data API caps each read at 1,000 rows, so page through every slice.
+  const rows: { slice_index: number; worker: string; done_at: string | null; leased_at: string }[] = [];
+  for (let from = 0; from < 500_000; from += 1000) {
+    const { data } = await db.from(TABLE[pool]).select("slice_index, worker, done_at, leased_at").order("slice_index").range(from, from + 999);
+    if (!data?.length) break;
+    rows.push(...(data as typeof rows));
+    if (data.length < 1000) break;
+  }
   const per = new Map<string, number>();
   const done: Record<number, number> = {}, open: Record<number, number> = {};
   const cutoff = Date.now() - LEASE_MS;
