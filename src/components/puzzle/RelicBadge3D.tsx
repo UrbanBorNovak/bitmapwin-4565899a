@@ -17,7 +17,7 @@ function faceTexture(d: RelicDraft, back: boolean) {
   g.fillStyle = d.proof === "server-verified" ? CYAN : "#7d8796";
   g.font = "bold 22px 'Space Mono', monospace";
   if (!back) {
-    g.fillText(d.proof === "server-verified" ? "★ SERVER-VERIFIED" : "PROOF PENDING", 256, 96);
+    g.fillText(d.demo ? "DEMO · NOT A REAL FIND" : d.proof === "server-verified" ? "★ SERVER-VERIFIED" : "PROOF PENDING", 256, 96);
     g.fillStyle = ORANGE; g.font = "bold 120px 'Space Grotesk', sans-serif"; g.fillText(d.match, 256, 230);
     g.fillStyle = "#c9d1dc"; g.font = "20px 'Space Mono', monospace"; g.fillText("MATCHED HASH160 CHARS", 256, 268);
     g.fillStyle = "#7d8796"; g.font = "18px 'Space Mono', monospace"; g.fillText(`${d.hash.slice(0, 20)}…`, 256, 400);

@@ -24,3 +24,12 @@ describe("near-miss relic", () => {
     expect(relicSigningBlockers(ok, { nibbles: 5 }).length).toBeGreaterThan(0);
   });
 });
+
+import { DEMO_RELIC, draftSigningBlockers } from "./puzzle-relic";
+describe("demo relic", () => {
+  it("is flagged demo, unverified, and always blocked from signing", () => {
+    expect(DEMO_RELIC.demo).toBe(true);
+    expect(DEMO_RELIC.proof).toBe("unverified");
+    expect(draftSigningBlockers(DEMO_RELIC).some((r) => r.startsWith("Demo badge"))).toBe(true);
+  });
+});

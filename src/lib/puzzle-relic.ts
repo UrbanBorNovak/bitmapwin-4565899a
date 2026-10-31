@@ -24,6 +24,8 @@ export type RelicDraft = {
   match: string; nibbles: number; hash: string;
   proof: "server-verified" | "unverified";
   bitmap?: string; build?: string; guardian?: string;
+  /** set only on the built-in demo; a demo can never be inscribed */
+  demo?: true;
 };
 
 /** The JSON a relic would carry. Match count is copied verbatim, never rounded or upgraded. */
@@ -46,5 +48,19 @@ export function relicSigningBlockers(proof: RelicProof, find: { nibbles: number 
   if (!proof.verified) out.push("This find has no server-verified record yet.");
   else if (proof.nibbles !== find.nibbles) out.push("Recorded match count differs from this find.");
   if (!qualifiesForRelic(find.nibbles)) out.push(`Needs ${RELIC_MIN_CHARS}+ matching characters.`);
+  return out;
+}
+
+/** Fixed sample for previewing the badge. Not a real find: unverified, flagged demo, never signable. */
+export const DEMO_RELIC: RelicDraft = {
+  p: "bitmapwin-relic", v: 0, kind: "near-miss", match: "6/40", nibbles: 6,
+  hash: "f6f543000000000000000000000000000000000d", proof: "unverified", bitmap: "840000.bitmap", demo: true,
+};
+
+/** Blockers for any draft; a demo is always blocked regardless of other state. */
+export function draftSigningBlockers(d: RelicDraft): string[] {
+  const out: string[] = [];
+  if (d.demo) out.push("Demo badge: sample data, not a real find. It can never be inscribed.");
+  if (!RELIC_SIGNING_ENABLED) out.push("Relic inscribing is switched off until parentage and proof checks are audited.");
   return out;
 }
