@@ -4,8 +4,9 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { walletQuery } from "@/lib/wallet";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 import { TRIBUTE_SATS } from "@/lib/guardian-delegate";
+import { GUARDIAN_PRICE_SATS } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
-import { guardianDnaQuery } from "@/lib/bitmon-queries";
+import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 
 /** Chance of each tier from the block-hash roll in guardianFromBlock (before era bumps). */
 const BASE_ODDS = { COMMON: "68%", RARE: "22%", EPIC: "8%", MYTHIC: "2%" } as const;
@@ -24,7 +25,7 @@ function RarityLine({ height }: { height: number }) {
  * marks which already carry an inscribed Guardian (read from chain children).
  * Picking one loads it into the real delegate inscribe flow below.
  */
-export function QuickInscribe({ current, onPick }: { current: number; onPick: (h: number) => void }) {
+export function QuickInscribe({ current, onPick, onAwaken }: { current: number; onPick: (h: number) => void; onAwaken: (h: number) => void }) {
   const wallet = useWalletSession();
   const live = useQuery(walletQuery(wallet?.ordinalsAddress ?? ""));
   const inhabited = useQuery(inhabitedQuery());
@@ -64,24 +65,33 @@ export function QuickInscribe({ current, onPick }: { current: number; onPick: (h
         <p className="mt-3 font-mono text-[11px] text-muted-foreground">NO BITMAPS FOUND IN THIS WALLET.</p>
       ) : null}
       <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {heights.map((h) => {
-          const id = done?.get(h);
-          return (
-            <li key={h} className={`flex items-center gap-3 border p-2 ${h === current ? "border-bitcoin" : "border-border"}`}>
-              <div className="size-12 shrink-0 border border-border"><GuardianPortrait height={h} size={48} /></div>
-              <div className="min-w-0 flex-1 font-mono text-[10px]">
-                <p className="text-foreground">{h}.BITMAP</p>
-                <RarityLine height={h} />
-                {id ? (
-                  <a href={`https://ordinals.com/inscription/${id}`} target="_blank" rel="noreferrer" className="text-signal underline">◆ INSCRIBED ↗</a>
-                ) : (
-                  <button type="button" onClick={() => onPick(h)} className="text-bitcoin underline hover:text-foreground">◆ INSCRIBE →</button>
-                )}
-              </div>
-            </li>
-          );
-        })}
+        {heights.map((h) => (
+          <GuardianCard key={h} height={h} chainId={done?.get(h) ?? null} current={h === current} onPick={onPick} onAwaken={onAwaken} />
+        ))}
       </ul>
     </section>
+  );
+}
+
+function GuardianCard({ height: h, chainId, current, onPick, onAwaken }: { height: number; chainId: string | null; current: boolean; onPick: (h: number) => void; onAwaken: (h: number) => void }) {
+  const g = useQuery(guardianQuery(h));
+  const id = chainId ?? g.data?.inscriptionId ?? null;
+  const status = id ? "INSCRIBED" : g.data ? "AWAKE" : g.isPending ? "…" : "ASLEEP";
+  const tone = status === "INSCRIBED" ? "border-signal text-signal" : status === "AWAKE" ? "border-signal/60 text-signal" : "border-bitcoin/60 text-bitcoin";
+  return (
+    <li className={`flex items-center gap-3 border p-2 ${current ? "border-bitcoin" : "border-border"}`}>
+      <div className="size-12 shrink-0 border border-border"><GuardianPortrait height={h} size={48} /></div>
+      <div className="min-w-0 flex-1 font-mono text-[10px]">
+        <p className="flex items-center justify-between gap-2 text-foreground">{h}.BITMAP<span className={`border px-1 text-[9px] ${tone}`}>{status}</span></p>
+        <RarityLine height={h} />
+        {id ? (
+          <a href={`https://ordinals.com/inscription/${id}`} target="_blank" rel="noreferrer" className="text-signal underline">◆ VIEW ON CHAIN ↗</a>
+        ) : g.data ? (
+          <button type="button" onClick={() => onPick(h)} className="text-bitcoin underline hover:text-foreground">◆ INSCRIBE →</button>
+        ) : g.isPending ? null : (
+          <button type="button" onClick={() => onAwaken(h)} className="text-bitcoin underline hover:text-foreground">⚡ AWAKEN · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
+        )}
+      </div>
+    </li>
   );
 }
