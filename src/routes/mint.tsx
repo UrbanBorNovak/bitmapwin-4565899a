@@ -22,11 +22,12 @@ import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { guardianTier, powerScore } from "@/lib/onchain-guardian";
 import { GuardianScout } from "@/components/bitmon/GuardianScout";
 import { ForgeBuildAd } from "@/components/bitmon/ForgeBuildAd";
+import { QuickInscribe } from "@/components/bitmon/QuickInscribe";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({
     height: z.coerce.number().int().min(0).optional(),
-    tab: z.enum(["tutorial", "tour", "wallet", "story", "mine", "scout"]).optional(),
+    tab: z.enum(["inscribe", "tutorial", "tour", "wallet", "story", "mine", "scout"]).optional(),
   }),
 
   head: () => ({
@@ -49,7 +50,7 @@ function MintPage() {
   const [input, setInput] = useState(String(initial ?? 840000));
   const height = initial ?? 840000;
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>(tabFromUrl ?? "tour");
+  const [tab, setTab] = useState<Tab>(tabFromUrl ?? "inscribe");
 
   const [lang, setLang] = useMintLang();
   const t = MINT_COPY[lang];
@@ -205,6 +206,7 @@ function MintPage() {
         </div>
       </div>
       <div className="[&>*:first-child]:mt-4">
+        {tab === "inscribe" ? <QuickInscribe current={height} onPick={(h) => { go(h); setTimeout(() => document.querySelector("[data-tour=mint-delegate]")?.scrollIntoView({ behavior: "smooth" }), 400); }} /> : null}
         {tab === "tutorial" ? <SummonTutorial height={height} lang={lang} /> : null}
         {tab === "tour" ? <GuardianShowcase lang={lang} /> : null}
         {tab === "wallet" ? <WalletMintGuide lang={lang} /> : null}
@@ -226,5 +228,5 @@ function MintPage() {
   );
 }
 
-const TABS = [["tutorial", "AWAKEN TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY AWAKENINGS"], ["scout", "SCOUT MY BITMAPS"]] as const;
+const TABS = [["inscribe", "QUICK INSCRIBE"], ["tutorial", "AWAKEN TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY AWAKENINGS"], ["scout", "SCOUT MY BITMAPS"]] as const;
 type Tab = (typeof TABS)[number][0];
