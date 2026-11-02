@@ -206,7 +206,7 @@ function MintPage() {
         </div>
       </div>
       <div className="[&>*:first-child]:mt-4">
-        {tab === "inscribe" ? <QuickInscribe current={height} onPick={(h) => { go(h); setTimeout(() => document.querySelector("[data-tour=mint-delegate]")?.scrollIntoView({ behavior: "smooth" }), 400); }} /> : null}
+        {tab === "inscribe" ? <QuickInscribe current={height} onPick={(h) => { go(h); setTimeout(() => document.querySelector("[data-tour=mint-delegate]")?.scrollIntoView({ behavior: "smooth" }), 400); }} onAwaken={(h) => { go(h); setOpen(true); }} /> : null}
         {tab === "tutorial" ? <SummonTutorial height={height} lang={lang} /> : null}
         {tab === "tour" ? <GuardianShowcase lang={lang} /> : null}
         {tab === "wallet" ? <WalletMintGuide lang={lang} /> : null}
