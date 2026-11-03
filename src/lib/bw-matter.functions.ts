@@ -19,6 +19,14 @@ export const liveBitmapFn = createServerFn({ method: "GET" })
       return { inscriptionId: id, sat: null, source: "LIVEOCI BLOCK PARSER" as const, error: null };
     } catch (e) {
       console.error("liveBitmapFn", e);
+      // LiveOCI pages unreachable: fall back to the site's indexed first-is-first record, labelled as such.
+      try {
+        const { bitmapInscriptionFor } = await import("@/lib/land-skin.server");
+        const id = await bitmapInscriptionFor(data.height);
+        if (id) return { inscriptionId: id, sat: null, source: "SITE INDEX (LIVEOCI OFFLINE)" as const, error: null };
+      } catch (e2) {
+        console.error("liveBitmapFn fallback", e2);
+      }
       return { inscriptionId: null, sat: null, source: null, error: "LiveOCI lookup unavailable right now" };
     }
   });
