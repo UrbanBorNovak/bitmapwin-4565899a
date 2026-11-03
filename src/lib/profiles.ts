@@ -21,6 +21,8 @@ export type WalletProfile = {
   avatarInscriptionId: string | null;
   /** Self-declared X handle; not verified against X. */
   xHandle: string | null;
+  /** Set only after a public proof tweet was checked server-side. */
+  xVerifiedTweetId?: string | null;
   updatedAt: string | null;
 };
 
@@ -141,6 +143,7 @@ export async function fetchProfile(address: string): Promise<WalletProfile | nul
     bio: row.bio,
     avatarInscriptionId: row.avatar_inscription_id,
     xHandle: (data as { x_handle?: string | null }).x_handle ?? null,
+    xVerifiedTweetId: (data as { x_verified_tweet_id?: string | null }).x_verified_tweet_id ?? null,
     xVerifiedTweetId: (data as { x_verified_tweet_id?: string | null }).x_verified_tweet_id ?? null,
     updatedAt: row.updated_at,
   };
