@@ -8,6 +8,7 @@ import {
   saveProfile,
 } from "@/lib/profiles";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
+import { XTweetProof } from "@/components/XTweetProof";
 
 /**
  * Profile editor for the connected wallet: display name, bio and an avatar
@@ -128,8 +129,9 @@ export function ProfileEditor({
                 className="w-full bg-transparent py-2 pl-1 font-mono text-sm text-foreground outline-none disabled:opacity-40"
               />
             </div>
-            <span className="mt-1 block font-mono text-[9px] text-muted-foreground">SELF-DECLARED · SHOWN ON YOUR PUBLIC PROFILE · NOT VERIFIED BY X</span>
+            <span className="mt-1 block font-mono text-[9px] text-muted-foreground">{profile.data?.xVerifiedTweetId ? "VERIFIED BY PUBLIC TWEET" : "SELF-DECLARED UNTIL YOU POST A PROOF TWEET"}</span>
           </label>
+          {canEdit && <XTweetProof address={address} savedHandle={profile.data?.xHandle ?? null} verifiedTweetId={profile.data?.xVerifiedTweetId ?? null} />}
           <label className="block">
             <span className="label text-profile-warm-muted">YOUR STORY</span>
             <textarea
