@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { esploraFetch, guardianFromBlock, RARITY_TONE } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
+import { guardianQuery } from "@/lib/bitmon-queries";
 import { BW_MATTER_TABLE, ERA_NAMES, deriveMatter, fmt100 } from "@/lib/bw-matter";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
 import { dmtBlueprint, ERA_TRADITIONS } from "@/lib/bw-matter-blueprint";
@@ -40,6 +41,7 @@ function MatterPage() {
   const b = block.data;
   const m = b ? deriveMatter(b) : null;
   const dna = b ? guardianFromBlock(b) : null;
+  const awake = useQuery(guardianQuery(height));
 
   const sound = useMistSound();
   const go = (h: number) => { if (Number.isInteger(h) && h >= 0) { setHeight(h); setInput(String(h)); sound.chime(); } };
@@ -131,8 +133,19 @@ function MatterPage() {
           {dna && m ? (
             <>
               <div className="flex items-center gap-4">
-                <GuardianPortrait height={height} dna={dna} size={120} className="border border-border" />
+                {awake.data ? (
+                  <GuardianPortrait height={height} dna={dna} size={120} className="border border-border" />
+                ) : (
+                  <div className="matter-shroud relative h-[120px] w-[120px] shrink-0 overflow-hidden border border-border" role="img" aria-label="Unawakened — veiled in mist">
+                    <div className="matter-mist" style={{ top: "-10%", height: "120%" }} />
+                    <div className="matter-mist matter-mist-2" style={{ top: "20%", height: "100%" }} />
+                    <span className="absolute inset-x-0 bottom-2 text-center font-mono text-[8px] tracking-widest text-muted-foreground">{awake.isPending ? "…" : "VEILED IN MIST"}</span>
+                  </div>
+                )}
                 <div>
+                  <p className="font-mono text-[10px] tracking-widest" style={{ color: awake.data ? undefined : "var(--muted-foreground)" }}>
+                    {awake.data ? (awake.data.inscriptionId ? "◆ INSCRIBED" : "● AWAKE IN OASIS") : "○ DORMANT IN BLOCK"}
+                  </p>
                   <p className="font-display text-lg">{dna.species}</p>
                   <p className="font-mono text-[10px] tracking-widest" style={{ color: RARITY_TONE[dna.rarity] }}>{dna.rarity} · EPOCH {dna.epoch}</p>
                   <p className="mt-1 font-mono text-[10px] text-muted-foreground">DNA {dna.dnaHash.slice(0, 12)}</p>
@@ -146,6 +159,7 @@ function MatterPage() {
               <Row k="CONSENSUS ARMOR" v={String(m.def)} />
               <Row k="HASH CADENCE" v={`${fmt100(m.spd100)}×`} />
               <Link to="/mint" className="mt-3 inline-block font-mono text-[10px] tracking-widest text-primary hover:underline">AWAKEN OR INSCRIBE THIS GUARDIAN →</Link>
+              {!awake.data ? <p className="mt-2 text-xs text-muted-foreground">Still dormant. A Guardian is only one of many things that may one day be drawn from this block.</p> : null}
             </>
           ) : <p className="font-mono text-xs text-muted-foreground">READING BLOCK…</p>}
         </Panel>
