@@ -5,6 +5,7 @@ import { esploraFetch, guardianFromBlock, RARITY_TONE } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { BW_MATTER_TABLE, ERA_NAMES, deriveMatter, fmt100 } from "@/lib/bw-matter";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
+import { dmtBlueprint, ERA_TRADITIONS } from "@/lib/bw-matter-blueprint";
 import { MatterVeil, useMistSound } from "@/components/matter/MatterAtmosphere";
 
 export const Route = createFileRoute("/matter")({
@@ -150,6 +151,8 @@ function MatterPage() {
         </Panel>
       </section>
 
+      {b && m ? <BlueprintPanel b={b} m={m} /> : null}
+
       {b && dna && m ? <TraitInputs b={b} dna={dna} m={m} /> : null}
 
       <section className="border border-border bg-card/60 p-4 backdrop-blur">
@@ -166,6 +169,22 @@ function MatterPage() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="border border-border bg-card/60 p-4 backdrop-blur">
+        <p className="mb-3 font-mono text-[10px] tracking-[0.2em] text-primary">THE FOUR BUILDING TRADITIONS · ONE PER HALVING ERA</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {ERA_TRADITIONS.map((t) => (
+            <button key={t.era} type="button" onClick={() => go(t.era * 210_000)}
+              className={`border p-3 text-left transition ${m?.era === t.era ? "border-primary bg-primary/5" : "border-border hover:border-accent"}`}>
+              <p className="font-mono text-[10px] tracking-widest text-muted-foreground">ERA {t.era} · {t.name}</p>
+              <p className="mt-1 font-display text-base">{t.style}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t.forms.join(" · ")}</p>
+              <div className="mt-2 flex gap-1">{t.palette.map((c) => <span key={c} className="h-4 w-4 border border-border" style={{ background: c }} />)}</div>
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">Anyone can build in any tradition. Holders can put their build on their own BITMAP in Land Forge; everyone else can build freely in Tiny Studio and download it.</p>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
@@ -235,6 +254,33 @@ function TraitInputs({ b, dna, m }: { b: Block; dna: ReturnType<typeof guardianF
         <p className="mb-3 mt-1 text-xs text-muted-foreground">A proposed lore reading of the same block. It does not affect any Guardian's look, stats, battles or inscription.</p>
         <Table rows={draft} />
       </div>
+    </section>
+  );
+}
+
+function BlueprintPanel({ b, m }: { b: Block; m: NonNullable<ReturnType<typeof deriveMatter>> }) {
+  const bp = dmtBlueprint(b, m);
+  return (
+    <section className="border border-primary/40 bg-card/60 p-4 backdrop-blur">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] tracking-[0.2em] text-primary">4 · THE FORM · ITS DMT BLUEPRINT</p>
+          <p className="mt-1 font-display text-2xl">{m.element.name} {bp.form}</p>
+          <p className="font-mono text-[10px] tracking-widest text-muted-foreground">{bp.tradition.name} TRADITION · {bp.tradition.style.toUpperCase()}</p>
+        </div>
+        <div className="flex gap-1">{bp.palette.map((c, i) => <span key={i} title={c} className="h-8 w-8 border border-border" style={{ background: c }} />)}</div>
+      </div>
+      <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
+        <Row k="FOOTPRINT" v={`${bp.footprint} · ${b.txCount.toLocaleString()} TX`} />
+        <Row k="TERRACES" v={`${bp.terraces} · 1 + ⌊tx ÷ 500⌋, max 7`} />
+        <Row k="CEILING" v={`${bp.ceiling} VOXELS · 8 + ⌊weight ÷ 80,000⌋`} />
+        <Row k="INNER CORE" v={`${bp.core} · nonce mod 8`} />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link to="/forge" search={{ height: b.height }} className="border border-primary px-3 py-2 font-mono text-xs tracking-widest text-primary hover:bg-primary/10">[ BUILD ON THIS BITMAP IN LAND FORGE ]</Link>
+        <Link to="/tiny-studio" className="border border-border px-3 py-2 font-mono text-xs tracking-widest text-muted-foreground hover:text-foreground">[ BUILD FREELY IN TINY STUDIO ]</Link>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">A suggestion to inspire your build, read from this block's facts. It is lore, not a rule: build anything you like. Putting a build on a BITMAP needs the holder's wallet.</p>
     </section>
   );
 }
