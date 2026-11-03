@@ -1,6 +1,6 @@
 import { traitsOf } from "@/lib/traits";
 import { Activity, ArrowLeft, ArrowLeftRight, Database, Fingerprint, Globe, MapPin, ScrollText, ShieldCheck, Store, Users, Wallet, type LucideIcon } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
