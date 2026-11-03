@@ -128,8 +128,72 @@ export const HOUSE_PREFABS: Prefab[] = [
   { id: "fountain", name: "Plaza Fountain", sphere: "nature", blocks: fountain() },
   { id: "circle", name: "Stone Circle", sphere: "nature", blocks: stoneCircle() },
   ...biomePresets(),
+  { id: "parthenon", name: "The Parthenon", sphere: "kingdom", blocks: dedupe(parthenon()) },
+  { id: "tholos", name: "Tholos of Delphi", sphere: "kingdom", blocks: dedupe(tholos()) },
 ];
 export const prefabById = (id: string) => HOUSE_PREFABS.find((p) => p.id === id);
+
+function dedupe(blocks: TplBlock[]): TplBlock[] {
+  const m = new Map<string, TplBlock>();
+  for (const t of blocks) m.set(`${t.dx},${t.dy},${t.dz}`, t);
+  return [...m.values()];
+}
+
+// ---- GREEK LANDMARKS ----
+/** Doric temple: 3-step stylobate, 8×17 peristyle, inner naos, gold-trimmed pediment. ~19×31. */
+function parthenon() {
+  const s = b();
+  const W = 18, L = 30;
+  for (let i = 0; i < 3; i++) s.box(i, W - i, i, i, i, L - i, i === 0 ? "cobble" : "stone");
+  const y0 = 3, H = 7;
+  // peristyle columns, 8 front × 17 side
+  const xs = [3, 5, 7, 9, 11, 13, 15]; xs.push(W - 3);
+  const cols = new Set<string>();
+  for (const x of [3, W - 3]) for (let z = 3; z <= L - 3; z += 2) cols.add(`${x},${z}`);
+  for (const x of xs) { cols.add(`${x},3`); cols.add(`${x},${L - 3}`); }
+  for (const c of cols) { const [x, z] = c.split(",").map(Number) as [number, number]; s.box(x, x, y0, y0 + H - 1, z, z, "stone"); s.put(x, y0, z, "cobble"); }
+  // naos
+  s.box(6, W - 6, y0, y0 + H - 2, 7, L - 7, "stone", true);
+  s.cut((t) => t.dz === 7 && t.dx >= 8 && t.dx <= W - 8 && t.dy >= y0 && t.dy <= y0 + 4);
+  s.put(W / 2, y0, L - 9, "gold"); s.put(W / 2, y0 + 1, L - 9, "gold"); s.put(W / 2, y0 + 2, L - 9, "glow");
+  // entablature with gold frieze
+  const ye = y0 + H;
+  s.box(3, W - 3, ye, ye, 3, L - 3, "stone");
+  for (let x = 3; x <= W - 3; x += 2) { s.put(x, ye, 3, "gold"); s.put(x, ye, L - 3, "gold"); }
+  // pitched roof
+  for (let k = 0; k <= 7; k++) s.box(3 + k, W - 3 - k, ye + 1 + k, ye + 1 + k, 3, L - 3, k === 7 ? "gold" : "brick");
+  for (const z of [3, L - 3]) for (let k = 0; k <= 7; k++) for (let x = 3 + k; x <= W - 3 - k; x++) s.put(x, ye + 1 + k, z, "stone");
+  s.put(W / 2, ye + 4, 3, "gold"); s.put(W / 2, ye + 4, L - 3, "gold");
+  for (const x of [2, W - 2]) for (const z of [2, L - 2]) s.put(x, 3, z, "glow");
+  return s.out;
+}
+
+/** Circular monopteros: stepped rings, 20 columns, inner cella, conical cap, oracle flame. ~15×15. */
+function tholos() {
+  const s = b();
+  const C = 7;
+  for (let x = 0; x <= 14; x++) for (let z = 0; z <= 14; z++) {
+    const d = Math.hypot(x - C, z - C);
+    if (d <= 7.4) s.put(x, 0, z, "cobble");
+    if (d <= 6.6) s.put(x, 1, z, "stone");
+    if (d <= 5.8) s.put(x, 2, z, d < 2.5 ? "sand" : "stone");
+  }
+  const ring = (r: number) => { const out: [number, number][] = []; for (let a = 0; a < 20; a++) out.push([Math.round(C + Math.cos((a / 20) * Math.PI * 2) * r), Math.round(C + Math.sin((a / 20) * Math.PI * 2) * r)]); return out; };
+  for (const [x, z] of ring(5.4)) s.box(x, x, 3, 8, z, z, "stone");
+  // cella wall with doorway
+  for (let x = 0; x <= 14; x++) for (let z = 0; z <= 14; z++) {
+    const d = Math.hypot(x - C, z - C);
+    if (d > 2.6 && d <= 3.5) for (let y = 3; y <= 8; y++) s.put(x, y, z, "stone");
+    // entablature ring
+    if (d <= 6.2 && d > 4.6) s.put(x, 9, z, (x + z) % 3 === 0 ? "gold" : "stone");
+    // conical roof
+    for (let k = 0; k < 5; k++) if (d <= 5.6 - k * 1.2 && d > 4.4 - k * 1.2 - 1) s.put(x, 10 + k, z, "brick");
+  }
+  s.cut((t) => t.dz <= 4 && t.dx >= 6 && t.dx <= 8 && t.dy >= 3 && t.dy <= 6 && Math.hypot(t.dx - C, t.dz - C) > 2.4 && Math.hypot(t.dx - C, t.dz - C) <= 3.6);
+  s.put(C, 15, C, "gold");
+  s.put(C, 3, C, "gold"); s.put(C, 4, C, "glow");
+  return s.out;
+}
 
 // ---- OASIS & BIOMES: premium house presets, 10–25 BIT per stamp ----
 function pagoda() {
