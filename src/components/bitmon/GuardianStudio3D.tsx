@@ -58,7 +58,7 @@ export function GuardianStudio3D({ dna, animate = true }: { dna: GuardianDna; an
     const down = (e: PointerEvent) => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); drag = true; lx = e.clientX; ly = e.clientY; };
     const move = (e: PointerEvent) => {
       if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) r = Math.min(110, Math.max(28, r * pinch / d)); pinch = d; return; }
+      if (pts.size === 2) { const [a, b] = [...pts.values()] as [{ x: number; y: number }, { x: number; y: number }]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) r = Math.min(110, Math.max(28, r * pinch / d)); pinch = d; return; }
       vth = -(e.clientX - lx) * 0.006; vph = -(e.clientY - ly) * 0.006; lx = e.clientX; ly = e.clientY;
     };
     const up = (e: PointerEvent) => { pts.delete(e.pointerId); pinch = 0; if (!pts.size) drag = false; };
@@ -77,7 +77,7 @@ export function GuardianStudio3D({ dna, animate = true }: { dna: GuardianDna; an
       cam.position.set(Math.sin(th) * Math.sin(ph) * r, Math.cos(ph) * r + 9, Math.cos(th) * Math.sin(ph) * r); cam.lookAt(0, 9, 0);
       if (animate) place(now / 1000);
       renderer.render(scene, cam);
-      el.dataset.sceneReady = "1";
+      el.dataset["sceneReady"] = "1";
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
