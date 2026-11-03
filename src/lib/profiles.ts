@@ -19,6 +19,8 @@ export type WalletProfile = {
   residencyNameInscriptionId: string | null;
   bio: string | null;
   avatarInscriptionId: string | null;
+  /** Self-declared X handle; not verified against X. */
+  xHandle: string | null;
   updatedAt: string | null;
 };
 
@@ -120,7 +122,7 @@ export async function fetchTrending(limit = 12): Promise<ViewStats[]> {
 export async function fetchProfile(address: string): Promise<WalletProfile | null> {
   const { data, error } = await supabase
     .from("wallet_profiles")
-    .select("address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, updated_at")
+    .select("address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, x_handle, updated_at" as "address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, updated_at")
     .eq("address", address)
     .maybeSingle();
   if (error) throw error;
@@ -133,6 +135,7 @@ export async function fetchProfile(address: string): Promise<WalletProfile | nul
     residencyNameInscriptionId: data.residency_name_inscription_id,
     bio: data.bio,
     avatarInscriptionId: data.avatar_inscription_id,
+    xHandle: (data as { x_handle?: string | null }).x_handle ?? null,
     updatedAt: data.updated_at,
   };
 }
@@ -142,6 +145,7 @@ export async function saveProfile(input: {
   displayName: string | null;
   bio: string | null;
   avatarInscriptionId: string | null;
+  xHandle?: string | null;
 }) {
   await saveWalletProfileFn({ data: input });
 }
