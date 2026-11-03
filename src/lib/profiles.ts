@@ -144,7 +144,6 @@ export async function fetchProfile(address: string): Promise<WalletProfile | nul
     avatarInscriptionId: row.avatar_inscription_id,
     xHandle: (data as { x_handle?: string | null }).x_handle ?? null,
     xVerifiedTweetId: (data as { x_verified_tweet_id?: string | null }).x_verified_tweet_id ?? null,
-    xVerifiedTweetId: (data as { x_verified_tweet_id?: string | null }).x_verified_tweet_id ?? null,
     updatedAt: row.updated_at,
   };
 }
