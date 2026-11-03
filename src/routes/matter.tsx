@@ -125,9 +125,9 @@ function MatterPage() {
                   <p className="mt-1 font-mono text-[10px] text-muted-foreground">DNA {dna.dnaHash.slice(0, 12)}</p>
                 </div>
               </div>
-              <p className="mt-3 font-mono text-[10px] tracking-widest text-muted-foreground">GUARDIAN STATS (LIVE COLLECTION RULES)</p>
+              <p className="mt-3 font-mono text-[10px] tracking-widest text-primary">LIVE GUARDIAN RULES · USED BY INSCRIBED GUARDIANS</p>
               <Row k="HP · BITE · SPEED · ARMOR" v={`${dna.hp} · ${dna.bite} · ${dna.speed} · ${dna.armor}`} />
-              <p className="mt-3 font-mono text-[10px] tracking-widest text-muted-foreground">BW-MATTER-1 PHYSICS (DRAFT)</p>
+              <p className="mt-3 border-t border-dashed border-border pt-2 font-mono text-[10px] tracking-widest text-muted-foreground">BW-MATTER-1 STATS · DRAFT · NOT USED BY ANY GUARDIAN</p>
               <Row k="VITALITY HP" v={String(m.hp)} />
               <Row k="DENSITY STRIKE" v={String(m.atk)} />
               <Row k="CONSENSUS ARMOR" v={String(m.def)} />
@@ -137,6 +137,8 @@ function MatterPage() {
           ) : <p className="font-mono text-xs text-muted-foreground">READING BLOCK…</p>}
         </Panel>
       </section>
+
+      {b && dna && m ? <TraitInputs b={b} dna={dna} m={m} /> : null}
 
       <section className="border border-border bg-card/60 p-4 backdrop-blur">
         <div className="mb-3 flex flex-wrap justify-between gap-2 font-mono text-[10px] tracking-widest">
@@ -172,6 +174,55 @@ function MatterPage() {
         </Panel>
       </section>
     </main>
+  );
+}
+
+const hx = (tail: string, s: number, n: number) => tail.slice(s, s + n);
+const hi = (tail: string, s: number, n: number) => parseInt(tail.slice(s, s + n), 16);
+
+function TraitInputs({ b, dna, m }: { b: Block; dna: ReturnType<typeof guardianFromBlock>; m: NonNullable<ReturnType<typeof deriveMatter>> }) {
+  const t = dna.dnaHash;
+  const density = b.size > 0 ? b.weight / b.size : 4;
+  const roll = hi(t, 4, 4) / 0xffff;
+  const live: [string, string, string, string][] = [
+    ["SPECIES", `hash tail [0..4] = ${hx(t, 0, 4)}`, `${hi(t, 0, 4)} mod 8`, dna.species],
+    ["EPOCH", `height ${b.height.toLocaleString()}`, "⌊height ÷ 210,000⌋", String(dna.epoch)],
+    ["RARITY", `hash tail [4..8] = ${hx(t, 4, 4)} · height`, `roll ${roll.toFixed(4)}; <0.02 Mythic, <0.10 Epic, <0.32 Rare; epoch 0 +1 tier; height <10,000 Mythic`, dna.rarity],
+    ["HP", `${b.txCount.toLocaleString()} transactions`, "(120 + √tx × 18) × tier boost", String(dna.hp)],
+    ["BITE", `weight ÷ size = ${density.toFixed(2)} · tail [8..10] = ${hx(t, 8, 2)}`, "(18 + (4 − density) × 12 + byte ÷ 12) × tier boost", String(dna.bite)],
+    ["SPEED", `hash tail [10..12] = ${hx(t, 10, 2)}`, "(20 + byte ÷ 6) × tier boost", String(dna.speed)],
+    ["ARMOR", `${b.size.toLocaleString()} bytes · epoch ${dna.epoch}`, "(10 + min(40, size ÷ 50,000) + (4 − epoch) × 4) × tier boost", String(dna.armor)],
+    ["COLOURS", `hash tail [12..16] = ${hx(t, 12, 4)}`, "hue = value ÷ 0xFFFF × 360°; Mythic accent is Bitcoin orange", `${Math.round((hi(t, 12, 4) / 0xffff) * 360)}°`],
+    ["BODY SHAPE", "full block hash", "seeded generator picks body plan, limbs, horns, wings, pattern", "see portrait"],
+  ];
+  const draft: [string, string, string, string][] = [
+    ["ELEMENT", `height ${b.height.toLocaleString()}`, "era × 8 + stratum", `${m.element.symbol} · ${m.element.name}`],
+    ["PHASE", `${b.txCount.toLocaleString()} tx · ${Math.floor(b.size / 1024).toLocaleString()} KB`, "transactions per whole KB", m.phase],
+    ["VITALITY · STRIKE · ARMOR · CADENCE", "height, tx count, size", "BW-MATTER-1 draft formulas", `${m.hp} · ${m.atk} · ${m.def} · ${fmt100(m.spd100)}×`],
+  ];
+  const Table = ({ rows }: { rows: [string, string, string, string][] }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full font-mono text-[11px]">
+        <thead><tr className="text-left text-[10px] tracking-widest text-muted-foreground"><th className="py-1 pr-3">TRAIT</th><th className="pr-3">BLOCK INPUT</th><th className="pr-3">RULE</th><th>RESULT</th></tr></thead>
+        <tbody>{rows.map(([k, i, r, v]) => (
+          <tr key={k} className="border-t border-border/40 align-top"><td className="py-1 pr-3 text-foreground">{k}</td><td className="pr-3 text-accent">{i}</td><td className="pr-3 text-muted-foreground">{r}</td><td className="text-foreground">{v}</td></tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+  return (
+    <section className="grid gap-4">
+      <div className="border border-primary/60 bg-card/60 p-4 backdrop-blur">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-primary">LIVE GUARDIAN RULES · WHICH BLOCK INPUT SETS EACH TRAIT</p>
+        <p className="mb-3 mt-1 text-xs text-muted-foreground">These are the existing rules. Inscribed Guardians and this site both use them, and nothing on this page changes them. Tier boost = 1 + tier × 0.12.</p>
+        <Table rows={live} />
+      </div>
+      <div className="border border-dashed border-border bg-card/40 p-4 backdrop-blur">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground">BW-MATTER-1 · DRAFT READING · SEPARATE FROM GUARDIANS</p>
+        <p className="mb-3 mt-1 text-xs text-muted-foreground">A proposed lore reading of the same block. It does not affect any Guardian's look, stats, battles or inscription.</p>
+        <Table rows={draft} />
+      </div>
+    </section>
   );
 }
 
