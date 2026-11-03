@@ -554,29 +554,31 @@ function BitmapDetail() {
         </details>
       </div>
       <ParcelPagePanel height={block} ownerAddress={owner} />
-      <div id="market" className="scroll-mt-20">
+      <Drawer title="GUARDIANS · WORLDS · BITMONS">
+        <BitmapGuardianPanel height={block} />
+        <BitmapWorldsPanel height={block} />
+        <OnchainBitmonPanel height={block} />
+      </Drawer>
+      <Drawer title="REINSCRIPTIONS · SCRIPTS" id="market">
         <DistrictReinscriptions height={block} districtInscriptionId={inscriptionId} />
-      </div>
-      <div className="mt-8">
         <BssScriptPanel height={block} />
-      </div>
-<ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
-      <div className="mt-6">
+      </Drawer>
+      <Drawer title="EXTENDERS · DEVELOPMENT">
         <TerritoryPanel height={block} ownerAddress={owner} ownerPending={liveHolder.isPending} />
-      </div>
-      <BitmapDevelopment
-        height={block}
-        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
-      />
-      <BitmapGuardianPanel height={block} />
-      <BitmapWorldsPanel height={block} />
-      <OnchainBitmonPanel height={block} />
+        <BitmapDevelopment
+          height={block}
+          districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+        />
+      </Drawer>
         </div>
       )}
       {tab === "market" && (
         <div id="bitmap-panel-market" role="tabpanel" aria-labelledby="bitmap-tab-market" className="mt-6 space-y-6">
         <BitmapOrderBook height={block} />
         <BitmapStorefront height={block} />
+        <Drawer title="3D KIOSK">
+          <ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
+        </Drawer>
       <BidPanel
         height={block}
         ownerAddress={owner}
