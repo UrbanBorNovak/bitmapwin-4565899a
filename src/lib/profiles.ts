@@ -235,6 +235,7 @@ export async function fetchProfiles(addresses: string[]): Promise<Map<string, Wa
         residencyNameInscriptionId: row.residency_name_inscription_id,
         bio: row.bio,
         avatarInscriptionId: row.avatar_inscription_id,
+        xHandle: null,
         updatedAt: row.updated_at,
       } satisfies WalletProfile,
     ]),
