@@ -12,10 +12,16 @@ export const saveWalletProfileFn = createServerFn({ method: "POST" })
         displayName: z.string().max(48).nullable(),
         bio: z.string().max(500).nullable(),
         avatarInscriptionId: z.string().max(120).nullable(),
+        xHandle: z.string().max(80).nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { normalizeXHandle, isValidXHandle } = await import("@/lib/x-handle");
+    const xHandle = normalizeXHandle(data.xHandle);
+    if (!isValidXHandle(xHandle)) {
+      throw new Error("X HANDLE MUST BE 1–15 LETTERS, NUMBERS OR UNDERSCORES");
+    }
     const { assertControls } = await import("@/lib/coins.server");
     try {
       await assertControls(context.supabase, context.userId, data.address);
@@ -25,14 +31,16 @@ export const saveWalletProfileFn = createServerFn({ method: "POST" })
       );
     }
 
+    const row = {
+      address: data.address,
+      display_name: data.displayName,
+      bio: data.bio,
+      avatar_inscription_id: data.avatarInscriptionId,
+      owner_user_id: context.userId,
+      ...(data.xHandle !== undefined ? { x_handle: xHandle } : {}),
+    };
     const { error } = await context.supabase.from("wallet_profiles").upsert(
-      {
-        address: data.address,
-        display_name: data.displayName,
-        bio: data.bio,
-        avatar_inscription_id: data.avatarInscriptionId,
-        owner_user_id: context.userId,
-      },
+      row as never,
       { onConflict: "address" },
     );
     if (error) throw new Error(error.message);
