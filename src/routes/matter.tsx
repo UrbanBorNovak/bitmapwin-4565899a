@@ -107,7 +107,7 @@ function MatterPage() {
               <Row k="PHASE" v={m.phase} accent />
               <div className="mt-3 border-t border-border pt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
                 ERA = min(3, ⌊{height} ÷ 210,000⌋) = {m.era}<br />
-                STRATUM = min(7, ⌊({height} mod 210,000) ÷ 26,250⌋) = {m.stratum}<br />
+                STRATUM = min(7, ⌊({height} − {m.era} × 210,000) ÷ 26,250⌋) = {m.stratum}<br />
                 INDEX = {m.era} × 8 + {m.stratum} = {m.index}
               </div>
             </>

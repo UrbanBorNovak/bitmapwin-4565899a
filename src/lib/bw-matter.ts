@@ -45,7 +45,8 @@ export function eraOf(height: number) {
 }
 
 export function stratumOf(height: number) {
-  return Math.min(7, Math.floor((height % 210_000) / 26_250));
+  // The last era never wraps: everything from 813,750 up stays in stratum 7.
+  return Math.min(7, Math.floor((height - eraOf(height) * 210_000) / 26_250));
 }
 
 export function matterIndex(height: number) {
