@@ -5,6 +5,7 @@ import { esploraFetch, guardianFromBlock, RARITY_TONE } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { BW_MATTER_TABLE, ERA_NAMES, deriveMatter, fmt100 } from "@/lib/bw-matter";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
+import { MatterVeil, useMistSound } from "@/components/matter/MatterAtmosphere";
 
 export const Route = createFileRoute("/matter")({
   head: () => ({
@@ -39,16 +40,27 @@ function MatterPage() {
   const m = b ? deriveMatter(b) : null;
   const dna = b ? guardianFromBlock(b) : null;
 
-  const go = (h: number) => { if (Number.isInteger(h) && h >= 0) { setHeight(h); setInput(String(h)); } };
+  const sound = useMistSound();
+  const go = (h: number) => { if (Number.isInteger(h) && h >= 0) { setHeight(h); setInput(String(h)); sound.chime(); } };
+  const tone = m?.element.color;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 px-4 py-10">
-      <header className="space-y-2">
-        <p className="font-mono text-xs tracking-[0.2em] text-primary">BW-MATTER-1 · DRAFT STANDARD</p>
-        <h1 className="font-display text-3xl md:text-4xl">One block. Its BITMAP, its matter, its Guardian.</h1>
+    <div className="relative" style={tone ? ({ "--matter-tone": tone } as React.CSSProperties) : undefined}>
+    <MatterVeil />
+    <main className="relative z-10 mx-auto max-w-7xl space-y-6 px-4 py-10">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-mono text-xs tracking-[0.3em] text-primary">THE ALCHEMY OF PROOF-OF-WORK · BW-MATTER-1</p>
+          <button type="button" onClick={sound.toggle} aria-pressed={sound.on}
+            className="border border-border px-3 py-1 font-mono text-[10px] tracking-widest text-muted-foreground hover:text-foreground">
+            {sound.on ? "◉ MIST SOUND ON" : "○ HEAR THE MIST"}
+          </button>
+        </div>
+        <h1 className="matter-glow-text font-display text-3xl md:text-5xl">Every block was forged in fire.<br />Read what it became.</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Every reading below comes from the same Bitcoin block. The BITMAP is the first valid <span className="font-mono">&lt;height&gt;.bitmap</span> found by bop's on-chain LiveOCI.
-          The element and phase are BW-MATTER-1 lore labels, not chemistry, and they give no reward or rarity guarantee.
+          Miners poured energy into this block until the hash broke. From that one block rise three readings: the land it claims, the matter it holds, and the Guardian sleeping inside it.
+          The BITMAP is the first valid <span className="font-mono">&lt;height&gt;.bitmap</span> found by bop's on-chain LiveOCI.
+          Elements and phases are BW-MATTER-1 lore, not chemistry, and give no reward or rarity guarantee.
         </p>
       </header>
 
@@ -94,7 +106,7 @@ function MatterPage() {
           {m ? (
             <>
               <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 flex-col items-center justify-center border-2 font-mono" style={{ borderColor: m.element.color, color: m.element.color }}>
+                <div className="matter-crucible flex h-20 w-20 flex-col items-center justify-center border-2 font-mono" style={{ borderColor: m.element.color, color: m.element.color }}>
                   <span className="text-[10px]">#{m.element.z}</span>
                   <span className="text-2xl font-bold">{m.element.symbol}</span>
                 </div>
@@ -174,6 +186,7 @@ function MatterPage() {
         </Panel>
       </section>
     </main>
+    </div>
   );
 }
 
