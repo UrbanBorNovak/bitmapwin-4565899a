@@ -5,6 +5,7 @@ import { esploraFetch, guardianFromBlock, RARITY_TONE } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { BW_MATTER_TABLE, ERA_NAMES, deriveMatter, fmt100 } from "@/lib/bw-matter";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
+import { MatterVeil, useMistSound } from "@/components/matter/MatterAtmosphere";
 
 export const Route = createFileRoute("/matter")({
   head: () => ({
@@ -39,23 +40,34 @@ function MatterPage() {
   const m = b ? deriveMatter(b) : null;
   const dna = b ? guardianFromBlock(b) : null;
 
-  const go = (h: number) => { if (Number.isInteger(h) && h >= 0) { setHeight(h); setInput(String(h)); } };
+  const sound = useMistSound();
+  const go = (h: number) => { if (Number.isInteger(h) && h >= 0) { setHeight(h); setInput(String(h)); sound.chime(); } };
+  const tone = m?.element.color;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 px-4 py-10">
-      <header className="space-y-2">
-        <p className="font-mono text-xs tracking-[0.2em] text-primary">BW-MATTER-1 · DRAFT STANDARD</p>
-        <h1 className="font-display text-3xl md:text-4xl">One block. Its BITMAP, its matter, its Guardian.</h1>
+    <div className="relative" style={tone ? ({ "--matter-tone": tone } as React.CSSProperties) : undefined}>
+    <MatterVeil />
+    <main className="relative z-10 mx-auto max-w-7xl space-y-6 px-4 py-10">
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-mono text-xs tracking-[0.3em] text-primary">THE ALCHEMY OF PROOF-OF-WORK · BW-MATTER-1</p>
+          <button type="button" onClick={sound.toggle} aria-pressed={sound.on}
+            className="border border-border px-3 py-1 font-mono text-[10px] tracking-widest text-muted-foreground hover:text-foreground">
+            {sound.on ? "◉ MIST SOUND ON" : "○ HEAR THE MIST"}
+          </button>
+        </div>
+        <h1 className="matter-glow-text font-display text-3xl md:text-5xl">Every block was forged in fire.<br />Read what it became.</h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Every reading below comes from the same Bitcoin block. The BITMAP is the first valid <span className="font-mono">&lt;height&gt;.bitmap</span> found by bop's on-chain LiveOCI.
-          The element and phase are BW-MATTER-1 lore labels, not chemistry, and they give no reward or rarity guarantee.
+          Miners poured energy into this block until the hash broke. From that one block rise three readings: the land it claims, the matter it holds, and the Guardian sleeping inside it.
+          The BITMAP is the first valid <span className="font-mono">&lt;height&gt;.bitmap</span> found by bop's on-chain LiveOCI.
+          Elements and phases are BW-MATTER-1 lore, not chemistry, and give no reward or rarity guarantee.
         </p>
       </header>
 
       <form className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
         <input value={input} onChange={(e) => setInput(e.target.value.replace(/\D/g, ""))} inputMode="numeric" aria-label="Block height"
           className="w-40 border border-border bg-background px-3 py-2 font-mono text-sm" />
-        <button className="border border-primary px-3 py-2 font-mono text-xs tracking-widest text-primary hover:bg-primary/10">READ BLOCK</button>
+        <button className="border border-primary px-3 py-2 font-mono text-xs tracking-widest text-primary hover:bg-primary/10">REVEAL BLOCK</button>
         {PRESETS.map((p) => (
           <button type="button" key={p} onClick={() => go(p)}
             className={`border px-2 py-1 font-mono text-[10px] tracking-widest ${p === height ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
@@ -67,7 +79,7 @@ function MatterPage() {
       {block.isError ? <p className="font-mono text-xs text-destructive">COULD NOT READ BLOCK {height} FROM THE CHAIN RIGHT NOW</p> : null}
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Panel step="1" title="BITCOIN BLOCK + LIVEOCI">
+        <Panel step="1" title="THE FORGED BLOCK · ITS LAND">
           <Row k="HEIGHT" v={`${height.toLocaleString()}`} />
           <Row k="HASH" v={b ? `${b.hash.slice(0, 10)}…${b.hash.slice(-8)}` : "…"} />
           <Row k="TRANSACTIONS" v={b ? b.txCount.toLocaleString() : "…"} />
@@ -90,11 +102,11 @@ function MatterPage() {
           </div>
         </Panel>
 
-        <Panel step="2" title="BW-MATTER-1 ELEMENT">
+        <Panel step="2" title="THE CRUCIBLE · ITS MATTER">
           {m ? (
             <>
               <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 flex-col items-center justify-center border-2 font-mono" style={{ borderColor: m.element.color, color: m.element.color }}>
+                <div className="matter-crucible flex h-20 w-20 flex-col items-center justify-center border-2 font-mono" style={{ borderColor: m.element.color, color: m.element.color }}>
                   <span className="text-[10px]">#{m.element.z}</span>
                   <span className="text-2xl font-bold">{m.element.symbol}</span>
                 </div>
@@ -114,7 +126,7 @@ function MatterPage() {
           ) : <p className="font-mono text-xs text-muted-foreground">READING BLOCK…</p>}
         </Panel>
 
-        <Panel step="3" title="GUARDIAN FROM THE SAME BLOCK">
+        <Panel step="3" title="THE SPIRIT · ITS GUARDIAN">
           {dna && m ? (
             <>
               <div className="flex items-center gap-4">
@@ -142,8 +154,8 @@ function MatterPage() {
 
       <section className="border border-border bg-card/60 p-4 backdrop-blur">
         <div className="mb-3 flex flex-wrap justify-between gap-2 font-mono text-[10px] tracking-widest">
-          <span className="text-primary">PERIODIC SPECTRUM · 32 ELEMENTS · 4 ERAS × 8 STRATA</span>
-          <span className="text-muted-foreground">CLICK AN ELEMENT TO JUMP TO ITS FIRST BLOCK</span>
+          <span className="text-primary">THE PERIODIC TABLE OF BLOCKS · 32 ELEMENTS · 4 HALVING ERAS × 8 STRATA</span>
+          <span className="text-muted-foreground">TOUCH AN ELEMENT TO SUMMON ITS FIRST BLOCK</span>
         </div>
         <div className="grid grid-cols-8 gap-1 md:grid-cols-16">
           {BW_MATTER_TABLE.map((e, i) => (
@@ -174,6 +186,7 @@ function MatterPage() {
         </Panel>
       </section>
     </main>
+    </div>
   );
 }
 

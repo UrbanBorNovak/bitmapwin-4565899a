@@ -1933,3 +1933,26 @@
 @keyframes halloween-flicker { 0%,100% { opacity: 1 } 47% { opacity: .55 } 50% { opacity: 1 } 82% { opacity: .75 } }
 @keyframes halloween-bat { 0%,100% { transform: translate(0,0) } 50% { transform: translate(14px,-8px) } }
 @media (prefers-reduced-motion: reduce) { .halloween-fog, .halloween-pumpkin, .halloween-bat { animation: none; } }
+
+/* /matter mystic mist */
+.matter-veil { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.matter-veil::before { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in oklab, var(--matter-tone, var(--signal)) 18%, transparent), transparent 60%),
+    radial-gradient(ellipse at 50% 110%, color-mix(in oklab, var(--bitcoin) 12%, transparent), transparent 55%);
+  transition: background 1.2s ease; }
+.matter-mist { position: absolute; left: -50%; width: 200%; height: 45%; filter: blur(40px); opacity: .35;
+  background: radial-gradient(ellipse at 20% 50%, color-mix(in oklab, var(--matter-tone, var(--signal)) 30%, transparent), transparent 45%),
+    radial-gradient(ellipse at 65% 40%, color-mix(in oklab, var(--foreground) 14%, transparent), transparent 40%),
+    radial-gradient(ellipse at 90% 60%, color-mix(in oklab, var(--matter-tone, var(--signal)) 22%, transparent), transparent 40%);
+  animation: matter-drift 38s linear infinite alternate; }
+.matter-mist-2 { top: 40%; animation-duration: 52s; animation-direction: alternate-reverse; opacity: .25; }
+.matter-mist-3 { top: 70%; animation-duration: 64s; opacity: .3; }
+.matter-mote { position: absolute; width: 3px; height: 3px; border-radius: 9999px; background: var(--matter-tone, var(--signal));
+  box-shadow: 0 0 8px var(--matter-tone, var(--signal)); opacity: 0; animation: matter-rise linear infinite; }
+.matter-crucible { position: relative; box-shadow: 0 0 28px color-mix(in oklab, var(--matter-tone) 45%, transparent), inset 0 0 18px color-mix(in oklab, var(--matter-tone) 30%, transparent); }
+.matter-crucible::after { content: ""; position: absolute; inset: -8px; border: 1px solid color-mix(in oklab, var(--matter-tone) 50%, transparent); animation: matter-pulse 3.6s ease-out infinite; }
+.matter-glow-text { text-shadow: 0 0 18px color-mix(in oklab, var(--matter-tone, var(--signal)) 55%, transparent); }
+@keyframes matter-drift { from { transform: translateX(-12%) } to { transform: translateX(12%) } }
+@keyframes matter-rise { 0% { transform: translateY(0); opacity: 0 } 15% { opacity: .8 } 100% { transform: translateY(-70vh); opacity: 0 } }
+@keyframes matter-pulse { 0% { transform: scale(.9); opacity: .9 } 100% { transform: scale(1.35); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .matter-mist, .matter-mote, .matter-crucible::after { animation: none; } }
