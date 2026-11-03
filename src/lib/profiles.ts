@@ -21,6 +21,8 @@ export type WalletProfile = {
   avatarInscriptionId: string | null;
   /** Self-declared X handle; not verified against X. */
   xHandle: string | null;
+  /** Set only after a public proof tweet was checked server-side. */
+  xVerifiedTweetId?: string | null;
   updatedAt: string | null;
 };
 
@@ -122,7 +124,7 @@ export async function fetchTrending(limit = 12): Promise<ViewStats[]> {
 export async function fetchProfile(address: string): Promise<WalletProfile | null> {
   const { data, error } = await supabase
     .from("wallet_profiles")
-    .select("address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, x_handle, updated_at")
+    .select("address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, x_handle, x_verified_tweet_id, updated_at")
     .eq("address", address)
     .maybeSingle();
   if (error) throw error;
@@ -141,6 +143,7 @@ export async function fetchProfile(address: string): Promise<WalletProfile | nul
     bio: row.bio,
     avatarInscriptionId: row.avatar_inscription_id,
     xHandle: (data as { x_handle?: string | null }).x_handle ?? null,
+    xVerifiedTweetId: (data as { x_verified_tweet_id?: string | null }).x_verified_tweet_id ?? null,
     updatedAt: row.updated_at,
   };
 }

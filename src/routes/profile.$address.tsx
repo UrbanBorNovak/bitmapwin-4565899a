@@ -119,14 +119,14 @@ function ProfilePage() {
           <ParcelClubBadges address={address} className="mt-3 justify-center md:justify-start" />
           {profile.data?.xHandle && (
             <a
-              href={`https://x.com/${profile.data.xHandle}`}
+              href={profile.data.xVerifiedTweetId ? `https://x.com/${profile.data.xHandle}/status/${profile.data.xVerifiedTweetId}` : `https://x.com/${profile.data.xHandle}`}
               target="_blank"
               rel="noopener noreferrer"
-              title="Self-declared by the wallet owner; not verified by X"
+              title={profile.data.xVerifiedTweetId ? "Verified by a public tweet naming this address" : "Self-declared by the wallet owner; not verified by X"}
               className="mt-3 inline-flex items-center gap-2 font-mono text-xs text-profile-warm underline decoration-profile-warm/30 underline-offset-4 hover:text-foreground"
               data-no-translate
             >
-              𝕏 @{profile.data.xHandle} <span className="text-[9px] text-muted-foreground no-underline">SELF-DECLARED</span>
+              𝕏 @{profile.data.xHandle} {profile.data.xVerifiedTweetId ? <span className="text-[9px] text-signal no-underline">VERIFIED ✓</span> : <span className="text-[9px] text-muted-foreground no-underline">SELF-DECLARED</span>}
             </a>
           )}
           {profile.data?.bio && (

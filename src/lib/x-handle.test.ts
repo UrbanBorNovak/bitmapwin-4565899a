@@ -14,3 +14,21 @@ describe("x handle", () => {
     expect(isValidXHandle("good_handle1")).toBe(true);
   });
 });
+
+import { parseTweetUrl, tweetProves, xProofToken } from "./x-handle";
+describe("tweet proof", () => {
+  it("parses status links", () => {
+    expect(parseTweetUrl("https://x.com/jack/status/20?s=1")).toEqual({ handle: "jack", id: "20" });
+  });
+  it("token is 8 hex chars and stable", async () => {
+    const t = await xProofToken("bc1pABC");
+    expect(t).toMatch(/^[0-9a-f]{8}$/);
+    expect(await xProofToken("BC1PABC")).toBe(t);
+  });
+  it("requires both address and token in the tweet", () => {
+    const html = "<p>Verifying my Bitcoin address bc1pabc on @bitmapwin<br>Proof: deadbeef</p>";
+    expect(tweetProves(html, "bc1pABC", "deadbeef")).toBe(true);
+    expect(tweetProves(html, "bc1pXYZ", "deadbeef")).toBe(false);
+    expect(tweetProves(html, "bc1pABC", "00000000")).toBe(false);
+  });
+});
