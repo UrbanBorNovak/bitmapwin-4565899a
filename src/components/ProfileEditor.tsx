@@ -27,6 +27,7 @@ export function ProfileEditor({
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [xHandle, setXHandle] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
@@ -34,6 +35,7 @@ export function ProfileEditor({
     if (dirty) return;
     setName(profile.data?.editableDisplayName ?? "");
     setBio(profile.data?.bio ?? "");
+    setXHandle(profile.data?.xHandle ?? "");
     setAvatar(profile.data?.avatarInscriptionId ?? null);
   }, [profile.data, dirty]);
 
@@ -44,6 +46,7 @@ export function ProfileEditor({
         displayName: name.trim() || null,
         bio: bio.trim() || null,
         avatarInscriptionId: avatar,
+        xHandle: xHandle.trim() || null,
       }),
     onSuccess: () => {
       setDirty(false);
@@ -108,6 +111,24 @@ export function ProfileEditor({
               className="profile-readout mt-2 min-h-11 w-full px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-profile-warm disabled:opacity-40"
             />
             <span className="mt-1 block text-right font-mono text-[9px] text-muted-foreground">{name.length}/48</span>
+          </label>
+          <label className="block">
+            <span className="label text-profile-warm-muted">X (TWITTER) HANDLE</span>
+            <div className="profile-readout mt-2 flex min-h-11 items-center px-3 focus-within:border-profile-warm">
+              <span className="font-mono text-sm text-muted-foreground">@</span>
+              <input
+                value={xHandle}
+                disabled={!canEdit}
+                onChange={(e) => {
+                  setDirty(true);
+                  setXHandle(e.target.value.replace(/^@/, "").slice(0, 40));
+                }}
+                placeholder="yourhandle"
+                data-no-translate
+                className="w-full bg-transparent py-2 pl-1 font-mono text-sm text-foreground outline-none disabled:opacity-40"
+              />
+            </div>
+            <span className="mt-1 block font-mono text-[9px] text-muted-foreground">SELF-DECLARED · SHOWN ON YOUR PUBLIC PROFILE · NOT VERIFIED BY X</span>
           </label>
           <label className="block">
             <span className="label text-profile-warm-muted">YOUR STORY</span>
