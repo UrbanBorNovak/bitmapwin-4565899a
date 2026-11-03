@@ -5338,6 +5338,7 @@ export type Database = {
           residency_name: string | null
           residency_name_inscription_id: string | null
           updated_at: string
+          x_handle: string | null
         }
         Insert: {
           address: string
@@ -5350,6 +5351,7 @@ export type Database = {
           residency_name?: string | null
           residency_name_inscription_id?: string | null
           updated_at?: string
+          x_handle?: string | null
         }
         Update: {
           address?: string
@@ -5362,6 +5364,7 @@ export type Database = {
           residency_name?: string | null
           residency_name_inscription_id?: string | null
           updated_at?: string
+          x_handle?: string | null
         }
         Relationships: []
       }
