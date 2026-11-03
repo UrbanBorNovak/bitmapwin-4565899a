@@ -1,6 +1,6 @@
 import { traitsOf } from "@/lib/traits";
 import { Activity, ArrowLeft, ArrowLeftRight, Database, Fingerprint, Globe, MapPin, ScrollText, ShieldCheck, Store, Users, Wallet, type LucideIcon } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
@@ -68,6 +68,25 @@ import { formatSats } from "@/lib/trades";
 import { timeAgo } from "@/lib/bitmap";
 import { ArchaeologyDossier } from "@/components/ArchaeologyDossier";
 
+
+/** Closed-by-default section; children only mount once opened, so heavy 3D panels stay off the scroll path. */
+function Drawer({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section id={id} className="scroll-mt-20 border border-border">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-5 py-4 hover:bg-card"
+      >
+        <span className="label">{title}</span>
+        <span className="label text-signal">{open ? "[ − CLOSE ]" : "[ + OPEN ]"}</span>
+      </button>
+      {open && <div className="space-y-6 border-t border-border p-4">{children}</div>}
+    </section>
+  );
+}
 
 const blockScanQuery = (height: number) =>
   queryOptions({
@@ -389,10 +408,12 @@ function BitmapDetail() {
           <Globe className="size-5" aria-hidden="true" /> ENTER THE OASIS →
         </span>
       </Link>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <BitmapStreamPlayer height={block} />
-        <StreamChat height={block} />
-      </div>
+      <Drawer title="LIVE STREAM · CHAT">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <BitmapStreamPlayer height={block} />
+          <StreamChat height={block} />
+        </div>
+      </Drawer>
       <div className="mt-6">
         <TerritoryShareCard
           height={block}
@@ -554,29 +575,31 @@ function BitmapDetail() {
         </details>
       </div>
       <ParcelPagePanel height={block} ownerAddress={owner} />
-      <div id="market" className="scroll-mt-20">
+      <Drawer title="GUARDIANS · WORLDS · BITMONS">
+        <BitmapGuardianPanel height={block} />
+        <BitmapWorldsPanel height={block} />
+        <OnchainBitmonPanel height={block} />
+      </Drawer>
+      <Drawer title="REINSCRIPTIONS · SCRIPTS" id="market">
         <DistrictReinscriptions height={block} districtInscriptionId={inscriptionId} />
-      </div>
-      <div className="mt-8">
         <BssScriptPanel height={block} />
-      </div>
-<ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
-      <div className="mt-6">
+      </Drawer>
+      <Drawer title="EXTENDERS · DEVELOPMENT">
         <TerritoryPanel height={block} ownerAddress={owner} ownerPending={liveHolder.isPending} />
-      </div>
-      <BitmapDevelopment
-        height={block}
-        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
-      />
-      <BitmapGuardianPanel height={block} />
-      <BitmapWorldsPanel height={block} />
-      <OnchainBitmonPanel height={block} />
+        <BitmapDevelopment
+          height={block}
+          districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+        />
+      </Drawer>
         </div>
       )}
       {tab === "market" && (
         <div id="bitmap-panel-market" role="tabpanel" aria-labelledby="bitmap-tab-market" className="mt-6 space-y-6">
         <BitmapOrderBook height={block} />
         <BitmapStorefront height={block} />
+        <Drawer title="3D KIOSK">
+          <ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
+        </Drawer>
       <BidPanel
         height={block}
         ownerAddress={owner}
