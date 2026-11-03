@@ -67,7 +67,7 @@ function MatterPage() {
       <form className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
         <input value={input} onChange={(e) => setInput(e.target.value.replace(/\D/g, ""))} inputMode="numeric" aria-label="Block height"
           className="w-40 border border-border bg-background px-3 py-2 font-mono text-sm" />
-        <button className="border border-primary px-3 py-2 font-mono text-xs tracking-widest text-primary hover:bg-primary/10">READ BLOCK</button>
+        <button className="border border-primary px-3 py-2 font-mono text-xs tracking-widest text-primary hover:bg-primary/10">REVEAL BLOCK</button>
         {PRESETS.map((p) => (
           <button type="button" key={p} onClick={() => go(p)}
             className={`border px-2 py-1 font-mono text-[10px] tracking-widest ${p === height ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
@@ -79,7 +79,7 @@ function MatterPage() {
       {block.isError ? <p className="font-mono text-xs text-destructive">COULD NOT READ BLOCK {height} FROM THE CHAIN RIGHT NOW</p> : null}
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Panel step="1" title="BITCOIN BLOCK + LIVEOCI">
+        <Panel step="1" title="THE FORGED BLOCK · ITS LAND">
           <Row k="HEIGHT" v={`${height.toLocaleString()}`} />
           <Row k="HASH" v={b ? `${b.hash.slice(0, 10)}…${b.hash.slice(-8)}` : "…"} />
           <Row k="TRANSACTIONS" v={b ? b.txCount.toLocaleString() : "…"} />
@@ -102,7 +102,7 @@ function MatterPage() {
           </div>
         </Panel>
 
-        <Panel step="2" title="BW-MATTER-1 ELEMENT">
+        <Panel step="2" title="THE CRUCIBLE · ITS MATTER">
           {m ? (
             <>
               <div className="flex items-center gap-4">
@@ -126,7 +126,7 @@ function MatterPage() {
           ) : <p className="font-mono text-xs text-muted-foreground">READING BLOCK…</p>}
         </Panel>
 
-        <Panel step="3" title="GUARDIAN FROM THE SAME BLOCK">
+        <Panel step="3" title="THE SPIRIT · ITS GUARDIAN">
           {dna && m ? (
             <>
               <div className="flex items-center gap-4">
@@ -154,8 +154,8 @@ function MatterPage() {
 
       <section className="border border-border bg-card/60 p-4 backdrop-blur">
         <div className="mb-3 flex flex-wrap justify-between gap-2 font-mono text-[10px] tracking-widest">
-          <span className="text-primary">PERIODIC SPECTRUM · 32 ELEMENTS · 4 ERAS × 8 STRATA</span>
-          <span className="text-muted-foreground">CLICK AN ELEMENT TO JUMP TO ITS FIRST BLOCK</span>
+          <span className="text-primary">THE PERIODIC TABLE OF BLOCKS · 32 ELEMENTS · 4 HALVING ERAS × 8 STRATA</span>
+          <span className="text-muted-foreground">TOUCH AN ELEMENT TO SUMMON ITS FIRST BLOCK</span>
         </div>
         <div className="grid grid-cols-8 gap-1 md:grid-cols-16">
           {BW_MATTER_TABLE.map((e, i) => (
