@@ -52,6 +52,7 @@ import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as MatterRouteImport } from './routes/matter'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MintRouteImport } from './routes/mint'
 import { Route as MyLandRouteImport } from './routes/my-land'
@@ -396,6 +397,11 @@ const MapRoute = MapRouteImport.update({
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatterRoute = MatterRouteImport.update({
+  id: '/matter',
+  path: '/matter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -1102,6 +1108,7 @@ export interface FileRoutesByFullPath {
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/matter': typeof MatterRoute
   '/mcp': typeof McpRoute
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
@@ -1275,6 +1282,7 @@ export interface FileRoutesByTo {
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/matter': typeof MatterRoute
   '/mcp': typeof McpRoute
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
@@ -1449,6 +1457,7 @@ export interface FileRoutesById {
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/matter': typeof MatterRoute
   '/mcp': typeof McpRoute
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
@@ -1626,6 +1635,7 @@ export interface FileRouteTypes {
     | '/leases'
     | '/map'
     | '/marketplace'
+    | '/matter'
     | '/mcp'
     | '/mint'
     | '/my-land'
@@ -1799,6 +1809,7 @@ export interface FileRouteTypes {
     | '/leases'
     | '/map'
     | '/marketplace'
+    | '/matter'
     | '/mcp'
     | '/mint'
     | '/my-land'
@@ -1972,6 +1983,7 @@ export interface FileRouteTypes {
     | '/leases'
     | '/map'
     | '/marketplace'
+    | '/matter'
     | '/mcp'
     | '/mint'
     | '/my-land'
@@ -2148,6 +2160,7 @@ export interface RootRouteChildren {
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  MatterRoute: typeof MatterRoute
   McpRoute: typeof McpRoute
   MintRoute: typeof MintRoute
   MyLandRoute: typeof MyLandRoute
@@ -2531,6 +2544,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matter': {
+      id: '/matter'
+      path: '/matter'
+      fullPath: '/matter'
+      preLoaderRoute: typeof MatterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -3645,6 +3665,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
+  MatterRoute: MatterRoute,
   McpRoute: McpRoute,
   MintRoute: MintRoute,
   MyLandRoute: MyLandRoute,
