@@ -38,7 +38,7 @@ function StudioPage() {
         <button type="button" onClick={() => setAnimate((a) => !a)} className="rounded border border-border px-3 py-1.5 font-mono text-xs">{animate ? "PAUSE MOTION" : "PLAY MOTION"}</button>
       </form>
       <div className="mt-4 grid gap-4 md:grid-cols-[1fr_200px]">
-        <div className="aspect-[4/3] w-full overflow-hidden rounded-md border border-border bg-card/60">
+        <div className="aspect-[4/3] w-full overflow-hidden rounded-md border border-border bg-card">
           {q.data ? <GuardianStudio3D dna={q.data} animate={animate} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
         </div>
         <div className="space-y-2">
