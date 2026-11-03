@@ -1947,6 +1947,8 @@
   animation: matter-drift 38s linear infinite alternate; }
 .matter-mist-2 { top: 40%; animation-duration: 52s; animation-direction: alternate-reverse; opacity: .25; }
 .matter-mist-3 { top: 70%; animation-duration: 64s; opacity: .3; }
+.matter-shroud { background: radial-gradient(circle at 50% 55%, color-mix(in oklab, var(--matter-tone, var(--signal)) 22%, transparent), var(--background) 70%); }
+.matter-shroud .matter-mist { left: -60%; width: 220%; opacity: .55; }
 .matter-mote { position: absolute; width: 3px; height: 3px; border-radius: 9999px; background: var(--matter-tone, var(--signal));
   box-shadow: 0 0 8px var(--matter-tone, var(--signal)); opacity: 0; animation: matter-rise linear infinite; }
 .matter-crucible { position: relative; box-shadow: 0 0 28px color-mix(in oklab, var(--matter-tone) 45%, transparent), inset 0 0 18px color-mix(in oklab, var(--matter-tone) 30%, transparent); }
