@@ -27,7 +27,7 @@ export function xProofText(address: string, token: string): string {
 /** Extract handle + tweet id from an x.com / twitter.com status link. */
 export function parseTweetUrl(url: string): { handle: string; id: string } | null {
   const m = url.trim().match(/^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status(?:es)?\/(\d{1,25})/i);
-  return m ? { handle: m[1], id: m[2] } : null;
+  return m && m[1] && m[2] ? { handle: m[1], id: m[2] } : null;
 }
 
 /** True when the tweet text (oEmbed html) names the address and the token. */
