@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveMatter, matterIndex } from "@/lib/bw-matter";
+import { deriveMatter, elementAt, matterIndex } from "@/lib/bw-matter";
 
 describe("BW-MATTER-1 element assignment", () => {
   it("genesis is Aetherium, halvings start each era", () => {
@@ -13,9 +13,16 @@ describe("BW-MATTER-1 element assignment", () => {
     expect(matterIndex(26_250)).toBe(1);
     expect(matterIndex(209_999)).toBe(7);
   });
-  it("blocks past 840,000 stay in the last element", () => {
-    expect(matterIndex(840_000)).toBe(31);
-    expect(matterIndex(950_000)).toBe(31);
+  it("era 4 starts at the 840,000 halving", () => {
+    expect(matterIndex(839_999)).toBe(31);
+    expect(matterIndex(840_000)).toBe(32);
+    expect(matterIndex(950_000)).toBe(36);
+    expect(elementAt(32).name).toBe("Hyper-Silicon");
+  });
+  it("future halvings open undiscovered eras", () => {
+    expect(matterIndex(1_050_000)).toBe(40);
+    expect(elementAt(40).undiscovered).toBe(true);
+    expect(elementAt(40).era).toBe(5);
   });
   it("phase follows tx per whole KB", () => {
     const base = { height: 1, size: 10 * 1024, weight: 0, nonce: 0 };

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { esploraFetch, guardianFromBlock, RARITY_TONE } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { guardianQuery } from "@/lib/bitmon-queries";
-import { BW_MATTER_TABLE, ERA_NAMES, deriveMatter, fmt100 } from "@/lib/bw-matter";
+import { BW_MATTER_TABLE, deriveMatter, eraName, fmt100 } from "@/lib/bw-matter";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
 import { dmtBlueprint, ERA_TRADITIONS } from "@/lib/bw-matter-blueprint";
 import { MatterVeil, useMistSound } from "@/components/matter/MatterAtmosphere";
@@ -115,13 +115,13 @@ function MatterPage() {
                 </div>
                 <div>
                   <p className="font-display text-xl">{m.element.name}</p>
-                  <p className="font-mono text-[10px] tracking-widest text-muted-foreground">ERA {m.era} · {ERA_NAMES[m.era]} · STRATUM {m.stratum}</p>
+                  <p className="font-mono text-[10px] tracking-widest text-muted-foreground">ERA {m.era} · {eraName(m.era)} · STRATUM {m.stratum}</p>
                 </div>
               </div>
               <Row k="DENSITY" v={`${fmt100(m.density100)} TX/KB`} />
               <Row k="PHASE" v={m.phase} accent />
               <div className="mt-3 border-t border-border pt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
-                ERA = min(3, ⌊{height} ÷ 210,000⌋) = {m.era}<br />
+                ERA = ⌊{height} ÷ 210,000⌋ = {m.era}<br />
                 STRATUM = min(7, ⌊({height} − {m.era} × 210,000) ÷ 26,250⌋) = {m.stratum}<br />
                 INDEX = {m.era} × 8 + {m.stratum} = {m.index}
               </div>
@@ -171,7 +171,7 @@ function MatterPage() {
 
       <section className="border border-border bg-card/60 p-4 backdrop-blur">
         <div className="mb-3 flex flex-wrap justify-between gap-2 font-mono text-[10px] tracking-widest">
-          <span className="text-primary">THE PERIODIC TABLE OF BLOCKS · 32 ELEMENTS · 4 HALVING ERAS × 8 STRATA</span>
+          <span className="text-primary">THE PERIODIC TABLE OF BLOCKS · 40 ELEMENTS · 5 HALVING ERAS × 8 STRATA · FUTURE ERAS UNDISCOVERED</span>
           <span className="text-muted-foreground">TOUCH AN ELEMENT TO SUMMON ITS FIRST BLOCK</span>
         </div>
         <div className="grid grid-cols-8 gap-1 md:grid-cols-16">
@@ -182,12 +182,20 @@ function MatterPage() {
               <span className="block text-sm font-bold" style={{ color: e.color }}>{e.symbol}</span>
             </button>
           ))}
+          {Array.from({ length: 8 }, (_, s) => (
+            <button key={`f${s}`} onClick={() => go(1_050_000 + s * 26_250)} title="Era 5 · not mined yet · undiscovered"
+              className="border border-dashed border-border p-1 text-center font-mono text-muted-foreground hover:border-accent">
+              <span className="block text-[8px]">ERA 5</span>
+              <span className="block text-sm font-bold">?{s + 1}</span>
+            </button>
+          ))}
         </div>
+        <p className="mt-2 text-xs text-muted-foreground">Era 4 began at block 840,000. Every future halving opens a new era of 8 undiscovered strata; they stay unnamed until a new element is published. Other standards may read different matter from the same blocks.</p>
       </section>
 
       <section className="border border-border bg-card/60 p-4 backdrop-blur">
-        <p className="mb-3 font-mono text-[10px] tracking-[0.2em] text-primary">THE FOUR BUILDING TRADITIONS · ONE PER HALVING ERA</p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <p className="mb-3 font-mono text-[10px] tracking-[0.2em] text-primary">THE FIVE BUILDING TRADITIONS · ONE PER HALVING ERA</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {ERA_TRADITIONS.map((t) => (
             <button key={t.era} type="button" onClick={() => go(t.era * 210_000)}
               className={`border p-3 text-left transition ${m?.era === t.era ? "border-primary bg-primary/5" : "border-border hover:border-accent"}`}>
@@ -212,7 +220,7 @@ function MatterPage() {
         </Panel>
         <Panel step="?" title="HOW THE ELEMENT COMES FROM THE BLOCK">
           <ol className="list-decimal space-y-1 pl-4 text-sm text-muted-foreground">
-            <li>The <b className="text-foreground">height</b> picks the era and one of 8 strata, so one of 32 elements.</li>
+            <li>The <b className="text-foreground">height</b> picks the era and one of 8 strata; eras 0–4 name 40 elements, later eras are undiscovered.</li>
             <li><b className="text-foreground">Transactions per KB</b> picks the phase: ore, ingot or crystal.</li>
             <li>The element is a separate reading; it does not change how inscribed Guardians look.</li>
           </ol>
