@@ -117,6 +117,18 @@ function ProfilePage() {
           </div>
           <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address}</p>
           <ParcelClubBadges address={address} className="mt-3 justify-center md:justify-start" />
+          {profile.data?.xHandle && (
+            <a
+              href={`https://x.com/${profile.data.xHandle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Self-declared by the wallet owner; not verified by X"
+              className="mt-3 inline-flex items-center gap-2 font-mono text-xs text-profile-warm underline decoration-profile-warm/30 underline-offset-4 hover:text-foreground"
+              data-no-translate
+            >
+              𝕏 @{profile.data.xHandle} <span className="text-[9px] text-muted-foreground no-underline">SELF-DECLARED</span>
+            </a>
+          )}
           {profile.data?.bio && (
             <p className="mt-5 max-w-[70ch] whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
               {profile.data.bio}
