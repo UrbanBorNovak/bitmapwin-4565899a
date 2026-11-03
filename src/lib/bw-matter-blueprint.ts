@@ -12,6 +12,7 @@ export const ERA_TRADITIONS: EraTradition[] = [
   { era: 1, name: "TRANSITION", style: "Metallurgic citadels", forms: ["Bastion", "Colonnade", "Refinery tower"], palette: ["#708090", "#b87333", "#3f8f7a", "#00e5ff"] },
   { era: 2, name: "REFRACTORY", style: "Prismatic spires & forges", forms: ["Prism spire", "Geode vault", "Kinetic forge"], palette: ["#00ffff", "#4f5b66", "#39ff14", "#ced0dd"] },
   { era: 3, name: "CRYSTALLINE", style: "Void gates & resonators", forms: ["Rift gate", "Resonator ring", "Hypercube"], palette: ["#14090c", "#f5f5f5", "#ff007f", "#7b1fa2"] },
+  { era: 4, name: "SYNTHETIC", style: "Lattice arcologies & reactors", forms: ["Lattice arcology", "Plasma reactor", "Event horizon dome"], palette: ["#9ad1ff", "#ffb347", "#ff5ef0", "#111827"] },
 ];
 
 export type Footprint = "SOLITARY MONOLITH" | "COURTYARD TEMPLE" | "TERRACED ZIGGURAT";
@@ -30,7 +31,7 @@ export type DmtBlueprint = {
 const CORES = ["Floating cube", "Open geode", "Burning hearth", "Hanging prism", "Sunken well", "Twin pillars", "Orb cradle", "Spiral stair"];
 
 export function dmtBlueprint(b: MatterInput, m: MatterProfile): DmtBlueprint {
-  const tradition = ERA_TRADITIONS[m.era]!;
+  const tradition = ERA_TRADITIONS[Math.min(m.era, ERA_TRADITIONS.length - 1)]!;
   const footprint: Footprint = b.txCount < 50 ? "SOLITARY MONOLITH" : b.txCount <= 1500 ? "COURTYARD TEMPLE" : "TERRACED ZIGGURAT";
   const terraces = Math.min(7, 1 + Math.floor(b.txCount / 500));
   const ceiling = Math.min(60, 8 + Math.floor(b.weight / 80_000));
