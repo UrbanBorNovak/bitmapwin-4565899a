@@ -42,6 +42,7 @@ import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
 import { Route as ForgeRouteImport } from './routes/forge'
 import { Route as GenesisRanksRouteImport } from './routes/genesis-ranks'
+import { Route as GuardianStudioRouteImport } from './routes/guardian-studio'
 import { Route as GuardiansRouteImport } from './routes/guardians'
 import { Route as GuardiansGuideRouteImport } from './routes/guardians-guide'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -347,6 +348,11 @@ const ForgeRoute = ForgeRouteImport.update({
 const GenesisRanksRoute = GenesisRanksRouteImport.update({
   id: '/genesis-ranks',
   path: '/genesis-ranks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuardianStudioRoute = GuardianStudioRouteImport.update({
+  id: '/guardian-studio',
+  path: '/guardian-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuardiansRoute = GuardiansRouteImport.update({
@@ -1098,6 +1104,7 @@ export interface FileRoutesByFullPath {
   '/extenders': typeof ExtendersRouteWithChildren
   '/forge': typeof ForgeRoute
   '/genesis-ranks': typeof GenesisRanksRoute
+  '/guardian-studio': typeof GuardianStudioRoute
   '/guardians': typeof GuardiansRoute
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
@@ -1272,6 +1279,7 @@ export interface FileRoutesByTo {
   '/extend': typeof ExtendRoute
   '/forge': typeof ForgeRoute
   '/genesis-ranks': typeof GenesisRanksRoute
+  '/guardian-studio': typeof GuardianStudioRoute
   '/guardians': typeof GuardiansRoute
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
@@ -1447,6 +1455,7 @@ export interface FileRoutesById {
   '/extenders': typeof ExtendersRouteWithChildren
   '/forge': typeof ForgeRoute
   '/genesis-ranks': typeof GenesisRanksRoute
+  '/guardian-studio': typeof GuardianStudioRoute
   '/guardians': typeof GuardiansRoute
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
@@ -1625,6 +1634,7 @@ export interface FileRouteTypes {
     | '/extenders'
     | '/forge'
     | '/genesis-ranks'
+    | '/guardian-studio'
     | '/guardians'
     | '/guardians-guide'
     | '/history'
@@ -1799,6 +1809,7 @@ export interface FileRouteTypes {
     | '/extend'
     | '/forge'
     | '/genesis-ranks'
+    | '/guardian-studio'
     | '/guardians'
     | '/guardians-guide'
     | '/history'
@@ -1973,6 +1984,7 @@ export interface FileRouteTypes {
     | '/extenders'
     | '/forge'
     | '/genesis-ranks'
+    | '/guardian-studio'
     | '/guardians'
     | '/guardians-guide'
     | '/history'
@@ -2150,6 +2162,7 @@ export interface RootRouteChildren {
   ExtendersRoute: typeof ExtendersRouteWithChildren
   ForgeRoute: typeof ForgeRoute
   GenesisRanksRoute: typeof GenesisRanksRoute
+  GuardianStudioRoute: typeof GuardianStudioRoute
   GuardiansRoute: typeof GuardiansRoute
   GuardiansGuideRoute: typeof GuardiansGuideRoute
   HistoryRoute: typeof HistoryRoute
@@ -2474,6 +2487,13 @@ declare module '@tanstack/react-router' {
       path: '/genesis-ranks'
       fullPath: '/genesis-ranks'
       preLoaderRoute: typeof GenesisRanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guardian-studio': {
+      id: '/guardian-studio'
+      path: '/guardian-studio'
+      fullPath: '/guardian-studio'
+      preLoaderRoute: typeof GuardianStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guardians': {
@@ -3655,6 +3675,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtendersRoute: ExtendersRouteWithChildren,
   ForgeRoute: ForgeRoute,
   GenesisRanksRoute: GenesisRanksRoute,
+  GuardianStudioRoute: GuardianStudioRoute,
   GuardiansRoute: GuardiansRoute,
   GuardiansGuideRoute: GuardiansGuideRoute,
   HistoryRoute: HistoryRoute,
