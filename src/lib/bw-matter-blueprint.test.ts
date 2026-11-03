@@ -10,6 +10,6 @@ const bp = (height: number, txCount: number, weight: number, nonce = 0) => {
 describe("DMT blueprint", () => {
   it("under 50 transactions is a solitary monolith", () => expect(bp(0, 1, 1000).footprint).toBe("SOLITARY MONOLITH"));
   it("over 1,500 transactions is a terraced ziggurat", () => expect(bp(800_000, 3000, 4_000_000).footprint).toBe("TERRACED ZIGGURAT"));
-  it("ceiling caps at 60 voxels", () => expect(bp(800_000, 3000, 4_000_000).ceiling).toBe(58));
+  it("ceiling grows with weight and caps at 60", () => { expect(bp(800_000, 3000, 4_000_000).ceiling).toBe(58); expect(bp(800_000, 3000, 9_000_000).ceiling).toBe(60); });
   it("era follows the halving", () => expect(bp(420_000, 100, 400_000).tradition.name).toBe("REFRACTORY"));
 });
