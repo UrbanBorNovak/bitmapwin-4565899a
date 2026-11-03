@@ -18,7 +18,7 @@ describe("x handle", () => {
 import { parseTweetUrl, tweetProves, xProofToken } from "./x-handle";
 describe("tweet proof", () => {
   it("parses status links", () => {
-    expect(parseTweetUrl("https://x.com/jack/status/20?s=1")).toEqual({ handle: "jack", id: "20000".slice(0, 0) + "20" } as never);
+    expect(parseTweetUrl("https://x.com/jack/status/20?s=1")).toEqual({ handle: "jack", id: "20" });
   });
   it("token is 8 hex chars and stable", async () => {
     const t = await xProofToken("bc1pABC");
