@@ -182,7 +182,7 @@ function LevelRow({ side, level, count, cum, pct, tick, open, onToggle, fresh, s
         : <span className="relative text-muted-foreground">{count} ORDER{count === 1 ? "" : "S"}</span>}
       <span className={`relative text-right ${tone}`}>{tick && side === "ask" ? "≤ " : tick ? "≥ " : ""}{formatSats(level)}</span>
       <span className="relative w-20 text-right text-muted-foreground">{formatSats(cum)}</span>
-      <span className="relative flex w-28 gap-1">
+      <span className="relative flex w-44 shrink-0 gap-1">
         {single && side === "ask" && single.id && single.inscriptionId
           ? <><CartToggle item={{ offerId: single.id, height: single.bitmapHeight!, priceSats: single.priceSats!, inscriptionId: single.inscriptionId }} /><BuyButton offerId={single.id} priceSats={single.priceSats!} inscriptionId={single.inscriptionId} height={single.bitmapHeight!} className="btn-term w-full whitespace-nowrap !px-1 !py-0.5 text-[10px]" /></>
           : single && side === "bid"
@@ -199,13 +199,13 @@ function OrderRow({ height, price, tone, fresh, action }: { height: number; pric
       <Link to="/bitmap/$block" params={{ block: String(height) }} className="hover:text-signal">↳ {height}.BITMAP</Link>
       <span className={`text-right ${tone}`}>{formatSats(price)}</span>
       <span className="w-20" />
-      <span className="flex w-28 gap-1">{action}</span>
+      <span className="flex w-44 shrink-0 gap-1">{action}</span>
     </li>
   );
 }
 
 function BookHead({ tick }: { tick: number }) {
-  return <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 border-b border-border px-3 py-2"><span className="label">{tick ? "LEVEL" : "BITMAP"}</span><span className="label text-right">PRICE</span><span className="label w-20 text-right">TOTAL</span><span className="w-28" /></div>;
+  return <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 border-b border-border px-3 py-2"><span className="label">{tick ? "LEVEL" : "BITMAP"}</span><span className="label text-right">PRICE</span><span className="label w-20 text-right">TOTAL</span><span className="w-44" /></div>;
 }
 
 /** Flash newly posted orders cyan; keep removed ones briefly as amber ghosts. */

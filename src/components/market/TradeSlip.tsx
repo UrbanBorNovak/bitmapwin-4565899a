@@ -26,7 +26,7 @@ export function CartToggle({ item, className = "" }: { item: CartItem; className
   const on = items.some((i) => i.offerId === item.offerId);
   return (
     <button type="button" onClick={() => cart.toggle(item)} aria-pressed={on}
-      className={`border px-1.5 py-0.5 font-mono text-[10px] ${on ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"} ${className}`}>
+      className={`shrink-0 whitespace-nowrap border px-1.5 py-0.5 font-mono text-[10px] ${on ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"} ${className}`}>
       {on ? "IN SLIP" : "+ SLIP"}
     </button>
   );
