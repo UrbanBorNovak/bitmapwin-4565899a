@@ -155,7 +155,7 @@ function BarterPage() {
   return (
     <div className="relative isolate min-h-screen">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-background">
-        <div className="sticky top-0 h-dvh w-full"><ClientOnly fallback={null}><Suspense fallback={null}><BarterScene3D /></Suspense></ClientOnly></div>
+        <div className="sticky top-0 h-[62dvh] w-full"><ClientOnly fallback={null}><Suspense fallback={null}><BarterScene3D /></Suspense></ClientOnly></div>
       </div>
     
     <main className="mx-auto max-w-5xl px-4 py-10 font-mono">
