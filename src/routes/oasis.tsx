@@ -12,6 +12,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { ChevronDown, Eye, EyeOff, Maximize2, Minimize2, Palette } from "lucide-react";
 import { OasisVisualModsPanel, modStyle, useVisualMod, useModsHotkey } from "@/components/game/OasisVisualMods";
 import { getChainBlocks } from "@/lib/chain.functions";
+import { readMeadow, writeMeadow } from "@/lib/oasis-meadow";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { OasisEntry } from "@/components/game/OasisEntry";
 import { ClassSkillBar } from "@/components/game/ClassSkillBar";
@@ -55,6 +56,16 @@ export const Route = createFileRoute("/oasis")({
   },
   component: OasisPage,
 });
+
+function MeadowToggle() {
+  const [on, setOn] = useState(false);
+  useEffect(() => setOn(readMeadow()), []);
+  return (
+    <Button variant="terminalGhost" type="button" aria-pressed={on} title="Switch between storybook meadow and terminal look" onClick={() => { writeMeadow(!on); setOn(!on); }} className={`hud-panel hud-keep h-11 px-3 font-mono text-[10px] ${on ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+      {on ? "☀ MEADOW" : "☾ TERMINAL"}
+    </Button>
+  );
+}
 
 function OasisPage() {
   const { height } = Route.useSearch();
@@ -158,6 +169,7 @@ function OasisPage() {
               <Button variant="terminalGhost" size="icon" type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (`)" : "Cinematic view (`)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-11 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
                 {cinematic ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
               </Button>
+              <MeadowToggle />
               <SnapShare height={height ?? 0} />
               <ClipRecorder label="oasis" />
               <Button variant="terminalGhost" size="icon" type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel hud-keep grid size-11 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
