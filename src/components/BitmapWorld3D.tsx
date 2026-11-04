@@ -2823,8 +2823,9 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
     [],
   );
   useEffect(() => {
-    uniforms.uBase.value.set(ATLAS.forest);
-    uniforms.uSand.value.set(ATLAS.sand);
+    const meadow = colors.background === MEADOW.sky;
+    uniforms.uBase.value.set(meadow ? MEADOW.forest : ATLAS.forest);
+    uniforms.uSand.value.set(meadow ? MEADOW.sand : ATLAS.sand);
     uniforms.uGlow.value.set(colors.bitcoin);
   }, [colors, uniforms]);
   useFrame(({ scene, clock }) => {
