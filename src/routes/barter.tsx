@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
-import barterBg from "@/assets/barter_terminal_bg.png.asset.json";
+const BarterScene3D = lazy(() => import("@/components/barter/BarterScene3D"));
 import { ProposeSwap, SwapInbox } from "@/components/barter/SwapPanels";
 import type { ConnectedWallet } from "@/lib/browser-wallet";
 import { getWalletFn } from "@/lib/wallet.functions";
@@ -154,8 +154,10 @@ function BarterPage() {
 
   return (
     <div className="relative min-h-screen">
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${barterBg.url})` }} />
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background/45" />
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background">
+      <ClientOnly fallback={null}><Suspense fallback={null}><BarterScene3D /></Suspense></ClientOnly>
+    </div>
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background/30" />
     <main className="mx-auto max-w-5xl px-4 py-10 font-mono">
       <header className="mb-6 border border-border bg-card/60 p-5">
         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">BW-BARTER-1 · draft</p>
