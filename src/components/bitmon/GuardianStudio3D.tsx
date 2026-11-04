@@ -8,7 +8,10 @@ import * as THREE from "three";
 import type { GuardianDna } from "@/lib/bitmon";
 import { animVox, blueprint, onchainGenome } from "@/lib/onchain-guardian";
 
-export function GuardianStudio3D({ dna, animate = true }: { dna: GuardianDna; animate?: boolean }) {
+/** Trailer length in seconds: PICK (0–2.5) → SUMMON (2.5–5.5) → INSCRIBE (5.5–8). */
+export const TRAILER_S = 8;
+
+export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas }: { dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void }) {
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = wrap.current; if (!el) return;
@@ -72,20 +75,43 @@ export function GuardianStudio3D({ dna, animate = true }: { dna: GuardianDna; an
     let raf = 0, last = performance.now();
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      th += vth; ph = Math.min(1.45, Math.max(0.35, ph + vph));
-      const damp = Math.exp(-6 * dt); vph *= damp; vth = drag ? vth * damp : vth * damp + (1 - damp) * 0.0025;
-      cam.position.set(Math.sin(th) * Math.sin(ph) * r, Math.cos(ph) * r + 9, Math.cos(th) * Math.sin(ph) * r); cam.lookAt(0, 9, 0);
+      const tt = trailerStart ? (now - trailerStart) / 1000 : -1;
+      if (tt >= 0 && tt < TRAILER_S) {
+        // Scripted camera + reveal; blueprint shapes/colours untouched, only scale/light/camera.
+        const ease = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+        const reveal = ease((tt - 2.5) / 1.2);
+        mesh.visible = tt >= 2.5; mesh.scale.setScalar(Math.max(0.001, reveal));
+        mesh.position.y = (1 - reveal) * -6;
+        const flash = tt >= 2.5 && tt < 3.1 ? 1 - (tt - 2.5) / 0.6 : 0;
+        key.intensity = 2.2 + flash * 8; warm.intensity = 40 + flash * 300 + (tt > 5.5 ? 60 * Math.sin((tt - 5.5) * 9) ** 2 : 0);
+        (ring.material as THREE.MeshBasicMaterial).color.set(tt > 5.5 ? 0xf7931a : 0x28e0ff);
+        ring.scale.setScalar(1 + (tt < 2.5 ? 0.15 * Math.sin(tt * 6) : 0));
+        const shake = flash * 0.8;
+        const a = tt < 2.5 ? 2.4 - tt * 0.5 : tt < 5.5 ? 1.15 + (tt - 2.5) * 0.9 : 3.85 + (tt - 5.5) * 0.25;
+        const rr = tt < 2.5 ? 95 - tt * 14 : tt < 5.5 ? 60 - ease((tt - 2.5) / 3) * 22 : 38 + (tt - 5.5) * 6;
+        const hy = tt < 2.5 ? 40 - tt * 8 : 14 - ease((tt - 2.5) / 3) * 6;
+        cam.position.set(Math.sin(a) * rr + (Math.random() - 0.5) * shake, hy + (Math.random() - 0.5) * shake, Math.cos(a) * rr);
+        cam.lookAt(0, 9, 0);
+      } else {
+        mesh.visible = true; mesh.scale.setScalar(1); mesh.position.y = 0; key.intensity = 2.2; warm.intensity = 40;
+        th += vth; ph = Math.min(1.45, Math.max(0.35, ph + vph));
+        const damp = Math.exp(-6 * dt); vph *= damp; vth = drag ? vth * damp : vth * damp + (1 - damp) * 0.0025;
+        cam.position.set(Math.sin(th) * Math.sin(ph) * r, Math.cos(ph) * r + 9, Math.cos(th) * Math.sin(ph) * r); cam.lookAt(0, 9, 0);
+      }
       if (animate) place(now / 1000);
       renderer.render(scene, cam);
       el.dataset["sceneReady"] = "1";
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
+    onCanvas?.(cv);
     return () => {
+      onCanvas?.(null);
       cancelAnimationFrame(raf); ro.disconnect();
       scene.traverse((o) => { const m = o as THREE.Mesh; m.geometry?.dispose(); (m.material as THREE.Material | undefined)?.dispose?.(); });
       renderer.dispose(); cv.remove();
     };
-  }, [dna, animate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dna, animate, trailerStart]);
   return <div ref={wrap} className="h-full w-full cursor-grab active:cursor-grabbing" aria-label={`${dna.height}.BITMAP Guardian 3D preview`} />;
 }
