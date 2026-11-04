@@ -65,3 +65,14 @@ describe("BW-BARTER-1", () => {
     expect(verifyLayoutForMaker(tampered, ticket, taker)).toBe("maker does not receive matched asset intact");
   });
 });
+
+import { offerProofMessage as _opm } from "./barter-protocol";
+describe("offer proof message", () => {
+  const t = { makerAddress: "bc1pmaker", offeringOutpoint: "a".repeat(64) + ":0", offeringInscription: "b".repeat(64) + "i0", offeringValue: 546, sweetenerSats: 0, sweetenerDir: "demand" as const, criteria: { maxHeight: 9, assetType: "bitmap" as const } };
+  it("is identical regardless of criteria key order", () => {
+    expect(_opm(t, "c".repeat(64), 1)).toBe(_opm({ ...t, criteria: { assetType: "bitmap", maxHeight: 9 } }, "c".repeat(64), 1));
+  });
+  it("changes when the nostr key changes", () => {
+    expect(_opm(t, "c".repeat(64), 1)).not.toBe(_opm(t, "d".repeat(64), 1));
+  });
+});

@@ -186,6 +186,36 @@ export function satpointProblem(args: {
   return null;
 }
 
+/** Max age of an ownership proof at publish time. Older proofs are refused. */
+export const PROOF_MAX_AGE_S = 15 * 60;
+
+/**
+ * The exact text the maker's wallet signs (BIP-322). It binds the offer terms, the
+ * Nostr key that carries them, and a timestamp, so neither can be swapped later.
+ */
+export function offerProofMessage(t: BarterTicket, nostrPubkey: string, issuedAt: number): string {
+  return [
+    "BW-BARTER-1 offer",
+    `maker:${t.makerAddress}`,
+    `offering:${t.offeringInscription}@${t.offeringOutpoint}`,
+    `postage:${t.offeringValue}`,
+    `sweetener:${t.sweetenerDir}:${t.sweetenerSats}`,
+    `wants:${canonicalCriteria(t.criteria)}`,
+    `nostr:${nostrPubkey}`,
+    `issued:${issuedAt}`,
+  ].join("\n");
+}
+
+/** Stable JSON for criteria (sorted keys, undefined dropped) so maker and verifier sign the same text. */
+export function canonicalCriteria(c: BarterCriteria): string {
+  const o: Record<string, unknown> = {};
+  for (const k of Object.keys(c).sort()) {
+    const v = (c as Record<string, unknown>)[k];
+    if (v !== undefined) o[k] = v;
+  }
+  return JSON.stringify(o);
+}
+
 /** Nostr tags for a ticket (kind 30403). The Nostr key is only a messenger. */
 export function ticketTags(t: BarterTicket): string[][] {
   return [
@@ -197,6 +227,6 @@ export function ticketTags(t: BarterTicket): string[][] {
     ["offering_value", String(t.offeringValue)],
     ["sweetener_sats", String(t.sweetenerSats)],
     ["sweetener_dir", t.sweetenerDir],
-    ["criteria_rules", JSON.stringify(t.criteria)],
+    ["criteria_rules", canonicalCriteria(t.criteria)],
   ];
 }
