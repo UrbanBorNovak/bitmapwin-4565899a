@@ -10,6 +10,7 @@ import { animVox, blueprint, onchainGenome, type OnchainG } from "@/lib/onchain-
 import type { ParcelRect } from "@/lib/forge-parcels";
 import { bwvxBoxes, type BwvxBox } from "@/lib/bwvx-export";
 import { BLOCKS } from "@/lib/voxel-world";
+import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 
 /** BITMAP land side in scene units; the 64-cell parcel grid is scaled onto it. */
 const LAND = 32;
@@ -69,6 +70,20 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
     }
     scene.add(tiles);
 
+    // Ground height at any land point (parcel tile, then any build voxel above it).
+    const pSpan = list[0]?.span ?? 64, pk = LAND / pSpan;
+    let gBoxes: BwvxBox[] = [], gBs = 0, gTop0 = 0;
+    const surfaceAt = (x: number, z: number) => {
+      const gx = (x + LAND / 2) / pk, gz = (z + LAND / 2) / pk; let y = 0;
+      for (const p of list) if (p.x0 <= gx && gx < p.x1 && p.z0 <= gz && gz < p.z1) { y = 0.06 + Math.min(0.5, Math.log2(1 + p.size) * 0.05); break; }
+      if (gBoxes.length) {
+        const bx = (x + LAND / 2) / gBs, bz = (z + LAND / 2) / gBs; let peak = -1;
+        for (const b of gBoxes) if (b.x0 <= bx && bx < b.x1 + 1 && b.z0 <= bz && bz < b.z1 + 1) peak = Math.max(peak, b.y1);
+        if (peak >= 0) y = gTop0 + (peak + 1) * gBs;
+      }
+      return y;
+    };
+
     // Inscribed Land Forge build (verified from the BITMAP's sat), drawn on the land.
     if (build?.data) {
       let boxes: BwvxBox[] = [];
@@ -88,6 +103,7 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
           if (b.x0 <= c && c <= b.x1 + 1 && b.z0 <= c && c <= b.z1 + 1) peak = Math.max(peak, b.y1);
         });
         scene.add(bmesh);
+        gBoxes = boxes; gBs = bs; gTop0 = top0;
         // Guardian stands on the roof of whatever is built at the block's centre.
         if (peak >= 0) tiles.userData["top"] = top0 + (peak + 1) * bs;
       }
@@ -103,15 +119,45 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
     const baseY = tiles.userData["top"] as number; mesh.position.y = baseY;
     // Verified on-chain baby (child inscription) stands beside its parent at pet scale.
     let babyMesh: THREE.InstancedMesh | null = null;
+    let BV: ReturnType<typeof blueprint> = [];
+    // Baby wanders on a fly brain seeded by its own genome, staying near its parent.
+    const bState = { x: 9, z: 4, yaw: -0.5, speed: 0 };
+    let bBrain: FlyBrain | null = null;
     if (baby) {
-      const BV = blueprint(baby);
+      BV = blueprint(baby);
       babyMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, BV.length);
       babyMesh.castShadow = true;
-      const bm = new THREE.Matrix4(), bc = new THREE.Color();
-      BV.forEach((v, i) => { bm.compose(new THREE.Vector3(v[0], v[1], v[2]), new THREE.Quaternion(), new THREE.Vector3(v[3], v[4], v[5])); babyMesh!.setMatrixAt(i, bm); bc.set(v[6]); if (v[7]) bc.multiplyScalar(1 + v[7] * 0.6); babyMesh!.setColorAt(i, bc); });
-      babyMesh.scale.setScalar(0.45); babyMesh.position.set(9, baseY, 4); babyMesh.rotation.y = -0.5;
+      const bc = new THREE.Color();
+      BV.forEach((v, i) => { bc.set(v[6]); if (v[7]) bc.multiplyScalar(1 + v[7] * 0.6); babyMesh!.setColorAt(i, bc); });
+      babyMesh.scale.setScalar(0.45);
+      let s = 0; for (const ch of JSON.stringify(baby)) s = (Math.imul(s ^ ch.charCodeAt(0), 16777619) >>> 0);
+      bBrain = createFlyBrain(s / 4294967296 * 7 + 0.13);
       scene.add(babyMesh);
     }
+    const bm4 = new THREE.Matrix4(), bq = new THREE.Quaternion(), bpos = new THREE.Vector3(), bscl = new THREE.Vector3();
+    const stepBaby = (t: number, dt: number) => {
+      if (!babyMesh || !baby || !bBrain) return;
+      const d = Math.hypot(bState.x, bState.z);
+      const act = bBrain.think({ now: t * 1000, hp: 1, maxHp: 1, snared: false, heading: bState.yaw, playerDistance: d, playerAngle: Math.atan2(-bState.x, -bState.z), workDistance: null, workAngle: 0, worker: false, hostile: false, vendor: false }, dt);
+      if (animate) {
+        bState.yaw += act.steer;
+        // Leash: too far turns home, too close to the parent turns away.
+        const home = Math.atan2(-bState.x, -bState.z);
+        const diff = ((home - bState.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        if (d > 12) bState.yaw += diff * Math.min(1, dt * 3);
+        else if (d < 6) bState.yaw -= Math.sign(diff || 1) * dt * 3;
+        const target = act.state === "rest" ? 0 : 1.4 + act.throttle * 3.2;
+        bState.speed += (target - bState.speed) * Math.min(1, dt * 4);
+        bState.x += Math.sin(bState.yaw) * bState.speed * dt; bState.z += Math.cos(bState.yaw) * bState.speed * dt;
+        const lim = LAND / 2 - 2; bState.x = Math.max(-lim, Math.min(lim, bState.x)); bState.z = Math.max(-lim, Math.min(lim, bState.z));
+      }
+      babyMesh.position.set(bState.x, surfaceAt(bState.x, bState.z), bState.z);
+      babyMesh.rotation.y = bState.yaw;
+      const moving = animate && bState.speed > 0.5;
+      BV.forEach((v, i) => { const a = animate ? animVox(v, t, baby, moving, null) : v; bpos.set(a[0], a[1], a[2]); bscl.set(a[3], a[4], a[5]); babyMesh!.setMatrixAt(i, bm4.compose(bpos, bq, bscl)); });
+      babyMesh.instanceMatrix.needsUpdate = true;
+    };
+    stepBaby(0, 0.016);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3();
     const place = (t: number) => {
       V.forEach((v, i) => { const a = animate ? animVox(v, t, G, false, null) : v; pos.set(a[0], a[1], a[2]); scl.set(a[3], a[4], a[5]); m4.compose(pos, q, scl); mesh.setMatrixAt(i, m4); });
@@ -165,6 +211,7 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
         cam.position.set(Math.sin(th) * Math.sin(ph) * r, Math.cos(ph) * r + 9, Math.cos(th) * Math.sin(ph) * r); cam.lookAt(0, 9, 0);
       }
       if (animate) place(now / 1000);
+      stepBaby(now / 1000, Math.min(0.05, dt));
       renderer.render(scene, cam);
       el.dataset["sceneReady"] = "1";
       raf = requestAnimationFrame(loop);
