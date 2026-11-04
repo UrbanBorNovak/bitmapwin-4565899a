@@ -165,6 +165,27 @@ export function verifyLayoutForMaker(l: SwapLayout, ticket: BarterTicket, taker:
   return null;
 }
 
+/**
+ * Checks a chain-read satpoint ("txid:vout:offset") before an asset may be offered or matched.
+ * Supported: the inscription sits at offset 0 of the very UTXO we expect, that UTXO carries
+ * no other inscription, and its postage is at least dust. Anything else is refused.
+ */
+export function satpointProblem(args: {
+  outpoint: string;
+  value: number;
+  satpoint: string | null;
+  inscriptionsInUtxo: number;
+}): string | null {
+  if (!args.satpoint) return "position could not be read from chain";
+  const m = /^([0-9a-f]{64}):(\d+):(\d+)$/.exec(args.satpoint);
+  if (!m) return "unreadable position";
+  if (`${m[1]}:${m[2]}` !== args.outpoint) return "inscription has moved to another output";
+  if (Number(m[3]) !== 0) return `inscription sits at sat ${m[3]}, not the first sat`;
+  if (args.inscriptionsInUtxo !== 1) return `output holds ${args.inscriptionsInUtxo} inscriptions; trading one would move them all`;
+  if (args.value < DUST_SATS) return "output below dust";
+  return null;
+}
+
 /** Nostr tags for a ticket (kind 30403). The Nostr key is only a messenger. */
 export function ticketTags(t: BarterTicket): string[][] {
   return [
