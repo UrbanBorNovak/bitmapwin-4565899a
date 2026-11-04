@@ -394,6 +394,7 @@ function BitmapDetail() {
 
       {tab === "world" && (
         <div id="bitmap-panel-world" role="tabpanel" aria-labelledby="bitmap-tab-world" className="mt-6 space-y-6">
+      <ParcelPagePanel height={block} ownerAddress={owner} />
       <Link
         to="/oasis"
         search={{ height: block }}
@@ -574,7 +575,6 @@ function BitmapDetail() {
           </dl>
         </details>
       </div>
-      <ParcelPagePanel height={block} ownerAddress={owner} />
       <Drawer title="GUARDIANS · WORLDS · BITMONS">
         <BitmapGuardianPanel height={block} />
         <BitmapWorldsPanel height={block} />
