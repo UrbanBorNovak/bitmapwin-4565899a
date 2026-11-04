@@ -20,6 +20,7 @@ import { Route as BreedRouteImport } from './routes/breed'
 import { Route as BuildRouteImport } from './routes/build'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
+import { Route as BulkRouteImport } from './routes/bulk'
 import { Route as CharacterRouteImport } from './routes/character'
 import { Route as ChargeRouteImport } from './routes/charge'
 import { Route as ChurchRouteImport } from './routes/church'
@@ -238,6 +239,11 @@ const BuildersRoute = BuildersRouteImport.update({
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkRoute = BulkRouteImport.update({
+  id: '/bulk',
+  path: '/bulk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CharacterRoute = CharacterRouteImport.update({
@@ -1082,6 +1088,7 @@ export interface FileRoutesByFullPath {
   '/build': typeof BuildRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
+  '/bulk': typeof BulkRoute
   '/character': typeof CharacterRoute
   '/charge': typeof ChargeRoute
   '/church': typeof ChurchRoute
@@ -1259,6 +1266,7 @@ export interface FileRoutesByTo {
   '/build': typeof BuildRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
+  '/bulk': typeof BulkRoute
   '/character': typeof CharacterRoute
   '/charge': typeof ChargeRoute
   '/church': typeof ChurchRoute
@@ -1433,6 +1441,7 @@ export interface FileRoutesById {
   '/build': typeof BuildRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
+  '/bulk': typeof BulkRoute
   '/character': typeof CharacterRoute
   '/charge': typeof ChargeRoute
   '/church': typeof ChurchRoute
@@ -1612,6 +1621,7 @@ export interface FileRouteTypes {
     | '/build'
     | '/builders'
     | '/builds'
+    | '/bulk'
     | '/character'
     | '/charge'
     | '/church'
@@ -1789,6 +1799,7 @@ export interface FileRouteTypes {
     | '/build'
     | '/builders'
     | '/builds'
+    | '/bulk'
     | '/character'
     | '/charge'
     | '/church'
@@ -1962,6 +1973,7 @@ export interface FileRouteTypes {
     | '/build'
     | '/builders'
     | '/builds'
+    | '/bulk'
     | '/character'
     | '/charge'
     | '/church'
@@ -2140,6 +2152,7 @@ export interface RootRouteChildren {
   BuildRoute: typeof BuildRoute
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
+  BulkRoute: typeof BulkRoute
   CharacterRoute: typeof CharacterRoute
   ChargeRoute: typeof ChargeRoute
   ChurchRoute: typeof ChurchRoute
@@ -2333,6 +2346,13 @@ declare module '@tanstack/react-router' {
       path: '/builds'
       fullPath: '/builds'
       preLoaderRoute: typeof BuildsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bulk': {
+      id: '/bulk'
+      path: '/bulk'
+      fullPath: '/bulk'
+      preLoaderRoute: typeof BulkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/character': {
@@ -3653,6 +3673,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuildRoute: BuildRoute,
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
+  BulkRoute: BulkRoute,
   CharacterRoute: CharacterRoute,
   ChargeRoute: ChargeRoute,
   ChurchRoute: ChurchRoute,
