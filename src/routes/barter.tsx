@@ -264,7 +264,7 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
 type PostState = { phase: "idle" | "working" | "done" | "error"; msg: string; relays?: string[] };
 
 function PostWizard({ mine, makerAddress, provider, onClose, onPosted }: {
-  mine: Checked[]; makerAddress: string; provider?: WalletProviderId; onClose: () => void; onPosted: () => void;
+  mine: Checked[]; makerAddress: string; provider: WalletProviderId | undefined; onClose: () => void; onPosted: () => void;
 }) {
   const [step, setStep] = useState(1);
   const [post, setPost] = useState<PostState>({ phase: "idle", msg: "" });
