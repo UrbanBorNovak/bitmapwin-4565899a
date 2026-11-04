@@ -16,9 +16,9 @@ export function parseTicketEvent(e: NostrEvent): FeedTicket | null {
       if (typeof raw[k] === "number") criteria[k] = raw[k] as number;
     for (const k of ["exactInscriptionId", "parentInscriptionId"] as const)
       if (typeof raw[k] === "string") criteria[k] = raw[k] as string;
-    if (raw.patoshiOnly === true) criteria.patoshiOnly = true;
-    if (typeof raw.assetType === "string" && ["bitmap", "guardian", "voxel", "ordinal"].includes(raw.assetType))
-      criteria.assetType = raw.assetType as BarterCriteria["assetType"];
+    if (raw["patoshiOnly"] === true) criteria.patoshiOnly = true;
+    const at = raw["assetType"];
+    if (at === "bitmap" || at === "guardian" || at === "voxel" || at === "ordinal") criteria.assetType = at;
   } catch {
     return null;
   }

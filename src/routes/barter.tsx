@@ -189,7 +189,7 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
   const n = (s: string) => (s === "" ? undefined : Number(s));
 
   const criteria: BarterCriteria = {};
-  if (c.assetType) criteria.assetType = c.assetType as BarterCriteria["assetType"];
+  if (c.assetType) criteria.assetType = c.assetType as NonNullable<BarterCriteria["assetType"]>;
   for (const [k, v] of [["exactHeight", c.exactHeight], ["minHeight", c.minHeight], ["maxHeight", c.maxHeight], ["maxTxCount", c.maxTx]] as const) {
     const x = n(v); if (x !== undefined) criteria[k] = x;
   }
