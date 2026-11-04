@@ -54,7 +54,7 @@ function TradeScene({ still }: { still: boolean }) {
   useFrame(({ clock }) => {
     const t = still ? 0.25 : (clock.elapsedTime * 0.25) % 1;
     const k = 0.5 - 0.5 * Math.cos(t * Math.PI * 2); // 0→1→0 swap loop
-    const x = -1.6 + 3.2 * k, y = 2.2 + Math.sin(k * Math.PI) * 1.4;
+    const x = -1.6 + 3.2 * k, y = 3.6 + Math.sin(k * Math.PI) * 1.4;
     a.current?.position.set(x, y, 0);
     b.current?.position.set(-x, y, 0);
     if (a.current) a.current.rotation.y += 0.02;
@@ -62,14 +62,14 @@ function TradeScene({ still }: { still: boolean }) {
   });
   return (
     <group position={[0, 0, 0]}>
-      <group position={[-2.4, 0, 0]} rotation-y={Math.PI / 2} scale={2.6}>
+      <group position={[-3, 0, 0]} rotation-y={Math.PI / 2} scale={4}>
         <ToonPixelRig inscriptionId={DEFAULT_AVATAR_TEXTURE} pose="wave" movingRef={idle} fallback={null} />
       </group>
-      <group position={[2.4, 0, 0]} rotation-y={-Math.PI / 2} scale={2.6}>
+      <group position={[3, 0, 0]} rotation-y={-Math.PI / 2} scale={4}>
         <ToonPixelRig inscriptionId={DEFAULT_AVATAR_TEXTURE} tint="#bfe9ff" pose="idle" movingRef={idle} fallback={null} />
       </group>
-      <mesh ref={a} raycast={noRaycast}><boxGeometry args={[0.6, 0.6, 0.6]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={0.8} /></mesh>
-      <mesh ref={b} raycast={noRaycast}><boxGeometry args={[0.6, 0.6, 0.6]} /><meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={0.8} /></mesh>
+      <mesh ref={a} raycast={noRaycast}><boxGeometry args={[0.9, 0.9, 0.9]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={0.8} /></mesh>
+      <mesh ref={b} raycast={noRaycast}><boxGeometry args={[0.9, 0.9, 0.9]} /><meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={0.8} /></mesh>
     </group>
   );
 }
