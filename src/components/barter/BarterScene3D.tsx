@@ -90,7 +90,7 @@ export default function BarterScene3D() {
   const spots: [number, number][] = [[-GAP, -GAP], [GAP, GAP], [-GAP, GAP], [GAP, -GAP]];
   return (
     <SafeCanvas dpr={[1, 1.2]} orthographic camera={{ position: [45, 34, 45], zoom: 11, near: 0.1, far: 400 }}
-      gl={{ powerPreference: "low-power", antialias: false, alpha: true }} onCreated={({ camera }) => camera.lookAt(0, -2, 0)}>
+      gl={{ powerPreference: "low-power", antialias: false, alpha: true }} onCreated={({ camera }) => camera.lookAt(0, -14, 0)}>
       <ambientLight intensity={0.7} />
       <directionalLight position={[30, 50, 20]} intensity={1.3} color="#ffd7a3" />
       <pointLight position={[-20, 12, -10]} intensity={60} distance={60} color="#22d3ee" />
