@@ -56,8 +56,8 @@ function WebringsPage() {
 
       <ul className="space-y-4">
         {rings.map((r) => {
-          const cur = at[r.slug] ?? r.members[0];
-          const nb = ringNeighbours(r.members, cur)!;
+          const cur: number = at[r.slug] ?? r.members[0] ?? 0;
+          const nb = ringNeighbours(r.members, cur) ?? { prev: cur, next: cur };
           const go = (h: number) => setAt((s) => ({ ...s, [r.slug]: h }));
           return (
             <li key={r.slug} className="border border-border bg-card/60 p-4">
@@ -74,7 +74,7 @@ function WebringsPage() {
                 <button className="border border-border px-2 py-1 hover:border-primary" onClick={() => go(nb.next)}>NEXT ►</button>
                 <button
                   className="border border-border px-2 py-1 hover:border-primary"
-                  onClick={() => navigate({ to: "/bitmap/$block", params: { block: String(r.members[Math.floor(Math.random() * r.members.length)]) } })}
+                  onClick={() => navigate({ to: "/bitmap/$block", params: { block: String(r.members[Math.floor(Math.random() * r.members.length)] ?? cur) } })}
                 >🎲 RANDOM</button>
                 <button className="ml-auto text-muted-foreground underline" onClick={() => setOpen(open === r.slug ? null : r.slug)}>
                   {open === r.slug ? "hide hub" : "ring hub"}

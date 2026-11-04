@@ -43,5 +43,5 @@ export function ringNeighbours(members: number[], height: number) {
   const i = members.indexOf(height);
   if (i < 0 || members.length === 0) return null;
   const n = members.length;
-  return { prev: members[(i - 1 + n) % n], next: members[(i + 1) % n] };
+  return { prev: members[(i - 1 + n) % n] as number, next: members[(i + 1) % n] as number };
 }
