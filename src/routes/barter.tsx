@@ -2,14 +2,6 @@ import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
-import { createPortal } from "react-dom";
-/** Rendered into <body> so a transformed page ancestor can't offset the fixed backdrop. */
-function SceneBackdrop() {
-  return createPortal(
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen"><Suspense fallback={null}><BarterScene3D /></Suspense></div>,
-    document.body,
-  );
-}
 const BarterScene3D = lazy(() => import("@/components/barter/BarterScene3D"));
 import { ProposeSwap, SwapInbox } from "@/components/barter/SwapPanels";
 import type { ConnectedWallet } from "@/lib/browser-wallet";
@@ -161,9 +153,11 @@ function BarterPage() {
   });
 
   return (
-    <div className="relative min-h-screen">
-      <ClientOnly fallback={null}><SceneBackdrop /></ClientOnly>
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background/30" />
+    <div className="relative isolate min-h-screen">
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="sticky top-0 h-dvh w-full"><ClientOnly fallback={null}><Suspense fallback={null}><BarterScene3D /></Suspense></ClientOnly></div>
+      </div>
+    
     <main className="mx-auto max-w-5xl px-4 py-10 font-mono">
       <header className="mb-6 border border-border bg-card/60 p-5">
         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">BW-BARTER-1 · draft</p>
