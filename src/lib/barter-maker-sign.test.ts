@@ -23,7 +23,7 @@ vi.mock("sats-connect", () => ({
 
 import { buildSwapPsbt, byteArrayToHex, parsePsbt, serializePsbt, finalizeSignedPsbt, isFullySigned, extractRawTxHex } from "@/lib/psbt-buyer";
 import { addressToScriptPubKey } from "@/lib/psbt-builder";
-import { scriptToAddress } from "@/lib/psbt";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { hash160 } from "@/lib/psbt-scripts";
 import { makerKeysFor, signMakerSwap } from "@/lib/barter-maker-sign";
 import type { ConnectedWallet } from "@/lib/browser-wallet";
@@ -51,7 +51,15 @@ const spk = (a: string) => byteArrayToHex(addressToScriptPubKey(a));
 const nestedPub = hex(secp256k1.getPublicKey(secp256k1.utils.randomSecretKey(), true));
 const nestedRedeem = [0x00, 0x14, ...hash160([...Buffer.from(nestedPub, "hex")])];
 const nestedScript = [0xa9, 0x14, ...hash160(nestedRedeem), 0x87];
-const NESTED_ADDR = scriptToAddress(byteArrayToHex(nestedScript))!;
+const base58check = (payload: number[]) => {
+  const full = [...payload, ...sha256(sha256(Uint8Array.from(payload))).slice(0, 4)];
+  const A = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  let n = BigInt("0x" + Buffer.from(full).toString("hex")), out = "";
+  while (n > 0n) { out = A[Number(n % 58n)] + out; n /= 58n; }
+  for (const b of full) { if (b !== 0) break; out = "1" + out; }
+  return out;
+};
+const NESTED_ADDR = base58check([0x05, ...nestedScript.slice(2, 22)]);
 
 const swapFor = (makerAddr: string) => buildSwapPsbt({
   maker: { txid: "a".repeat(64), vout: 0, valueSats: 546, scriptPubKeyHex: spk(makerAddr) },
