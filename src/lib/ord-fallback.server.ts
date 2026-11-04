@@ -33,9 +33,23 @@ export async function ordInscription(id: string): Promise<OrdInscriptionInfo | n
 
 /** Inscription ids at an address, with their outpoints, from the fallback indexer. */
 export async function walletInscriptions(address: string): Promise<{ id: string; outpoint: string }[] | null> {
-  const j = await getJson<{ inscriptions?: { id?: string; outpoint?: string }[] }>(`${TURBO}/wallet/${address}`, 15_000);
+  type Op = string | { outpoint?: string };
+  const j = await getJson<{ inscriptions?: { id?: string; outpoint?: Op }[] }>(`${TURBO}/wallet/${address}`, 15_000);
   if (!j?.inscriptions) return null;
-  return j.inscriptions.flatMap((x) => (x.id && x.outpoint ? [{ id: x.id, outpoint: x.outpoint }] : []));
+  return j.inscriptions.flatMap((x) => {
+    const op = rawOutpoint(typeof x.outpoint === "string" ? x.outpoint : x.outpoint?.outpoint);
+    return x.id && op ? [{ id: x.id, outpoint: op }] : [];
+  });
+}
+
+/** Accepts "txid:vout" or ord's raw 36-byte outpoint hex (little-endian txid + u32 vout). */
+export function rawOutpoint(v: string | undefined): string | null {
+  if (!v) return null;
+  if (/^[0-9a-f]{64}:\d+$/.test(v)) return v;
+  if (!/^[0-9a-f]{72}$/.test(v)) return null;
+  const txid = v.slice(0, 64).match(/../g)!.reverse().join("");
+  const vout = parseInt(v.slice(64).match(/../g)!.reverse().join(""), 16);
+  return `${txid}:${vout}`;
 }
 
 export type ChainOutput = { address: string | null; inscriptions: string[]; outpoint: string; spent: boolean; value: number };
@@ -54,7 +68,10 @@ export async function chainOutput(outpoint: string): Promise<ChainOutput | null>
     const address = out.scriptpubkey_address ?? null;
     const list = address ? await walletInscriptions(address) : null;
     if (!list) return null; // inscription count unknown: fail closed
-    return { address, outpoint, spent: sp.spent === true, value: out.value, inscriptions: list.filter((x) => x.outpoint === outpoint).map((x) => x.id) };
+    const here = list.filter((x) => x.outpoint === outpoint).map((x) => x.id);
+    // An unspent output we were asked about must show up in the listing; if not, the listing is incomplete.
+    if (!sp.spent && !here.length) return null;
+    return { address, outpoint, spent: sp.spent === true, value: out.value, inscriptions: here };
   }
   return null;
 }
