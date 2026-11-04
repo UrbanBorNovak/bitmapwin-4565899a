@@ -1223,6 +1223,8 @@ function MyspaceEditor({
         {text("avatarInscriptionId", "PROFILE PICTURE — IMAGE INSCRIPTION ID", 120, "…i0")}
         {text("songTitle", "PROFILE SONG TITLE", 80, "GENESIS CHIPTUNE")}
         {text("songInscriptionId", "PROFILE SONG — AUDIO INSCRIPTION ID", 120, "…i0 (OPTIONAL)")}
+        {text("videoTitle", "FLASHBOX VIDEO TITLE", 80, "MY BLOCK, MY MOVIE")}
+        {text("videoSource", "FLASHBOX — VIDEO INSCRIPTION ID OR YOUTUBE LINK", 200, "…i0 OR https://youtu.be/…")}
       </div>
       {area("aboutMe", "ABOUT ME", 2000, "WHO YOU ARE, WHY THIS BLOCK")}
       {area("wantToMeet", "WHO I'D LIKE TO MEET", 2000, "BUILDERS, COLLECTORS, NEIGHBOURS")}

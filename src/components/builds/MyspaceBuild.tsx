@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { CSSProperties, ReactNode } from "react";
-import type { MyspaceConfig, MyspaceSkin } from "@/lib/build-sdk";
+import { flashboxSource, type MyspaceConfig, type MyspaceSkin } from "@/lib/build-sdk";
 import { inscriptionImageUrl, viewStatsQuery } from "@/lib/profiles";
 
 /**
@@ -174,6 +174,8 @@ export function MyspaceBuild({ config, height }: { config: MyspaceConfig; height
             </Box>
           ) : null}
 
+          <Flashbox title={config.videoTitle} source={config.videoSource} skin={skin} />
+
           {config.aboutMe || config.wantToMeet ? (
             <Box title={`${name}'s Blurbs`} skin={skin}>
               {config.aboutMe ? (
@@ -226,5 +228,37 @@ export function MyspaceBuild({ config, height }: { config: MyspaceConfig; height
         </div>
       </div>
     </div>
+  );
+}
+
+/** 2006-style Flash player chrome around an on-chain video or a YouTube embed. */
+function Flashbox({ title, source, skin }: { title: string; source: string; skin: (typeof SKINS)[MyspaceSkin] }) {
+  const src = flashboxSource(source);
+  if (!src) return null;
+  return (
+    <Box title="▶ Flashbox" skin={skin}>
+      {title ? <p className="mb-1 font-bold">{title}</p> : null}
+      <div style={{ border: "2px outset #d4d0c8", background: "#d4d0c8", padding: 3 }}>
+        <div className="flex items-center justify-between px-1 pb-1 text-[10px] font-bold" style={{ color: "#000" }}>
+          <span>Flash Player 9</span>
+          <span>{src.type === "inscription" ? "ON-CHAIN" : "YOUTUBE"}</span>
+        </div>
+        <div style={{ background: "#000", aspectRatio: "16 / 9" }}>
+          {src.type === "inscription" ? (
+            <video controls preload="none" playsInline className="h-full w-full" src={inscriptionImageUrl(src.id)} />
+          ) : (
+            <iframe
+              title={title || "Flashbox video"}
+              className="h-full w-full"
+              src={`https://www.youtube-nocookie.com/embed/${src.id}`}
+              allow="encrypted-media; picture-in-picture; fullscreen"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              referrerPolicy="strict-origin-when-cross-origin"
+              loading="lazy"
+            />
+          )}
+        </div>
+      </div>
+    </Box>
   );
 }
