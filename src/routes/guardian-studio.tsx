@@ -6,6 +6,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { GuardianStudio3D } from "@/components/bitmon/GuardianStudio3D";
+import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { parcelRects } from "@/lib/forge-parcels";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 
 export const Route = createFileRoute("/guardian-studio")({
@@ -28,6 +30,8 @@ function StudioPage() {
   const [height, setHeight] = useState(840000);
   const [animate, setAnimate] = useState(true);
   const q = useQuery({ ...guardianDnaQuery(height), staleTime: Infinity });
+  const sizes = useQuery(blockSizeMapQuery(height));
+  const parcels = useMemo(() => parcelRects(sizes.data?.classes), [sizes.data]);
   const [trailer, setTrailer] = useState(0);
   const [rec, setRec] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -65,7 +69,7 @@ function StudioPage() {
       <div className="mt-4 grid gap-4 md:grid-cols-[1fr_200px]">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border bg-card">
           {trailer > 0 && q.data && <MintTrailerOverlay start={trailer} height={height} name={name} />}
-          {q.data ? <GuardianStudio3D dna={q.data} animate={animate} trailerStart={trailer} onCanvas={(c) => { canvasRef.current = c; }} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
+          {q.data ? <GuardianStudio3D dna={q.data} animate={animate} trailerStart={trailer} parcels={parcels} onCanvas={(c) => { canvasRef.current = c; }} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
         </div>
         <div className="space-y-2">
           <p className="label text-muted-foreground">CURRENT 2D RENDERER</p>
