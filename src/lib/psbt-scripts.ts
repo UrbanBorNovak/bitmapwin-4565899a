@@ -9,6 +9,7 @@
 
 import { ripemd160 } from "@noble/hashes/legacy.js";
 import { sha256 } from "@noble/hashes/sha2.js";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
 
 function hexToBytes(hex: string): number[] {
   const clean = hex.trim().replace(/^0x/, "");
@@ -85,7 +86,6 @@ export function p2shP2wpkhRedeemScript(
 }
 
 /* ── maker signing keys for BW-BARTER-1 swaps ───────────────────────── */
-import { secp256k1 } from "@noble/curves/secp256k1.js";
 
 function taggedHash(tag: string, data: number[]): Uint8Array {
   const t = sha256(new TextEncoder().encode(tag));
