@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
 import { getWalletFn } from "@/lib/wallet.functions";
@@ -26,6 +26,9 @@ export const Route = createFileRoute("/barter")({
 });
 
 /** Chain-read wallet items as protocol facts. Tx counts are not in the scan, so tx rules never match here. */
+/** Matches the server's per-request cap in inscriptionSatpointsFn. */
+const SATPOINT_PAGE = 60;
+
 type Raw = AssetFacts & { inUtxo: number };
 /** An asset after its chain satpoint check; `block` is the reason it may not trade, or null. */
 type Checked = Raw & { satpoint?: string | null; block: string | null };
@@ -67,19 +70,35 @@ function BarterPage() {
     staleTime: 60_000,
   });
   const raw = useMemo(() => walletAssets(holdings.data), [holdings.data]);
-  const sats = useQuery({
-    queryKey: ["barter-satpoints", raw.map((a) => a.inscriptionId).join(",")],
-    queryFn: () => inscriptionSatpointsFn({ data: { ids: raw.slice(0, 60).map((a) => a.inscriptionId) } }),
-    enabled: raw.length > 0,
-    staleTime: 60_000,
+  // Every inscription is checked, in pages of SATPOINT_PAGE; each page is its own request.
+  const pages = useMemo(() => {
+    const ids = [...new Set(raw.map((a) => a.inscriptionId))];
+    const out: string[][] = [];
+    for (let i = 0; i < ids.length; i += SATPOINT_PAGE) out.push(ids.slice(i, i + SATPOINT_PAGE));
+    return out;
+  }, [raw]);
+  const satQs = useQueries({
+    queries: pages.map((ids) => ({
+      queryKey: ["barter-satpoints", ids.join(",")],
+      queryFn: () => inscriptionSatpointsFn({ data: { ids } }),
+      staleTime: 60_000,
+      retry: 1,
+    })),
   });
-  const mine = useMemo<Checked[]>(() => raw.map((a, i) => {
-    if (i >= 60) return { ...a, block: "too many items to check at once" };
-    if (!sats.data) return { ...a, block: sats.isError ? "position could not be read from chain" : "checking position…" };
-    const sp = sats.data[a.inscriptionId] ?? null;
+  const pageOf = useMemo(() => {
+    const m = new Map<string, number>();
+    pages.forEach((ids, p) => ids.forEach((id) => m.set(id, p)));
+    return m;
+  }, [pages]);
+  const checkedPages = satQs.filter((q) => q.data).length;
+  const mine = useMemo<Checked[]>(() => raw.map((a) => {
+    const q = satQs[pageOf.get(a.inscriptionId) ?? -1];
+    if (!q?.data) return { ...a, block: q?.isError ? "position could not be read from chain" : "checking position…" };
+    const sp = q.data[a.inscriptionId] ?? null;
     const block = satpointProblem({ outpoint: a.outpoint, value: a.value, satpoint: sp, inscriptionsInUtxo: a.inUtxo });
     return { ...a, offset: block ? a.offset : 0, satpoint: sp, block };
-  }), [raw, sats.data, sats.isError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [raw, pageOf, satQs.map((q) => q.dataUpdatedAt + ":" + q.errorUpdatedAt).join(",")]);
 
   const [filter, setFilter] = useState<{ type: string; maxHeight: string; fillable: boolean }>({ type: "", maxHeight: "", fillable: false });
   const [drawer, setDrawer] = useState<FeedTicket | null>(null);
@@ -125,6 +144,11 @@ function BarterPage() {
 
       {!wallet && <p className="mb-3 text-xs text-muted-foreground">Connect a wallet on the <Link to="/wallet" className="underline">wallet page</Link> to see which offers you can fill.</p>}
       {holdings.isLoading && <p className="mb-3 text-xs text-accent">Scanning your wallet on-chain…</p>}
+      {pages.length > 0 && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          Positions checked: {checkedPages}/{pages.length} batches · {mine.filter((a) => !a.block).length} of {mine.length} items usable
+        </p>
+      )}
 
       {feed.isLoading && <p className="text-sm text-muted-foreground">Reading offers from Nostr relays…</p>}
       {feed.error && <p className="text-sm text-destructive">Could not reach the relays.</p>}
