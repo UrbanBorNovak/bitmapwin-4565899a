@@ -4,33 +4,31 @@ import { buildPurchaseFn, releasePurchaseReservationFn, submitPurchaseFn } from 
 import { keyCandidates, signPurchasePsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { resolveWallet } from "@/components/BuyButton";
 import { trackPurchase } from "@/components/TransferTracker";
+import { makeBuyOne } from "@/lib/sweep-buy";
 import { createSweepRunner, type RunnerSnapshot } from "@/lib/sweep-runner";
 import { formatSats } from "@/lib/trades";
 import type { CartItem } from "@/lib/sweep-cart";
 
-/** One purchase: server hold + quote, wallet signature, submit. Throws on any failure so the runner skips it. */
+/** One live purchase: server hold + quote, wallet signature, submit. */
 async function buyOne(item: CartItem): Promise<{ txid: string | null; spentSats: number }> {
   const wallet = await resolveWallet();
   const tapKey = xOnlyPubKeyHex(wallet.publicKey);
-  const quote = await buildPurchaseFn({
-    data: {
-      offerId: item.offerId,
-      buyerPaymentAddress: wallet.paymentAddress,
-      buyerOrdinalsAddress: wallet.ordinalsAddress,
-      expectedPriceSats: item.priceSats,
-      ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
-      ...(keyCandidates(wallet).length > 0 ? { paymentPublicKeyHex: keyCandidates(wallet) } : {}),
-    },
-  });
-  try {
-    const signed = await signPurchasePsbt(wallet.provider, quote.psbtBase64, wallet.paymentAddress, quote.signIndices);
-    const res = await submitPurchaseFn({ data: { offerId: item.offerId, psbt: signed, buyerAddress: wallet.ordinalsAddress } });
-    if (res.txid) trackPurchase({ txid: res.txid, buyerAddress: wallet.ordinalsAddress, inscriptionId: item.inscriptionId, height: item.height });
-    return { txid: res.txid ?? null, spentSats: quote.priceSats + quote.marketFeeSats + quote.feeSats };
-  } catch (e) {
-    void releasePurchaseReservationFn({ data: { offerId: item.offerId, buyerAddress: wallet.ordinalsAddress } }).catch(() => {});
-    throw e;
-  }
+  return makeBuyOne({
+    quote: (it) => buildPurchaseFn({
+      data: {
+        offerId: it.offerId,
+        buyerPaymentAddress: wallet.paymentAddress,
+        buyerOrdinalsAddress: wallet.ordinalsAddress,
+        expectedPriceSats: it.priceSats,
+        ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
+        ...(keyCandidates(wallet).length > 0 ? { paymentPublicKeyHex: keyCandidates(wallet) } : {}),
+      },
+    }),
+    sign: (q) => signPurchasePsbt(wallet.provider, q.psbtBase64, wallet.paymentAddress, q.signIndices),
+    submit: (it, psbt) => submitPurchaseFn({ data: { offerId: it.offerId, psbt, buyerAddress: wallet.ordinalsAddress } }),
+    release: (it) => releasePurchaseReservationFn({ data: { offerId: it.offerId, buyerAddress: wallet.ordinalsAddress } }),
+    onBought: (it, txid) => trackPurchase({ txid, buyerAddress: wallet.ordinalsAddress, inscriptionId: it.inscriptionId, height: it.height }),
+  })(item);
 }
 
 export function SweepRunnerPanel({ picks, budgetSats, feeRate }: { picks: CartItem[]; budgetSats: number | null; feeRate: number | null }) {
@@ -43,7 +41,7 @@ export function SweepRunnerPanel({ picks, budgetSats, feeRate }: { picks: CartIt
   const active = state === "running" || state === "paused";
 
   const start = () => {
-    if (!window.confirm(`Start a sweep of ${picks.length} BITMAPs? Your wallet asks you to sign each one. Keep this tab open until it finishes.`)) return;
+    if (!window.confirm(`Start a sweep of ${picks.length} BITMAPs? Your wallet asks you to sign each one. Each signature is a REAL Bitcoin purchase. Keep this tab open until it finishes.`)) return;
     runner.current = createSweepRunner(picks, { buyOne, feeRate: () => feeRef.current }, { budgetSats }, (s) => {
       setSnap(s);
       if (s.state !== "running") void qc.invalidateQueries({ queryKey: ["offers"] });
@@ -52,7 +50,7 @@ export function SweepRunnerPanel({ picks, budgetSats, feeRate }: { picks: CartIt
   };
 
   const bought = snap?.outcomes.filter((o) => o.kind === "bought") ?? [];
-  const skipped = snap?.outcomes.filter((o) => o.kind === "skipped") ?? [];
+  const skipped = snap?.outcomes.filter((o) => o.kind !== "bought") ?? [];
   const exportCsv = () => {
     const rows = ["height,status,txid_or_reason", ...(snap?.outcomes ?? []).map((o) => `${o.item.height},${o.kind},${o.kind === "bought" ? o.txid ?? "" : `"${o.reason.replace(/"/g, "'")}"`}`)];
     const a = document.createElement("a");
@@ -85,7 +83,7 @@ export function SweepRunnerPanel({ picks, budgetSats, feeRate }: { picks: CartIt
             {snap.outcomes.slice().reverse().map((o) => (
               <li key={o.item.offerId} className="flex gap-2">
                 <span className="w-24">{o.item.height}.BITMAP</span>
-                {o.kind === "bought" ? <span className="truncate text-bitcoin">BOUGHT · {o.txid ?? "PENDING"}</span> : <span className="truncate text-muted-foreground">SKIPPED · {o.reason.toUpperCase()}</span>}
+                {o.kind === "bought" ? <span className="truncate text-bitcoin">BOUGHT · {o.txid ?? "PENDING"}</span> : o.kind === "uncertain" ? <span className="truncate text-destructive">{o.reason}</span> : <span className="truncate text-muted-foreground">SKIPPED · {o.reason.toUpperCase()}</span>}
               </li>
             ))}
           </ol>

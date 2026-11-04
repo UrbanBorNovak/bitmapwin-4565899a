@@ -4,10 +4,12 @@
  * items that fail (sold, moved, rejected) and never passes the budget cap.
  */
 import type { CartItem } from "@/lib/sweep-cart";
+import { AmbiguousBroadcastError } from "@/lib/sweep-buy";
 
 export type RunOutcome =
   | { kind: "bought"; item: CartItem; txid: string | null; spentSats: number }
-  | { kind: "skipped"; item: CartItem; reason: string };
+  | { kind: "skipped"; item: CartItem; reason: string }
+  | { kind: "uncertain"; item: CartItem; reason: string; spentSats: number };
 
 export type RunState = "idle" | "running" | "paused" | "stopped" | "done";
 
@@ -52,6 +54,11 @@ export function createSweepRunner(items: CartItem[], deps: RunnerDeps, opts: Run
         spentSats += r.spentSats;
         outcomes.push({ kind: "bought", item, txid: r.txid, spentSats: r.spentSats });
       } catch (e) {
+        if (e instanceof AmbiguousBroadcastError) {
+          spentSats += e.spentSats;
+          outcomes.push({ kind: "uncertain", item, reason: e.message, spentSats: e.spentSats });
+          index += 1; state = "stopped"; note = `HALTED · ${item.height}.BITMAP MAY HAVE BROADCAST · VERIFY IN YOUR WALLET`; emit(); return;
+        }
         outcomes.push({ kind: "skipped", item, reason: (e as Error)?.message ?? "FAILED" });
       }
       index += 1;
