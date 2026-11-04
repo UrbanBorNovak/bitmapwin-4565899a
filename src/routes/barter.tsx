@@ -7,6 +7,13 @@ import { ProposeSwap, SwapInbox } from "@/components/barter/SwapPanels";
 import type { ConnectedWallet } from "@/lib/browser-wallet";
 import { getWalletFn } from "@/lib/wallet.functions";
 import type { WalletSnapshot } from "@/lib/wallet";
+function Thumb({ id, size = "size-10" }: { id: string; size?: string }) {
+  return (
+    <span className={`relative inline-block shrink-0 overflow-hidden border border-border bg-background ${size}`}>
+      <iframe src={`https://ordinals.com/preview/${id}`} title={`Inscription ${id.slice(0, 8)}`} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none absolute left-0 top-0 h-[400%] w-[400%] origin-top-left scale-25 border-0" />
+    </span>
+  );
+}
 import { inscriptionSatpointsFn, verifyBarterOffersFn, type OfferVerdict } from "@/lib/barter.functions";
 import { signMessageWithWallet, type WalletProviderId } from "@/lib/browser-wallet";
 import { deviceNostrKey, publishEvent } from "@/lib/nostr-listing";
@@ -204,9 +211,9 @@ function BarterPage() {
           return (
             <li key={t.eventId} className="border border-border bg-card/60 p-4 text-xs">
               <p className="text-muted-foreground">OFFERING</p>
-              <a href={`https://ordinals.com/inscription/${t.offeringInscription}`} target="_blank" rel="noreferrer" className="text-sm text-primary underline">
+              <div className="flex items-center gap-2"><Thumb id={t.offeringInscription} size="size-12" /><a href={`https://ordinals.com/inscription/${t.offeringInscription}`} target="_blank" rel="noreferrer" className="text-sm text-primary underline">
                 {t.offeringInscription.slice(0, 12)}…
-              </a>
+              </a></div>
               <p className="mt-2 text-muted-foreground">WANTS</p>
               <p className="text-sm text-foreground">{describeCriteria(t.criteria)}</p>
               {t.sweetenerSats > 0 && <p className="mt-1">{t.sweetenerDir === "demand" ? "+ asks" : "+ adds"} {t.sweetenerSats.toLocaleString()} sats</p>}
@@ -258,7 +265,7 @@ function MatchDrawer({ ticket, mine, wallet, verdict, onClose }: { ticket: FeedT
         {ok.map((a) => (
           <li key={a.inscriptionId} className={`border p-2 ${a.block ? "border-destructive/50" : "border-border"}`}>
             <div className="flex items-center justify-between">
-              <span className={a.block ? "text-muted-foreground line-through" : "text-accent"}>{assetLabel(a)}</span>
+              <span className="flex items-center gap-2"><Thumb id={a.inscriptionId} /><span className={a.block ? "text-muted-foreground line-through" : "text-accent"}>{assetLabel(a)}</span></span>
               <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
             </div>
             <p className={`mt-1 ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ Position checked: first sat of its own output"}</p>
@@ -320,7 +327,7 @@ function PostWizard({ mine, makerAddress, provider, onClose, onPosted }: {
                   className={`w-full border p-2 text-left disabled:cursor-not-allowed disabled:opacity-60 ${pickId === a.inscriptionId ? "border-primary text-primary" : "border-border"}`}
                   onClick={() => setPickId(a.inscriptionId)}
                 >
-                  {assetLabel(a)} <span className="text-muted-foreground">· {a.value.toLocaleString()} sats</span>
+                  <span className="flex items-center gap-2"><Thumb id={a.inscriptionId} size="size-8" /><span>{assetLabel(a)} <span className="text-muted-foreground">· {a.value.toLocaleString()} sats</span></span></span>
                   <span className={`block text-[11px] ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ first sat of its own output"}</span>
                 </button>
               </li>
