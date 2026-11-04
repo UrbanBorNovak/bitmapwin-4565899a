@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
 import { getWalletFn } from "@/lib/wallet.functions";
 import type { WalletSnapshot } from "@/lib/wallet";
-import { inscriptionSatpointsFn } from "@/lib/barter.functions";
+import { inscriptionSatpointsFn, verifyBarterOffersFn, type OfferVerdict } from "@/lib/barter.functions";
+import { signMessageWithWallet, type WalletProviderId } from "@/lib/browser-wallet";
+import { deviceNostrKey, publishEvent } from "@/lib/nostr-listing";
+import { signBarterEvent, nostrPubkeyOf } from "@/lib/barter-feed";
 import { fetchBarterTickets, describeCriteria, type FeedTicket } from "@/lib/barter-feed";
 import {
-  matchesCriteria, ticketProblem, ticketTags, satpointProblem, DUST_SATS,
+  matchesCriteria, ticketProblem, ticketTags, satpointProblem, offerProofMessage, DUST_SATS,
   type AssetFacts, type BarterCriteria, type BarterTicket,
 } from "@/lib/barter-protocol";
 
@@ -104,6 +107,33 @@ function BarterPage() {
   const [drawer, setDrawer] = useState<FeedTicket | null>(null);
   const [wizard, setWizard] = useState(false);
 
+  // Wallet proofs on feed offers are checked by the server (signature + live chain position).
+  const proofs = useQuery({
+    queryKey: ["barter-proofs", (feed.data ?? []).map((t) => t.eventId).join(",")],
+    enabled: !!feed.data?.length,
+    staleTime: 120_000,
+    queryFn: async () => {
+      const withProof = (feed.data ?? []).filter((t) => t.proofSig && t.proofIssued !== undefined);
+      const out: Record<string, OfferVerdict> = {};
+      for (let i = 0; i < withProof.length; i += 30) {
+        const offers = withProof.slice(i, i + 30).map((t) => ({
+          key: t.eventId, makerAddress: t.makerAddress, offeringOutpoint: t.offeringOutpoint,
+          offeringInscription: t.offeringInscription, offeringValue: t.offeringValue,
+          sweetenerSats: t.sweetenerSats, sweetenerDir: t.sweetenerDir, criteria: t.criteria,
+          nostrPubkey: t.pubkey, issuedAt: t.proofIssued!, signature: t.proofSig!,
+        }));
+        Object.assign(out, await verifyBarterOffersFn({ data: { offers, fresh: false } }));
+      }
+      return out;
+    },
+  });
+  const proofLabel = (t: FeedTicket): { ok: boolean; text: string } => {
+    if (!t.proofSig) return { ok: false, text: "No wallet proof" };
+    const v = proofs.data?.[t.eventId];
+    if (!v) return { ok: false, text: proofs.isError ? "Proof could not be checked" : "Checking wallet proof…" };
+    return v.ok ? { ok: true, text: "✓ Wallet proof verified · item still in place" } : { ok: false, text: `Proof failed: ${v.reason}` };
+  };
+
   const tickets = (feed.data ?? []).filter((t) => {
     if (filter.type && t.criteria.assetType !== filter.type) return false;
     const mh = Number(filter.maxHeight);
@@ -121,7 +151,7 @@ function BarterPage() {
           Offers to swap one inscription for another that meets set rules. Items are matched only using facts read from Bitcoin. Missing facts never count as a match.
         </p>
         <div className="mt-3">
-          <Unavailable>Wallet signing and settlement are not built yet. You can browse, filter, draft and check matches, but nothing can be signed, posted or traded.</Unavailable>
+          <Unavailable>Swap signing and settlement are not built yet. You can post offers signed by your wallet, browse and check matches, but no swap can be signed or traded.</Unavailable>
         </div>
       </header>
 
@@ -170,6 +200,7 @@ function BarterPage() {
               <p className="mt-2 text-muted-foreground">WANTS</p>
               <p className="text-sm text-foreground">{describeCriteria(t.criteria)}</p>
               {t.sweetenerSats > 0 && <p className="mt-1">{t.sweetenerDir === "demand" ? "+ asks" : "+ adds"} {t.sweetenerSats.toLocaleString()} sats</p>}
+              {(() => { const p = proofLabel(t); return <p className={`mt-2 ${p.ok ? "text-accent" : "text-destructive"}`}>{p.text}</p>; })()}
               {t.note && <p className="mt-2 italic text-muted-foreground">“{t.note}”</p>}
               <div className="mt-3 flex items-center justify-between">
                 <span className={n > 0 ? "text-accent" : "text-muted-foreground"}>{wallet ? `${n} match${n === 1 ? "" : "es"} in your wallet` : ""}</span>
@@ -181,7 +212,7 @@ function BarterPage() {
       </ul>
 
       {drawer && <MatchDrawer ticket={drawer} mine={mine} hasWallet={!!wallet} onClose={() => setDrawer(null)} />}
-      {wizard && <PostWizard mine={mine} makerAddress={wallet?.ordinalsAddress ?? ""} onClose={() => setWizard(false)} />}
+      {wizard && <PostWizard mine={mine} makerAddress={wallet?.ordinalsAddress ?? ""} provider={wallet?.provider as WalletProviderId | undefined} onClose={() => setWizard(false)} onPosted={() => feed.refetch()} />}
     </main>
   );
 }
@@ -206,6 +237,7 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
   return (
     <Sheet title="MATCHING ASSETS" onClose={onClose}>
       <p className="text-muted-foreground">Wants: <span className="text-foreground">{describeCriteria(ticket.criteria)}</span></p>
+      {!ticket.proofSig && <p className="mt-2 text-destructive">This offer has no wallet proof; treat its maker as unverified.</p>}
       {usesTx && <p className="mt-2 text-muted-foreground">This offer has a transaction-count rule. The wallet scan doesn't read tx counts, so nothing can match it here yet.</p>}
       {!hasWallet && <p className="mt-3">Connect a wallet to check your items.</p>}
       {hasWallet && ok.length === 0 && <p className="mt-3">None of your items meet these rules.</p>}
@@ -229,8 +261,13 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
   );
 }
 
-function PostWizard({ mine, makerAddress, onClose }: { mine: Checked[]; makerAddress: string; onClose: () => void }) {
+type PostState = { phase: "idle" | "working" | "done" | "error"; msg: string; relays?: string[] };
+
+function PostWizard({ mine, makerAddress, provider, onClose, onPosted }: {
+  mine: Checked[]; makerAddress: string; provider?: WalletProviderId; onClose: () => void; onPosted: () => void;
+}) {
   const [step, setStep] = useState(1);
+  const [post, setPost] = useState<PostState>({ phase: "idle", msg: "" });
   const [pickId, setPickId] = useState<string | null>(null);
   // Re-read the live check every render so a position change also blocks later steps.
   const pick = mine.find((a) => a.inscriptionId === pickId) ?? null;
@@ -309,8 +346,40 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: Checked[]; makerAdd
             <summary className="cursor-pointer text-muted-foreground">Offer data that would be posted</summary>
             <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-all border border-border p-2 text-[10px]">{JSON.stringify(ticketTags(ticket), null, 1)}</pre>
           </details>
-          <button disabled className="w-full cursor-not-allowed border border-border px-3 py-2 opacity-50">SIGN & POST OFFER</button>
-          <Unavailable>Signing and posting offers is not implemented, so this draft is not saved or shared anywhere.</Unavailable>
+          <p className="text-muted-foreground">Posting re-reads the item's position from Bitcoin, asks your wallet to sign a message proving you hold it (no transaction, no fee), and sends the offer to public Nostr relays. Anyone can see it.</p>
+          <button
+            disabled={!!problem || !provider || post.phase === "working" || post.phase === "done"}
+            className="w-full border border-primary px-3 py-2 text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={async () => {
+              if (!ticket || !provider) return;
+              try {
+                setPost({ phase: "working", msg: "Re-checking the item's position on Bitcoin…" });
+                const sp = await inscriptionSatpointsFn({ data: { ids: [ticket.offeringInscription] } });
+                const bad = satpointProblem({ outpoint: ticket.offeringOutpoint, value: ticket.offeringValue, satpoint: sp[ticket.offeringInscription] ?? null, inscriptionsInUtxo: pick?.inUtxo ?? 0 });
+                if (bad) throw new Error(`Item can't be offered: ${bad}`);
+                const sk = deviceNostrKey();
+                const pubkey = nostrPubkeyOf(sk);
+                const issuedAt = Math.floor(Date.now() / 1000);
+                setPost({ phase: "working", msg: "Waiting for your wallet to sign the ownership proof…" });
+                const signature = await signMessageWithWallet(provider, makerAddress, offerProofMessage(ticket, pubkey, issuedAt));
+                setPost({ phase: "working", msg: "Checking the proof against Bitcoin…" });
+                const v = (await verifyBarterOffersFn({ data: { fresh: true, offers: [{ key: "x", ...ticket, nostrPubkey: pubkey, issuedAt, signature }] } }))["x"];
+                if (!v?.ok) throw new Error(`Proof refused: ${v && !v.ok ? v.reason : "no answer"}`);
+                setPost({ phase: "working", msg: "Sending to Nostr relays…" });
+                const ev = signBarterEvent([...ticketTags(ticket), ["proof_sig", signature], ["proof_issued", String(issuedAt)]], c.note.slice(0, 280), sk);
+                const relays = await publishEvent(ev);
+                if (relays.length === 0) throw new Error("No relay accepted the offer. Nothing was posted.");
+                setPost({ phase: "done", msg: `Posted. ${relays.length} relay${relays.length === 1 ? "" : "s"} confirmed receipt.`, relays });
+                onPosted();
+              } catch (e) {
+                setPost({ phase: "error", msg: e instanceof Error ? e.message : String(e) });
+              }
+            }}
+          >{post.phase === "working" ? "WORKING…" : post.phase === "done" ? "POSTED" : "SIGN PROOF & POST OFFER"}</button>
+          {!provider && <p className="text-destructive">Connect a wallet to sign.</p>}
+          {post.msg && <p className={post.phase === "error" ? "text-destructive" : post.phase === "done" ? "text-accent" : "text-muted-foreground"}>{post.msg}</p>}
+          {post.relays && <ul className="text-muted-foreground">{post.relays.map((r) => <li key={r}>✓ {r}</li>)}</ul>}
+          <Unavailable>Taking up an offer — building, signing and settling the swap — is not implemented. A posted offer only announces terms.</Unavailable>
           <button className="border border-border px-3 py-2" onClick={() => setStep(2)}>BACK</button>
         </div>
       )}
