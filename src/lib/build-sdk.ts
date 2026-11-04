@@ -1027,10 +1027,10 @@ export function flashboxSource(raw: string): FlashboxSource {
   const v = raw.trim();
   if (!v) return null;
   const insc = v.match(/(?:^|\/)([0-9a-f]{64}i\d+)$/i);
-  if (insc) return { type: "inscription", id: insc[1].toLowerCase() };
+  if (insc) return { type: "inscription", id: (insc[1] ?? "").toLowerCase() };
   const yt =
     v.match(/^(?:https?:\/\/)?(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/) ??
     v.match(/^(?:https?:\/\/)?youtu\.be\/([A-Za-z0-9_-]{11})/);
-  if (yt) return { type: "youtube", id: yt[1] };
+  if (yt) return { type: "youtube", id: yt[1] ?? "" };
   return null;
 }
