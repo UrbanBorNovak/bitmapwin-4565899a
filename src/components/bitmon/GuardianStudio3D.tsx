@@ -17,7 +17,7 @@ const LAND = 32;
 /** Trailer length in seconds: PICK (0–2.5) → SUMMON (2.5–5.5) → INSCRIBE (5.5–8). */
 export const TRAILER_S = 8;
 
-export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {}, baby = null, build = null }: { build?: { data: string; span?: number } | null; baby?: OnchainG | null; dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
+export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {}, baby = null, build = null }: { build?: { data: string; span?: number | undefined } | null; baby?: OnchainG | null; dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = wrap.current; if (!el) return;
