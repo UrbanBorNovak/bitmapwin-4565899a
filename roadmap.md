@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Guardian popup recovery
-- [ ] Keep the Guardian popup within the visible window and above bottom navigation.
-- [ ] Clear obsolete ownership-check messages on explicit retry without discarding payments.
-- [ ] Verify scrolling on desktop and phone; retain live-wallet checks as untested.
+- [x] Keep the Guardian popup within the visible window and above bottom navigation.
+- [x] Clear obsolete ownership-check messages on explicit retry without discarding payments.
+- [x] Verify scrolling on desktop and phone; live-wallet retry remains untested (requires Bill's wallet).
 
 ## Private player records
 - [x] Lock tournament entrant secrets and identity links to trusted server routines.
