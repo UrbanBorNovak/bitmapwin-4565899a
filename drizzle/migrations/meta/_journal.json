@@ -316,6 +316,13 @@
       "when": 1793739612946,
       "tag": "0044_x_tweet_proof",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793805366544,
+      "tag": "0045_grant_x_handle_columns",
+      "breakpoints": true
     }
   ]
 }

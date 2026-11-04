@@ -1,0 +1,1 @@
+GRANT SELECT (x_handle, x_verified_tweet_id) ON public.wallet_profiles TO anon, authenticated;
