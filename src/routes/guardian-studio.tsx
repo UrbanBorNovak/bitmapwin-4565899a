@@ -34,13 +34,12 @@ function StudioPage() {
   const name = q.data?.blockHash ? onchainGuardianName(height, q.data.blockHash) : `${q.data?.species ?? "GUARDIAN"}`;
   const play = (record: boolean) => {
     setRec(null);
-    const ac = playTrailerSfx();
+    const { ac, out } = playTrailerSfx();
     setTrailer(performance.now());
     if (!record || !canvasRef.current || typeof MediaRecorder === "undefined") return;
     // Records the 3D canvas plus the trailer sound (captions are the page overlay, not in the file).
     const stream = canvasRef.current.captureStream(30);
-    const dest = ac.createMediaStreamDestination(); ac.destination.channelCount; // keep live output too
-    try { (ac as AudioContext & { _out?: GainNode }); } catch { /* noop */ }
+    const dest = ac.createMediaStreamDestination(); out.connect(dest);
     dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
     const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm" });
     const chunks: Blob[] = [];

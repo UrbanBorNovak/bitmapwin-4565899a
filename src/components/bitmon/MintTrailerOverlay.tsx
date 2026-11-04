@@ -46,5 +46,5 @@ export function playTrailerSfx() {
   hit(2.5, 40, 30, 1.6, "sine"); hit(2.5, 900, 80, 0.6, "square");
   hit(5.5, 220, 440, 0.3, "triangle"); hit(5.8, 330, 660, 0.3, "triangle"); hit(6.1, 440, 880, 1.2, "triangle");
   setTimeout(() => ac.close(), (TRAILER_S + 1) * 1000);
-  return ac;
+  return { ac, out };
 }
