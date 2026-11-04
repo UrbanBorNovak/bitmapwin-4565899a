@@ -25,7 +25,7 @@ export function MintTrailerOverlay({ start, height, name }: { start: number; hei
       {act === 1 && local < 0.5 && <div className="absolute inset-0 bg-primary" style={{ opacity: 0.6 * (1 - local / 0.5) }} />}
       <div key={act} className="absolute inset-x-0 bottom-[14%] text-center animate-in fade-in zoom-in-95 duration-500">
         <p className="label text-accent">{lines.k}</p>
-        <p className="font-display text-4xl tracking-tight text-foreground md:text-6xl">{lines.big}</p>
+        <p className="font-display text-2xl tracking-tight text-foreground md:text-4xl">{lines.big}</p>
         <p className="mt-1 font-mono text-xs text-primary">{lines.sub}</p>
       </div>
     </div>
