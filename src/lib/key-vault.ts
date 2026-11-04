@@ -18,7 +18,7 @@ export const VAULT_MIN_PASS = 10;
 export const DELETE_PHRASE = "DELETE MY BACKUP";
 
 type Vault = { pub: string; salt: string; iv: string; wrapped: string };
-export type SealedBackup = { at: string; address?: string | undefined; epk: string; iv: string; ct: string };
+export type SealedBackup = { at: string; address?: string | undefined; epk: string; iv: string; ct: string; vault?: Vault };
 
 const b64 = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b instanceof Uint8Array ? b : new Uint8Array(b))));
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -72,17 +72,27 @@ export async function sealFoundKey(keyHex: string, address?: string): Promise<bo
 /** Decrypt every sealed backup with the passphrase. Throws "Wrong passphrase" on failure. */
 export async function openSealed(pass: string, items = listSealed(), vault = readVault()): Promise<string[]> {
   if (!vault) throw new Error("No backup vault on this device");
-  let priv: CryptoKey;
-  try {
-    const pk = await subtle().decrypt({ name: "AES-GCM", iv: unb64(vault.iv) }, await passKey(pass, unb64(vault.salt)), unb64(vault.wrapped));
-    priv = await subtle().importKey("pkcs8", pk, EC, false, ["deriveKey"]);
-  } catch { throw new Error("Wrong passphrase"); }
+  const privs = new Map<string, CryptoKey | null>();
+  const unlock = async (v: Vault) => {
+    if (privs.has(v.wrapped)) return privs.get(v.wrapped)!;
+    let k: CryptoKey | null = null;
+    try {
+      const pk = await subtle().decrypt({ name: "AES-GCM", iv: unb64(v.iv) }, await passKey(pass, unb64(v.salt)), unb64(v.wrapped));
+      k = await subtle().importKey("pkcs8", pk, EC, false, ["deriveKey"]);
+    } catch { k = null; }
+    privs.set(v.wrapped, k); return k;
+  };
   const out: string[] = [];
   for (const s of items) {
-    const epk = await subtle().importKey("raw", unb64(s.epk), EC, false, []);
-    const pt = await subtle().decrypt({ name: "AES-GCM", iv: unb64(s.iv) }, await shared(priv, epk), unb64(s.ct));
-    out.push(new TextDecoder().decode(pt));
+    const priv = await unlock(s.vault ?? vault);
+    if (!priv) continue;
+    try {
+      const epk = await subtle().importKey("raw", unb64(s.epk), EC, false, []);
+      const pt = await subtle().decrypt({ name: "AES-GCM", iv: unb64(s.iv) }, await shared(priv, epk), unb64(s.ct));
+      out.push(new TextDecoder().decode(pt));
+    } catch { /* record sealed to another vault or passphrase — skip */ }
   }
+  if (!out.length && (items.length || !(await unlock(vault)))) throw new Error("Wrong passphrase");
   return out;
 }
 
@@ -97,9 +107,12 @@ export function encryptedBackupText(): string | null {
 export function importBackupText(text: string): number {
   const j = JSON.parse(text);
   if (j?.format !== "bitmapwin-puzzle-backup-v1" || !j.vault || !Array.isArray(j.sealed)) throw new Error("Not a Bitmap backup file");
-  if (!readVault()) ls()?.setItem(VAULT_KEY, JSON.stringify(j.vault));
+  const local = readVault();
+  if (!local) ls()?.setItem(VAULT_KEY, JSON.stringify(j.vault));
+  const foreign = local && local.pub !== j.vault.pub;
   const have = new Set(listSealed().map((s) => s.ct));
-  ls()?.setItem(SEALED_KEY, JSON.stringify([...listSealed(), ...j.sealed.filter((s: SealedBackup) => !have.has(s.ct))]));
+  const incoming = j.sealed.filter((s: SealedBackup) => !have.has(s.ct)).map((s: SealedBackup) => (foreign && !s.vault ? { ...s, vault: j.vault as Vault } : s));
+  ls()?.setItem(SEALED_KEY, JSON.stringify([...listSealed(), ...incoming]));
   return j.sealed.length;
 }
 
