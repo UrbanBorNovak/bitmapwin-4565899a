@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 /** Rendered into <body> so a transformed page ancestor can't offset the fixed backdrop. */
 function SceneBackdrop() {
   return createPortal(
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 h-dvh w-screen"><Suspense fallback={null}><BarterScene3D /></Suspense></div>,
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen"><Suspense fallback={null}><BarterScene3D /></Suspense></div>,
     document.body,
   );
 }
@@ -162,7 +162,6 @@ function BarterPage() {
 
   return (
     <div className="relative min-h-screen">
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background" />
       <ClientOnly fallback={null}><SceneBackdrop /></ClientOnly>
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background/30" />
     <main className="mx-auto max-w-5xl px-4 py-10 font-mono">
