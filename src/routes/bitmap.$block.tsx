@@ -31,6 +31,7 @@ import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { BitmapValuation } from "@/components/BitmapValuation";
 import { BitmapDevelopment } from "@/components/BitmapDevelopment";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
+import { WebringWidget } from "@/components/WebringWidget";
 import { ParcelPanel } from "@/components/ParcelPanel";
 import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
 import { LeasePanel } from "@/components/leases/LeasePanel";
@@ -395,6 +396,7 @@ function BitmapDetail() {
       {tab === "world" && (
         <div id="bitmap-panel-world" role="tabpanel" aria-labelledby="bitmap-tab-world" className="mt-6 space-y-6">
       <ParcelPagePanel height={block} ownerAddress={owner} />
+      <WebringWidget height={block} />
       <Link
         to="/oasis"
         search={{ height: block }}
