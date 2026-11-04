@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
 import { getWalletFn } from "@/lib/wallet.functions";
 import type { WalletSnapshot } from "@/lib/wallet";
+import { inscriptionSatpointsFn } from "@/lib/barter.functions";
 import { fetchBarterTickets, describeCriteria, type FeedTicket } from "@/lib/barter-feed";
 import {
-  matchesCriteria, ticketProblem, ticketTags, DUST_SATS,
+  matchesCriteria, ticketProblem, ticketTags, satpointProblem, DUST_SATS,
   type AssetFacts, type BarterCriteria, type BarterTicket,
 } from "@/lib/barter-protocol";
 
@@ -25,11 +26,16 @@ export const Route = createFileRoute("/barter")({
 });
 
 /** Chain-read wallet items as protocol facts. Tx counts are not in the scan, so tx rules never match here. */
-function walletAssets(w: WalletSnapshot | undefined): AssetFacts[] {
-  const out: AssetFacts[] = [];
+type Raw = AssetFacts & { inUtxo: number };
+/** An asset after its chain satpoint check; `block` is the reason it may not trade, or null. */
+type Checked = Raw & { satpoint?: string | null; block: string | null };
+
+function walletAssets(w: WalletSnapshot | undefined): Raw[] {
+  const out: Raw[] = [];
   for (const u of w?.utxos ?? []) {
     for (const i of u.inscriptions) {
-      const a: AssetFacts = {
+      const a: Raw = {
+        inUtxo: u.inscriptions.length,
         inscriptionId: i.id, outpoint: u.outpoint, value: u.valueSats,
         offset: -1, // not resolved by the wallet scan
         type: i.bitmapHeight !== null ? "bitmap" : "ordinal", spent: false,
@@ -60,7 +66,20 @@ function BarterPage() {
     enabled: !!wallet?.ordinalsAddress,
     staleTime: 60_000,
   });
-  const mine = useMemo(() => walletAssets(holdings.data), [holdings.data]);
+  const raw = useMemo(() => walletAssets(holdings.data), [holdings.data]);
+  const sats = useQuery({
+    queryKey: ["barter-satpoints", raw.map((a) => a.inscriptionId).join(",")],
+    queryFn: () => inscriptionSatpointsFn({ data: { ids: raw.slice(0, 60).map((a) => a.inscriptionId) } }),
+    enabled: raw.length > 0,
+    staleTime: 60_000,
+  });
+  const mine = useMemo<Checked[]>(() => raw.map((a, i) => {
+    if (i >= 60) return { ...a, block: "too many items to check at once" };
+    if (!sats.data) return { ...a, block: sats.isError ? "position could not be read from chain" : "checking position…" };
+    const sp = sats.data[a.inscriptionId] ?? null;
+    const block = satpointProblem({ outpoint: a.outpoint, value: a.value, satpoint: sp, inscriptionsInUtxo: a.inUtxo });
+    return { ...a, offset: block ? a.offset : 0, satpoint: sp, block };
+  }), [raw, sats.data, sats.isError]);
 
   const [filter, setFilter] = useState<{ type: string; maxHeight: string; fillable: boolean }>({ type: "", maxHeight: "", fillable: false });
   const [drawer, setDrawer] = useState<FeedTicket | null>(null);
