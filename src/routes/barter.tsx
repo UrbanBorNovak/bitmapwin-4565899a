@@ -224,6 +224,7 @@ function BarterPage() {
       {drawer && <MatchDrawer ticket={drawer} mine={mine} wallet={wallet ?? null} verdict={proofs.data?.[drawer.eventId]} onClose={() => setDrawer(null)} />}
       {wizard && <PostWizard mine={mine} makerAddress={wallet?.ordinalsAddress ?? ""} provider={wallet?.provider as WalletProviderId | undefined} onClose={() => setWizard(false)} onPosted={() => feed.refetch()} />}
     </main>
+    </div>
   );
 }
 
