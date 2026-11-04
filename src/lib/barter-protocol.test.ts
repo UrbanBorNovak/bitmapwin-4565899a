@@ -21,7 +21,8 @@ describe("BW-BARTER-1", () => {
     expect(matchesCriteria(ticket.criteria, { ...taker, height: 100_000 })).toBe(false);
   });
   it("missing height never matches a height rule", () => {
-    expect(matchesCriteria(ticket.criteria, { ...taker, height: undefined })).toBe(false);
+    const { height: _h, ...noHeight } = taker;
+    expect(matchesCriteria(ticket.criteria, noHeight)).toBe(false);
   });
   it("spent assets never match", () => {
     expect(matchesCriteria(ticket.criteria, { ...taker, spent: true })).toBe(false);
