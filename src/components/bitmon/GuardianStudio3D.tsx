@@ -43,7 +43,7 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
     ped.position.y = -0.6; ped.receiveShadow = true; ped.castShadow = true; scene.add(ped);
     const ring = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(LAND, 1.2, LAND)), new THREE.LineBasicMaterial({ color: 0x28e0ff }));
     ring.position.y = -0.6; scene.add(ring);
-    const tileMat = new THREE.MeshStandardMaterial({ color: 0x1a2733, roughness: 0.5, metalness: 0.3, emissive: 0x28e0ff, emissiveIntensity: 0.08 });
+    const tileMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.3, emissive: 0xf7931a, emissiveIntensity: 0.04 });
     const list = parcels.slice(0, 6000);
     const tiles = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), tileMat, Math.max(1, list.length));
     tiles.count = list.length; tiles.receiveShadow = true;
@@ -141,6 +141,6 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
       renderer.dispose(); cv.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dna, animate, trailerStart, parcels]);
+  }, [dna, animate, trailerStart, parcels, owners]);
   return <div ref={wrap} className="h-full w-full cursor-grab active:cursor-grabbing" aria-label={`${dna.height}.BITMAP Guardian 3D preview`} />;
 }
