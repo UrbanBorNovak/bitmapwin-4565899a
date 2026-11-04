@@ -223,6 +223,7 @@ export function ShadowInscriber(props: {
   };
 
   const start = async () => {
+    setParentNotes([]);
     try {
       setBusy("CHECKING FOR AN EARLIER PAYMENT…");
       // Never ask for a second fee while an earlier paid commit sits unspent.

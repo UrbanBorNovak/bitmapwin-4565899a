@@ -1,5 +1,10 @@
 # Roadmap
 
+## Guardian popup recovery
+- [ ] Keep the Guardian popup within the visible window and above bottom navigation.
+- [ ] Clear obsolete ownership-check messages on explicit retry without discarding payments.
+- [ ] Verify scrolling on desktop and phone; retain live-wallet checks as untested.
+
 ## Private player records
 - [x] Lock tournament entrant secrets and identity links to trusted server routines.
 - [x] Lock Shadow commitment and spent-commitment records to trusted server routines.
