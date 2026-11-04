@@ -93,7 +93,7 @@ async function fetchOutputHtml(outpoint: string, attempts = 2): Promise<OrdOutpu
   return null;
 }
 
-async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
+export async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
   const json = await ordJson<OrdOutput>(`/output/${outpoint}`, 2);
   if (json) {
     return {

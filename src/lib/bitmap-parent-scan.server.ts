@@ -4,11 +4,12 @@
  * from the browser.
  */
 const ORD = "https://ordinals.com";
+const HEADERS = { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" };
 const ID_RE = /^[0-9a-f]{64}i\d+$/;
 
 async function contentText(id: string): Promise<string | null> {
   try {
-    const r = await fetch(`${ORD}/content/${id}`, { signal: AbortSignal.timeout(8000) });
+    const r = await fetch(`${ORD}/content/${id}`, { headers: HEADERS, signal: AbortSignal.timeout(8000) });
     if (!r.ok) return null;
     const type = r.headers.get("content-type") ?? "";
     if (!type.startsWith("text/")) return null;
@@ -32,7 +33,7 @@ export async function scanWalletForBitmap(address: string, height: number): Prom
   if (!/^(bc1|[13])[a-zA-HJ-NP-Z0-9]{20,90}$/.test(address)) return null;
   let html = "";
   try {
-    const r = await fetch(`${ORD}/address/${address}`, { signal: AbortSignal.timeout(10_000) });
+    const r = await fetch(`${ORD}/address/${address}`, { headers: HEADERS, signal: AbortSignal.timeout(10_000) });
     if (!r.ok) return null;
     html = await r.text();
   } catch {
