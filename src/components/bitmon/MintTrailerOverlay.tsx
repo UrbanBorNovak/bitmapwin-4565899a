@@ -35,6 +35,38 @@ export function MintTrailerOverlay({ start, height, name }: { start: number; hei
 /** Short synth hits per act; Web Audio only, no external files. */
 export function playTrailerSfx() {
   const ac = new AudioContext();
+  const out = scheduleTrailerSfx(ac);
+  setTimeout(() => ac.close(), (TRAILER_S + 1) * 1000);
+  return { ac, out };
+}
+
+/** Same score rendered offline, so it can be muxed into an MP4 as AAC. */
+export async function renderTrailerAudio(): Promise<AudioBuffer | null> {
+  if (typeof OfflineAudioContext === "undefined") return null;
+  const ac = new OfflineAudioContext(2, 48000 * TRAILER_S, 48000);
+  scheduleTrailerSfx(ac);
+  return ac.startRendering().catch(() => null);
+}
+
+/** Caption frame for the exported video (mirrors the HTML overlay). */
+export function drawTrailerCaptions(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, height: number, name: string) {
+  const act = t < 2.5 ? 0 : t < 5.5 ? 1 : 2;
+  const lines = [
+    { k: "01 · PICK", big: `${height.toLocaleString("en-US")}.BITMAP`, sub: "ONE BLOCK. ONE OWNER." },
+    { k: "02 · SUMMON", big: name, sub: "BORN FROM THE BLOCK HASH" },
+    { k: "03 · INSCRIBE", big: "ON BITCOIN. FOREVER.", sub: "BITMAPWIN.APP/MINT" },
+  ][act]!;
+  const local = act === 0 ? t : act === 1 ? t - 2.5 : t - 5.5;
+  ctx.fillStyle = "#0a0e14"; ctx.fillRect(0, 0, W, H * 0.11); ctx.fillRect(0, H * 0.89, W, H * 0.11);
+  if (act === 1 && local < 0.5) { ctx.fillStyle = `rgba(247,147,26,${0.6 * (1 - local / 0.5)})`; ctx.fillRect(0, 0, W, H); }
+  ctx.globalAlpha = Math.min(1, local / 0.5); ctx.textAlign = "center";
+  ctx.fillStyle = "#22d3ee"; ctx.font = `${Math.round(H * 0.025)}px "Space Mono", monospace`; ctx.fillText(lines.k, W / 2, H * 0.72);
+  ctx.fillStyle = "#f5f5f5"; ctx.font = `bold ${Math.round(H * 0.065)}px "Space Grotesk", sans-serif`; ctx.fillText(lines.big, W / 2, H * 0.79);
+  ctx.fillStyle = "#f7931a"; ctx.font = `${Math.round(H * 0.025)}px "Space Mono", monospace`; ctx.fillText(lines.sub, W / 2, H * 0.835);
+  ctx.globalAlpha = 1;
+}
+
+function scheduleTrailerSfx(ac: BaseAudioContext) {
   const out = ac.createGain(); out.gain.value = 0.25; out.connect(ac.destination);
   const hit = (at: number, f0: number, f1: number, dur: number, type: OscillatorType) => {
     const o = ac.createOscillator(), g = ac.createGain();
@@ -45,6 +77,5 @@ export function playTrailerSfx() {
   hit(0, 60, 200, 2.4, "sawtooth");
   hit(2.5, 40, 30, 1.6, "sine"); hit(2.5, 900, 80, 0.6, "square");
   hit(5.5, 220, 440, 0.3, "triangle"); hit(5.8, 330, 660, 0.3, "triangle"); hit(6.1, 440, 880, 1.2, "triangle");
-  setTimeout(() => ac.close(), (TRAILER_S + 1) * 1000);
-  return { ac, out };
+  return out;
 }
