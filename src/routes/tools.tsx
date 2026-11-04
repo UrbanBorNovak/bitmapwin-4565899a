@@ -13,6 +13,7 @@ type Tool = {
   hook: string;
   specs: string[];
   next?: { to: string; label: string };
+  href?: string;
 };
 
 const TOOLS: Tool[] = [
@@ -35,6 +36,9 @@ const TOOLS: Tool[] = [
   { to: "/clips", name: "BITMAP Clips", cost: "free", badge: "FREE · BY @BITLODO", cat: "media",
     hook: "Turn a BITMAP into a short retro 3D video clip.",
     specs: ["original @bitlodo studio", "pixel fonts", "runs in your browser"] },
+  { to: "https://bitmap.center", href: "https://bitmap.center", name: "bitmap.center", cost: "free", badge: "COMMUNITY · BY @SIX0BITMAP", cat: "create",
+    hook: "The arena, the market and the ghost mint for BITMAPs, built around 114588.bitmap.",
+    specs: ["Arena mint battles", "Table of Olympus (114588)", "holder index, chat & ghost mints", "external site"] },
   { to: "/bot", name: "Listing Watch Bot", cost: "free", badge: "FREE · ALERTS", cat: "trade",
     hook: "Watch the market with your own rules and get alerted when a matching BITMAP lists.",
     specs: ["rule presets", "checks every 30s", "JSON export", "never buys or signs"],
@@ -135,9 +139,15 @@ function ToolsPage() {
             <p className="mt-2 text-sm text-muted-foreground">{t.hook}</p>
             <p className="mt-3 font-mono text-xs text-foreground/80">{t.specs.join(" · ")}</p>
             <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
-              <Link to={t.to} className="border border-bitcoin px-3 py-1.5 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">
-                OPEN →
-              </Link>
+              {t.href ? (
+                <a href={t.href} target="_blank" rel="noopener noreferrer" className="border border-bitcoin px-3 py-1.5 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">
+                  OPEN ↗
+                </a>
+              ) : (
+                <Link to={t.to} className="border border-bitcoin px-3 py-1.5 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">
+                  OPEN →
+                </Link>
+              )}
               {t.next && (
                 <Link to={t.next.to} className="font-mono text-xs text-muted-foreground hover:text-signal">
                   then: {t.next.label} ↗

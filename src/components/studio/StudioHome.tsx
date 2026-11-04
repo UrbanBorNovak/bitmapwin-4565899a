@@ -58,6 +58,7 @@ export function StudioHome() {
           { title: "CO-FORGE", icon: <Users className="h-4 w-4" />, note: "Build together with other makers on the same canvas.", link: <Link to="/co-forge" className={cta}>OPEN</Link> },
           { title: "TINY STUDIO", icon: <Boxes className="h-4 w-4" />, note: "Quick small pieces and props for your land.", link: <Link to="/tiny-studio" className={cta}>OPEN</Link> },
           { title: "PARCEL FOUNDRY", icon: <Layers className="h-4 w-4" />, note: "One Outpost per transaction parcel, clipped to its own cells.", link: <Link to="/kennels" className={cta}>OPEN</Link> },
+          { title: "BITMAP.CENTER", icon: <Boxes className="h-4 w-4" />, note: "Arena mint battles, market and ghost mint around 114588.bitmap (community site by @six0Bitmap).", link: <a href="https://bitmap.center" target="_blank" rel="noopener noreferrer" className={cta}>OPEN ↗</a> },
         ]}
       />
 
