@@ -1,8 +1,25 @@
 /** Reads BW-BARTER-1 tickets (kind 30403) from public Nostr relays. Malformed tickets are dropped. */
-import { NOSTR_RELAYS, verifyEvent, type NostrEvent } from "@/lib/nostr-listing";
+import { schnorr } from "@noble/curves/secp256k1.js";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
+import { NOSTR_RELAYS, eventId, verifyEvent, type NostrEvent } from "@/lib/nostr-listing";
 import { BARTER_KIND, BARTER_TAG, ticketProblem, type BarterCriteria, type BarterTicket } from "@/lib/barter-protocol";
 
-export type FeedTicket = BarterTicket & { eventId: string; createdAt: number; note: string };
+/** `proofSig`/`proofIssued` are the maker's wallet proof tags; unverified until the server checks them. */
+export type FeedTicket = BarterTicket & {
+  eventId: string; createdAt: number; note: string; pubkey: string;
+  proofSig?: string; proofIssued?: number;
+};
+
+/** Signs a kind-30403 barter event with the device messenger key. */
+export function signBarterEvent(tags: string[][], content: string, secretHex: string, createdAt = Math.floor(Date.now() / 1000)): NostrEvent {
+  const sk = hexToBytes(secretHex);
+  const pubkey = bytesToHex(schnorr.getPublicKey(sk));
+  const base = { pubkey, created_at: createdAt, kind: BARTER_KIND, tags, content };
+  const id = eventId(base);
+  return { ...base, id, sig: bytesToHex(schnorr.sign(hexToBytes(id), sk)) };
+}
+
+export const nostrPubkeyOf = (secretHex: string) => bytesToHex(schnorr.getPublicKey(hexToBytes(secretHex)));
 
 const tag = (e: NostrEvent, k: string) => e.tags.find((t) => t[0] === k)?.[1];
 
@@ -33,7 +50,12 @@ export function parseTicketEvent(e: NostrEvent): FeedTicket | null {
     criteria,
   };
   if (!t.makerAddress || ticketProblem(t)) return null;
-  return { ...t, eventId: e.id, createdAt: e.created_at, note: e.content.slice(0, 280) };
+  const proofSig = tag(e, "proof_sig");
+  const proofIssued = Number(tag(e, "proof_issued"));
+  return {
+    ...t, eventId: e.id, createdAt: e.created_at, note: e.content.slice(0, 280), pubkey: e.pubkey,
+    ...(proofSig && Number.isInteger(proofIssued) ? { proofSig, proofIssued } : {}),
+  };
 }
 
 /** Collects tickets from relays until EOSE or timeout. Only signature-valid events are kept. */
