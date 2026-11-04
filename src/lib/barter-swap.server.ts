@@ -11,10 +11,12 @@ import {
 import { addressToScriptPubKey } from "@/lib/psbt-builder";
 import { buildSwapPsbt, byteArrayToHex, type FundingUtxo } from "@/lib/psbt-buyer";
 import { decodePsbt } from "@/lib/psbt";
+import { fetchOutput } from "@/lib/offers.server";
+import { ordInscription } from "@/lib/ord-fallback.server";
 
 const ORD = "https://ordinals.com";
 const MEMPOOL = "https://mempool.space/api";
-const UA = "bitmap-marketplace/1.0";
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 /** Refuse swaps whose fee rate looks like a mistake. */
 export const SWAP_MAX_FEE_RATE = 500;
 
@@ -32,8 +34,8 @@ export type LiveAsset = AssetFacts & { address: string };
 /** Reads one inscription's live position and holder; returns a refusal reason or the facts. */
 export async function liveAsset(inscriptionId: string, outpoint: string): Promise<LiveAsset | { error: string }> {
   const [ins, out] = await Promise.all([
-    getJson<{ satpoint?: string; address?: string }>(`${ORD}/r/inscription/${inscriptionId}`),
-    getJson<{ inscriptions?: string[]; spent?: boolean; value?: number; address?: string }>(`${ORD}/output/${outpoint}`),
+    ordInscription(inscriptionId).then((x) => (x ? { satpoint: x.satpoint, address: x.address ?? undefined } : null)),
+    fetchOutput(outpoint),
   ]);
   if (!ins || !out) return { error: "chain could not be read" };
   if (out.spent) return { error: "output is spent" };

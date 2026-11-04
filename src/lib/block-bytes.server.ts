@@ -69,7 +69,7 @@ async function fetchWithBackoff(url: string, accept: string, timeoutMs: number):
     try {
       const response = await withUpstreamSlot(() =>
         fetch(url, {
-          headers: { accept, "user-agent": "bitmap-marketplace/1.0" },
+          headers: { accept, "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
           signal: AbortSignal.timeout(timeoutMs),
         }),
       );

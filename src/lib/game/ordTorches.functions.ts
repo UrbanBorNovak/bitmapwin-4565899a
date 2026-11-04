@@ -8,7 +8,7 @@ export const getOrdTorchesFn = createServerFn({ method: "GET" }).handler(async (
   if (cache && Date.now() - cache.at < 6 * 3600_000) return { parent: ORD_TORCHES_PARENT, ids: cache.ids };
   const ids: string[] = [];
   const fetchPage = async (page: number) => {
-    const res = await fetch(`https://ordinals.com/r/children/${ORD_TORCHES_PARENT}/${page}`, { headers: { "User-Agent": "bitmapwin/1.0" } });
+    const res = await fetch(`https://ordinals.com/r/children/${ORD_TORCHES_PARENT}/${page}`, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" } });
     if (!res.ok) return { ids: [] as string[], more: false };
     const body = (await res.json()) as { ids?: unknown[]; more?: boolean };
     return { ids: (body.ids ?? []).map((r) => String(r).toLowerCase()).filter((id) => INSCRIPTION_ID_RE.test(id)), more: body.more === true };

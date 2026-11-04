@@ -3,7 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { decodePsbt, scriptToAddress, type DecodedPsbt } from "@/lib/psbt";
 
 const ORD = "https://ordinals.com";
-const UA = "bitmap-marketplace/1.0";
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 function db() {
   return createClient<Database>(
@@ -93,7 +93,7 @@ async function fetchOutputHtml(outpoint: string, attempts = 2): Promise<OrdOutpu
   return null;
 }
 
-async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
+export async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
   const json = await ordJson<OrdOutput>(`/output/${outpoint}`, 2);
   if (json) {
     return {
@@ -102,7 +102,12 @@ async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
       spent: json.spent === true,
     };
   }
-  return fetchOutputHtml(outpoint);
+  const html = await fetchOutputHtml(outpoint);
+  if (html && (html.spent || html.inscriptions.length)) return html;
+  // ordinals.com refused (bot challenge) or the page lacked the inscription list:
+  // rebuild the same facts from esplora + the second ord index.
+  const { chainOutput } = await import("@/lib/ord-fallback.server");
+  return (await chainOutput(outpoint)) ?? html;
 }
 
 /** Reads the inscription body and returns the bitmap number it claims. */

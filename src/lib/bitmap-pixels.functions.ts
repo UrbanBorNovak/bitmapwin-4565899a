@@ -29,7 +29,7 @@ function cleanLabel(value: string, index: number) {
  */
 export const getBitmapPixelsCollection = createServerFn({ method: "GET" }).handler(async () => {
   const response = await fetch(`https://ordinals.com/content/${BITMAP_PIXELS_INSCRIPTION}`, {
-    headers: { "User-Agent": "bitmapwin/1.0" },
+    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
   });
   if (!response.ok) throw new Error("BITMAP Pixels collection is temporarily unavailable");
 

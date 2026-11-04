@@ -12,7 +12,7 @@ const ADDR_RE = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{20,90}$/;
 
 async function json<T>(path: string): Promise<T | null> {
   try {
-    const r = await fetch(`${ORD}${path}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(12_000) });
+    const r = await fetch(`${ORD}${path}`, { headers: { accept: "application/json", "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }, signal: AbortSignal.timeout(12_000) });
     if (!r.ok) return null;
     return (await r.json()) as T;
   } catch {
@@ -22,7 +22,7 @@ async function json<T>(path: string): Promise<T | null> {
 
 async function addressInscriptions(address: string): Promise<string[]> {
   try {
-    const r = await fetch(`${ORD}/address/${address}`, { signal: AbortSignal.timeout(12_000) });
+    const r = await fetch(`${ORD}/address/${address}`, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }, signal: AbortSignal.timeout(12_000) });
     if (!r.ok) return [];
     const html = await r.text();
     return [...new Set([...html.matchAll(/\/inscription\/([0-9a-f]{64}i\d+)/g)].map((m) => m[1]!))].slice(0, 400);

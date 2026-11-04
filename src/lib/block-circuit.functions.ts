@@ -21,7 +21,7 @@ export const getBlockCircuit = createServerFn({ method: "GET" })
       let inscriptions: BlockCircuit["inscriptions"] = null;
       try {
         const r = await fetch(`https://ordinals.com/inscriptions/block/${data.height}`, {
-          headers: { "user-agent": "bitmapwin/1.0" },
+          headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
           signal: AbortSignal.timeout(8000),
         });
         if (r.ok) {

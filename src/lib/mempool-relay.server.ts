@@ -17,7 +17,7 @@ const PUBLIC_HOSTS = [
   "https://blockstream.info/api",
   "https://mempool.emzy.de/api",
 ];
-const UA = "bitmap-marketplace/1.0";
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const TXID = /^[0-9a-f]{64}$/i;
 
 function privateRelays(): string[] {

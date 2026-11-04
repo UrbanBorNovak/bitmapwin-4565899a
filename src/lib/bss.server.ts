@@ -11,7 +11,7 @@ import { bssDecode } from "@/lib/bss/format";
 import type { BssLoad, BssScene } from "@/lib/bss/types";
 
 const ORD = "https://ordinals.com";
-const UA = "bitmapwin/1.0";
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const TTL = 30 * 60_000;
 const MAX_CHILD_PAGES = 4;
 const MAX_BMP_BYTES = 2_000_000;

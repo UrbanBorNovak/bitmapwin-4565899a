@@ -34,7 +34,7 @@ export function outScriptForAddress(address: string): Uint8Array {
 
 async function readJson<T>(url: string): Promise<T | null> {
   try {
-    const r = await fetch(url, { headers: { "User-Agent": "bitmapwin/1.0" }, signal: AbortSignal.timeout(10_000) });
+    const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }, signal: AbortSignal.timeout(10_000) });
     if (!r.ok) return null;
     return (await r.json()) as T;
   } catch {
@@ -68,7 +68,10 @@ export async function pendingTransferOf(txid: string, vout: number): Promise<{ t
  * fall back to a smaller parent set instead of building an invalid reveal.
  */
 export async function fetchParentSpend(inscriptionId: string, signer: ParentSigner): Promise<ParentSpend | null> {
-  const meta = await readJson<OrdInscription>(`https://ordinals.com/r/inscription/${inscriptionId}`);
+  // ordinals.com sometimes refuses server requests (bot challenge); turbo.ordinalswallet.com runs the same ord index.
+  const meta =
+    (await readJson<OrdInscription>(`https://ordinals.com/r/inscription/${inscriptionId}`)) ??
+    (await readJson<OrdInscription>(`https://turbo.ordinalswallet.com/inscription/${inscriptionId}`));
   const satpoint = meta?.satpoint;
   if (!satpoint) return null;
   const [txid, voutRaw, offRaw] = satpoint.split(":");

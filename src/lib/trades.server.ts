@@ -26,7 +26,7 @@ async function getJson<T>(url: string, attempts = 3): Promise<T> {
   for (let i = 0; i < attempts; i++) {
     try {
       const res = await fetch(url, {
-        headers: { accept: "application/json", "user-agent": "bitmap-marketplace/1.0" },
+        headers: { accept: "application/json", "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
         signal: AbortSignal.timeout(15000),
       });
       if (res.ok) return (await res.json()) as T;

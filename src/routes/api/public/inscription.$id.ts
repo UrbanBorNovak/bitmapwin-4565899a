@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/public/inscription/$id")({
         // ordinals.com rate-limits bursts (a gallery page asks for many at once): retry briefly.
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            const res = await fetch(source, { headers: { "User-Agent": "bitmapwin/1.0" } });
+            const res = await fetch(source, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" } });
             if (res.ok && res.body) {
               upstream = res;
               break;
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/inscription/$id")({
         if (!upstream) {
           // ordinals.com busy: try the UniSat mirror (same immutable bytes) before giving up.
           try {
-            const res = await fetch(`https://static.unisat.io/content/${id}`, { headers: { "User-Agent": "bitmapwin/1.0" } });
+            const res = await fetch(`https://static.unisat.io/content/${id}`, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" } });
             if (res.ok && res.body) upstream = res;
           } catch { /* fall through */ }
         }

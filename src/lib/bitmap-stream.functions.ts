@@ -23,7 +23,7 @@ export const streamLiveStatusFn = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<{ status: "live" | "offline" | "unknown" }> => {
     try {
       const res = await fetch(`https://${data.height}.bitmap.stream/api/status`, {
-        headers: { "User-Agent": "bitmapwin/1.0", Accept: "application/json" },
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", Accept: "application/json" },
         signal: AbortSignal.timeout(5000),
       });
       if (res.status === 404) return { status: "offline" };

@@ -9,7 +9,7 @@ const STALE_MS = 6 * 60 * 60 * 1000;
 const MAX_LIVE = 60;
 
 async function json(url: string, accept = "application/json"): Promise<any> {
-  const r = await fetch(url, { headers: { Accept: accept }, signal: AbortSignal.timeout(8000) });
+  const r = await fetch(url, { headers: { Accept: accept, "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }, signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error(String(r.status));
   return r.json();
 }
