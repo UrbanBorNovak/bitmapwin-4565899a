@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
+import { ProposeSwap, SwapInbox } from "@/components/barter/SwapPanels";
+import type { ConnectedWallet } from "@/lib/browser-wallet";
 import { getWalletFn } from "@/lib/wallet.functions";
 import type { WalletSnapshot } from "@/lib/wallet";
 import { inscriptionSatpointsFn, verifyBarterOffersFn, type OfferVerdict } from "@/lib/barter.functions";
@@ -151,7 +153,9 @@ function BarterPage() {
           Offers to swap one inscription for another that meets set rules. Items are matched only using facts read from Bitcoin. Missing facts never count as a match.
         </p>
         <div className="mt-3">
-          <Unavailable>Swap signing and settlement are not built yet. You can post offers signed by your wallet, browse and check matches, but no swap can be signed or traded.</Unavailable>
+          <p className="border border-dashed border-primary/60 p-3 text-xs text-muted-foreground">
+            <strong className="text-primary">ATOMIC SWAPS · </strong>A taker signs a swap that moves both items in one Bitcoin transaction; the maker reviews it and signs to broadcast. Either item moving before then cancels it. Proposals travel over public Nostr relays.
+          </p>
         </div>
       </header>
 
@@ -188,6 +192,8 @@ function BarterPage() {
         </p>
       )}
 
+      {wallet && <SwapInbox wallet={wallet} tickets={feed.data ?? []} />}
+
       <ul className="grid gap-3 sm:grid-cols-2">
         {tickets.map((t) => {
           const n = mine.filter((a) => matchesCriteria(t.criteria, a)).length;
@@ -211,7 +217,7 @@ function BarterPage() {
         })}
       </ul>
 
-      {drawer && <MatchDrawer ticket={drawer} mine={mine} hasWallet={!!wallet} onClose={() => setDrawer(null)} />}
+      {drawer && <MatchDrawer ticket={drawer} mine={mine} wallet={wallet ?? null} verdict={proofs.data?.[drawer.eventId]} onClose={() => setDrawer(null)} />}
       {wizard && <PostWizard mine={mine} makerAddress={wallet?.ordinalsAddress ?? ""} provider={wallet?.provider as WalletProviderId | undefined} onClose={() => setWizard(false)} onPosted={() => feed.refetch()} />}
     </main>
   );
@@ -231,7 +237,9 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket; mine: Checked[]; hasWallet: boolean; onClose: () => void }) {
+function MatchDrawer({ ticket, mine, wallet, verdict, onClose }: { ticket: FeedTicket; mine: Checked[]; wallet: ConnectedWallet | null; verdict: OfferVerdict | undefined; onClose: () => void }) {
+  const hasWallet = !!wallet;
+  const unsupported = ticket.sweetenerDir === "give" && ticket.sweetenerSats > 0;
   const ok = mine.filter((a) => matchesCriteria(ticket.criteria, a));
   const usesTx = ticket.criteria.minTxCount !== undefined || ticket.criteria.maxTxCount !== undefined;
   return (
@@ -249,13 +257,14 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
               <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
             </div>
             <p className={`mt-1 ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ Position checked: first sat of its own output"}</p>
+            {!a.block && wallet && verdict?.ok && !unsupported && <ProposeSwap ticket={ticket} wallet={wallet} asset={{ inscriptionId: a.inscriptionId, outpoint: a.outpoint, label: assetLabel(a) }} />}
           </li>
         ))}
       </ul>
       {ok.length > 0 && <p className="mt-2 text-muted-foreground">{ok.filter((a) => !a.block).length} of {ok.length} matching items can be used.</p>}
       <div className="mt-4 space-y-2">
-        <button disabled className="w-full cursor-not-allowed border border-border px-3 py-2 opacity-50">PROPOSE SWAP & SIGN</button>
-        <Unavailable>Building, signing and sending the swap is not implemented.</Unavailable>
+        {!verdict?.ok && <p className="text-destructive">Swaps open only on offers whose wallet proof is verified.</p>}
+        {unsupported && <Unavailable>Offers where the maker adds sats can't be swapped yet.</Unavailable>}
       </div>
     </Sheet>
   );
@@ -379,7 +388,7 @@ function PostWizard({ mine, makerAddress, provider, onClose, onPosted }: {
           {!provider && <p className="text-destructive">Connect a wallet to sign.</p>}
           {post.msg && <p className={post.phase === "error" ? "text-destructive" : post.phase === "done" ? "text-accent" : "text-muted-foreground"}>{post.msg}</p>}
           {post.relays && <ul className="text-muted-foreground">{post.relays.map((r) => <li key={r}>✓ {r}</li>)}</ul>}
-          <Unavailable>Taking up an offer — building, signing and settling the swap — is not implemented. A posted offer only announces terms.</Unavailable>
+          <p className="text-muted-foreground">Takers' signed swaps arrive in "Swap proposals" on this page, in this browser. You review and sign each one; nothing moves without you.</p>
           <button className="border border-border px-3 py-2" onClick={() => setStep(2)}>BACK</button>
         </div>
       )}
