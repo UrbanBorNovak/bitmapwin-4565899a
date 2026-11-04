@@ -6,6 +6,16 @@ import { buildBarterSwapFn, reviewBarterSwapFn, broadcastBarterSwapFn } from "@/
 import { fetchSwapProposals, signSwapEvent, swapProposalTags, nostrPubkeyOf, type FeedTicket, type SwapProposal } from "@/lib/barter-feed";
 import { deviceNostrKey, publishEvent } from "@/lib/nostr-listing";
 import { prepareMakerInput } from "@/lib/psbt-buyer";
+import { addressToScriptPubKey } from "@/lib/psbt-builder";
+import { makerSigningKeys, type MakerKeys } from "@/lib/psbt-scripts";
+
+/** Which key details the connected wallet can supply for the maker's item; refused paths explain why. */
+function makerKeysFor(wallet: ConnectedWallet): MakerKeys {
+  if (wallet.provider !== "unisat" && wallet.provider !== "xverse") return { ok: false, reason: "Swaps can be signed only with UniSat or Xverse for now." };
+  let script: number[];
+  try { script = addressToScriptPubKey(wallet.ordinalsAddress); } catch { return { ok: false, reason: "Your ordinals address can't be read." }; }
+  return makerSigningKeys(script, [wallet.publicKey, wallet.paymentPublicKey]);
+}
 import type { BarterTicket } from "@/lib/barter-protocol";
 
 const ticketOf = (t: BarterTicket) => ({
@@ -123,11 +133,13 @@ function ProposalRow({ p, t, wallet }: { p: SwapProposal; t: FeedTicket; wallet:
   const [agree, setAgree] = useState(false);
   const [state, setState] = useState<{ phase: Phase; msg: string; txid?: string }>({ phase: "idle", msg: "" });
   const r = review.data;
+  const keys = makerKeysFor(wallet);
 
   const accept = async () => {
     setState({ phase: "signing", msg: "Sign your offered item in the wallet…" });
     try {
-      const prepared = prepareMakerInput(p.psbtBase64, wallet.publicKey, [wallet.publicKey, wallet.paymentPublicKey].filter((k): k is string => !!k));
+      if (!keys.ok) throw new Error(keys.reason);
+      const prepared = prepareMakerInput(p.psbtBase64, keys.tapKeyHex, keys.publicKeys);
       const signed = await signParentInputsPsbt(wallet.provider as WalletProviderId, prepared, wallet.ordinalsAddress, [0]);
       setState({ phase: "signing", msg: "Re-checking and broadcasting…" });
       const b = await broadcastBarterSwapFn({ data: { ticket: ticketOf(t), psbtBase64: signed } });
@@ -150,7 +162,8 @@ function ProposalRow({ p, t, wallet }: { p: SwapProposal; t: FeedTicket; wallet:
           {t.sweetenerDir === "demand" && t.sweetenerSats > 0 && <p className="text-accent">✓ Plus {t.sweetenerSats.toLocaleString()} sats</p>}
           <p className="text-muted-foreground">Miner fee {r.feeSats.toLocaleString()} sats, paid by the taker.</p>
           {!r.takerSigned && <p className="text-destructive">The taker has not signed every input.</p>}
-          {r.takerSigned && state.phase !== "done" && (
+          {r.takerSigned && !keys.ok && <p className="text-destructive">Signing unavailable: {keys.reason}</p>}
+          {r.takerSigned && keys.ok && state.phase !== "done" && (
             <>
               <label className="flex items-start gap-2">
                 <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />

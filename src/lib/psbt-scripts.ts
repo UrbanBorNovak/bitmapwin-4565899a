@@ -9,6 +9,7 @@
 
 import { ripemd160 } from "@noble/hashes/legacy.js";
 import { sha256 } from "@noble/hashes/sha2.js";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
 
 function hexToBytes(hex: string): number[] {
   const clean = hex.trim().replace(/^0x/, "");
@@ -82,4 +83,57 @@ export function p2shP2wpkhRedeemScript(
   const redeem = [0x00, 0x14, ...hash160(pubkey)];
   const expected = toHex(scriptPubKey.slice(2, 22));
   return toHex(hash160(redeem)) === expected ? redeem : null;
+}
+
+/* ── maker signing keys for BW-BARTER-1 swaps ───────────────────────── */
+
+function taggedHash(tag: string, data: number[]): Uint8Array {
+  const t = sha256(new TextEncoder().encode(tag));
+  return sha256(Uint8Array.from([...t, ...t, ...data]));
+}
+
+/** True when this x-only (or compressed) key, BIP-86 tweaked, is the P2TR output key in `script`. */
+export function taprootKeyMatches(script: number[], publicKeyHex: string): boolean {
+  if (!isP2trScript(script)) return false;
+  const clean = publicKeyHex.trim().replace(/^0x/, "").toLowerCase();
+  const x = clean.length === 66 ? clean.slice(2) : clean;
+  if (!/^[0-9a-f]{64}$/.test(x)) return false;
+  try {
+    const P = secp256k1.Point.fromHex("02" + x);
+    const t = BigInt("0x" + toHex(taggedHash("TapTweak", hexToBytes(x))));
+    const Q = P.add(secp256k1.Point.BASE.multiply(t)).toAffine();
+    return Q.x.toString(16).padStart(64, "0") === toHex(script.slice(2));
+  } catch {
+    return false;
+  }
+}
+
+export type MakerKeys =
+  | { ok: true; tapKeyHex?: string; publicKeys: string[] }
+  | { ok: false; reason: string };
+
+/**
+ * Picks and validates the key details a wallet needs to sign the maker's asset
+ * input: the BIP-86 internal key for taproot, the matching public key for
+ * nested segwit. Legacy addresses are refused.
+ */
+export function makerSigningKeys(script: number[], keys: (string | undefined)[]): MakerKeys {
+  const list = keys.filter((k): k is string => typeof k === "string" && k.length >= 64);
+  if (isP2trScript(script)) {
+    const hit = list.find((k) => taprootKeyMatches(script, k));
+    if (!hit) {
+      return { ok: false, reason: list.length === 0
+        ? "Your wallet didn't share the key for your ordinals address. Disconnect and reconnect the wallet, then try again."
+        : "The key your wallet shared doesn't match the address holding this item. Switch to the account that holds it and reconnect." };
+    }
+    const x = hit.length === 66 ? hit.slice(2) : hit;
+    return { ok: true, tapKeyHex: x, publicKeys: [] };
+  }
+  if (isP2shScript(script)) {
+    const hit = list.find((k) => p2shP2wpkhRedeemScript(script, k));
+    return hit ? { ok: true, publicKeys: [hit] } : { ok: false, reason: "Your wallet didn't share a key matching this nested-segwit (3…) address. Reconnect the wallet." };
+  }
+  if (script.length === 22 && script[0] === 0x00 && script[1] === 0x14) return { ok: true, publicKeys: [] };
+  if (isP2pkhScript(script)) return { ok: false, reason: "Legacy (1…) addresses can't sign swaps here." };
+  return { ok: false, reason: "This address type can't sign swaps here." };
 }
