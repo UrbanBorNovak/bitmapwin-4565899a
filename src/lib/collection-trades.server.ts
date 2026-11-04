@@ -26,7 +26,7 @@ type Tx = {
 
 async function getJson<T>(url: string, headers: Record<string, string> = {}): Promise<T | null> {
   try {
-    const r = await fetch(url, { headers: { accept: "application/json", "User-Agent": "bitmapwin/1.0", ...headers }, signal: AbortSignal.timeout(10000) });
+    const r = await fetch(url, { headers: { accept: "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", ...headers }, signal: AbortSignal.timeout(10000) });
     return r.ok ? ((await r.json()) as T) : null;
   } catch { return null; }
 }

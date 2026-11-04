@@ -76,7 +76,7 @@ export async function validateOnChainGlb(inscriptionId: string): Promise<Validat
   const response = await fetch(`https://ordinals.com/content/${inscriptionId}`, {
     headers: {
       accept: "model/gltf-binary,model/gltf+json,application/octet-stream,*/*",
-      "user-agent": "bitmap-marketplace/1.0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     },
     signal: AbortSignal.timeout(15_000),
   });

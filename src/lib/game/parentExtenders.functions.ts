@@ -15,7 +15,7 @@ type ChildrenResponse = { ids?: unknown[]; more?: boolean; page?: number };
 type InscriptionMeta = { content_type?: unknown; content_length?: unknown; number?: unknown };
 
 async function readJson<T>(url: string): Promise<T | null> {
-  const response = await fetch(url, { headers: { "User-Agent": "bitmapwin/1.0" } });
+  const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" } });
   if (!response.ok) return null;
   return (await response.json()) as T;
 }

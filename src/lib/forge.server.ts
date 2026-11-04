@@ -55,7 +55,7 @@ const cache = new Map<number, { expires: number; value: ForgeBuild | null }>();
 
 async function ord(path: string): Promise<Response | null> {
   try {
-    const r = await fetch(`${ORD}${path}`, { headers: { "user-agent": "bitmapwin/1.0", accept: "application/json, */*" }, signal: AbortSignal.timeout(10_000) });
+    const r = await fetch(`${ORD}${path}`, { headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", accept: "application/json, */*" }, signal: AbortSignal.timeout(10_000) });
     return r.ok ? r : null;
   } catch {
     return null;

@@ -14,7 +14,7 @@ import { decodePsbt } from "@/lib/psbt";
 
 const ORD = "https://ordinals.com";
 const MEMPOOL = "https://mempool.space/api";
-const UA = "bitmap-marketplace/1.0";
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 /** Refuse swaps whose fee rate looks like a mistake. */
 export const SWAP_MAX_FEE_RATE = 500;
 

@@ -32,7 +32,7 @@ async function loadConfig(id: string): Promise<Loaded> {
   let answered = false;
   for (const src of CONTENT_SOURCES) {
     try {
-      const r = await fetch(src(id), { headers: { "User-Agent": "bitmapwin/1.0" }, signal: AbortSignal.timeout(6000) });
+      const r = await fetch(src(id), { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }, signal: AbortSignal.timeout(6000) });
       if (r.status === 404) continue;
       if (!r.ok) continue;
       const text = await r.text();

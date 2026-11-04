@@ -31,7 +31,7 @@ async function getJson<T>(path: string): Promise<T> {
   for (const base of MIRRORS) {
     try {
       const res = await fetch(`${base}${path}`, {
-        headers: { accept: "application/json", "user-agent": "bitmapwin/1.0" },
+        headers: { accept: "application/json", "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
         signal: AbortSignal.timeout(8000),
       });
       if (res.ok) return (await res.json()) as T;
