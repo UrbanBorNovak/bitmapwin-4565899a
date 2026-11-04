@@ -205,9 +205,11 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
   );
 }
 
-function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; makerAddress: string; onClose: () => void }) {
+function PostWizard({ mine, makerAddress, onClose }: { mine: Checked[]; makerAddress: string; onClose: () => void }) {
   const [step, setStep] = useState(1);
-  const [pick, setPick] = useState<AssetFacts | null>(null);
+  const [pickId, setPickId] = useState<string | null>(null);
+  // Re-read the live check every render so a position change also blocks later steps.
+  const pick = mine.find((a) => a.inscriptionId === pickId) ?? null;
   const [c, setC] = useState({ assetType: "bitmap", exactHeight: "", minHeight: "", maxHeight: "", maxTx: "", patoshi: false, sweet: "", note: "" });
   const n = (s: string) => (s === "" ? undefined : Number(s));
 
@@ -221,7 +223,7 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
     makerAddress, offeringOutpoint: pick.outpoint, offeringInscription: pick.inscriptionId, offeringValue: pick.value,
     sweetenerSats: n(c.sweet) ?? 0, sweetenerDir: "demand", criteria,
   } : null;
-  const problem = ticket ? ticketProblem(ticket) : "pick an item first";
+  const problem = !pick ? "pick an item first" : pick.block ? `item position: ${pick.block}` : ticketProblem(ticket!);
   const field = (label: string, key: "exactHeight" | "minHeight" | "maxHeight" | "maxTx" | "sweet") => (
     <label className="flex flex-col gap-1">{label}
       <input className="border border-border bg-background px-2 py-1" inputMode="numeric" value={c[key]} onChange={(e) => setC({ ...c, [key]: e.target.value.replace(/\D/g, "") })} />
@@ -238,13 +240,18 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
           <ul className="max-h-96 space-y-1 overflow-auto">
             {mine.map((a) => (
               <li key={a.inscriptionId}>
-                <button className={`w-full border p-2 text-left ${pick?.inscriptionId === a.inscriptionId ? "border-primary text-primary" : "border-border"}`} onClick={() => setPick(a)}>
+                <button
+                  disabled={!!a.block}
+                  className={`w-full border p-2 text-left disabled:cursor-not-allowed disabled:opacity-60 ${pickId === a.inscriptionId ? "border-primary text-primary" : "border-border"}`}
+                  onClick={() => setPickId(a.inscriptionId)}
+                >
                   {assetLabel(a)} <span className="text-muted-foreground">· {a.value.toLocaleString()} sats</span>
+                  <span className={`block text-[11px] ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ first sat of its own output"}</span>
                 </button>
               </li>
             ))}
           </ul>
-          <button disabled={!pick} className="mt-4 w-full border border-primary px-3 py-2 text-primary disabled:opacity-40" onClick={() => setStep(2)}>NEXT: WHAT YOU WANT</button>
+          <button disabled={!pick || !!pick.block} className="mt-4 w-full border border-primary px-3 py-2 text-primary disabled:opacity-40" onClick={() => setStep(2)}>NEXT: WHAT YOU WANT</button>
         </>
       )}
       {step === 2 && (
@@ -265,7 +272,7 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
           </label>
           <div className="flex gap-2">
             <button className="flex-1 border border-border px-3 py-2" onClick={() => setStep(1)}>BACK</button>
-            <button className="flex-1 border border-primary px-3 py-2 text-primary" onClick={() => setStep(3)}>NEXT: REVIEW</button>
+            <button disabled={!pick || !!pick.block} className="flex-1 border border-primary px-3 py-2 text-primary disabled:opacity-40" onClick={() => setStep(3)}>NEXT: REVIEW</button>
           </div>
         </div>
       )}

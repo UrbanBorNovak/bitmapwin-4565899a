@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSwapLayout, matchesCriteria, ticketProblem, verifyLayoutForMaker, type AssetFacts, type BarterTicket } from "./barter-protocol";
+import { satpointProblem, buildSwapLayout, matchesCriteria, ticketProblem, verifyLayoutForMaker, type AssetFacts, type BarterTicket } from "./barter-protocol";
 
 const h = (c: string) => c.repeat(64);
 const ticket: BarterTicket = {
@@ -47,6 +47,16 @@ describe("BW-BARTER-1", () => {
   });
   it("refuses inscriptions not at offset 0", () => {
     expect(buildSwapLayout({ ...base, taker: { ...taker, offset: 300 } })).toEqual({ error: "inscription not at offset 0" });
+  });
+  it("satpoint: accepts first sat of its own single-inscription output", () => {
+    expect(satpointProblem({ outpoint: `${h("b")}:1`, value: 546, satpoint: `${h("b")}:1:0`, inscriptionsInUtxo: 1 })).toBeNull();
+  });
+  it("satpoint: refuses offset 300, moved output, shared output, unreadable", () => {
+    const o = `${h("b")}:1`;
+    expect(satpointProblem({ outpoint: o, value: 10_000, satpoint: `${h("b")}:1:300`, inscriptionsInUtxo: 1 })).toBe("inscription sits at sat 300, not the first sat");
+    expect(satpointProblem({ outpoint: o, value: 546, satpoint: `${h("c")}:0:0`, inscriptionsInUtxo: 1 })).toBe("inscription has moved to another output");
+    expect(satpointProblem({ outpoint: o, value: 546, satpoint: `${h("b")}:1:0`, inscriptionsInUtxo: 2 })).toMatch(/holds 2 inscriptions/);
+    expect(satpointProblem({ outpoint: o, value: 546, satpoint: null, inscriptionsInUtxo: 1 })).toBe("position could not be read from chain");
   });
   it("maker check catches a redirected asset", () => {
     const l = buildSwapLayout(base);
