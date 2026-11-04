@@ -3,7 +3,10 @@ import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 const HeroVoxelDiorama3D = lazy(() => import("@/components/home/HeroVoxelDiorama3D"));
 import { GeoTransfers } from "@/components/GeoTransfers";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { freshFeaturedQuery, shuffled } from "@/lib/fresh-featured";
+import type { RegistryParcel } from "@/lib/registry";
 import { ParcelCard } from "@/components/ParcelCard";
 import { HowItWorks } from "@/components/HowItWorks";
 import { BlockMosaic } from "@/components/BlockMosaic";
@@ -76,13 +79,19 @@ function Index() {
   const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
   const { data: salesCount } = useSuspenseQuery(paidSalesCountQuery());
 
-  const featured = [...parcels]
-    .sort((a, b) => {
-      if (a.listedSats !== null && b.listedSats === null) return -1;
-      if (a.listedSats === null && b.listedSats !== null) return 1;
-      return (b.lastSaleSats ?? -1) - (a.lastSaleSats ?? -1);
-    })
-    .slice(0, 8);
+  const fresh = useQuery(freshFeaturedQuery());
+  const [shuffleSeed, setShuffleSeed] = useState<RegistryParcel[] | null>(null);
+  useEffect(() => {
+    // Shuffle after hydration so every visit shows a different set.
+    setShuffleSeed(shuffled(parcels));
+  }, [parcels]);
+  const freshItems = fresh.data ?? [];
+  const freshKind = new Map(freshItems.map((f) => [f.parcel.bitmapHeight, f.kind] as const));
+  const pool = shuffleSeed ?? parcels;
+  const featured = [
+    ...freshItems.map((f) => f.parcel),
+    ...pool.filter((p) => !freshKind.has(p.bitmapHeight)),
+  ].slice(0, 8);
   const recentSales = trades.filter((trade) => trade.price_sats > 0);
   const listed = parcels.filter((parcel) => parcel.listedSats !== null);
   const lead = featured[0] ?? null;
@@ -255,7 +264,12 @@ function Index() {
         ) : (
           <div data-tour="home-featured" className="mt-4 flex snap-x snap-mandatory gap-px overflow-x-auto bg-border pb-0 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((p) => (
-              <div key={p.inscriptionId} className="w-[84vw] max-w-[330px] shrink-0 snap-center sm:w-auto sm:max-w-none">
+              <div key={p.inscriptionId} className="relative w-[84vw] max-w-[330px] shrink-0 snap-center sm:w-auto sm:max-w-none">
+                {freshKind.has(p.bitmapHeight) ? (
+                  <div className="label pointer-events-none absolute left-2 top-2 z-10 border border-bitcoin bg-background/90 px-2 py-0.5 text-bitcoin">
+                    {freshKind.get(p.bitmapHeight) === "guardian" ? "NEW · GUARDIAN INSCRIBED" : "NEW · VOXEL BUILD INSCRIBED"}
+                  </div>
+                ) : null}
                 <ParcelCard parcel={p} />
               </div>
             ))}
