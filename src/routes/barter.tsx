@@ -248,7 +248,7 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
       )}
       {step === 3 && ticket && (
         <div className="grid gap-3">
-          <p>Offering <span className="text-primary">{assetLabel(ticket && pick ? pick : ({} as AssetFacts))}</span></p>
+          <p>Offering <span className="text-primary">{pick ? assetLabel(pick) : ""}</span></p>
           <p>Wants <span className="text-accent">{describeCriteria(criteria)}</span></p>
           {problem ? <p className="text-destructive">Can't post: {problem}.</p> : <p className="text-accent">✓ Offer passes the protocol checks.</p>}
           <details>
