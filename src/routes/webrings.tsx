@@ -60,7 +60,7 @@ function WebringsPage() {
           const nb = ringNeighbours(r.members, cur) ?? { prev: cur, next: cur };
           const go = (h: number) => setAt((s) => ({ ...s, [r.slug]: h }));
           return (
-            <li key={r.slug} className="border border-border bg-card/60 p-4">
+            <li key={r.slug} id={r.slug} className="border border-border bg-card/60 p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="font-display text-lg text-foreground">{r.name}</h2>
                 <span className="text-xs text-accent">{r.members.length} member{r.members.length === 1 ? "" : "s"}</span>
