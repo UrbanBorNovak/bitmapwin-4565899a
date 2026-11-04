@@ -152,6 +152,6 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
       renderer.dispose(); cv.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dna, animate, trailerStart, parcels, owners]);
+  }, [dna, animate, trailerStart, parcels, owners, baby]);
   return <div ref={wrap} className="h-full w-full cursor-grab active:cursor-grabbing" aria-label={`${dna.height}.BITMAP Guardian 3D preview`} />;
 }
