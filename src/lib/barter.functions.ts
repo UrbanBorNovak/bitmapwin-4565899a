@@ -88,3 +88,66 @@ export const verifyBarterOffersFn = createServerFn({ method: "POST" })
     }
     return out;
   });
+
+const ticketSchema = z.object({
+  makerAddress: z.string().min(20).max(100),
+  offeringOutpoint: z.string().regex(/^[0-9a-f]{64}:\d+$/),
+  offeringInscription: z.string().regex(INS),
+  offeringValue: z.number().int(),
+  sweetenerSats: z.number().int().min(0),
+  sweetenerDir: z.enum(["give", "demand"]),
+  criteria: z.record(z.string(), z.unknown()),
+});
+const asTicket = (t: z.infer<typeof ticketSchema>) => ({ ...t, criteria: t.criteria as import("@/lib/barter-protocol").BarterCriteria });
+const psbtField = z.string().min(40).max(200_000);
+
+/** Public: builds the unsigned swap for a taker after live checks of both items. Writes nothing. */
+export const buildBarterSwapFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    ticket: ticketSchema,
+    takerInscription: z.string().regex(INS),
+    takerOutpoint: z.string().regex(/^[0-9a-f]{64}:\d+$/),
+    takerOrdinalsAddress: z.string().min(20).max(100),
+    takerPaymentAddress: z.string().min(20).max(100),
+    takerPublicKey: z.string().regex(/^[0-9a-f]{64,66}$/i).optional(),
+    takerPaymentPublicKey: z.string().regex(/^[0-9a-f]{64,66}$/i).optional(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { buildSwap } = await import("@/lib/barter-swap.server");
+    try {
+      return { ok: true as const, ...(await buildSwap({ ...data, ticket: asTicket(data.ticket) })) };
+    } catch (e) {
+      return { ok: false as const, reason: e instanceof Error ? e.message : "could not build the swap" };
+    }
+  });
+
+/** Public: the maker's live check of a received swap proposal. Writes nothing. */
+export const reviewBarterSwapFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ ticket: ticketSchema, psbtBase64: psbtField }).parse(d))
+  .handler(async ({ data }) => {
+    const { reviewSwap } = await import("@/lib/barter-swap.server");
+    const r = await reviewSwap(data.psbtBase64, asTicket(data.ticket));
+    if (!r.ok) return r;
+    const { decodePsbt } = await import("@/lib/psbt");
+    const d = decodePsbt(data.psbtBase64);
+    const takerSigned = d.inputs.slice(1).every((i) => i.signed);
+    return { ok: true as const, feeSats: r.feeSats, takerSigned, takerAsset: { id: r.taker.inscriptionId, height: r.taker.height ?? null, value: r.taker.value }, outputs: r.layout.outputs };
+  });
+
+/** Public: re-checks a fully signed swap, finalizes and broadcasts it. Bitcoin itself rejects anything unsigned. */
+export const broadcastBarterSwapFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ ticket: ticketSchema, psbtBase64: psbtField }).parse(d))
+  .handler(async ({ data }) => {
+    const { reviewSwap } = await import("@/lib/barter-swap.server");
+    const r = await reviewSwap(data.psbtBase64, asTicket(data.ticket));
+    if (!r.ok) return r;
+    const { finalizeSignedPsbt, isFullySigned, extractRawTxHex } = await import("@/lib/psbt-buyer");
+    let finalized: string;
+    try { finalized = finalizeSignedPsbt(data.psbtBase64); } catch { return { ok: false as const, reason: "signatures could not be finalized" }; }
+    if (!isFullySigned(finalized)) return { ok: false as const, reason: "not every input is signed" };
+    const raw = extractRawTxHex(finalized);
+    if (!raw) return { ok: false as const, reason: "transaction could not be extracted" };
+    const { broadcastRawTransaction } = await import("@/lib/purchase.server");
+    const b = await broadcastRawTransaction(raw);
+    return "txid" in b ? { ok: true as const, txid: b.txid } : { ok: false as const, reason: `Bitcoin rejected it: ${b.error.slice(0, 160)}` };
+  });
