@@ -5,15 +5,7 @@ import { signParentInputsPsbt } from "@/lib/browser-wallet";
 import { buildBarterSwapFn, reviewBarterSwapFn, broadcastBarterSwapFn } from "@/lib/barter.functions";
 import { fetchSwapProposals, signSwapEvent, swapProposalTags, nostrPubkeyOf, type FeedTicket, type SwapProposal } from "@/lib/barter-feed";
 import { deviceNostrKey, publishEvent } from "@/lib/nostr-listing";
-import { prepareMakerInput } from "@/lib/psbt-buyer";
-import { addressToScriptPubKey } from "@/lib/psbt-builder";
-import { makerSigningKeys, type MakerKeys } from "@/lib/psbt-scripts";
-
-/** Which key details the connected wallet can supply for the maker's item; refused paths explain why. */
-function makerKeysFor(wallet: ConnectedWallet): MakerKeys {
-  if (wallet.provider !== "unisat" && wallet.provider !== "xverse") return { ok: false, reason: "Swaps can be signed only with UniSat or Xverse for now." };
-  let script: number[];
-  try { script = addressToScriptPubKey(wallet.ordinalsAddress); } catch { return { ok: false, reason: "Your ordinals address can't be read." }; }
+import { makerKeysFor, signMakerSwap } from "@/lib/barter-maker-sign";
   return makerSigningKeys(script, [wallet.publicKey, wallet.paymentPublicKey]);
 }
 import type { BarterTicket } from "@/lib/barter-protocol";
@@ -138,9 +130,7 @@ function ProposalRow({ p, t, wallet }: { p: SwapProposal; t: FeedTicket; wallet:
   const accept = async () => {
     setState({ phase: "signing", msg: "Sign your offered item in the wallet…" });
     try {
-      if (!keys.ok) throw new Error(keys.reason);
-      const prepared = prepareMakerInput(p.psbtBase64, keys.tapKeyHex, keys.publicKeys);
-      const signed = await signParentInputsPsbt(wallet.provider as WalletProviderId, prepared, wallet.ordinalsAddress, [0]);
+      const signed = await signMakerSwap(wallet, p.psbtBase64);
       setState({ phase: "signing", msg: "Re-checking and broadcasting…" });
       const b = await broadcastBarterSwapFn({ data: { ticket: ticketOf(t), psbtBase64: signed } });
       if (!b.ok) throw new Error(b.reason);
