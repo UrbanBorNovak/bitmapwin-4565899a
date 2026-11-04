@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { TRAILER_S } from "@/components/bitmon/GuardianStudio3D";
 import { MintTrailerOverlay, playTrailerSfx } from "@/components/bitmon/MintTrailerOverlay";
 import { onchainGuardianName } from "@/lib/onchain-name";
