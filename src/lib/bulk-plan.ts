@@ -5,7 +5,7 @@ export const BULK_MAX = 1000;
 
 export type AskRow = { id: string; bitmapHeight: number | null; inscriptionId: string | null; priceSats: number; sellerAddress: string | null };
 
-export type BulkFilter = { count: number; budgetSats: number | null; minHeight: number | null; maxHeight: number | null; maxPriceSats: number | null; ownAddress?: string };
+export type BulkFilter = { count: number; budgetSats: number | null; minHeight: number | null; maxHeight: number | null; maxPriceSats: number | null; ownAddress?: string | undefined };
 
 /** Cheapest-first picks under every bound; never more than BULK_MAX, never your own asks, never unpriced or unidentified asks. */
 export function planSweep(asks: AskRow[], f: BulkFilter): { picks: CartItem[]; totalSats: number } {
