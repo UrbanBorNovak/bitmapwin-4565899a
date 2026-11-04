@@ -136,7 +136,6 @@ export function MyspaceBuild({ config, height }: { config: MyspaceConfig; height
           <Box title={`Contacting ${name}`} skin={skin}>
             <ul className="grid grid-cols-2 gap-1">
               <li><a href="#community" style={linkStyle}>✉ Sign Guestbook</a></li>
-              <li><a href="#market" style={linkStyle}>💰 Make Offer</a></li>
               <li><Link to="/oasis" style={linkStyle}>🌴 Visit in Oasis</Link></li>
               <li>
                 <a href={`https://ordinals.com/search?query=${height}.bitmap`} target="_blank" rel="noreferrer" style={linkStyle}>
