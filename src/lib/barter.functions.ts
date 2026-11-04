@@ -72,9 +72,10 @@ export const verifyBarterOffersFn = createServerFn({ method: "POST" })
       let valid = false;
       try { valid = Verifier.verifySignature(o.makerAddress, P.offerProofMessage(ticket, o.nostrPubkey, o.issuedAt), o.signature); } catch { valid = false; }
       if (!valid) { out[o.key] = { ok: false, reason: "wallet signature does not verify" }; continue; }
+      const { fetchOutput } = await import("@/lib/offers.server");
       const [ins, outp] = await Promise.all([
         ordJson<{ satpoint?: string; address?: string }>(`/r/inscription/${o.offeringInscription}`),
-        ordJson<{ inscriptions?: string[]; spent?: boolean; value?: number; address?: string }>(`/output/${o.offeringOutpoint}`),
+        fetchOutput(o.offeringOutpoint),
       ]);
       if (!ins || !outp) { out[o.key] = { ok: false, reason: "chain could not be read" }; continue; }
       if (outp.spent) { out[o.key] = { ok: false, reason: "offered output is spent" }; continue; }
