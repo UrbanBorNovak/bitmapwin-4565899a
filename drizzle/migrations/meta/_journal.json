@@ -330,6 +330,13 @@
       "when": 1793811364570,
       "tag": "0046_myspace_build_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793813397684,
+      "tag": "0047_allow_myspace_build_kind",
+      "breakpoints": true
     }
   ]
 }
