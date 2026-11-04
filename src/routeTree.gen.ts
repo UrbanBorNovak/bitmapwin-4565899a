@@ -88,6 +88,7 @@ import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as VaultRouteImport } from './routes/vault'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WatchRouteImport } from './routes/watch'
+import { Route as WebringsRouteImport } from './routes/webrings'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as XmasRouteImport } from './routes/xmas'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -579,6 +580,11 @@ const WalletRoute = WalletRouteImport.update({
 const WatchRoute = WatchRouteImport.update({
   id: '/watch',
   path: '/watch',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebringsRoute = WebringsRouteImport.update({
+  id: '/webrings',
+  path: '/webrings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorldStatsRoute = WorldStatsRouteImport.update({
@@ -1156,6 +1162,7 @@ export interface FileRoutesByFullPath {
   '/vault': typeof VaultRoute
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
+  '/webrings': typeof WebringsRoute
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1330,6 +1337,7 @@ export interface FileRoutesByTo {
   '/vault': typeof VaultRoute
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
+  '/webrings': typeof WebringsRoute
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1509,6 +1517,7 @@ export interface FileRoutesById {
   '/vault': typeof VaultRoute
   '/wallet': typeof WalletRoute
   '/watch': typeof WatchRoute
+  '/webrings': typeof WebringsRoute
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1689,6 +1698,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/wallet'
     | '/watch'
+    | '/webrings'
     | '/world-stats'
     | '/xmas'
     | '/.well-known/oauth-protected-resource'
@@ -1863,6 +1873,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/wallet'
     | '/watch'
+    | '/webrings'
     | '/world-stats'
     | '/xmas'
     | '/.well-known/oauth-protected-resource'
@@ -2041,6 +2052,7 @@ export interface FileRouteTypes {
     | '/vault'
     | '/wallet'
     | '/watch'
+    | '/webrings'
     | '/world-stats'
     | '/xmas'
     | '/.well-known/oauth-protected-resource'
@@ -2220,6 +2232,7 @@ export interface RootRouteChildren {
   VaultRoute: typeof VaultRoute
   WalletRoute: typeof WalletRoute
   WatchRoute: typeof WatchRoute
+  WebringsRoute: typeof WebringsRoute
   WorldStatsRoute: typeof WorldStatsRoute
   XmasRoute: typeof XmasRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -2822,6 +2835,13 @@ declare module '@tanstack/react-router' {
       path: '/watch'
       fullPath: '/watch'
       preLoaderRoute: typeof WatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/webrings': {
+      id: '/webrings'
+      path: '/webrings'
+      fullPath: '/webrings'
+      preLoaderRoute: typeof WebringsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/world-stats': {
@@ -3741,6 +3761,7 @@ const rootRouteChildren: RootRouteChildren = {
   VaultRoute: VaultRoute,
   WalletRoute: WalletRoute,
   WatchRoute: WatchRoute,
+  WebringsRoute: WebringsRoute,
   WorldStatsRoute: WorldStatsRoute,
   XmasRoute: XmasRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
