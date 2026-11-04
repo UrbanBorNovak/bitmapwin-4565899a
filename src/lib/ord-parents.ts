@@ -68,7 +68,10 @@ export async function pendingTransferOf(txid: string, vout: number): Promise<{ t
  * fall back to a smaller parent set instead of building an invalid reveal.
  */
 export async function fetchParentSpend(inscriptionId: string, signer: ParentSigner): Promise<ParentSpend | null> {
-  const meta = await readJson<OrdInscription>(`https://ordinals.com/r/inscription/${inscriptionId}`);
+  // ordinals.com sometimes refuses server requests (bot challenge); turbo.ordinalswallet.com runs the same ord index.
+  const meta =
+    (await readJson<OrdInscription>(`https://ordinals.com/r/inscription/${inscriptionId}`)) ??
+    (await readJson<OrdInscription>(`https://turbo.ordinalswallet.com/inscription/${inscriptionId}`));
   const satpoint = meta?.satpoint;
   if (!satpoint) return null;
   const [txid, voutRaw, offRaw] = satpoint.split(":");

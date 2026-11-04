@@ -102,7 +102,11 @@ export async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
       spent: json.spent === true,
     };
   }
-  return fetchOutputHtml(outpoint);
+  const html = await fetchOutputHtml(outpoint);
+  if (html) return html;
+  // ordinals.com refused (bot challenge): rebuild the same facts from esplora + the second ord index.
+  const { chainOutput } = await import("@/lib/ord-fallback.server");
+  return chainOutput(outpoint);
 }
 
 /** Reads the inscription body and returns the bitmap number it claims. */
