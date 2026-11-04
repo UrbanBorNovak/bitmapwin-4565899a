@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import { useWalletSession } from "@/lib/wallet-session";
 import { getWalletFn } from "@/lib/wallet.functions";
 import type { WalletSnapshot } from "@/lib/wallet";
+import { inscriptionSatpointsFn } from "@/lib/barter.functions";
 import { fetchBarterTickets, describeCriteria, type FeedTicket } from "@/lib/barter-feed";
 import {
-  matchesCriteria, ticketProblem, ticketTags, DUST_SATS,
+  matchesCriteria, ticketProblem, ticketTags, satpointProblem, DUST_SATS,
   type AssetFacts, type BarterCriteria, type BarterTicket,
 } from "@/lib/barter-protocol";
 
@@ -25,11 +26,16 @@ export const Route = createFileRoute("/barter")({
 });
 
 /** Chain-read wallet items as protocol facts. Tx counts are not in the scan, so tx rules never match here. */
-function walletAssets(w: WalletSnapshot | undefined): AssetFacts[] {
-  const out: AssetFacts[] = [];
+type Raw = AssetFacts & { inUtxo: number };
+/** An asset after its chain satpoint check; `block` is the reason it may not trade, or null. */
+type Checked = Raw & { satpoint?: string | null; block: string | null };
+
+function walletAssets(w: WalletSnapshot | undefined): Raw[] {
+  const out: Raw[] = [];
   for (const u of w?.utxos ?? []) {
     for (const i of u.inscriptions) {
-      const a: AssetFacts = {
+      const a: Raw = {
+        inUtxo: u.inscriptions.length,
         inscriptionId: i.id, outpoint: u.outpoint, value: u.valueSats,
         offset: -1, // not resolved by the wallet scan
         type: i.bitmapHeight !== null ? "bitmap" : "ordinal", spent: false,
@@ -60,7 +66,20 @@ function BarterPage() {
     enabled: !!wallet?.ordinalsAddress,
     staleTime: 60_000,
   });
-  const mine = useMemo(() => walletAssets(holdings.data), [holdings.data]);
+  const raw = useMemo(() => walletAssets(holdings.data), [holdings.data]);
+  const sats = useQuery({
+    queryKey: ["barter-satpoints", raw.map((a) => a.inscriptionId).join(",")],
+    queryFn: () => inscriptionSatpointsFn({ data: { ids: raw.slice(0, 60).map((a) => a.inscriptionId) } }),
+    enabled: raw.length > 0,
+    staleTime: 60_000,
+  });
+  const mine = useMemo<Checked[]>(() => raw.map((a, i) => {
+    if (i >= 60) return { ...a, block: "too many items to check at once" };
+    if (!sats.data) return { ...a, block: sats.isError ? "position could not be read from chain" : "checking position…" };
+    const sp = sats.data[a.inscriptionId] ?? null;
+    const block = satpointProblem({ outpoint: a.outpoint, value: a.value, satpoint: sp, inscriptionsInUtxo: a.inUtxo });
+    return { ...a, offset: block ? a.offset : 0, satpoint: sp, block };
+  }), [raw, sats.data, sats.isError]);
 
   const [filter, setFilter] = useState<{ type: string; maxHeight: string; fillable: boolean }>({ type: "", maxHeight: "", fillable: false });
   const [drawer, setDrawer] = useState<FeedTicket | null>(null);
@@ -157,7 +176,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket; mine: AssetFacts[]; hasWallet: boolean; onClose: () => void }) {
+function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket; mine: Checked[]; hasWallet: boolean; onClose: () => void }) {
   const ok = mine.filter((a) => matchesCriteria(ticket.criteria, a));
   const usesTx = ticket.criteria.minTxCount !== undefined || ticket.criteria.maxTxCount !== undefined;
   return (
@@ -168,23 +187,29 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
       {hasWallet && ok.length === 0 && <p className="mt-3">None of your items meet these rules.</p>}
       <ul className="mt-3 space-y-2">
         {ok.map((a) => (
-          <li key={a.inscriptionId} className="flex items-center justify-between border border-border p-2">
-            <span className="text-accent">{assetLabel(a)}</span>
-            <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
+          <li key={a.inscriptionId} className={`border p-2 ${a.block ? "border-destructive/50" : "border-border"}`}>
+            <div className="flex items-center justify-between">
+              <span className={a.block ? "text-muted-foreground line-through" : "text-accent"}>{assetLabel(a)}</span>
+              <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
+            </div>
+            <p className={`mt-1 ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ Position checked: first sat of its own output"}</p>
           </li>
         ))}
       </ul>
+      {ok.length > 0 && <p className="mt-2 text-muted-foreground">{ok.filter((a) => !a.block).length} of {ok.length} matching items can be used.</p>}
       <div className="mt-4 space-y-2">
         <button disabled className="w-full cursor-not-allowed border border-border px-3 py-2 opacity-50">PROPOSE SWAP & SIGN</button>
-        <Unavailable>Building, signing and sending the swap is not implemented. The inscription's position inside its output is also not checked yet, and the rules need it to be first.</Unavailable>
+        <Unavailable>Building, signing and sending the swap is not implemented.</Unavailable>
       </div>
     </Sheet>
   );
 }
 
-function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; makerAddress: string; onClose: () => void }) {
+function PostWizard({ mine, makerAddress, onClose }: { mine: Checked[]; makerAddress: string; onClose: () => void }) {
   const [step, setStep] = useState(1);
-  const [pick, setPick] = useState<AssetFacts | null>(null);
+  const [pickId, setPickId] = useState<string | null>(null);
+  // Re-read the live check every render so a position change also blocks later steps.
+  const pick = mine.find((a) => a.inscriptionId === pickId) ?? null;
   const [c, setC] = useState({ assetType: "bitmap", exactHeight: "", minHeight: "", maxHeight: "", maxTx: "", patoshi: false, sweet: "", note: "" });
   const n = (s: string) => (s === "" ? undefined : Number(s));
 
@@ -198,7 +223,7 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
     makerAddress, offeringOutpoint: pick.outpoint, offeringInscription: pick.inscriptionId, offeringValue: pick.value,
     sweetenerSats: n(c.sweet) ?? 0, sweetenerDir: "demand", criteria,
   } : null;
-  const problem = ticket ? ticketProblem(ticket) : "pick an item first";
+  const problem = !pick ? "pick an item first" : pick.block ? `item position: ${pick.block}` : ticketProblem(ticket!);
   const field = (label: string, key: "exactHeight" | "minHeight" | "maxHeight" | "maxTx" | "sweet") => (
     <label className="flex flex-col gap-1">{label}
       <input className="border border-border bg-background px-2 py-1" inputMode="numeric" value={c[key]} onChange={(e) => setC({ ...c, [key]: e.target.value.replace(/\D/g, "") })} />
@@ -215,13 +240,18 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
           <ul className="max-h-96 space-y-1 overflow-auto">
             {mine.map((a) => (
               <li key={a.inscriptionId}>
-                <button className={`w-full border p-2 text-left ${pick?.inscriptionId === a.inscriptionId ? "border-primary text-primary" : "border-border"}`} onClick={() => setPick(a)}>
+                <button
+                  disabled={!!a.block}
+                  className={`w-full border p-2 text-left disabled:cursor-not-allowed disabled:opacity-60 ${pickId === a.inscriptionId ? "border-primary text-primary" : "border-border"}`}
+                  onClick={() => setPickId(a.inscriptionId)}
+                >
                   {assetLabel(a)} <span className="text-muted-foreground">· {a.value.toLocaleString()} sats</span>
+                  <span className={`block text-[11px] ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ first sat of its own output"}</span>
                 </button>
               </li>
             ))}
           </ul>
-          <button disabled={!pick} className="mt-4 w-full border border-primary px-3 py-2 text-primary disabled:opacity-40" onClick={() => setStep(2)}>NEXT: WHAT YOU WANT</button>
+          <button disabled={!pick || !!pick.block} className="mt-4 w-full border border-primary px-3 py-2 text-primary disabled:opacity-40" onClick={() => setStep(2)}>NEXT: WHAT YOU WANT</button>
         </>
       )}
       {step === 2 && (
@@ -242,7 +272,7 @@ function PostWizard({ mine, makerAddress, onClose }: { mine: AssetFacts[]; maker
           </label>
           <div className="flex gap-2">
             <button className="flex-1 border border-border px-3 py-2" onClick={() => setStep(1)}>BACK</button>
-            <button className="flex-1 border border-primary px-3 py-2 text-primary" onClick={() => setStep(3)}>NEXT: REVIEW</button>
+            <button disabled={!pick || !!pick.block} className="flex-1 border border-primary px-3 py-2 text-primary disabled:opacity-40" onClick={() => setStep(3)}>NEXT: REVIEW</button>
           </div>
         </div>
       )}
