@@ -15,7 +15,7 @@ const LAND = 32;
 /** Trailer length in seconds: PICK (0–2.5) → SUMMON (2.5–5.5) → INSCRIBE (5.5–8). */
 export const TRAILER_S = 8;
 
-export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [] }: { dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[] }) {
+export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {} }: { dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = wrap.current; if (!el) return;
@@ -43,7 +43,7 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
     ped.position.y = -0.6; ped.receiveShadow = true; ped.castShadow = true; scene.add(ped);
     const ring = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(LAND, 1.2, LAND)), new THREE.LineBasicMaterial({ color: 0x28e0ff }));
     ring.position.y = -0.6; scene.add(ring);
-    const tileMat = new THREE.MeshStandardMaterial({ color: 0x1a2733, roughness: 0.5, metalness: 0.3, emissive: 0x28e0ff, emissiveIntensity: 0.08 });
+    const tileMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.3, emissive: 0xf7931a, emissiveIntensity: 0.04 });
     const list = parcels.slice(0, 6000);
     const tiles = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), tileMat, Math.max(1, list.length));
     tiles.count = list.length; tiles.receiveShadow = true;
@@ -54,7 +54,11 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
         const h = 0.06 + Math.min(0.5, Math.log2(1 + p.size) * 0.05);
         m.compose(new THREE.Vector3((p.x0 + p.x1) / 2 * k - LAND / 2, h / 2, (p.z0 + p.z1) / 2 * k - LAND / 2), new THREE.Quaternion(), new THREE.Vector3(Math.max(0.05, w - gap), h, Math.max(0.05, d - gap)));
         tiles.setMatrixAt(i, m);
-        tc.setHSL(0.55, 0.25, 0.1 + ((p.index * 37) % 9) * 0.012); tiles.setColorAt(i, tc);
+        // Bitcoin orange by default; each distinct on-chain owner gets its own hue.
+        const o = owners[p.index];
+        if (o) { let hsh = 0; for (let j = 0; j < o.length; j++) hsh = (hsh * 31 + o.charCodeAt(j)) >>> 0; tc.setHSL((hsh % 360) / 360, 0.75, 0.45); }
+        else tc.setHSL(0.083, 0.93, 0.32 + ((p.index * 37) % 9) * 0.015);
+        tiles.setColorAt(i, tc);
       });
       // Guardian stands on top of the parcel at the centre of its block.
       let top = 0; const c = span / 2;
@@ -137,6 +141,6 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
       renderer.dispose(); cv.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dna, animate, trailerStart, parcels]);
+  }, [dna, animate, trailerStart, parcels, owners]);
   return <div ref={wrap} className="h-full w-full cursor-grab active:cursor-grabbing" aria-label={`${dna.height}.BITMAP Guardian 3D preview`} />;
 }
