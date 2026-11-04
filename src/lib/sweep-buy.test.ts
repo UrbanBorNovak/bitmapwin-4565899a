@@ -23,7 +23,8 @@ describe("sweep wallet flow (mocked signing + broadcast)", () => {
 
   it("wallet rejection skips the item, releases its hold, never submits it", async () => {
     const submit = vi.fn(async () => ({ txid: "tx" }));
-    const t = run({ submit, sign: async (q) => { if (q && submit.mock.calls.length === 1) throw new Error("User rejected"); return "signed"; } });
+    let n = 0;
+    const t = run({ submit, sign: async () => { if (++n === 2) throw new Error("User rejected"); return "signed"; } });
     const s = await t.go();
     expect(s.state).toBe("done");
     expect(s.outcomes[1]).toMatchObject({ kind: "skipped", reason: "WALLET DECLINED · User rejected" });
