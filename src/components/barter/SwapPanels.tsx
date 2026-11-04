@@ -6,8 +6,6 @@ import { buildBarterSwapFn, reviewBarterSwapFn, broadcastBarterSwapFn } from "@/
 import { fetchSwapProposals, signSwapEvent, swapProposalTags, nostrPubkeyOf, type FeedTicket, type SwapProposal } from "@/lib/barter-feed";
 import { deviceNostrKey, publishEvent } from "@/lib/nostr-listing";
 import { makerKeysFor, signMakerSwap } from "@/lib/barter-maker-sign";
-  return makerSigningKeys(script, [wallet.publicKey, wallet.paymentPublicKey]);
-}
 import type { BarterTicket } from "@/lib/barter-protocol";
 
 const ticketOf = (t: BarterTicket) => ({
