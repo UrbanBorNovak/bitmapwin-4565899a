@@ -9,6 +9,7 @@ import { cart, useCart } from "@/lib/sweep-cart";
 import { BULK_MAX, batches, planSweep } from "@/lib/bulk-plan";
 import { TradeSlip, useFees } from "@/components/market/TradeSlip";
 import { BulkSellDrawer } from "@/components/market/BulkSellDrawer";
+import { SweepRunnerPanel } from "@/components/market/SweepRunnerPanel";
 
 export const Route = createFileRoute("/bulk")({
   head: () => ({
@@ -81,6 +82,8 @@ function BulkPage() {
           HOW IT RUNS: LOAD ONE BATCH (UP TO 20) INTO THE TRADE SLIP, THEN BUY EACH ONE THERE. EVERY BITMAP IS STILL ITS OWN PURCHASE, HELD FOR YOU FOR 90 SECONDS AND SIGNED IN YOUR WALLET WITH ITS EXACT MINER FEE SHOWN FIRST. ASKS THAT SELL MEANWHILE FAIL SAFELY. ONE-TRANSACTION MULTI-BUYS ARE NOT ENABLED YET — THEY WAIT ON INDEPENDENT REVIEW.
         </p>
       </section>
+
+      <SweepRunnerPanel picks={plan.picks} budgetSats={num(budget)} feeRate={fees.data?.halfHourFee ?? null} />
 
       <section className="space-y-2">
         {groups.length === 0 && <p className="font-mono text-[11px] text-muted-foreground">{asks.isLoading ? "READING OPEN ASKS…" : "NO OPEN ASKS MATCH THIS PLAN."}</p>}
