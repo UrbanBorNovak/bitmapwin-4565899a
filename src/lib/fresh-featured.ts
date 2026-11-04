@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { inhabitedBitmapsFn } from "@/lib/inhabited.functions";
 import { fetchRegistryParcel, type RegistryParcel } from "@/lib/registry";
 
 export type FreshKind = "guardian" | "build";
@@ -11,11 +12,8 @@ export const freshFeaturedQuery = () =>
     queryKey: ["home", "fresh-featured"],
     queryFn: async (): Promise<FreshFeatured[]> => {
       const [g, b] = await Promise.all([
-        supabase
-          .from("bitmon_guardians")
-          .select("block_height, stats, created_at")
-          .order("created_at", { ascending: false })
-          .limit(200),
+        // Chain truth: Guardian children of the collection root, oldest first.
+        inhabitedBitmapsFn().catch(() => []),
         supabase
           .from("bitmap_forge_builds")
           .select("bitmap_height, verified_at")
@@ -23,12 +21,7 @@ export const freshFeaturedQuery = () =>
           .limit(4),
       ]);
       const picks: { height: number; kind: FreshKind; at: string }[] = [];
-      for (const r of g.data ?? []) {
-        const s = (r.stats ?? {}) as Record<string, unknown>;
-        if (typeof s["inscription"] !== "string") continue;
-        picks.push({ height: r.block_height, kind: "guardian", at: r.created_at });
-        if (picks.length >= 3) break;
-      }
+      for (const r of [...g].reverse().slice(0, 3)) picks.push({ height: r.height, kind: "guardian", at: r.inscriptionId });
       for (const r of b.data ?? []) picks.push({ height: r.bitmap_height, kind: "build", at: r.verified_at });
       const seen = new Set<number>();
       const unique = picks.filter((p) => (seen.has(p.height) ? false : (seen.add(p.height), true)));
