@@ -134,6 +134,8 @@ export async function reviewSwap(psbtBase64: string, t: BarterTicket): Promise<S
   try { d = decodePsbt(psbtBase64); } catch { return { ok: false, reason: "not a valid PSBT" }; }
   if (d.inputs.some((i) => i.witnessValueSats === null)) return { ok: false, reason: "an input lacks its value" };
   if (d.outputs.some((o) => !o.address)) return { ok: false, reason: "an output has an unsupported script" };
+  // Every signature must commit to all inputs and outputs (SIGHASH_DEFAULT or ALL).
+  if (d.inputs.some((i) => i.sighashes.some((h) => h !== 0x00 && h !== 0x01))) return { ok: false, reason: "a signature does not cover the whole swap" };
   const i1 = d.inputs[1];
   if (!i1) return { ok: false, reason: "layout too short" };
   const takerIns = await getJson<{ id?: string; inscriptions?: string[] }>(`${ORD}/output/${i1.outpoint}`);
