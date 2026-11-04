@@ -353,6 +353,7 @@ import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
 import { ATLAS } from "@/lib/atlas-palette";
+import { MEADOW, MEADOW_EVENT, readMeadow } from "@/lib/oasis-meadow";
 import { TerrainModels } from "@/components/game/TerrainModels";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
@@ -454,6 +455,15 @@ function readWorldColors(): WorldColors {
     const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
     return `rgb(${red}, ${green}, ${blue})`;
   };
+  if (readMeadow()) {
+    return {
+      background: MEADOW.sky,
+      foreground: "rgb(255, 245, 219)",
+      muted: MEADOW.sand,
+      bitcoin: read("--bitcoin", "orange"),
+      border: MEADOW.grid,
+    };
+  }
   return {
     // Sky, ground and linework come from the atlas painting so the world you
     // walk is the same place the illustrated map shows. Light and highlight
@@ -3822,6 +3832,9 @@ function BitmapWorld3DInner({
 
   useEffect(() => {
     setColors(readWorldColors());
+    const onMeadow = () => setColors(readWorldColors());
+    window.addEventListener(MEADOW_EVENT, onMeadow);
+    return () => window.removeEventListener(MEADOW_EVENT, onMeadow);
   }, []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
