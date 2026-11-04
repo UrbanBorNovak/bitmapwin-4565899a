@@ -12,6 +12,7 @@ import { Link } from "@tanstack/react-router";
 import { GuardianStudio3D } from "@/components/bitmon/GuardianStudio3D";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { parcelRects } from "@/lib/forge-parcels";
+import { forgeBuildQuery } from "@/lib/forge";
 import { parcelOwnersFn } from "@/lib/parcel-owners.functions";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 
@@ -55,6 +56,10 @@ function StudioPage() {
     const them: PetParent = { inscriptionId: otherId, height: otherH, genome: onchainGenome(otherDna.data) };
     return first.sire === selfId ? breedPet(me, them) : breedPet(them, me);
   }, [first, q.data, otherDna.data, otherH, selfId, otherId, height]);
+  const buildQ = useQuery(forgeBuildQuery(height));
+  const [showBuild, setShowBuild] = useState(true);
+  const build = buildQ.data ?? null;
+  const build3d = useMemo(() => (build && showBuild ? { data: build.data, span: build.span } : null), [build, showBuild]);
   const [trailer, setTrailer] = useState(0);
   const [rec, setRec] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -92,7 +97,7 @@ function StudioPage() {
       <div className="mt-4 grid gap-4 md:grid-cols-[1fr_200px]">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border bg-card">
           {trailer > 0 && q.data && <MintTrailerOverlay start={trailer} height={height} name={name} />}
-          {q.data ? <GuardianStudio3D dna={q.data} animate={animate} trailerStart={trailer} parcels={parcels} owners={owners} baby={baby} onCanvas={(c) => { canvasRef.current = c; }} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
+          {q.data ? <GuardianStudio3D dna={q.data} animate={animate} trailerStart={trailer} parcels={parcels} owners={owners} baby={baby} build={build3d} onCanvas={(c) => { canvasRef.current = c; }} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
         </div>
         <div className="space-y-2">
           <p className="label text-muted-foreground">CURRENT 2D RENDERER</p>
@@ -107,6 +112,20 @@ function StudioPage() {
               : <>
                   <p className="text-signal">{babies.length} verified bab{babies.length > 1 ? "ies" : "y"}{baby ? " · first shown beside parent" : ""}</p>
                   {babies.map((b) => <Link key={b.id} to="/pet/$id" params={{ id: b.id }} className="block text-primary hover:underline">{b.id.slice(0, 8)}…{b.id.slice(-4)} · GEN {b.g ?? "?"}</Link>)}
+                </>}
+          </div>
+          <div className="rounded border border-border p-2 font-mono text-[10px]">
+            <p className="label text-muted-foreground">VOXEL BUILD · ON-CHAIN</p>
+            {buildQ.isLoading ? <p className="text-muted-foreground">Reading chain…</p>
+              : buildQ.isError ? <p className="text-destructive">Could not reach ordinals.com.</p>
+              : !build ? <>
+                  <p className="text-muted-foreground">No voxel build inscribed on this BITMAP yet.</p>
+                  <Link to="/forge" search={{ height } as never} className="text-primary hover:underline">Build one in Land Forge →</Link>
+                </>
+              : <>
+                  <p className="text-signal">◆ Inscribed · {build.blockCount.toLocaleString()} blocks{build.archetype ? ` · ${build.archetype}` : ""}</p>
+                  <a href={`https://ordinals.com/inscription/${build.inscriptionId}`} target="_blank" rel="noreferrer" className="block text-primary hover:underline">{build.inscriptionId.slice(0, 8)}…{build.inscriptionId.slice(-4)}</a>
+                  <button type="button" onClick={() => setShowBuild((s) => !s)} className="mt-1 rounded border border-border px-2 py-0.5">{showBuild ? "HIDE IN 3D" : "SHOW IN 3D"}</button>
                 </>}
           </div>
           <p className="font-mono text-[10px] text-muted-foreground">Drag to orbit · scroll or pinch to zoom.</p>

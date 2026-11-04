@@ -8,6 +8,8 @@ import * as THREE from "three";
 import type { GuardianDna } from "@/lib/bitmon";
 import { animVox, blueprint, onchainGenome, type OnchainG } from "@/lib/onchain-guardian";
 import type { ParcelRect } from "@/lib/forge-parcels";
+import { bwvxBoxes, type BwvxBox } from "@/lib/bwvx-export";
+import { BLOCKS } from "@/lib/voxel-world";
 
 /** BITMAP land side in scene units; the 64-cell parcel grid is scaled onto it. */
 const LAND = 32;
@@ -15,7 +17,7 @@ const LAND = 32;
 /** Trailer length in seconds: PICK (0–2.5) → SUMMON (2.5–5.5) → INSCRIBE (5.5–8). */
 export const TRAILER_S = 8;
 
-export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {}, baby = null }: { baby?: OnchainG | null; dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
+export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {}, baby = null, build = null }: { build?: { data: string; span?: number | undefined } | null; baby?: OnchainG | null; dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = wrap.current; if (!el) return;
@@ -66,6 +68,30 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
       tiles.userData["top"] = top;
     }
     scene.add(tiles);
+
+    // Inscribed Land Forge build (verified from the BITMAP's sat), drawn on the land.
+    if (build?.data) {
+      let boxes: BwvxBox[] = [];
+      try { boxes = bwvxBoxes(build.data); } catch { boxes = []; }
+      if (boxes.length) {
+        const span = build.span ?? 64, bs = LAND / span, top0 = tiles.userData["top"] as number;
+        const bmesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0.05 }), boxes.length);
+        bmesh.castShadow = true; bmesh.receiveShadow = true;
+        const bm = new THREE.Matrix4(), bq = new THREE.Quaternion(), bp = new THREE.Vector3(), bsz = new THREE.Vector3(), bc = new THREE.Color();
+        const c = span / 2; let peak = -1;
+        boxes.forEach((b, i) => {
+          const sx = b.x1 - b.x0 + 1, sy = b.y1 - b.y0 + 1, sz = b.z1 - b.z0 + 1;
+          bp.set((b.x0 + sx / 2) * bs - LAND / 2, top0 + (b.y0 + sy / 2) * bs, (b.z0 + sz / 2) * bs - LAND / 2);
+          bsz.set(sx * bs, sy * bs, sz * bs);
+          bmesh.setMatrixAt(i, bm.compose(bp, bq, bsz));
+          bmesh.setColorAt(i, bc.set(BLOCKS[b.k]?.top ?? "#888888"));
+          if (b.x0 <= c && c <= b.x1 + 1 && b.z0 <= c && c <= b.z1 + 1) peak = Math.max(peak, b.y1);
+        });
+        scene.add(bmesh);
+        // Guardian stands on the roof of whatever is built at the block's centre.
+        if (peak >= 0) tiles.userData["top"] = top0 + (peak + 1) * bs;
+      }
+    }
 
     // One draw call for the whole creature.
     const mat = new THREE.MeshStandardMaterial({ roughness: 0.62, metalness: 0.12 });
@@ -152,6 +178,6 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
       renderer.dispose(); cv.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dna, animate, trailerStart, parcels, owners, baby]);
+  }, [dna, animate, trailerStart, parcels, owners, baby, build]);
   return <div ref={wrap} className="h-full w-full cursor-grab active:cursor-grabbing" aria-label={`${dna.height}.BITMAP Guardian 3D preview`} />;
 }
