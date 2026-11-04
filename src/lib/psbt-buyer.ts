@@ -180,7 +180,7 @@ function serializeMap(entries: Kv[]): number[] {
   return out;
 }
 
-function serializePsbt(psbt: ParsedPsbt): string {
+export function serializePsbt(psbt: ParsedPsbt): string {
   const unsignedTx = { key: [0x00], value: serializeTx(psbt.tx) };
   const hasUnsignedTx = psbt.global.some((kv) => kv.key.length === 1 && kv.key[0] === 0x00);
   const global = hasUnsignedTx
