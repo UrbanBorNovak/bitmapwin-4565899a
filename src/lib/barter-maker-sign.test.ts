@@ -80,11 +80,11 @@ let fetchSpy: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   walletCalls.length = 0; walletMode = "sign";
   const provider = { request: vi.fn(async () => ({ result: null })), signTransaction: vi.fn() };
-  (globalThis as Record<string, unknown>).window = { XverseProviders: { BitcoinProvider: provider } };
+  (globalThis as Record<string, unknown>)["window"] = { XverseProviders: { BitcoinProvider: provider } };
   fetchSpy = vi.fn(() => { throw new Error("network blocked in test: no broadcast allowed"); });
   vi.stubGlobal("fetch", fetchSpy);
 });
-afterEach(() => { vi.unstubAllGlobals(); delete (globalThis as Record<string, unknown>).window; });
+afterEach(() => { vi.unstubAllGlobals(); delete (globalThis as Record<string, unknown>)["window"]; });
 
 describe("Xverse maker signing · taproot (bc1p…)", () => {
   it("hands Xverse the checked internal key, asks for input 0 only with SIGHASH_ALL, and yields a complete unbroadcast tx", async () => {
