@@ -14,7 +14,7 @@ export const BUILD_SDK_VERSION = "2.0.0";
 export const BUILD_PROTOCOL = "bitmap-build";
 export const BUILD_PROTOCOL_VERSION = 2;
 
-export const BUILD_KINDS = ["info", "shop", "gallery", "game3d", "game2d"] as const;
+export const BUILD_KINDS = ["info", "shop", "gallery", "game3d", "game2d", "myspace"] as const;
 export type BuildKind = (typeof BUILD_KINDS)[number];
 
 export const BUILD_KIND_LABELS: Record<BuildKind, string> = {
@@ -23,6 +23,7 @@ export const BUILD_KIND_LABELS: Record<BuildKind, string> = {
   gallery: "ON-CHAIN GALLERY",
   game3d: "3D WORLD (THREE.JS)",
   game2d: "2D ARCADE",
+  myspace: "MYSPACE '06 PROFILE",
 };
 
 export const BUILD_KIND_HINTS: Record<BuildKind, string> = {
@@ -31,6 +32,7 @@ export const BUILD_KIND_HINTS: Record<BuildKind, string> = {
   gallery: "SHOWCASE INSCRIPTION IDS YOU HOLD AS A GRID OF ON-CHAIN IMAGES",
   game3d: "A WALKABLE VOXEL WORLD GENERATED FROM THIS BLOCK'S DATA",
   game2d: "A PIXEL MAZE RUN SEEDED BY THIS BLOCK HEIGHT",
+  myspace: "MOOD, PROFILE SONG, TOP 8 BITMAPS AND A GUESTBOOK — 2006 NOSTALGIA",
 };
 
 /* ------------------------------------------------------------------------- *
@@ -223,12 +225,41 @@ export type Game2dConfig = {
   speed: number; // 1..10
 };
 
+export const MYSPACE_SKINS = ["classic", "cyber", "glitter"] as const;
+export type MyspaceSkin = (typeof MYSPACE_SKINS)[number];
+export const MYSPACE_SKIN_LABELS: Record<MyspaceSkin, string> = {
+  classic: "CLASSIC BLUE '06",
+  cyber: "CYBER 95",
+  glitter: "GLITTER GOLD",
+};
+
+/** One Top 8 slot: another BITMAP the holder features, with a nickname. */
+export type MyspaceFriend = { height: number; nickname: string };
+
+export type MyspaceConfig = {
+  displayName: string;
+  /** Quote under the profile picture. */
+  quote: string;
+  mood: string;
+  /** "Currently listening to" line and the optional on-chain audio inscription. */
+  songTitle: string;
+  songInscriptionId: string;
+  /** Optional on-chain image inscription used as the profile picture. */
+  avatarInscriptionId: string;
+  aboutMe: string;
+  wantToMeet: string;
+  interests: string;
+  top8: MyspaceFriend[];
+  skin: MyspaceSkin;
+};
+
 export type BuildConfigMap = {
   info: InfoConfig;
   shop: ShopConfig;
   gallery: GalleryConfig;
   game3d: Game3dConfig;
   game2d: Game2dConfig;
+  myspace: MyspaceConfig;
 };
 
 export type BuildConfig = BuildConfigMap[BuildKind];
@@ -265,6 +296,19 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
     models: [],
   },
   game2d: { title: "BLOCK RUN", coins: 12, walls: 22, speed: 5 },
+  myspace: {
+    displayName: "",
+    quote: "",
+    mood: "",
+    songTitle: "",
+    songInscriptionId: "",
+    avatarInscriptionId: "",
+    aboutMe: "",
+    wantToMeet: "",
+    interests: "",
+    top8: [],
+    skin: "classic",
+  },
 };
 
 /** Documented limits — useful for builder-side validation and UIs. */
@@ -284,6 +328,7 @@ export const BUILD_LIMITS = {
   gallery: { items: 48, inscriptionId: 120, caption: 80, columns: [2, 3, 4] as const },
   game3d: { worldName: 60, towers: [4, 64] as const, models: 6, scale: [0.1, 20] as const },
   game2d: { title: 60, coins: [3, 40] as const, walls: [0, 60] as const, speed: [1, 10] as const },
+  myspace: { displayName: 60, quote: 140, mood: 60, songTitle: 80, inscriptionId: 120, about: 2000, interests: 600, top8: 8, nickname: 24 },
 } as const;
 
 
@@ -539,6 +584,31 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
             } satisfies Game3dModel;
           })
           .filter((m) => m.inscriptionId !== ""),
+      };
+      return config as BuildConfigMap[K];
+    }
+    case "myspace": {
+      const top8 = Array.isArray(o["top8"]) ? o["top8"] : [];
+      const skin = MYSPACE_SKINS.includes(o["skin"] as MyspaceSkin) ? (o["skin"] as MyspaceSkin) : "classic";
+      const config: MyspaceConfig = {
+        displayName: str(o["displayName"], 60),
+        quote: str(o["quote"], 140),
+        mood: str(o["mood"], 60),
+        songTitle: str(o["songTitle"], 80),
+        songInscriptionId: str(o["songInscriptionId"], 120).trim(),
+        avatarInscriptionId: str(o["avatarInscriptionId"], 120).trim(),
+        aboutMe: str(o["aboutMe"], 2000),
+        wantToMeet: str(o["wantToMeet"], 2000),
+        interests: str(o["interests"], 600),
+        top8: top8
+          .slice(0, 8)
+          .map((f) => {
+            const r = (f ?? {}) as Record<string, unknown>;
+            const h = Number(r["height"]);
+            return { height: Number.isInteger(h) && h >= 0 ? h : -1, nickname: str(r["nickname"], 24) };
+          })
+          .filter((f) => f.height >= 0),
+        skin,
       };
       return config as BuildConfigMap[K];
     }
@@ -911,6 +981,30 @@ export const BUILD_PRESETS: BuildPreset[] = [
   },
 ];
 
+const MYSPACE_PRESETS: BuildPreset[] = [
+  {
+    id: "myspace-classic",
+    name: "TOM'S CLASSIC",
+    blurb: "THE ORIGINAL LIGHT-BLUE TABLES — EVERYONE'S FIRST FRIEND",
+    kind: "myspace",
+    config: { ...DEFAULT_CONFIGS.myspace, skin: "classic", mood: "STACKING SATS", quote: "DON'T TRUST, VERIFY." } satisfies MyspaceConfig,
+  },
+  {
+    id: "myspace-cyber",
+    name: "CYBER 95",
+    blurb: "DARK TERMINAL, NEON ORANGE TABLES",
+    kind: "myspace",
+    config: { ...DEFAULT_CONFIGS.myspace, skin: "cyber", mood: "HODLING" } satisfies MyspaceConfig,
+  },
+  {
+    id: "myspace-glitter",
+    name: "GLITTER GOLD",
+    blurb: "SPARKLY GOLD BORDERS — MAXIMUM 2006",
+    kind: "myspace",
+    config: { ...DEFAULT_CONFIGS.myspace, skin: "glitter", mood: "FEELING BLOCKY" } satisfies MyspaceConfig,
+  },
+];
+
 export function presetsForKind(kind: BuildKind): BuildPreset[] {
-  return BUILD_PRESETS.filter((p) => p.kind === kind);
+  return [...BUILD_PRESETS, ...MYSPACE_PRESETS].filter((p) => p.kind === kind);
 }
