@@ -4,7 +4,11 @@ import { MintTrailerOverlay, playTrailerSfx } from "@/components/bitmon/MintTrai
 import { onchainGuardianName } from "@/lib/onchain-name";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { guardianDnaQuery } from "@/lib/bitmon-queries";
+import { allGuardiansQuery, guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
+import { guardianBabiesQuery } from "@/lib/guardian-babies";
+import { breedPet, type PetParent } from "@/lib/guardian-genetics";
+import { onchainGenome } from "@/lib/onchain-guardian";
+import { Link } from "@tanstack/react-router";
 import { GuardianStudio3D } from "@/components/bitmon/GuardianStudio3D";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { parcelRects } from "@/lib/forge-parcels";
@@ -36,6 +40,21 @@ function StudioPage() {
   const ownerQ = useQuery({ queryKey: ["parcel-owners", height], queryFn: () => parcelOwnersFn({ data: { height } }), staleTime: 600_000 });
   const owners = useMemo(() => Object.fromEntries((ownerQ.data ?? []).filter((o) => o.owner).map((o) => [o.index, o.owner as string])), [ownerQ.data]);
   const ownerCount = new Set(Object.values(owners)).size;
+  const awake = useQuery(guardianQuery(height));
+  const selfId = awake.data?.inscriptionId ?? null;
+  const babiesQ = useQuery(guardianBabiesQuery(selfId));
+  const babies = babiesQ.data ?? [];
+  const roster = useQuery(allGuardiansQuery()).data ?? [];
+  const first = babies[0];
+  const otherId = first ? (first.sire === selfId ? first.dam : first.sire) : null;
+  const otherH = roster.find((g) => g.inscriptionId === otherId)?.height;
+  const otherDna = useQuery({ ...guardianDnaQuery(otherH ?? 0), enabled: otherH != null });
+  const baby = useMemo(() => {
+    if (!first || !q.data || !otherDna.data || otherH == null || !selfId || !otherId) return null;
+    const me: PetParent = { inscriptionId: selfId, height, genome: onchainGenome(q.data) };
+    const them: PetParent = { inscriptionId: otherId, height: otherH, genome: onchainGenome(otherDna.data) };
+    return first.sire === selfId ? breedPet(me, them) : breedPet(them, me);
+  }, [first, q.data, otherDna.data, otherH, selfId, otherId, height]);
   const [trailer, setTrailer] = useState(0);
   const [rec, setRec] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -73,12 +92,23 @@ function StudioPage() {
       <div className="mt-4 grid gap-4 md:grid-cols-[1fr_200px]">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border bg-card">
           {trailer > 0 && q.data && <MintTrailerOverlay start={trailer} height={height} name={name} />}
-          {q.data ? <GuardianStudio3D dna={q.data} animate={animate} trailerStart={trailer} parcels={parcels} owners={owners} onCanvas={(c) => { canvasRef.current = c; }} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
+          {q.data ? <GuardianStudio3D dna={q.data} animate={animate} trailerStart={trailer} parcels={parcels} owners={owners} baby={baby} onCanvas={(c) => { canvasRef.current = c; }} /> : <p className="grid h-full place-items-center font-mono text-xs text-muted-foreground">{q.isError ? "Could not read this block." : "READING BLOCK…"}</p>}
         </div>
         <div className="space-y-2">
           <p className="label text-muted-foreground">CURRENT 2D RENDERER</p>
           {q.data && <GuardianPortrait height={height} dna={q.data} size={200} />}
           <p className="font-mono text-[10px] text-muted-foreground">Orange parcels: unclaimed. {ownerCount > 0 ? `${ownerCount} owner${ownerCount > 1 ? "s" : ""} shown in their own colour.` : "No owned parcels found."}</p>
+          <div className="rounded border border-border p-2 font-mono text-[10px]">
+            <p className="label text-muted-foreground">BABIES · CHILD INSCRIPTIONS</p>
+            {!selfId ? <p className="text-muted-foreground">Not inscribed yet, so it can't have on-chain babies.</p>
+              : babiesQ.isLoading ? <p className="text-muted-foreground">Reading chain…</p>
+              : babiesQ.isError ? <p className="text-destructive">Could not reach ordinals.com.</p>
+              : babies.length === 0 ? <p className="text-muted-foreground">No babies inscribed as children of this Guardian.</p>
+              : <>
+                  <p className="text-signal">{babies.length} verified bab{babies.length > 1 ? "ies" : "y"}{baby ? " · first shown beside parent" : ""}</p>
+                  {babies.map((b) => <Link key={b.id} to="/pet/$id" params={{ id: b.id }} className="block text-primary hover:underline">{b.id.slice(0, 8)}…{b.id.slice(-4)} · GEN {b.g ?? "?"}</Link>)}
+                </>}
+          </div>
           <p className="font-mono text-[10px] text-muted-foreground">Drag to orbit · scroll or pinch to zoom.</p>
         </div>
       </div>
