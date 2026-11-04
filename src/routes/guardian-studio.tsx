@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { TRAILER_S } from "@/components/bitmon/GuardianStudio3D";
-import { MintTrailerOverlay, playTrailerSfx } from "@/components/bitmon/MintTrailerOverlay";
+import { MintTrailerOverlay, playTrailerSfx, renderTrailerAudio, drawTrailerCaptions } from "@/components/bitmon/MintTrailerOverlay";
+import { X_SIZES, canEncodeMp4, createXRecorder } from "@/lib/x-video";
 import { onchainGuardianName } from "@/lib/onchain-name";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -64,20 +65,41 @@ function StudioPage() {
   const [rec, setRec] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const name = q.data?.blockHash ? onchainGuardianName(height, q.data.blockHash) : `${q.data?.species ?? "GUARDIAN"}`;
-  const play = (record: boolean) => {
-    setRec(null);
-    const { ac, out } = playTrailerSfx();
-    setTrailer(performance.now());
-    if (!record || !canvasRef.current || typeof MediaRecorder === "undefined") return;
-    // Records the 3D canvas plus the trailer sound (captions are the page overlay, not in the file).
-    const stream = canvasRef.current.captureStream(30);
-    const dest = ac.createMediaStreamDestination(); out.connect(dest);
-    dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
-    const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm" });
-    const chunks: Blob[] = [];
-    mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-    mr.onstop = () => setRec(URL.createObjectURL(new Blob(chunks, { type: "video/webm" })));
-    mr.start(); setTimeout(() => mr.stop(), TRAILER_S * 1000);
+  const [recNote, setRecNote] = useState<string | null>(null);
+  const [recName, setRecName] = useState("");
+  const play = async (record: boolean) => {
+    setRec(null); setRecNote(null);
+    const gl = canvasRef.current;
+    if (!record || !gl) { playTrailerSfx(); setTrailer(performance.now()); return; }
+    if (typeof MediaRecorder === "undefined" && !canEncodeMp4()) return setRecNote("THIS BROWSER CAN'T RECORD VIDEO.");
+    setRecNote("RECORDING…");
+    const [W, H] = X_SIZES["16:9"];
+    const out = document.createElement("canvas"); out.width = W; out.height = H;
+    const ctx = out.getContext("2d")!;
+    const audio = await renderTrailerAudio();
+    const xr = await createXRecorder(out, audio);
+    playTrailerSfx();
+    const start = performance.now();
+    setTrailer(start);
+    const paint = async () => {
+      const t = (performance.now() - start) / 1000;
+      const s = Math.max(W / gl.width, H / gl.height), dw = gl.width * s, dh = gl.height * s;
+      ctx.fillStyle = "#0a0e14"; ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(gl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      drawTrailerCaptions(ctx, W, H, Math.min(t, TRAILER_S - 0.01), height, name);
+      xr.addFrame(out, Math.min(t, TRAILER_S));
+      if (t < TRAILER_S) { requestAnimationFrame(() => void paint()); return; }
+      try {
+        const blob = await xr.finish();
+        const fname = `${height}-guardian-trailer.${xr.kind}`;
+        const url = URL.createObjectURL(blob);
+        setRec(url); setRecName(fname);
+        const a = document.createElement("a"); a.href = url; a.download = fname;
+        document.body.appendChild(a); a.click(); a.remove();
+        setRecNote(xr.kind === "mp4" ? `X-READY MP4 SAVED (1280×720, H.264${xr.hasAudio ? " + AAC" : ""}).` : "SAVED AS WEBM — X NEEDS MP4. USE CHROME, EDGE OR SAFARI.");
+      } catch { setRecNote("RECORDING FAILED. TRY AGAIN."); }
+    };
+    requestAnimationFrame(() => void paint());
   };
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -92,7 +114,9 @@ function StudioPage() {
         <button type="button" onClick={() => setAnimate((a) => !a)} className="rounded border border-border px-3 py-1.5 font-mono text-xs">{animate ? "PAUSE MOTION" : "PLAY MOTION"}</button>
         <button type="button" disabled={!q.data} onClick={() => play(false)} className="rounded border border-primary bg-primary px-3 py-1.5 font-mono text-xs text-primary-foreground disabled:opacity-40">▶ PLAY MINT TRAILER</button>
         <button type="button" disabled={!q.data} onClick={() => play(true)} className="rounded border border-accent px-3 py-1.5 font-mono text-xs text-accent disabled:opacity-40">● RECORD {TRAILER_S}s CLIP</button>
-        {rec && <a href={rec} download={`${height}-guardian-trailer.webm`} className="rounded border border-accent px-3 py-1.5 font-mono text-xs text-accent">DOWNLOAD CLIP</a>}
+        {rec && <a href={rec} download={recName} className="rounded border border-accent px-3 py-1.5 font-mono text-xs text-accent">DOWNLOAD CLIP</a>}
+        {rec && <a href={`https://x.com/intent/post?text=${encodeURIComponent(`${height}.BITMAP Guardian summoned 🟧 #Bitmap #Ordinals #Bitcoin`)}&url=${encodeURIComponent("https://bitmapwin.app/mint")}`} target="_blank" rel="noreferrer" className="rounded border border-primary px-3 py-1.5 font-mono text-xs text-primary">POST TO X</a>}
+        {recNote && <span className="font-mono text-[10px] text-accent">{recNote}</span>}
       </form>
       <div className="mt-4 grid gap-4 md:grid-cols-[1fr_200px]">
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border bg-card">
