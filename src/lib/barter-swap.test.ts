@@ -60,3 +60,32 @@ describe("BW-BARTER-1 swap PSBT", () => {
     expect(out).not.toBe(b.psbtBase64);
   });
 });
+
+import { makerSigningKeys, taprootKeyMatches } from "@/lib/psbt-scripts";
+
+describe("maker signing keys", () => {
+  // BIP-86 test vector: first receive address of the reference mnemonic.
+  const X = "cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115";
+  const ADDR = "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr";
+  const script = addressToScriptPubKey(ADDR);
+  it("accepts the key that controls the taproot address, with or without prefix", () => {
+    expect(taprootKeyMatches(script, X)).toBe(true);
+    expect(taprootKeyMatches(script, "03" + X)).toBe(true);
+    expect(makerSigningKeys(script, [undefined, "02" + X])).toEqual({ ok: true, tapKeyHex: X, publicKeys: [] });
+  });
+  it("refuses a key that doesn't control the address", () => {
+    const r = makerSigningKeys(script, ["11".repeat(32)]);
+    expect(r.ok).toBe(false);
+  });
+  it("refuses when the wallet shared no key", () => {
+    expect(makerSigningKeys(script, [undefined]).ok).toBe(false);
+  });
+  it("refuses legacy addresses", () => {
+    expect(makerSigningKeys(addressToScriptPubKey("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"), []).ok).toBe(false);
+  });
+  it("replaces a key hint planted by the taker on the maker's input", () => {
+    const planted = prepareMakerInput(build().psbtBase64, "22".repeat(32));
+    const fixed = prepareMakerInput(planted, X);
+    expect(fixed).toBe(prepareMakerInput(build().psbtBase64, X));
+  });
+});

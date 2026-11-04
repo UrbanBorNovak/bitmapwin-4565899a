@@ -753,7 +753,6 @@ export function prepareMakerInput(psbtBase64: string, tapKeyHex?: string, public
   if (!map) throw new Error("Swap has no maker input");
   const wu = map.find((kv) => kv.key.length === 1 && kv.key[0] === 0x01);
   if (!wu) throw new Error("Maker input has no witness UTXO");
-  if (map.some((kv) => kv.key[0] === 0x17 || kv.key[0] === 0x04)) return psbtBase64;
   const value = wu.value.slice(0, 8).reduce((s, b, i) => s + b * 2 ** (8 * i), 0);
   const script = wu.value.slice(9);
   const fresh = fundingInputMap(
@@ -761,6 +760,7 @@ export function prepareMakerInput(psbtBase64: string, tapKeyHex?: string, public
     tapKeyOf(tapKeyHex),
     publicKeyHex,
   );
-  psbt.inputs[0] = [...map, ...fresh.filter((kv) => kv.key[0] !== 0x01)];
+  // Hints already on input 0 came from the taker; replace them with the maker's own checked keys.
+  psbt.inputs[0] = [...map.filter((kv) => kv.key[0] !== 0x17 && kv.key[0] !== 0x04), ...fresh.filter((kv) => kv.key[0] !== 0x01)];
   return serializePsbt(psbt);
 }
