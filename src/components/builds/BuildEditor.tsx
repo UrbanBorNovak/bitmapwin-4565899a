@@ -32,6 +32,10 @@ import {
   type Game3dConfig,
   type GalleryConfig,
   type InfoConfig,
+  type MyspaceConfig,
+  MYSPACE_SKINS,
+  MYSPACE_SKIN_LABELS,
+  type MyspaceSkin,
   type ShopConfig,
   type ShopItem,
 } from "@/lib/build-sdk";
@@ -292,6 +296,8 @@ export function BuildEditor({
           />
         ) : kind === "gallery" ? (
           <GalleryEditor config={parseBuildConfig("gallery", config)} onChange={onConfigChange} />
+        ) : kind === "myspace" ? (
+          <MyspaceEditor config={parseBuildConfig("myspace", config)} onChange={onConfigChange} />
         ) : kind === "game3d" ? (
           <Game3dEditor config={parseBuildConfig("game3d", config)} onChange={onConfigChange} />
         ) : (
@@ -1159,6 +1165,107 @@ function ShopEditor({
             [ + ASSET ]
           </button>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function MyspaceEditor({
+  config,
+  onChange,
+}: {
+  config: MyspaceConfig;
+  onChange: (c: MyspaceConfig) => void;
+}) {
+  const text = (key: keyof MyspaceConfig, label: string, max: number, placeholder: string) => (
+    <label className="block">
+      <span className="label">{label}</span>
+      <input
+        className={`mt-1 ${input}`}
+        value={String(config[key])}
+        placeholder={placeholder}
+        onChange={(e) => onChange({ ...config, [key]: e.target.value.slice(0, max) })}
+      />
+    </label>
+  );
+  const area = (key: keyof MyspaceConfig, label: string, max: number, placeholder: string) => (
+    <label className="block">
+      <span className="label">{label}</span>
+      <textarea
+        className={`mt-1 h-20 resize-none ${input}`}
+        value={String(config[key])}
+        placeholder={placeholder}
+        onChange={(e) => onChange({ ...config, [key]: e.target.value.slice(0, max) })}
+      />
+    </label>
+  );
+  const setFriend = (i: number, patch: Partial<{ height: number; nickname: string }>) =>
+    onChange({ ...config, top8: config.top8.map((f, j) => (j === i ? { ...f, ...patch } : f)) });
+
+  return (
+    <div className="space-y-3">
+      <label className="block">
+        <span className="label">SKIN</span>
+        <select
+          className={`mt-1 ${input}`}
+          value={config.skin}
+          onChange={(e) => onChange({ ...config, skin: e.target.value as MyspaceSkin })}
+        >
+          {MYSPACE_SKINS.map((s) => (
+            <option key={s} value={s}>{MYSPACE_SKIN_LABELS[s]}</option>
+          ))}
+        </select>
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {text("displayName", "DISPLAY NAME", 60, "LEAVE EMPTY TO SHOW <HEIGHT>.BITMAP")}
+        {text("mood", "MOOD", 60, "STACKING SATS")}
+        {text("quote", "QUOTE UNDER PICTURE", 140, "DON'T TRUST, VERIFY.")}
+        {text("avatarInscriptionId", "PROFILE PICTURE — IMAGE INSCRIPTION ID", 120, "…i0")}
+        {text("songTitle", "PROFILE SONG TITLE", 80, "GENESIS CHIPTUNE")}
+        {text("songInscriptionId", "PROFILE SONG — AUDIO INSCRIPTION ID", 120, "…i0 (OPTIONAL)")}
+      </div>
+      {area("aboutMe", "ABOUT ME", 2000, "WHO YOU ARE, WHY THIS BLOCK")}
+      {area("wantToMeet", "WHO I'D LIKE TO MEET", 2000, "BUILDERS, COLLECTORS, NEIGHBOURS")}
+      {area("interests", "INTERESTS", 600, "ORDINALS, VOXELS, PIXEL ART")}
+      <div>
+        <span className="label">TOP 8 — BITMAPS YOU FEATURE ({config.top8.length}/8)</span>
+        <div className="mt-2 space-y-2">
+          {config.top8.map((f, i) => (
+            <div key={i} className="grid grid-cols-[120px_minmax(0,1fr)_auto] gap-2">
+              <input
+                type="number"
+                min={0}
+                className={input}
+                value={f.height}
+                aria-label={`Friend ${i + 1} block height`}
+                onChange={(e) => setFriend(i, { height: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+              />
+              <input
+                className={input}
+                value={f.nickname}
+                placeholder="NICKNAME"
+                aria-label={`Friend ${i + 1} nickname`}
+                onChange={(e) => setFriend(i, { nickname: e.target.value.slice(0, 24) })}
+              />
+              <button
+                type="button"
+                className="label border border-border px-2 hover:border-primary"
+                onClick={() => onChange({ ...config, top8: config.top8.filter((_, j) => j !== i) })}
+              >
+                REMOVE
+              </button>
+            </div>
+          ))}
+          {config.top8.length < 8 ? (
+            <button
+              type="button"
+              className="label rounded-md border border-dashed border-border px-3 py-2 hover:border-primary"
+              onClick={() => onChange({ ...config, top8: [...config.top8, { height: 0, nickname: "" }] })}
+            >
+              + ADD FRIEND
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
