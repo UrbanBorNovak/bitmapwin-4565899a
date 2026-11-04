@@ -176,7 +176,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket; mine: AssetFacts[]; hasWallet: boolean; onClose: () => void }) {
+function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket; mine: Checked[]; hasWallet: boolean; onClose: () => void }) {
   const ok = mine.filter((a) => matchesCriteria(ticket.criteria, a));
   const usesTx = ticket.criteria.minTxCount !== undefined || ticket.criteria.maxTxCount !== undefined;
   return (
@@ -187,15 +187,19 @@ function MatchDrawer({ ticket, mine, hasWallet, onClose }: { ticket: FeedTicket;
       {hasWallet && ok.length === 0 && <p className="mt-3">None of your items meet these rules.</p>}
       <ul className="mt-3 space-y-2">
         {ok.map((a) => (
-          <li key={a.inscriptionId} className="flex items-center justify-between border border-border p-2">
-            <span className="text-accent">{assetLabel(a)}</span>
-            <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
+          <li key={a.inscriptionId} className={`border p-2 ${a.block ? "border-destructive/50" : "border-border"}`}>
+            <div className="flex items-center justify-between">
+              <span className={a.block ? "text-muted-foreground line-through" : "text-accent"}>{assetLabel(a)}</span>
+              <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
+            </div>
+            <p className={`mt-1 ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ Position checked: first sat of its own output"}</p>
           </li>
         ))}
       </ul>
+      {ok.length > 0 && <p className="mt-2 text-muted-foreground">{ok.filter((a) => !a.block).length} of {ok.length} matching items can be used.</p>}
       <div className="mt-4 space-y-2">
         <button disabled className="w-full cursor-not-allowed border border-border px-3 py-2 opacity-50">PROPOSE SWAP & SIGN</button>
-        <Unavailable>Building, signing and sending the swap is not implemented. The inscription's position inside its output is also not checked yet, and the rules need it to be first.</Unavailable>
+        <Unavailable>Building, signing and sending the swap is not implemented.</Unavailable>
       </div>
     </Sheet>
   );
