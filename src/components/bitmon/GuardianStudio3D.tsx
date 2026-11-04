@@ -6,7 +6,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { GuardianDna } from "@/lib/bitmon";
-import { animVox, blueprint, onchainGenome } from "@/lib/onchain-guardian";
+import { animVox, blueprint, onchainGenome, type OnchainG } from "@/lib/onchain-guardian";
 import type { ParcelRect } from "@/lib/forge-parcels";
 
 /** BITMAP land side in scene units; the 64-cell parcel grid is scaled onto it. */
@@ -15,7 +15,7 @@ const LAND = 32;
 /** Trailer length in seconds: PICK (0–2.5) → SUMMON (2.5–5.5) → INSCRIBE (5.5–8). */
 export const TRAILER_S = 8;
 
-export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {} }: { dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
+export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanvas, parcels = [], owners = {}, baby = null }: { baby?: OnchainG | null; dna: GuardianDna; animate?: boolean; trailerStart?: number; onCanvas?: (c: HTMLCanvasElement | null) => void; parcels?: ParcelRect[]; owners?: Record<number, string> }) {
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = wrap.current; if (!el) return;
@@ -75,6 +75,17 @@ export function GuardianStudio3D({ dna, animate = true, trailerStart = 0, onCanv
     V.forEach((v, i) => { col.set(v[6]); if (v[7]) col.multiplyScalar(1 + v[7] * 0.6); mesh.setColorAt(i, col); });
     scene.add(mesh);
     const baseY = tiles.userData["top"] as number; mesh.position.y = baseY;
+    // Verified on-chain baby (child inscription) stands beside its parent at pet scale.
+    let babyMesh: THREE.InstancedMesh | null = null;
+    if (baby) {
+      const BV = blueprint(baby);
+      babyMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, BV.length);
+      babyMesh.castShadow = true;
+      const bm = new THREE.Matrix4(), bc = new THREE.Color();
+      BV.forEach((v, i) => { bm.compose(new THREE.Vector3(v[0], v[1], v[2]), new THREE.Quaternion(), new THREE.Vector3(v[3], v[4], v[5])); babyMesh!.setMatrixAt(i, bm); bc.set(v[6]); if (v[7]) bc.multiplyScalar(1 + v[7] * 0.6); babyMesh!.setColorAt(i, bc); });
+      babyMesh.scale.setScalar(0.45); babyMesh.position.set(9, baseY, 4); babyMesh.rotation.y = -0.5;
+      scene.add(babyMesh);
+    }
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3();
     const place = (t: number) => {
       V.forEach((v, i) => { const a = animate ? animVox(v, t, G, false, null) : v; pos.set(a[0], a[1], a[2]); scl.set(a[3], a[4], a[5]); m4.compose(pos, q, scl); mesh.setMatrixAt(i, m4); });
