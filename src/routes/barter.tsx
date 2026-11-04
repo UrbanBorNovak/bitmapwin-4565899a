@@ -148,7 +148,7 @@ function BarterPage() {
   return (
     <div className="relative min-h-screen">
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${barterBg.url})` }} />
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background/75" />
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-background/45" />
     <main className="mx-auto max-w-5xl px-4 py-10 font-mono">
       <header className="mb-6 border border-border bg-card/60 p-5">
         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">BW-BARTER-1 · draft</p>
