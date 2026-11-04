@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiRouteImport } from './routes/api'
 import { Route as ArchaeologyRouteImport } from './routes/archaeology'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BarterRouteImport } from './routes/barter'
 import { Route as BetaRouteImport } from './routes/beta'
 import { Route as BiternamRouteImport } from './routes/biternam'
 import { Route as BotRouteImport } from './routes/bot'
@@ -205,6 +206,11 @@ const ArchaeologyRoute = ArchaeologyRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BarterRoute = BarterRouteImport.update({
+  id: '/barter',
+  path: '/barter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BetaRoute = BetaRouteImport.update({
@@ -1087,6 +1093,7 @@ export interface FileRoutesByFullPath {
   '/api': typeof ApiRouteWithChildren
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
+  '/barter': typeof BarterRoute
   '/beta': typeof BetaRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
@@ -1266,6 +1273,7 @@ export interface FileRoutesByTo {
   '/api': typeof ApiRouteWithChildren
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
+  '/barter': typeof BarterRoute
   '/beta': typeof BetaRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
@@ -1442,6 +1450,7 @@ export interface FileRoutesById {
   '/api': typeof ApiRouteWithChildren
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
+  '/barter': typeof BarterRoute
   '/beta': typeof BetaRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
@@ -1623,6 +1632,7 @@ export interface FileRouteTypes {
     | '/api'
     | '/archaeology'
     | '/auth'
+    | '/barter'
     | '/beta'
     | '/biternam'
     | '/bot'
@@ -1802,6 +1812,7 @@ export interface FileRouteTypes {
     | '/api'
     | '/archaeology'
     | '/auth'
+    | '/barter'
     | '/beta'
     | '/biternam'
     | '/bot'
@@ -1977,6 +1988,7 @@ export interface FileRouteTypes {
     | '/api'
     | '/archaeology'
     | '/auth'
+    | '/barter'
     | '/beta'
     | '/biternam'
     | '/bot'
@@ -2157,6 +2169,7 @@ export interface RootRouteChildren {
   ApiRoute: typeof ApiRouteWithChildren
   ArchaeologyRoute: typeof ArchaeologyRoute
   AuthRoute: typeof AuthRoute
+  BarterRoute: typeof BarterRoute
   BetaRoute: typeof BetaRoute
   BiternamRoute: typeof BiternamRoute
   BotRoute: typeof BotRoute
@@ -2310,6 +2323,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/barter': {
+      id: '/barter'
+      path: '/barter'
+      fullPath: '/barter'
+      preLoaderRoute: typeof BarterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/beta': {
@@ -3686,6 +3706,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRoute: ApiRouteWithChildren,
   ArchaeologyRoute: ArchaeologyRoute,
   AuthRoute: AuthRoute,
+  BarterRoute: BarterRoute,
   BetaRoute: BetaRoute,
   BiternamRoute: BiternamRoute,
   BotRoute: BotRoute,
