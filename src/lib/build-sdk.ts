@@ -244,6 +244,9 @@ export type MyspaceConfig = {
   /** "Currently listening to" line and the optional on-chain audio inscription. */
   songTitle: string;
   songInscriptionId: string;
+  /** Flashbox: optional video — an on-chain video inscription id or a YouTube link. */
+  videoTitle: string;
+  videoSource: string;
   /** Optional on-chain image inscription used as the profile picture. */
   avatarInscriptionId: string;
   aboutMe: string;
@@ -302,6 +305,8 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
     mood: "",
     songTitle: "",
     songInscriptionId: "",
+    videoTitle: "",
+    videoSource: "",
     avatarInscriptionId: "",
     aboutMe: "",
     wantToMeet: "",
@@ -596,6 +601,8 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
         mood: str(o["mood"], 60),
         songTitle: str(o["songTitle"], 80),
         songInscriptionId: str(o["songInscriptionId"], 120).trim(),
+        videoTitle: str(o["videoTitle"], 80),
+        videoSource: str(o["videoSource"], 200).trim(),
         avatarInscriptionId: str(o["avatarInscriptionId"], 120).trim(),
         aboutMe: str(o["aboutMe"], 2000),
         wantToMeet: str(o["wantToMeet"], 2000),
@@ -1007,4 +1014,23 @@ const MYSPACE_PRESETS: BuildPreset[] = [
 
 export function presetsForKind(kind: BuildKind): BuildPreset[] {
   return [...BUILD_PRESETS, ...MYSPACE_PRESETS].filter((p) => p.kind === kind);
+}
+
+/** What a Flashbox source points to: an on-chain inscription, a YouTube video, or nothing usable. */
+export type FlashboxSource =
+  | { type: "inscription"; id: string }
+  | { type: "youtube"; id: string }
+  | null;
+
+/** Only inscription ids and YouTube links are accepted; anything else plays nothing. */
+export function flashboxSource(raw: string): FlashboxSource {
+  const v = raw.trim();
+  if (!v) return null;
+  const insc = v.match(/(?:^|\/)([0-9a-f]{64}i\d+)$/i);
+  if (insc) return { type: "inscription", id: (insc[1] ?? "").toLowerCase() };
+  const yt =
+    v.match(/^(?:https?:\/\/)?(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/) ??
+    v.match(/^(?:https?:\/\/)?youtu\.be\/([A-Za-z0-9_-]{11})/);
+  if (yt) return { type: "youtube", id: yt[1] ?? "" };
+  return null;
 }
