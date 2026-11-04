@@ -313,6 +313,25 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const [qr, setQr] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [mintMode, setMintMode] = useState<"public" | "shielded">(SHORD_VAULT_DISABLED ? "public" : "shielded");
+  const [popupHeight, setPopupHeight] = useState<number | undefined>();
+
+  useEffect(() => {
+    if (!open) return;
+    const fit = () => {
+      const zoom = Number(getComputedStyle(document.documentElement).zoom) || 1;
+      setPopupHeight((window.visualViewport?.height ?? window.innerHeight) * 0.85 / zoom);
+    };
+    fit();
+    const observer = new MutationObserver(fit);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+    window.addEventListener("resize", fit);
+    window.visualViewport?.addEventListener("resize", fit);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", fit);
+      window.visualViewport?.removeEventListener("resize", fit);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -368,6 +387,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const start = async () => {
     setBusy(true);
     setDenied(null);
+    setParentBitmapId(null);
+    setNeedBitmapId(false);
     try {
       // Stop before any payment unless the connected wallet holds <height>.bitmap.
       const { resolveWallet } = await import("@/components/BuyButton");
@@ -428,7 +449,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto border-border bg-card">
+      <DialogContent style={{ maxHeight: popupHeight }} className="max-h-[85dvh] min-h-0 max-w-2xl overflow-y-auto overscroll-contain border-border bg-card pb-16 [overflow-wrap:anywhere] [scroll-padding-bottom:4rem]">
         <DialogHeader>
           <DialogTitle className="font-mono text-sm tracking-widest">
             {celebrate ? "GUARDIAN AWAKENED" : `BLOCK-DNA GUARDIAN · ${height}.BITMAP`}
