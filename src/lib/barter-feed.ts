@@ -106,3 +106,72 @@ export function describeCriteria(c: BarterCriteria): string {
   if (c.parentInscriptionId) p.push(`child of ${c.parentInscriptionId.slice(0, 8)}…`);
   return p.join(" · ") || "—";
 }
+
+/* ── swap proposals (taker → maker) ─────────────────────────────────── */
+export const SWAP_KIND = 30404;
+export const SWAP_TAG = "bw-barter-1-swap";
+
+export type SwapProposal = {
+  eventId: string; createdAt: number; takerPubkey: string;
+  offerEventId: string; offeringOutpoint: string; takerOutpoint: string; psbtBase64: string;
+};
+
+/** Tags for a taker's signed swap, addressed to the maker's messenger key. */
+export function swapProposalTags(p: { offerEventId: string; makerPubkey: string; offeringOutpoint: string; takerOutpoint: string }): string[][] {
+  return [
+    ["d", `swap:${p.offeringOutpoint}:${p.takerOutpoint}`],
+    ["t", SWAP_TAG],
+    ["e", p.offerEventId],
+    ["p", p.makerPubkey],
+    ["offering_outpoint", p.offeringOutpoint],
+    ["taker_outpoint", p.takerOutpoint],
+  ];
+}
+
+export function signSwapEvent(tags: string[][], psbtBase64: string, secretHex: string): NostrEvent {
+  const sk = hexToBytes(secretHex);
+  const base = { pubkey: bytesToHex(schnorr.getPublicKey(sk)), created_at: Math.floor(Date.now() / 1000), kind: SWAP_KIND, tags, content: psbtBase64 };
+  const id = eventId(base);
+  return { ...base, id, sig: bytesToHex(schnorr.sign(hexToBytes(id), sk)) };
+}
+
+export function parseSwapEvent(e: NostrEvent): SwapProposal | null {
+  if (e.kind !== SWAP_KIND || !e.tags.some((t) => t[0] === "t" && t[1] === SWAP_TAG)) return null;
+  const offerEventId = tag(e, "e"), offeringOutpoint = tag(e, "offering_outpoint"), takerOutpoint = tag(e, "taker_outpoint");
+  if (!offerEventId || !offeringOutpoint || !takerOutpoint || !/^cHNidP/.test(e.content)) return null;
+  return { eventId: e.id, createdAt: e.created_at, takerPubkey: e.pubkey, offerEventId, offeringOutpoint, takerOutpoint, psbtBase64: e.content };
+}
+
+/** Reads swap proposals addressed to one messenger key. Only signature-valid events are kept. */
+export function fetchSwapProposals(makerPubkey: string, relays = NOSTR_RELAYS, timeoutMs = 6000): Promise<SwapProposal[]> {
+  return new Promise((resolve) => {
+    const seen = new Map<string, SwapProposal>();
+    let open = relays.length;
+    const sockets: WebSocket[] = [];
+    const finish = () => {
+      sockets.forEach((s) => { try { s.close(); } catch { /* ignore */ } });
+      resolve([...seen.values()].sort((a, b) => b.createdAt - a.createdAt));
+    };
+    const timer = setTimeout(finish, timeoutMs);
+    const done = () => { if (--open <= 0) { clearTimeout(timer); finish(); } };
+    for (const url of relays) {
+      let ws: WebSocket;
+      try { ws = new WebSocket(url); } catch { done(); continue; }
+      sockets.push(ws);
+      const sub = "swap" + Math.random().toString(36).slice(2, 8);
+      ws.onopen = () => ws.send(JSON.stringify(["REQ", sub, { kinds: [SWAP_KIND], "#p": [makerPubkey], limit: 100 }]));
+      ws.onmessage = (m) => {
+        try {
+          const msg = JSON.parse(String(m.data)) as unknown[];
+          if (msg[0] === "EVENT") {
+            const e = msg[2] as NostrEvent;
+            if (!verifyEvent(e)) return;
+            const p = parseSwapEvent(e);
+            if (p) seen.set(`${p.offeringOutpoint}:${p.takerOutpoint}`, p);
+          } else if (msg[0] === "EOSE") done();
+        } catch { /* ignore */ }
+      };
+      ws.onerror = () => done();
+    }
+  });
+}

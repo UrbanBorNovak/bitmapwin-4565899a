@@ -666,3 +666,101 @@ export function buildPaymentPsbt(input: PaymentPsbtInput): PaymentPsbtResult {
     usedFunding: used,
   };
 }
+
+/* ── BW-BARTER-1 atomic swap ─────────────────────────────────────────── */
+
+export type SwapPsbtInput = {
+  maker: { txid: string; vout: number; valueSats: number; scriptPubKeyHex: string };
+  taker: { txid: string; vout: number; valueSats: number; scriptPubKeyHex: string };
+  makerReceiveScriptHex: string;
+  takerReceiveScriptHex: string;
+  takerChangeScriptHex: string;
+  funding: FundingUtxo[];
+  feeRate: number;
+  /** taker-paid sats to the maker (0 = none) */
+  sweetenerSats: number;
+  takerTapKeyHex?: string | undefined;
+  takerPaymentTapKeyHex?: string | undefined;
+  takerPublicKeyHex?: string | string[] | undefined;
+};
+
+export type SwapPsbtResult = {
+  psbtBase64: string;
+  feeSats: number;
+  changeSats: number;
+  /** indices signed by the taker's ordinals key (the matched asset) */
+  takerAssetIndex: number;
+  /** indices signed by the taker's payment key (fee funding) */
+  fundingIndices: number[];
+};
+
+const tapKeyOf = (hex: string | undefined): number[] | null => {
+  if (!hex) return null;
+  const h = hex.length === 66 ? hex.slice(2) : hex;
+  return /^[0-9a-f]{64}$/i.test(h) ? hexToByteArray(h) : null;
+};
+
+/**
+ * Builds the unsigned BW-BARTER-1 swap. Both parties sign SIGHASH_ALL, so no
+ * input or output can change after either signature.
+ * inputs : [maker asset, taker asset, taker funding…]
+ * outputs: [maker asset → taker, taker asset → maker, sweetener → maker?, change → taker?]
+ * Each asset sits on sat 0 of its input and output, and every earlier output
+ * has the same value as its input, so FIFO sat flow carries each inscription intact.
+ */
+export function buildSwapPsbt(input: SwapPsbtInput): SwapPsbtResult {
+  const outs = [
+    { valueSats: input.maker.valueSats, script: hexToByteArray(input.takerReceiveScriptHex) },
+    { valueSats: input.taker.valueSats, script: hexToByteArray(input.makerReceiveScriptHex) },
+  ];
+  if (input.sweetenerSats > 0) {
+    if (input.sweetenerSats < DUST) throw new Error("Sweetener below dust");
+    outs.push({ valueSats: input.sweetenerSats, script: hexToByteArray(input.makerReceiveScriptHex) });
+  }
+  const used: FundingUtxo[] = [];
+  let funded = 0;
+  let feeSats = 0;
+  const candidates = [...input.funding].filter((u) => u.valueSats > DUST).sort((a, b) => b.valueSats - a.valueSats);
+  for (const c of candidates) {
+    used.push(c);
+    funded += c.valueSats;
+    feeSats = Math.ceil(estimateVsize(2 + used.length, outs.length + 1) * Math.max(1, input.feeRate));
+    if (funded >= feeSats + input.sweetenerSats + DUST) break;
+  }
+  if (used.length === 0 || funded < feeSats + input.sweetenerSats) {
+    throw new Error(`Not enough confirmed funds for the fee: need ~${feeSats + input.sweetenerSats} sats, have ${funded}`);
+  }
+  let changeSats = funded - feeSats - input.sweetenerSats;
+  if (changeSats < DUST) { feeSats += changeSats; changeSats = 0; }
+  if (changeSats > 0) outs.push({ valueSats: changeSats, script: hexToByteArray(input.takerChangeScriptHex) });
+
+  const asIn = (u: { txid: string; vout: number }) => ({ txidLe: hexToByteArray(u.txid).reverse(), vout: u.vout, sequence: 0xfffffffd });
+  const tx: RawTx = { version: 2, locktime: 0, inputs: [asIn(input.maker), asIn(input.taker), ...used.map(asIn)], outputs: outs };
+  const makerScript = hexToByteArray(input.maker.scriptPubKeyHex);
+  const inputs: Kv[][] = [
+    [{ key: [0x01], value: [...u64le(input.maker.valueSats), ...varint(makerScript.length), ...makerScript] }],
+    fundingInputMap({ ...input.taker }, tapKeyOf(input.takerTapKeyHex), input.takerPublicKeyHex),
+    ...used.map((u) => fundingInputMap(u, tapKeyOf(input.takerPaymentTapKeyHex ?? input.takerTapKeyHex), input.takerPublicKeyHex)),
+  ];
+  const psbtBase64 = serializePsbt({ global: [], inputs, outputs: tx.outputs.map(() => []), tx });
+  return { psbtBase64, feeSats, changeSats, takerAssetIndex: 1, fundingIndices: used.map((_, i) => i + 2) };
+}
+
+/** Adds the maker's signing hints (taproot internal key / P2SH redeem script) to input 0 before the maker signs. */
+export function prepareMakerInput(psbtBase64: string, tapKeyHex?: string, publicKeyHex?: string | string[]): string {
+  const psbt = parsePsbt(psbtBase64);
+  const map = psbt.inputs[0];
+  if (!map) throw new Error("Swap has no maker input");
+  const wu = map.find((kv) => kv.key.length === 1 && kv.key[0] === 0x01);
+  if (!wu) throw new Error("Maker input has no witness UTXO");
+  if (map.some((kv) => kv.key[0] === 0x17 || kv.key[0] === 0x04)) return psbtBase64;
+  const value = wu.value.slice(0, 8).reduce((s, b, i) => s + b * 2 ** (8 * i), 0);
+  const script = wu.value.slice(9);
+  const fresh = fundingInputMap(
+    { txid: "00".repeat(32), vout: 0, valueSats: value, scriptPubKeyHex: byteArrayToHex(script) },
+    tapKeyOf(tapKeyHex),
+    publicKeyHex,
+  );
+  psbt.inputs[0] = [...map, ...fresh.filter((kv) => kv.key[0] !== 0x01)];
+  return serializePsbt(psbt);
+}
