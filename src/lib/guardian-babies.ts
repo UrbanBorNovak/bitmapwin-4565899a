@@ -2,7 +2,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { readCbor } from "@/lib/forge-delegate";
 
-export type BabyMeta = { id: string; sire: string; dam: string; g?: number };
+export type BabyMeta = { id: string; sire: string; dam: string; g?: number | undefined };
 const ORD = "https://ordinals.com";
 
 async function meta(id: string): Promise<BabyMeta | null> {
