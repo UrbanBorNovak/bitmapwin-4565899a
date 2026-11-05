@@ -239,6 +239,9 @@ function beaconMock(mode: "live" | "none"): string {
 function R(b,ct){return Promise.resolve(new Response(b,{status:200,headers:{"content-type":ct}}))}
 window.fetch=function(u){u=String(u);
  if(u.indexOf("/r/children/9d1da99c")===0){var S=[];for(var q=0;q<140;q++)S.push(((q*2654435761)>>>0).toString(16).padStart(8,"0")+"mocksibling"+q+"i0");return R(JSON.stringify({ids:S,more:false,page:0}),"application/json")}
+ if(u.indexOf("/r/parents/")===0)return R(JSON.stringify({ids:["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"],more:false,page:0}),"application/json");
+ if(u==="/content/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0")return R("840000.bitmap","text/plain");
+ if(u==="/r/blockheight")return R("900000","text/plain");
  if(u.indexOf("/r/inscription/")===0)return R(JSON.stringify({sat:1234567890,id:"x"}),"application/json");
  if(u.indexOf("/r/sat/")===0)return R(JSON.stringify({id:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbi0"}),"application/json");
  if(u==="/content/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbi0")return R('<div data-b="'+B+'"></div>',"text/html");
