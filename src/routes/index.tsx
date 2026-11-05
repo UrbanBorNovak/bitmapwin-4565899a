@@ -23,7 +23,7 @@ import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
 import { BlockChronicles } from "@/components/BlockChronicles";
 import { LivingBlockShowcase } from "@/components/LivingBlockShowcase";
-import { HalloweenBanner } from "@/components/HalloweenBanner";
+import { NovemberBuildBanner } from "@/components/NovemberBuildBanner";
 
 
 export const Route = createFileRoute("/")({
@@ -103,7 +103,7 @@ function Index() {
   return (
     <div className="pb-10">
       <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
-        <HalloweenBanner />
+        <NovemberBuildBanner />
       </section>
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="grid overflow-hidden border border-border-strong lg:min-h-[560px] lg:grid-cols-12">
