@@ -286,9 +286,9 @@ function kremlin() {
   for (let x = 12; x <= 48; x += 3) for (const y of [4, 9]) s.box(x, x + 1, y, y + 2, 46, 46, "glass");
   s.box(10, 50, 15, 16, 46, 56, "grass");
   s.box(26, 34, 17, 20, 48, 54, "sand"); onion(30, 51, 21, 2, "gold");
-  // Lenin-free Red Square lamps
+  // Red Square lamps
   for (let x = 8; x <= N - 8; x += 6) s.put(x, 2, 8, "glow");
-  return s.out;
+  return s.out.filter((t) => t.dx >= 0 && t.dz >= 0 && t.dx < FORGE_SPAN && t.dz < FORGE_SPAN);
 }
 
 // ---- OASIS & BIOMES: premium house presets, 10–25 BIT per stamp ----
