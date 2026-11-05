@@ -261,7 +261,7 @@ function BeaconTestbench() {
   const [copied, setCopied] = useState<string | null>(null);
   const html = useMemo(() => {
     const v8 = guardianMasterGeneratorHtmlV8();
-    return v8.replace(/<head[^>]*>/i, (m) => m + beaconMock(mode));
+    return v8.replace(/<head[^>]*>/i, (m) => m + beaconMock(mode)).replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200)</script></body>');
   }, [mode]);
   useEffect(() => {
     const on = (e: MessageEvent) => {
