@@ -24,23 +24,56 @@ function unpackBWVX(r){var B=[],c=function(i){return r.charCodeAt(i)};
   else for(var k=0;k+3<r.length;k+=4)B.push([c(k),c(k+1),c(k+2),c(k+3)]);return B}
 function citadelPrep(B){var occ={},i,b,key=function(x,y,z){return x+","+y+","+z};
   for(i=0;i<B.length;i++){b=B[i];occ[key(b[0],b[1],b[2])]=1}
-  var S=[],mx=0;for(i=0;i<B.length;i++){b=B[i];if(occ[key(b[0],b[1]+1,b[2])])continue;
-    var ao=0;for(var dx=-1;dx<2;dx++)for(var dz=-1;dz<2;dz++)if((dx||dz)&&occ[key(b[0]+dx,b[1]+1,b[2]+dz)])ao++;
-    S.push([b[0],b[1],b[2],b[3],Math.max(.62,1-ao*.06)]);if(b[0]>mx)mx=b[0];if(b[2]>mx)mx=b[2]}
-  S.sort(function(p,q){return(p[1]-q[1])||((p[0]+p[2])-(q[0]+q[2]))});
-  return{s:S.slice(0,6000),span:mx>63?128:64}}
+  /* face mask bits: 1 top, 2 +z, 4 +x, 8 -z, 16 -x; voxels with no open face are skipped */
+  var S=[],mx=0;for(i=0;i<B.length;i++){b=B[i];var X=b[0],Y=b[1],Z=b[2];if(X>mx)mx=X;if(Z>mx)mx=Z;
+    var f=(occ[key(X,Y+1,Z)]?0:1)|(occ[key(X,Y,Z+1)]?0:2)|(occ[key(X+1,Y,Z)]?0:4)|(occ[key(X,Y,Z-1)]?0:8)|(occ[key(X-1,Y,Z)]?0:16);if(!f)continue;
+    var ao=0;for(var dx=-1;dx<2;dx++)for(var dz=-1;dz<2;dz++)if((dx||dz)&&occ[key(X+dx,Y+1,Z+dz)])ao++;
+    S.push([X,Y,Z,b[3],Math.max(.62,1-ao*.06),f])}
+  return{s:S.slice(0,12000),span:SPN||(mx>63?128:64)}}
+var CBM=null,SPN=0,IDR=/^[0-9a-f]{64}i\d+$/;
+/* minimal CBOR (maps/strings/ints/bytes) for Tag 5 metadata, same as the Land Forge master */
+function cbor(b){var i=0;function L(a){if(a<24)return a;if(a==24)return b[i++];if(a==25){i+=2;return b[i-2]<<8|b[i-1]}if(a==26){i+=4;return(b[i-4]<<24>>>0)+(b[i-3]<<16)+(b[i-2]<<8)+b[i-1]}return 0}
+  function I(){var x=b[i++],t=x>>5,a=x&31,n,s,k,o;if(t==0)return L(a);if(t==1)return-1-L(a);
+    if(t==2||t==3){if(a==31){s=t==3?"":[];while(b[i]!=255){var c=I();if(t==3)s+=c;else s=s.concat(c)}i++;return s}n=L(a);s=b.slice(i,i+n);i+=n;return t==3?new TextDecoder().decode(s):Array.from(s)}
+    if(t==4){n=L(a);o=[];for(k=0;k<n;k++)o.push(I());return o}if(t==5){n=L(a);o={};for(k=0;k<n;k++){var key=I();o[key]=I()}return o}return null}return I()}
+function metaOf(id){return t("/r/metadata/"+id).then(function(r){var h=String(JSON.parse(r)).replace(/[^0-9a-f]/gi,""),b=new Uint8Array(h.length/2);for(var k=0;k<b.length;k++)b[k]=parseInt(h.substr(k*2,2),16);return cbor(b)}).catch(function(){return null})}
+function b64B(s){return unpackBWVX(atob(String(s).replace(/\s/g,"")))}
+/* voxels of one inscribed piece: master-delegate metadata first, then self-rendering HTML */
+function pieceOf(id){return metaOf(id).then(function(m){if(m&&/^BWVX/.test(m.f||"")&&(m.d||m.b))return b64B(m.d||m.b);
+  return t("/content/"+id).then(function(h){var x=h.match(/<script id="bwvx"[^>]*>([A-Za-z0-9+\/=\s]*)<\/script>/);return x?b64B(x[1]):null})}).catch(function(){return null})}
+function placeP(V,x,y,z,r,sp){if(!V||!V.length)return[];var mx=1e9,my=1e9,mz=1e9,k,o=[];for(k=0;k<V.length;k++){mx=Math.min(mx,V[k][0]);my=Math.min(my,V[k][1]);mz=Math.min(mz,V[k][2])}
+  V=V.map(function(v){return[v[0]-mx,v[1]-my,v[2]-mz,v[3]]});for(var q=0;q<((r%4)+4)%4;q++){var X=0;for(k=0;k<V.length;k++)X=Math.max(X,V[k][0]);V=V.map(function(v){return[v[2],v[1],X-v[0],v[3]]})}
+  for(k=0;k<V.length;k++){var p=[V[k][0]+x,V[k][1]+y,V[k][2]+z,V[k][3]];if(p[0]<sp&&p[1]<sp&&p[2]<sp)o.push(p)}return o}
+/* one candidate reinscription → voxels, or null when it is not a Land Forge build */
+function buildOf(id){return metaOf(id).then(function(m){if(m&&/^BWVX/.test(m.f||"")&&(m.d||m.b)&&!m.p)return b64B(m.d||m.b);
+  return t("/content/"+id).then(function(h){if(h.length>120000)return null;var x=h.match(/<script id="bwvx"[^>]*>([A-Za-z0-9+\/=\s]*)<\/script>/);if(x)return b64B(x[1]);
+    var a=h.match(/<script id="bwvx-asm"([^>]*)>([A-Za-z0-9+\/=\s]*)<\/script>/);if(!a)return null;
+    var pm=a[1].match(/data-parts="([^"]*)"/),sm=a[1].match(/data-span="(\d+)"/),sp=sm&&+sm[1]==128?128:64;SPN=sp;
+    var B=a[2].trim()?b64B(a[2]):[],segs=(pm?pm[1]:"").split(";").filter(Boolean).slice(0,32);
+    return Promise.all(segs.map(function(sg){var s=sg.split("@"),n=(s[1]||"").split(",").map(Number);if(!IDR.test(s[0])||n.length<4)return[];
+      return pieceOf(s[0]).then(function(V){return placeP(V,n[0],n[1],n[2],n[3],sp)})})).then(function(all){all.forEach(function(v){B=B.concat(v)});return B})})})}
 function citadelLoad(tries){
-  if(!BMP){if(tries<40)setTimeout(function(){citadelLoad(tries+1)},500);return}
-  j("/r/inscription/"+BMP).then(function(ins){if(!ins||ins.sat==null)throw 0;return t("/r/sat/"+ins.sat+"/at/-1")})
-  .then(function(r){var id=(String(r).match(/[0-9a-f]{64}i\d+/)||[""])[0];if(!id||id===BMP)throw 0;return t("/content/"+id)})
-  .then(function(h){var m=h.match(/<script id="bwvx"[^>]*>([\s\S]*?)<\/script>/)||h.match(/data-b="([A-Za-z0-9+\/=]+)"/);if(!m)return;
-    var B=unpackBWVX(atob(m[1].replace(/\s/g,"")));if(B.length)CIT=citadelPrep(B)}).catch(function(){})}
+  /* the BITMAP: the verified Tag 3 parent, else the canonical OCI id for this Guardian's block (Guardians inscribed under the root only) */
+  var bm=BMP||BID||CBM;
+  if(!bm){if(typeof G!=="undefined"&&G&&G.h!=null&&tries>=6){bitmapId(G.h).then(function(id){if(id&&IDR.test(id)){CBM=id;citadelLoad(tries+1)}}).catch(function(){});return}
+    if(tries<120)setTimeout(function(){citadelLoad(tries+1)},500);return}
+  /* same order the site verifies: sat's newest reinscription first, then older ones (max 8) */
+  j("/r/inscription/"+bm).then(function(ins){if(!ins||ins.sat==null)throw 0;return j("/r/sat/"+ins.sat)})
+  .then(function(r){var ids=((r&&r.ids)||[]).slice().reverse().filter(function(x){return x!==bm&&IDR.test(x)}).slice(0,8),k=0;
+    (function next(){if(k>=ids.length)return;SPN=0;buildOf(ids[k++]).then(function(B){if(B&&B.length)CIT=citadelPrep(B);else next()})})()}).catch(function(){})}
 function shade(h,f){var n=parseInt(h.slice(1),16);return"rgb("+[(n>>16)&255,(n>>8)&255,n&255].map(function(v){return Math.round(v*f)}).join(",")+")"}
 var _dl8=drawLand;
-drawLand=function(pulse){_dl8(pulse);if(!CIT||!LAND)return;var L=LAND,u=2*L.half/CIT.span,o=-L.half,i;
-  for(i=0;i<CIT.s.length;i++){var v=CIT.s[i],x=o+v[0]*u,z=o+v[2]*u,y=(v[1]+1)*u,c=CITP[v[3]]||CITP[0];
-    var a=P3(x,y,z),b=P3(x+u,y,z),cc=P3(x+u,y,z+u),d=P3(x,y,z+u),e=P3(x,y-u,z+u),f=P3(x+u,y-u,z+u);
-    poly([d,cc,f,e],shade(c[1],.7*v[4]));poly([a,b,cc,d],shade(c[0],v[4]))}};
+/* full cubes for every exposed voxel (same look as the build's own on-chain viewer): faces facing the camera, painter-sorted each frame */
+var CFACE=[[[0,1,0],[1,1,0],[1,1,1],[0,1,1],0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1],1,.8],[[1,0,0],[1,0,1],[1,1,1],[1,1,0],1,.62],[[0,0,0],[1,0,0],[1,1,0],[0,1,0],1,.7],[[0,0,0],[0,0,1],[0,1,1],[0,1,0],1,.55]];
+drawLand=function(pulse){_dl8(pulse);if(!CIT||!LAND)return;var L=LAND,u=2*L.half/CIT.span,o=-L.half,i,k,S=CIT.s,Q=[];
+  for(i=0;i<S.length;i++){var v=S[i],x=o+v[0]*u,z=o+v[2]*u,y=v[1]*u;Q.push([P3(x+u/2,y+u/2,z+u/2)[2],x,y,z,v])}
+  Q.sort(function(p,q){return q[0]-p[0]});
+  for(i=0;i<Q.length;i++){var w=Q[i],vv=w[4],c=CITP[vv[3]]||CITP[0];
+    for(k=0;k<5;k++){if(!(vv[5]&(1<<k)))continue;var F=CFACE[k],cx=0,cy=0,cz=0,n;for(n=0;n<4;n++){cx+=F[n][0]/4;cy+=F[n][1]/4;cz+=F[n][2]/4}
+      /* back faces: the face centre lies farther than the cube centre */
+      if(P3(w[1]+cx*u,w[2]+cy*u,w[3]+cz*u)[2]>w[0]+1e-9)continue;
+      var pp=[F[0],F[1],F[2],F[3]].map(function(p){return P3(w[1]+p[0]*u,w[2]+p[1]*u,w[3]+p[2]*u)});
+      poly(pp,shade(F[4]?c[1]:c[0],F[5]*(k?1:vv[4])))}}};
 setTimeout(function(){citadelLoad(0)},1200);
 /* readable HUD cards: 11px floor, near-solid panels, brighter labels, roomier rows; both start closed */
 function hudBox(x,y,w,h,edge){g.globalAlpha=LM?.96:.92;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x,y,w,h);
