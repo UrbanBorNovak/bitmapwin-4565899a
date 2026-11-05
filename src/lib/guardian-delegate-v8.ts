@@ -317,13 +317,24 @@ function aiFacts(){var h=G&&G.h!=null?G.h:"?",arm=!G?"voxel":G.th==="CLAY"?"gene
   ms=!G?"":G.ms==="TITAN"?"titan-class":G.ms==="WRAITH"?"wraith-class":"standard-class",cr=[];
   if(G&&G.tp)cr.push("Taproot crest");if(G&&G.sw)cr.push("SegWit crest");if(G&&G.lz)cr.push("super-zero hash crest");
   var era=typeof h==="number"?(h<210000?"the genesis era (2009-2012)":h<420000?"the second halving era":h<630000?"the third halving era":h<840000?"the fourth halving era":"the fifth halving era"):"an unknown era";
-  return{h:h,arm:arm,ms:ms,cr:cr,era:era,pets:PETS.length,build:!!CIT,df:G&&G.df?fmtD(G.df):null,wt:G&&G.wt?(G.wt/1e6).toFixed(2)+" MWU":null}}
+  return{h:h,arm:arm,ms:ms,cr:cr,era:era,pets:PETS.length,build:!!CIT,df:G&&G.df?fmtD(G.df):null,wt:G&&G.wt?(G.wt/1e6).toFixed(2)+" MWU":null,col:aiCol(),shp:aiShape()}}
+/* colour words from the Guardian's own hsl() palette; armour overrides match the painted voxels */
+function aiHue(s){var m=/hsl\((\d+)/.exec(String(s||""));if(!m)return null;var h=+m[1]%360;
+  return h<15?"crimson red":h<40?"fiery amber":h<60?"solar gold":h<85?"acid lime":h<150?"emerald green":h<185?"teal":h<210?"electric cyan":h<245?"cobalt sapphire blue":h<275?"royal violet":h<310?"amethyst purple":h<340?"magenta":"crimson red"}
+function aiCol(){if(!G)return"";var b=aiHue(G.body)||"stone",a=aiHue(G.accent)||"cyan";
+  var body=G.th==="CLAY"?"terracotta and scorched-clay":G.th==="TERA"?b+" plates mixed with chrome and titanium-white":b;
+  return body+" voxel body with glowing "+a+" accents on eyes, horns and wing tips"}
+function aiShape(){if(!G)return"voxel creature";var S={quadruped:"four-legged beast",hexapod:"six-legged insectoid",serpent:"long segmented serpent",biped:"upright two-legged warrior",avian:"winged bird-like flyer",floater:"legless floating spirit",arachnid:"eight-legged spider-like crawler",centaur:"centaur with a beast body and upright torso"},
+  H=["short horns","curved tusks","antlers","a crown crest"],p=[];
+  if(G.seg)p.push(G.seg+" body segments");if(G.horn!=null&&H[G.horn])p.push(H[G.horn]);if(G.wing)p.push("wings");if(G.spine)p.push("a spined back");if(G.pat)p.push("patterned plates");if(G.tl)p.push("a "+String(G.tl).toLowerCase()+" tail");if(G.dn)p.push(String(G.dn).toLowerCase()+" hide");
+  return(S[G.sh]||"voxel creature")+(G.bulk>1.15?", heavy and bulky":G.bulk<.95?", lean":"")+(p.length?", with "+p.join(", "):"")}
 function aiPrompts(){var f=aiFacts(),pet=f.pets?(f.pets===1?" with one small baby companion at its feet":" with "+f.pets+" small baby companions at its feet"):"",
   bld=f.build?", standing on a voxel citadel built on its BITMAP":", standing on a flat Mondrian-tiled BITMAP plot",
   cr=f.cr.length?" bearing a "+f.cr.join(" and a "):"";
-  return[["IMAGE","A "+f.ms+" "+f.arm+" voxel Guardian creature born from Bitcoin block "+f.h+" in "+f.era+cr+pet+bld+", glowing Bitcoin-orange ground with cyan edge light, ring of tiny sibling Guardians on the horizon, isometric voxel art, volumetric fog, cinematic lighting, highly detailed --ar 16:9"],
-    ["VIDEO","Slow cinematic orbit around a "+f.arm+" voxel Guardian born from Bitcoin block "+f.h+pet+bld+". It wakes, shakes voxel dust from its shoulders and looks at the camera. Orange glow rises from the ground, fog drifts, small Guardians walk on the horizon. 8 seconds, smooth camera, no text."],
-    ["LORE","Write the legend of the Guardian of Bitcoin block "+f.h+", mined in "+f.era+". Facts from the chain: armour "+f.arm+(f.df?" (difficulty "+f.df+")":"")+", body "+f.ms+(f.wt?" (block weight "+f.wt+")":"")+", crests: "+(f.cr.length?f.cr.join(", "):"none")+", baby pets: "+f.pets+", voxel build on its land: "+(f.build?"yes":"no")+". Keep these facts exact; invent only story, personality and a short battle cry. Under 300 words."],
+  var nm=G&&G.nm?' named "'+G.nm+'"':"",look=" — a "+f.shp+", "+f.col;
+  return[["IMAGE","A "+f.ms+" "+f.arm+" voxel Guardian"+nm+look+", born from Bitcoin block "+f.h+" in "+f.era+cr+pet+bld+", glowing Bitcoin-orange ground with cyan edge light, ring of tiny sibling Guardians on the horizon, isometric voxel art, volumetric fog, cinematic lighting, highly detailed --ar 16:9"],
+    ["VIDEO","Slow cinematic orbit around a "+f.arm+" voxel Guardian"+look+", born from Bitcoin block "+f.h+pet+bld+". It wakes, shakes voxel dust from its shoulders and looks at the camera. Orange glow rises from the ground, fog drifts, small Guardians walk on the horizon. 8 seconds, smooth camera, no text."],
+    ["LORE","Write the legend of the Guardian of Bitcoin block "+f.h+", mined in "+f.era+". Facts from the chain: look: "+f.shp+", "+f.col+"; armour "+f.arm+(f.df?" (difficulty "+f.df+")":"")+", body "+f.ms+(f.wt?" (block weight "+f.wt+")":"")+", crests: "+(f.cr.length?f.cr.join(", "):"none")+", baby pets: "+f.pets+", voxel build on its land: "+(f.build?"yes":"no")+". Keep these facts exact; invent only story, personality and a short battle cry. Under 300 words."],
     ["MUSIC","Theme song for the Guardian of Bitcoin block "+f.h+" ("+f.era+"). Style: "+(f.arm==="genesis clay"?"ancient ambient, deep drums, chant":f.arm==="terahash-armoured"?"dark synthwave, heavy bass, 128 BPM":"industrial chiptune, 140 BPM")+", instrumental build-up, heroic chorus about guarding the chain."]]}
 function aiCopy(s,b){var ok=function(){b.textContent="COPIED \u2713";setTimeout(function(){b.textContent="COPY"},1400)};
   try{navigator.clipboard.writeText(s).then(ok,function(){fb()})}catch(e){fb()}
