@@ -238,7 +238,7 @@ function kremlin() {
   s.box(sx - 5, sx + 5, 1, 24, 0, 7, "brick");
   s.cut((t) => t.dx >= sx - 2 && t.dx <= sx + 2 && t.dy >= 1 && t.dy <= 7 && t.dz <= 7);
   for (let y = 3; y <= 23; y += 5) for (const x of [sx - 5, sx + 5]) s.box(x, x, y, y + 1, 0, 7, "stone");
-  s.box(sx - 6, sx + 6, 25, 26, -1, 8, "stone");
+  s.box(sx - 6, sx + 6, 25, 26, 0, 8, "stone");
   s.box(sx - 4, sx + 4, 27, 34, 0, 7, "brick");
   for (let x = sx - 2; x <= sx + 2; x++) for (let y = 29; y <= 33; y++) s.put(x, y, -0, Math.hypot(x - sx, y - 31) < 1.2 ? "gold" : "glass");
   s.put(sx, 31, 0, "glow");
