@@ -83,7 +83,7 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, "MASTER CODE DELEGATE V7", "MASTER CODE DELEGATE V8");
   s = swap(s, "GTLON=true,", "GTLON=false,PROOFON=false,");
   s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button");');
-  s = swap(s, 'tb.textContent=GTLON?"TIMELINE ×":"TIMELINE +"}', 'tb.textContent=GTLON?"TIMELINE ×":"TIMELINE +";pb.textContent=PROOFON?"PROOF ×":"PROOF +"}');
+  s = swap(s, '"TIMELINE +"}', '"TIMELINE +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +"}');
   s = swap(s, "[mb,tb].forEach", "[mb,tb,pb].forEach");
   s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
