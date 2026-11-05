@@ -242,7 +242,8 @@ function focusHud(w,h){if(!FOC)return;var fs=Math.max(11,Math.min(13,w*.016)),hs
     ["SAME HOLDER",a?kin?kin+" MORE IN VIEW":"ONLY ONE IN VIEW":"\u2026",kin?col:"#c5d0d9"],
     ["CHILDREN",k===undefined||k===-1?"READING\u2026":k===-2?"CHAIN UNREADABLE":k===0?"NONE YET":String(k),k>0||typeof k==="string"?"#3fe0d0":"#c5d0d9"]];
   if(R&&R.b&&R.b.transaction_count!=null)rows.splice(2,0,["PARCELS",String(R.b.transaction_count||R.b.tx_count)+" TX","#ffffff"]);
-  var ph=hs*1.5+lh*(rows.length+.5),y=h-pad-64-ph+hs*1.3;
+  var ph=hs*1.5+lh*(rows.length+.5),y=Math.max(pad+hs*3,h-pad-120-ph+hs*1.3),fd=document.getElementById("bwfoc");
+  if(fd){fd.style.bottom="auto";fd.style.right=(pad-10)+"px";fd.style.top=Math.max(0,y-hs*1.3-36)+"px"}
   hudBox(x-10,y-hs*1.3,pw+20,ph,col);txt("PACK MEMBER \u00B7 ON CHAIN",x,y,hs,col);
   for(i=0;i<rows.length;i++){var yy=y+lh*(i+1.1);txt(rows[i][0],x,yy,fs,"#c5d0d9");txt(rows[i][1],x+pw*.38,yy,fs,rows[i][2])}}
 var _ch8f=chainHud;chainHud=function(w,h){_ch8f(w,h);focusHud(w,h)};
