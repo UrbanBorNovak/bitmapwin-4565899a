@@ -78,7 +78,7 @@ function beaconLoad(){kids(SELF,200).then(function(ids){ids=ids.slice().reverse(
       if(m){BEACON=m[1];BEACONST="LIVE"}else nx()}).catch(nx)})()}).catch(function(){BEACONST="UNREADABLE"})}
 setTimeout(beaconLoad,1600);
 tributeHud=function(w,h){var cbn=document.getElementById("bwcb");if(cbn)cbn.style.display=TRIBUTEON&&BEACON?"":"none";if(!TRIBUTEON)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
-    pw=Math.min(w-pad*2,360),x=w-pw-pad,y=h-pad-lh*9,L=[];
+    pw=Math.min(w-pad*2,360),x=w-pw-pad,y=pad+fs*(w<520?7.4:5.2)+(PROOFON&&G?lh*7.6:0),L=[];
   if(BEACON){for(var k=0;k<BEACON.length;k+=Math.max(16,Math.floor(pw/(fs*.62))))L.push(BEACON.slice(k,k+Math.max(16,Math.floor(pw/(fs*.62)))))}
   hudBox(x-10,y-hs*1.3,pw+20,hs*1.5+lh*(5+L.length),"#f7931a");
   txt("SILENT BEACON \u00B7 "+BEACONST,x,y,hs,"#f7931a");
