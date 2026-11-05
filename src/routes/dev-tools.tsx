@@ -332,23 +332,39 @@ window.fetch=function(u){u=String(u);var m=u.match(/^\\/r\\/blockinfo\\/(\\d+)$/
  if(m)return hash(m[1]).then(function(x){return of(M+"block/"+x+"/raw")}).then(function(r){return r.arrayBuffer()}).then(function(a){var b=new Uint8Array(a),s="";for(var i=0;i<b.length;i++)s+=(b[i]<16?"0":"")+b[i].toString(16);return new Response(s)});
  return of(u)}})()</script>`;
 
+/** Test-only: a fake master with one free module, one funded module (1.85M of 2.5M sats) and a fake funding tx. */
+const moduleMock = `<script>(function(){var of=window.fetch.bind(window),MID="${"b".repeat(64)}i0",SPK="0014${"c".repeat(40)}";
+window.BW_MASTER_ID=MID;function le(v){var s="";for(var i=0;i<8;i++){s+=("0"+(v%256).toString(16)).slice(-2);v=Math.floor(v/256)}return s}
+var TX="02000000"+"01"+"${"0".repeat(64)}"+"00000000"+"00"+"ffffffff"+"01"+le(1850000)+"16"+SPK+"00000000";
+var C={m1:'BW-MOD-1\\n{"id":"FIREFLIES","label":"FIREFLIES"}\\napi.on(function(put,t){for(var i=0;i<14;i++){var a=i*2.4+t*.5;put([Math.sin(a)*9,2+Math.sin(t*2+i),Math.cos(a)*9,.3,.3,.3],"#c8ff5a",2)}})',
+m2:'BW-MOD-1\\n{"id":"AURORA","label":"AURORA SKY","goal":2500000,"spk":"'+SPK+'","addr":"bc1qmockmockmockmockmockmockmockmock0000"}\\napi.on(function(){})',
+f1:"BW-FUND-1 AURORA ${"d".repeat(64)}"};
+window.fetch=function(u){u=String(u);if(u.indexOf("/r/children/"+MID)===0)return Promise.resolve(new Response(JSON.stringify({ids:["m1","m2","f1"],more:false})));
+var m=u.match(/^\\/content\\/(m1|m2|f1)$/);if(m)return Promise.resolve(new Response(C[m[1]]));
+if(u.indexOf("/r/tx/")===0)return Promise.resolve(new Response(TX));return of(u)}})()</script>`;
+
 /** Holiday preview for the V8 Three.js draft. Test-only: maps the on-chain Three.js id to the same r163 build on a CDN. */
 function HolidayTestbench() {
   const [day, setDay] = useState(24);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [sky, setSky] = useState("");
+  const [fx, setFx] = useState(0);
+  const [mods, setMods] = useState(false);
   const html = useMemo(() => {
     const imap = `<script type="importmap">{"imports":{"/content/${THREE_R163_MODULE_ID}":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>`;
-    const pin = day > 0 ? `<script>window.ADVENT_DAY=${day}</script>` : "";
+    const pin = `<script>window.ADVENT_DAY=${day};${sky ? `window.BW_SKY="${sky}";` : ""}${fx ? `window.BW_FX=${fx};` : ""}</script>`;
     return guardianMasterGeneratorHtmlV8Three()
-      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none"))
+      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + (mods ? moduleMock : "") + beaconMock("none"))
       .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200);setInterval(function(){if(STATE==="RELIC")STATE="AWAKE"},300)</script></body>');
-  }, [day]);
+  }, [day, sky, fx, mods]);
   const btn = (on: boolean) =>
     `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
+  const skies: [string, string][] = [["", "SKY TODAY"], ["2026-11-17", "LEONIDS"], ["2026-11-24", "FULL MOON"], ["2026-03-03", "BLOOD MOON"], ["2026-08-12", "SOLAR ECLIPSE"]];
+  const fxs: [number, string][] = [[0, "LIVE BLOCKS"], [1050000, "HALVING"], [935424, "DIFFICULTY"], [929929, "PALINDROME"], [940000, "MILESTONE"]];
   return (
     <section className="mt-8 border border-border p-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="display text-xl">V8 · THREE.JS HOLIDAYS · TESTBENCH</h2>
+        <h2 className="display text-xl">V8 · THREE.JS HOLIDAYS · SKY · BLOCK EVENTS · TESTBENCH</h2>
         <DataBadge kind="soon" note="PINNED DATE · MOCK CHAIN" />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -357,11 +373,20 @@ function HolidayTestbench() {
         ))}
         <button type="button" className={btn(day === 0)} onClick={() => setDay(0)}>TODAY (REAL DATE)</button>
         <span className="w-4" />
+        {skies.map(([v, l]) => (
+          <button key={l} type="button" className={btn(sky === v)} onClick={() => setSky(v)}>{l}</button>
+        ))}
+        <span className="w-4" />
+        {fxs.map(([v, l]) => (
+          <button key={l} type="button" className={btn(fx === v)} onClick={() => setFx(v)}>{l}</button>
+        ))}
+        <button type="button" className={btn(mods)} onClick={() => setMods(!mods)}>MOCK MODULES {mods ? "ON" : "OFF"}</button>
+        <span className="w-4" />
         <button type="button" className={btn(device === "desktop")} onClick={() => setDevice("desktop")}>DESKTOP</button>
         <button type="button" className={btn(device === "mobile")} onClick={() => setDevice("mobile")}>MOBILE</button>
       </div>
       <iframe
-        key={day + device}
+        key={`${day}${device}${sky}${fx}${mods}`}
         title="Holiday preview"
         srcDoc={html}
         sandbox="allow-scripts"
