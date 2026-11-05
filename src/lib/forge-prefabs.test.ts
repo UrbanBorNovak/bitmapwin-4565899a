@@ -40,3 +40,11 @@ describe("biome preset prices", () => {
     expect(housePresetPrice("plate8")).toBe(0);
   });
 });
+
+describe("Kremlin modules", () => {
+  it("each Kremlin piece fits the 12,000-block build limit", () => {
+    const parts = HOUSE_PREFABS.filter((p) => p.id.startsWith("kremlin-"));
+    expect(parts).toHaveLength(7);
+    for (const p of parts) expect(p.blocks.length, p.id).toBeLessThanOrEqual(12000);
+  });
+});
