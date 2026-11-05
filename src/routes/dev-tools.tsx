@@ -190,6 +190,13 @@ V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleStrin
         const url = URL.createObjectURL(new Blob([guardianMasterGeneratorHtmlV8Three()], { type: "text/html" }));
         const a = document.createElement("a"); a.href = url; a.download = "guardian-master-v8-three.html"; a.click(); URL.revokeObjectURL(url);
       }}>DOWNLOAD V8 · THREE.JS ON-CHAIN .HTML ({guardianV8ThreeByteSize().toLocaleString()} BYTES)</button>
+      <button type="button" className="ml-2 mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={() => {
+        void navigator.clipboard.writeText(guardianMasterGeneratorHtmlV8Three()).then(() => alert("V8 Three.js HTML copied"));
+      }}>COPY V8 · THREE.JS HTML</button>
+      <details className="mt-3">
+        <summary className="cursor-pointer font-mono text-xs text-signal">VIEW V8 · THREE.JS HTML (READY TO INSCRIBE · text/html;charset=utf-8)</summary>
+        <textarea readOnly value={guardianMasterGeneratorHtmlV8Three()} className="mt-2 h-96 w-full border border-border bg-secondary p-3 font-mono text-[11px]" onFocus={(e) => e.currentTarget.select()} />
+      </details>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {[["V7 · ACTIVE", v7], ["V8 · DRAFT", v8]].map(([label, html]) => (
           <div key={label}>
