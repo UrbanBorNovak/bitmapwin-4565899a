@@ -281,6 +281,18 @@ var LASTP="t";
 var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w<900;
   if(!one||LASTP==="t")tributeHud(w,h);else{var cbn=document.getElementById("bwcb");if(cbn)cbn.style.display="none"}
   if(!one||LASTP==="s")swarmHud(w,h)};
+/* Baby pets: children of this Guardian whose own Tag 5 metadata is BITMAPWIN-PET and names this
+   Guardian as sire or dam. Lean pets carry baked voxels (v, ×10); up to 3 stand beside the parent's
+   feet at pet scale, appended to VOX so both painters draw them. Pets without baked voxels are skipped. */
+var PETS=[];
+function petLoad(){if(!SELF)return;kids(SELF,100).then(function(ids){ids=ids.slice(0,24);var i=0;
+  (function nx(){if(i>=ids.length||PETS.length>=3)return;var id=ids[i++];
+    metaOf(id).then(function(m){if(m&&m.p==="BITMAPWIN-PET"&&(m.sire===SELF||m.dam===SELF)&&typeof m.v==="string"&&VOX){
+      var C=m.C||["#f7931a"],n=PETS.length,ox=[11,-11,0][n],oz=[6,6,11][n],k=.42,ph=n*1.7;
+      m.v.split(";").forEach(function(r){var a=r.split(",").map(Number);if(a.length<8)return;
+        VOX.push([a[0]/10*k+ox,a[1]/10*k,a[2]/10*k+oz,a[3]/10*k,a[4]/10*k,a[5]/10*k,C[a[6]]||C[0],a[7]?1:0,4,ph])});
+      PETS.push(id)}}).catch(function(){}).then(nx)})()}).catch(function(){})}
+setTimeout(petLoad,2200);
 `;
 
 function swap(src: string, from: string, to: string): string {
