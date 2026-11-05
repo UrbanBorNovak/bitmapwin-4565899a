@@ -252,8 +252,8 @@ window.fetch=function(u){u=String(u);
  if(u.indexOf("/r/children/")===0){PAR=u.split("/")[3];return R(JSON.stringify({ids:K.concat(["mockpet0i0","mockpet1i0"]),more:false,page:0}),"application/json")}
  if(u==="/r/metadata/mockpet0i0"){var V=[[0,30,0,40,30,50,0,0],[0,70,22,30,30,30,0,0],[-10,85,30,6,6,4,1,1],[10,85,30,6,6,4,1,1],[-12,8,-15,10,16,10,0,0],[12,8,-15,10,16,10,0,0],[-12,8,15,10,16,10,0,0],[12,8,15,10,16,10,0,0],[0,40,-30,8,8,20,2,0]].map(function(a){return a.join(",")}).join(";");
   return R(JSON.stringify(cb({p:"BITMAPWIN-PET",sire:PAR,dam:"mockdam0i0",g:1,C:["#7fd8a8","#ffffff","#f7931a"],v:V})),"application/json")}
- if(u==="/r/metadata/mockpet1i0")return new Response("",{status:404});
- if(u==="/content/mockpet1i0")return R('<title>BITMAPWIN PET · GEN 1</title><script>const M={"g":1,"sire":"'+PAR+'","dam":"mockdam0i0","ra":"RARE","sh":"biped"},C=["#c07fff","#ffffff"],V=[[0,3,0,4,4,4,0,0],[0,7,0,3,3,3,0,0],[-1,8,1.6,0.6,0.6,0.4,1,1],[1,8,1.6,0.6,0.6,0.4,1,1],[-1,0.8,0,1,1.6,1,0,0],[1,0.8,0,1,1.6,1,0,0]];<\/script>',"text/html");
+ if(u==="/r/metadata/mockpet1i0")return Promise.resolve(new Response("",{status:404}));
+ if(u==="/content/mockpet1i0")return R('<title>BITMAPWIN PET · GEN 1</title><script>const M={"g":1,"sire":"'+PAR+'","dam":"mockdam0i0","ra":"RARE","sh":"biped"},C=["#c07fff","#ffffff"],V=[[0,3,0,4,4,4,0,0],[0,7,0,3,3,3,0,0],[-1,8,1.6,0.6,0.6,0.4,1,1],[1,8,1.6,0.6,0.6,0.4,1,1],[-1,0.8,0,1,1.6,1,0,0],[1,0.8,0,1,1.6,1,0,0]];<"+"/script>',"text/html");
  if(u==="/content/mockpet0i0")return R("mock pet","text/plain");
  if(u==="/content/mockbeacon0i0")return R("BW-BEACON-1 "+SP,"text/plain");
  if(u==="/content/mockchild0i0")return R("gm","text/plain");
