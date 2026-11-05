@@ -14,7 +14,7 @@
  * set as the master; V7 stays the active Tag 11 delegate.
  */
 import { guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
-import { BLOCKS } from "@/lib/voxel-populate";
+import { BLOCKS } from "@/lib/voxel-world";
 
 const PALETTE = BLOCKS.map((b) => [b.top, b.side]);
 
