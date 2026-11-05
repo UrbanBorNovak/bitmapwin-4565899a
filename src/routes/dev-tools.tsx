@@ -332,7 +332,7 @@ function HolidayTestbench() {
     const pin = day > 0 ? `<script>window.ADVENT_DAY=${day}</script>` : "";
     return guardianMasterGeneratorHtmlV8Three()
       .replace(/<head[^>]*>/i, (m) => m + imap + pin + beaconMock("none"))
-      .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200)</script></body>');
+      .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200);setInterval(function(){if(STATE==="RELIC")STATE="AWAKE"},300)</script></body>');
   }, [day]);
   const btn = (on: boolean) =>
     `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
