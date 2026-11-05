@@ -310,6 +310,36 @@ function petHtml(id,known){return fetch("/content/"+id).then(function(r){if(!r.o
   V=V.filter(function(a){return Array.isArray(a)&&a.length>=8&&a.slice(0,6).every(function(x){return typeof x==="number"&&isFinite(x)})});
   return{C:C.filter(function(c){return typeof c==="string"}),V:V}}).catch(function(){return null})}
 setTimeout(petLoad,2200);
+/* AI prompts: built only from facts this page already read from the chain (G, CIT, PETS, BEACON).
+   Nothing is sent anywhere; the visitor copies text and pastes it into any AI tool. */
+var AIPON=false,AIPT=null;function aiLbl(){var b=document.getElementById("bwai");if(b)b.textContent=AIPON?"PROMPT \u00D7":"PROMPT +"}
+function aiFacts(){var h=G&&G.h!=null?G.h:"?",arm=!G?"voxel":G.th==="CLAY"?"genesis clay":G.th==="TERA"?"terahash-armoured":"forged steel",
+  ms=!G?"":G.ms==="TITAN"?"titan-class":G.ms==="WRAITH"?"wraith-class":"standard-class",cr=[];
+  if(G&&G.tp)cr.push("Taproot crest");if(G&&G.sw)cr.push("SegWit crest");if(G&&G.lz)cr.push("super-zero hash crest");
+  var era=typeof h==="number"?(h<210000?"the genesis era (2009-2012)":h<420000?"the second halving era":h<630000?"the third halving era":h<840000?"the fourth halving era":"the fifth halving era"):"an unknown era";
+  return{h:h,arm:arm,ms:ms,cr:cr,era:era,pets:PETS.length,build:!!CIT,df:G&&G.df?fmtD(G.df):null,wt:G&&G.wt?(G.wt/1e6).toFixed(2)+" MWU":null}}
+function aiPrompts(){var f=aiFacts(),pet=f.pets?(f.pets===1?" with one small baby companion at its feet":" with "+f.pets+" small baby companions at its feet"):"",
+  bld=f.build?", standing on a voxel citadel built on its BITMAP":", standing on a flat Mondrian-tiled BITMAP plot",
+  cr=f.cr.length?" bearing a "+f.cr.join(" and a "):"";
+  return[["IMAGE","A "+f.ms+" "+f.arm+" voxel Guardian creature born from Bitcoin block "+f.h+" in "+f.era+cr+pet+bld+", glowing Bitcoin-orange ground with cyan edge light, ring of tiny sibling Guardians on the horizon, isometric voxel art, volumetric fog, cinematic lighting, highly detailed --ar 16:9"],
+    ["VIDEO","Slow cinematic orbit around a "+f.arm+" voxel Guardian born from Bitcoin block "+f.h+pet+bld+". It wakes, shakes voxel dust from its shoulders and looks at the camera. Orange glow rises from the ground, fog drifts, small Guardians walk on the horizon. 8 seconds, smooth camera, no text."],
+    ["LORE","Write the legend of the Guardian of Bitcoin block "+f.h+", mined in "+f.era+". Facts from the chain: armour "+f.arm+(f.df?" (difficulty "+f.df+")":"")+", body "+f.ms+(f.wt?" (block weight "+f.wt+")":"")+", crests: "+(f.cr.length?f.cr.join(", "):"none")+", baby pets: "+f.pets+", voxel build on its land: "+(f.build?"yes":"no")+". Keep these facts exact; invent only story, personality and a short battle cry. Under 300 words."],
+    ["MUSIC","Theme song for the Guardian of Bitcoin block "+f.h+" ("+f.era+"). Style: "+(f.arm==="genesis clay"?"ancient ambient, deep drums, chant":f.arm==="terahash-armoured"?"dark synthwave, heavy bass, 128 BPM":"industrial chiptune, 140 BPM")+", instrumental build-up, heroic chorus about guarding the chain."]]}
+function aiCopy(s,b){var ok=function(){b.textContent="COPIED \u2713";setTimeout(function(){b.textContent="COPY"},1400)};
+  try{navigator.clipboard.writeText(s).then(ok,function(){fb()})}catch(e){fb()}
+  function fb(){var ta=document.createElement("textarea");ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok()}catch(_){window.prompt("Copy this prompt",s)}ta.remove()}}
+function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=document.createElement("div");AIPT=d;
+  d.style.cssText="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:min(440px,92vw);max-height:78vh;overflow:auto;background:#04060ae8;border:1px solid #f7931a;color:#c5d0d9;font:12px/1.5 monospace;padding:14px;box-sizing:border-box";
+  d.onclick=function(e){e.stopPropagation()};
+  var hd=document.createElement("div");hd.style.cssText="display:flex;justify-content:space-between;color:#f7931a;margin-bottom:8px";hd.innerHTML="<b>AI PROMPTS \u00B7 FROM BLOCK DATA</b>";
+  var x=document.createElement("button");x.textContent="\u00D7";x.style.cssText="background:none;border:0;color:#f7931a;font:16px monospace;cursor:pointer";x.onclick=function(){AIPON=false;aiPanel();aiLbl()};hd.appendChild(x);d.appendChild(hd);
+  var n=document.createElement("div");n.style.cssText="color:#8a949c;margin-bottom:10px";n.textContent="Paste into any image, video, chat or music AI. Facts come from Bitcoin; the AI adds the rest.";d.appendChild(n);
+  aiPrompts().forEach(function(p){var r=document.createElement("div");r.style.cssText="border-top:1px solid #1d2730;padding:8px 0";
+    var t=document.createElement("div");t.style.cssText="display:flex;justify-content:space-between;align-items:center;color:#3fe0d0";t.textContent=p[0];
+    var b=document.createElement("button");b.textContent="COPY";b.style.cssText="background:#f7931a;color:#04060a;border:0;padding:4px 10px;font:bold 11px monospace;cursor:pointer";b.onclick=function(){aiCopy(p[1],b)};t.appendChild(b);
+    var q=document.createElement("div");q.style.cssText="color:#e6edf2;margin-top:4px;word-break:break-word";q.textContent=p[1];r.appendChild(t);r.appendChild(q);d.appendChild(r)});
+  document.body.appendChild(d)}
+addEventListener("keydown",function(e){if(e.key==="Escape"&&AIPON){AIPON=false;aiPanel();aiLbl()}});
 `;
 
 function swap(src: string, from: string, to: string): string {
@@ -326,10 +356,10 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, "<title>BLOCK-DNA GUARDIAN V7</title>", "<title>BLOCK-DNA GUARDIAN V8</title>");
   s = swap(s, "MASTER CODE DELEGATE V7", "MASTER CODE DELEGATE V8");
   s = swap(s, "GTLON=true,", "GTLON=false,PROOFON=false,TRIBUTEON=false,SWARMON=false,tributeHud=function(){},swarmHud=function(){},");
-  s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button"),sb=document.createElement("button");');
+  s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button"),sb=document.createElement("button"),ab=document.createElement("button");');
   s = swap(s, '"TIMELINE +"}', '"TIMELINE +";sb.textContent=SWARMON?"SWARM \u00D7":"SWARM +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.id="bwcb";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
-  s = swap(s, "[mb,tb].forEach", "[mb,tb,sb,pb,rb,cb].forEach");
-  s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON){GTLON=false;LASTP=\"s\"}label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;if(TRIBUTEON)LASTP=\"t\";label()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
+  s = swap(s, "[mb,tb].forEach", "[mb,tb,sb,pb,rb,ab,cb].forEach");
+  s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON){GTLON=false;LASTP=\"s\"}label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;if(TRIBUTEON)LASTP=\"t\";label()};ab.id=\"bwai\";ab.textContent=\"PROMPT +\";ab.onclick=function(e){e.stopPropagation();AIPON=!AIPON;aiPanel();aiLbl()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
