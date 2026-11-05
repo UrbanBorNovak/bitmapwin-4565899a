@@ -211,9 +211,9 @@ window.fetch=function(u){u=String(u);
  if(u==="/content/mockbeacon0i0")return R("BW-BEACON-1 "+SP,"text/plain");
  if(u==="/content/mockchild0i0")return R("gm","text/plain");
  return of(u)};
-try{var cw=navigator.clipboard.writeText.bind(navigator.clipboard);navigator.clipboard.writeText=function(s){parent.postMessage({beaconCopied:s},"*");return cw(s).catch(function(){})}}
-catch(_){}
-document.addEventListener("click",function(e){var b=e.target;if(b&&b.textContent==="COPIED")0},true);})()</script>`;
+var C=navigator.clipboard,cw=C&&C.writeText?C.writeText.bind(C):null;
+var w=function(s){parent.postMessage({beaconCopied:String(s)},"*");return cw?cw(s).catch(function(){}):Promise.resolve()};
+try{if(C)C.writeText=w;else Object.defineProperty(navigator,"clipboard",{value:{writeText:w}})}catch(_){}})()</script>`;
 }
 
 /** Silent Beacon testbench — mocked children only, nothing is read from or written to the chain. */
