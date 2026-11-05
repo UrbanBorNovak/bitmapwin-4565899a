@@ -75,9 +75,9 @@ var BEACON=null,BEACONST="SEARCHING";
 function beaconLoad(){kids(SELF,200).then(function(ids){ids=ids.slice().reverse();var i=0;
   (function nx(){if(i>=ids.length||i>=40){BEACONST="NONE";return}var id=ids[i++];
     t("/content/"+id).then(function(s){var m=String(s).slice(0,400).match(/^\s*BW-BEACON-1\s+(sp1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{100,120})\s*$/);
-      if(m){BEACON=m[1];BEACONST="LIVE";label()}else nx()}).catch(nx)})()}).catch(function(){BEACONST="UNREADABLE"})}
+      if(m){BEACON=m[1];BEACONST="LIVE"}else nx()}).catch(nx)})()}).catch(function(){BEACONST="UNREADABLE"})}
 setTimeout(beaconLoad,1600);
-tributeHud=function(w,h){if(!TRIBUTEON)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
+tributeHud=function(w,h){var cbn=document.getElementById("bwcb");if(cbn)cbn.style.display=TRIBUTEON&&BEACON?"":"none";if(!TRIBUTEON)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
     pw=Math.min(w-pad*2,360),x=w-pw-pad,y=h-pad-lh*9,L=[];
   if(BEACON){for(var k=0;k<BEACON.length;k+=Math.max(16,Math.floor(pw/(fs*.62))))L.push(BEACON.slice(k,k+Math.max(16,Math.floor(pw/(fs*.62)))))}
   hudBox(x-10,y-hs*1.3,pw+20,hs*1.5+lh*(5+L.length),"#f7931a");
@@ -105,7 +105,7 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, "MASTER CODE DELEGATE V7", "MASTER CODE DELEGATE V8");
   s = swap(s, "GTLON=true,", "GTLON=false,PROOFON=false,TRIBUTEON=false,tributeHud=function(){},");
   s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button");');
-  s = swap(s, '"TIMELINE +"}', '"TIMELINE +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
+  s = swap(s, '"TIMELINE +"}', '"TIMELINE +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.id="bwcb";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
   s = swap(s, "[mb,tb].forEach", "[mb,tb,pb,rb,cb].forEach");
   s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;label()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
