@@ -323,6 +323,15 @@ function BeaconTestbench() {
 }
 
 /** The single master inscription every tiny Guardian delegate mint renders with. */
+/** Test-only: answers /r/blockinfo and /r/block with the real block from mempool.space, so exact parcels can be previewed. */
+const realBlockShim = `<script>(function(){var of=window.fetch.bind(window),M="https://mempool.space/api/";
+function hash(h){return of(M+"block-height/"+h).then(function(r){return r.text()})}
+window.fetch=function(u){u=String(u);var m=u.match(/^\\/r\\/blockinfo\\/(\\d+)$/);
+ if(m)return hash(m[1]).then(function(x){return of(M+"block/"+x)}).then(function(r){return r.json()}).then(function(b){return new Response(JSON.stringify({hash:b.id,height:b.height,transaction_count:b.tx_count,size:b.size}),{headers:{"content-type":"application/json"}})});
+ m=u.match(/^\\/r\\/block\\/(\\d+)$/);
+ if(m)return hash(m[1]).then(function(x){return of(M+"block/"+x+"/raw")}).then(function(r){return r.arrayBuffer()}).then(function(a){var b=new Uint8Array(a),s="";for(var i=0;i<b.length;i++)s+=(b[i]<16?"0":"")+b[i].toString(16);return new Response(s)});
+ return of(u)}})()</script>`;
+
 /** Holiday preview for the V8 Three.js draft. Test-only: maps the on-chain Three.js id to the same r163 build on a CDN. */
 function HolidayTestbench() {
   const [day, setDay] = useState(24);
@@ -331,7 +340,7 @@ function HolidayTestbench() {
     const imap = `<script type="importmap">{"imports":{"/content/${THREE_R163_MODULE_ID}":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>`;
     const pin = day > 0 ? `<script>window.ADVENT_DAY=${day}</script>` : "";
     return guardianMasterGeneratorHtmlV8Three()
-      .replace(/<head[^>]*>/i, (m) => m + imap + pin + beaconMock("none"))
+      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none"))
       .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200);setInterval(function(){if(STATE==="RELIC")STATE="AWAKE"},300)</script></body>');
   }, [day]);
   const btn = (on: boolean) =>

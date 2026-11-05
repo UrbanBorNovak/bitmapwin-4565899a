@@ -15,6 +15,34 @@ export const THREE_R163_MODULE_ID = "0d013bb60fc5bf5a6c77da7371b07dc162ebc7d7f3a
 
 const threeBlock = (id: string) => String.raw`<script type="module">
 /* ================= V8-THREE: WebGL creature painter from on-chain Three.js ================= */
+/* ---- Exact parcels: /r/block/<height> raw hex -> each tx's total output sats -> Bitmap side
+   class floor(log10(sats))-4 clamped 1..8 (bitfeed / bitmap.trade rule), packed by the same mondrian().
+   Any doubt (fetch error, bad parse, tx count mismatch, >12k txs) keeps the seeded land untouched. ---- */
+const parseBlockValues=(hx)=>{if(typeof hx!=="string"||hx.length<162||hx.length%2||!/^[0-9a-f]+$/i.test(hx.slice(0,200)))return null;
+  let p=160;const L=hx.length;
+  const b=()=>{if(p+2>L)throw 0;const v=parseInt(hx.substr(p,2),16);p+=2;return v};
+  const u32=()=>{const v=b()|b()<<8|b()<<16|(b()<<24>>>0);return v>>>0};
+  const vi=()=>{const f=b();if(f<253)return f;if(f===253)return b()|b()<<8;if(f===254)return u32();const lo=u32(),hi=u32();if(hi)throw 0;return lo};
+  const skip=(n)=>{p+=n*2;if(p>L)throw 0};
+  try{const n=vi(),out=[];if(n<1||n>12000)return null;
+    for(let i=0;i<n;i++){skip(4);let sw=false,ni=vi();if(ni===0){if(b()!==1)return null;sw=true;ni=vi()}
+      for(let k=0;k<ni;k++){skip(36);skip(vi());skip(4)}
+      const no=vi();let sum=0;for(let k=0;k<no;k++){const lo=u32(),hi=u32();sum+=lo+hi*4294967296;skip(vi())}
+      if(sw)for(let k=0;k<ni;k++){const w=vi();for(let q=0;q<w;q++)skip(vi())}
+      skip(4);out.push(sum)}
+    return p===L?out:null}catch(_){return null}};
+window.BW_PARCELS="seeded";
+(async()=>{try{
+  for(let i=0;i<120&&!(typeof G!=="undefined"&&G&&LAND);i++)await new Promise(r=>setTimeout(r,500));
+  if(!(G&&LAND)||!(G.h>0))return;
+  const r=await fetch("/r/block/"+G.h);if(!r.ok)return;const hx=(await r.text()).trim().replace(/^"|"$/g,"");
+  if(hx.length>16e6)return;
+  const vals=parseBlockValues(hx);if(!vals||vals.length!==LAND.n)return;
+  const sizes=vals.map(v=>Math.max(1,Math.min(8,Math.floor(Math.log10(Math.max(1,v)))-4)));
+  const M=mondrian(sizes),side=Math.max(M.w,M.h),S=28/side,half=14,p=[],OR=["#f7931a","#f9a23c","#e8850e","#ffb03a","#d97a0a"];
+  for(let i=0;i<M.sq.length;i++){const q=M.sq[i];p.push([q.x*S-half+(side-M.w)*S/2,q.y*S-half+(side-M.h)*S/2,q.r*S,OR[(h32(G.dna+":"+i)>>>3)%OR.length]])}
+  LAND={p,half,depth:LAND.depth,n:LAND.n,exact:true};window.BW_PARCELS="block";
+}catch(_){window.BW_PARCELS="seeded"}})();
 try{
   const T=await import("/content/${id}");
   const cv=document.createElement("canvas"),R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
