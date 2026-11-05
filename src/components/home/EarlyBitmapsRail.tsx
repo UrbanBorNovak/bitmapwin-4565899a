@@ -2,15 +2,15 @@ import { Link } from "@tanstack/react-router";
 
 // Tier sizes are facts of the chain: block heights 0..N-1 exist exactly once each.
 const TIERS = [
-  { tag: "100", name: "sub100", supply: 100, width: "md:w-[22%]" },
-  { tag: "1k", name: "sub1k", supply: 1_000, width: "md:w-[44%]" },
-  { tag: "10k", name: "sub10k", supply: 10_000, width: "md:w-[70%]" },
+  { tag: "100", name: "sub100", supply: 100, width: "md:w-[36%]" },
+  { tag: "1k", name: "sub1k", supply: 1_000, width: "md:w-[54%]" },
+  { tag: "10k", name: "sub10k", supply: 10_000, width: "md:w-[76%]" },
   { tag: "100k", name: "sub100k", supply: 100_000, width: "md:w-full" },
 ];
 
 export function EarlyBitmapsRail() {
   return (
-    <section className="mx-auto max-w-[1600px] px-3 pt-10 md:px-5 md:pt-16">
+    <section className="relative z-10 mx-auto max-w-[1600px] bg-background px-3 py-8 md:px-5 md:py-12">
       <h2 className="font-display text-2xl font-bold lowercase tracking-tight text-bitcoin md:text-3xl">early bitmaps</h2>
       <p className="mt-1 text-sm text-muted-foreground">The first blocks of Bitcoin, grouped by height.</p>
       <div className="mt-5 flex flex-col gap-2">
@@ -18,7 +18,7 @@ export function EarlyBitmapsRail() {
           <Link
             key={t.name}
             to="/marketplace"
-            className={`group flex w-full items-center gap-3 rounded-md border border-foreground/[0.06] bg-foreground/[0.025] px-3 py-2.5 transition-colors hover:border-bitcoin/40 hover:bg-foreground/[0.05] ${t.width}`}
+            className={`group flex w-full items-center gap-3 rounded-md border border-foreground/[0.06] bg-card px-3 py-2.5 transition-colors hover:border-bitcoin/40 hover:bg-secondary ${t.width}`}
           >
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold ${
@@ -27,7 +27,7 @@ export function EarlyBitmapsRail() {
             >
               {t.tag}
             </span>
-            <span className="min-w-0">
+            <span className="min-w-0 whitespace-nowrap">
               <span className="block text-sm font-semibold text-foreground">{t.name}</span>
               <span className="block font-mono text-[10px] text-muted-foreground">
                 blocks 0 – {(t.supply - 1).toLocaleString("en-US")}
@@ -39,9 +39,6 @@ export function EarlyBitmapsRail() {
             </span>
           </Link>
         ))}
-      </div>
-      <div className="mt-2 hidden justify-between border-t border-foreground/[0.06] pt-1 font-mono text-[9px] text-muted-foreground md:flex">
-        <span>0</span><span>100</span><span>1,000</span><span>10,000</span><span>100,000</span>
       </div>
     </section>
   );
@@ -55,8 +52,8 @@ export function HubBento() {
     { to: "/passport" as const, k: "IDENTITY", t: "Passport", b: "Where you've been, and your Guardians." },
   ];
   return (
-    <section className="mx-auto max-w-[1600px] px-3 pt-10 md:px-5 md:pt-16">
-      <div className="grid gap-6 rounded-xl border border-foreground/[0.06] bg-foreground/[0.025] p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:p-8">
+    <section className="relative z-10 mx-auto max-w-[1600px] bg-background px-3 py-8 md:px-5 md:py-12">
+      <div className="grid gap-6 rounded-xl border border-foreground/[0.06] bg-card p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:p-8">
         <div className="flex flex-col">
           <div className="font-display text-2xl font-bold lowercase tracking-tight">
             <span className="text-bitcoin">bitmap</span> <span className="rounded bg-bitcoin px-1.5 text-primary-foreground">forge</span>
@@ -74,12 +71,12 @@ export function HubBento() {
             </Link>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 content-start gap-2 self-start lg:grid-cols-4">
           {tiles.map((x) => (
-            <Link key={x.k} to={x.to} className="group flex flex-col rounded-lg border border-foreground/[0.06] bg-background/60 p-4 transition-colors hover:border-signal/40">
+            <Link key={x.k} to={x.to} className="group flex flex-col rounded-lg border border-foreground/[0.06] bg-background p-4 transition-colors hover:border-signal/40">
               <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{x.k}</span>
               <span className="mt-2 text-base font-semibold text-foreground group-hover:text-signal">{x.t}</span>
-              <span className="mt-1 text-xs leading-snug text-muted-foreground">{x.b}</span>
+              <span className="mt-1 text-sm leading-snug text-muted-foreground">{x.b}</span>
             </Link>
           ))}
         </div>
