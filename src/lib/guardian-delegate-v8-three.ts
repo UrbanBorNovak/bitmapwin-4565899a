@@ -45,9 +45,9 @@ try{
     if(!stone)advent(put,t);
     M.count=n;M.instanceMatrix.needsUpdate=true;if(M.instanceColor)M.instanceColor.needsUpdate=true;
     R.render(S,C);g.shadowBlur=0;g.drawImage(cv,0,0,w,h);
-    const ad=adventDay();if(ad&&!stone){const left=ad<24?Math.ceil((Date.UTC(new Date().getUTCFullYear(),11,ad+1)-Date.now())/36e5):0;
-      g.font="11px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign="right";
-      g.fillText(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad+" \u00b7 NEXT GIFT IN "+Math.max(0,left)+"H",w-12,h-14);g.textAlign="left"}
+    const ad=adventDay();if(ad&&!stone){const left=Math.max(1,Math.ceil((864e5-Date.now()%864e5)/36e5)),nar=w<600;
+      g.font="11px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign=nar?"center":"right";
+      g.fillText(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad+" \u00b7 NEXT GIFT IN "+left+"H",nar?w/2:w-12,nar?122:h-14);g.textAlign="left"}
   };
   /* ---- Advent engine: client UTC date; unlocks one more thing each December day. ?advent=DD previews. ---- */
   const adventDay=()=>{const q=+(new URLSearchParams(location.search).get("advent")||window.ADVENT_DAY||0);if(q>0)return Math.min(31,q);
@@ -68,16 +68,18 @@ try{
   function advent(put,t){const d=adventDay();if(!d)return;
     const flakes=Math.min(180,8+d*7);for(let i=0;i<flakes;i++){const fx=(hr(i)-.5)*60,fz=(hr(i+99)-.5)*60,sp=1.5+hr(i+7)*2;
       const fy=30-((t*sp+hr(i+3)*30)%30);put([fx+Math.sin(t+i)*.6,fy,fz,.22,.22,.22],"#ffffff",1.2)}
-    if(d>=4){const cov=Math.min(140,(d-3)*7);for(let i=0;i<cov;i++){const a=hr(i+500)*Math.PI*2,r=9+hr(i+600)*16;
-      put([Math.sin(a)*r,.08,Math.cos(a)*r,1+hr(i+700)*2.4,.16+d*.006,1+hr(i+800)*2.4],"#eef6ff",.3)}}
-    if(d>=8)tree(put,-13,-9,t,0);
-    if(d>=12)tree(put,13,-10,t,3);
-    if(d>=15){const ea=t*.4,ex=Math.sin(ea)*10,ez=Math.cos(ea)*10,bob=Math.abs(Math.sin(t*6))*.3;
+    /* everything sits on the BITMAP slab (LAND.half) so nothing floats over the void */
+    const S=LAND&&LAND.half>4?LAND.half:14,TX=S*.72,TZ=-S*.68;
+    if(d>=4){const cov=Math.min(120,(d-3)*6);for(let i=0;i<cov;i++){const sz=.8+hr(i+700)*1.6,lim=S-sz/2-.2;
+      put([(hr(i+500)*2-1)*lim,.06,(hr(i+600)*2-1)*lim,sz,.1+d*.004,.8+hr(i+800)*1.6],"#eef6ff",.25)}}
+    if(d>=8)tree(put,-TX,TZ,t,0);
+    if(d>=12)tree(put,TX,TZ,t,3);
+    if(d>=15){const er=Math.min(10,S*.8),ea=t*.4,ex=Math.sin(ea)*er,ez=Math.cos(ea)*er,bob=Math.abs(Math.sin(t*6))*.3;
       put([ex,.9+bob,ez,.7,1,.5],"#2e8b3a",0);put([ex,1.75+bob,ez,.55,.55,.55],"#f1c6a0",0);
       put([ex,2.25+bob,ez,.5,.4,.5],"#d62828",0);put([ex,2.6+bob,ez,.2,.35,.2],"#d62828",0);put([ex,2.85+bob,ez,.16,.16,.16],"#ffffff",1)}
-    if(d>=19){const gn=Math.min(10,(d-18)*2);for(let i=0;i<gn;i++){const tx=i%2?13:-13,tz=i%2?-10:-9;gift(put,tx+(hr(i+40)-.5)*6,tz+3+hr(i+50)*2,i)}}
-    if(d>=21&&d<24){const a=t*.35;deer(put,Math.sin(a)*24,20,Math.cos(a)*24,a+Math.PI/2,t,d>=22)}
-    if(d>=24){const a=t*.3,R0=22,y=18+Math.sin(t)*1.5;
+    if(d>=19){const gn=Math.min(10,(d-18)*2);for(let i=0;i<gn;i++){const tx=i%2?TX:-TX;gift(put,tx+(hr(i+40)-.5)*5,TZ+3+hr(i+50)*2,i)}}
+    if(d>=21&&d<24){const a=t*.35,R1=S+3;deer(put,Math.sin(a)*R1,12,Math.cos(a)*R1,a+Math.PI/2,t,d>=22)}
+    if(d>=24){const a=t*.3,R0=S+4,y=12+Math.sin(t)*1.2;
       for(let k=0;k<6;k++){const ak=a+.13*(5-k)+.13;deer(put,Math.sin(ak)*R0,y,Math.cos(ak)*R0,ak+Math.PI/2,t,k===5)}
       const sx=Math.sin(a)*R0,sz=Math.cos(a)*R0;put([sx,y-.4,sz,2.4,1,1.6],"#b5121b",.3);put([sx,y-1,sz,2.8,.2,1.8],"#ffd23f",.8);
       put([sx,y+.6,sz,.9,1.1,.9],"#d62828",0);put([sx,y+1.35,sz,.6,.6,.6],"#f1c6a0",0);put([sx,y+1.1,sz,.7,.35,.7],"#ffffff",.6);
