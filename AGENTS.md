@@ -36,6 +36,7 @@
 - Oasis touch input is sampled and damped in the camera frame loop, with immediate movement release; touch pads are world-relative and navigation reserves their space. Why: smooth, frame-rate-independent controls without drifting or overlapping thumbs.
 - Public game/chain tables (dispatches, spoils, forge modules/builds, kits, custody, genesis minters, spawn points, oasis voxels, kennels) stay world-readable via RLS but expose only non-account columns through column-level GRANTs; internal user uuids are read only by server code. Why: shared world state is public, account linkage is not.
 - Subdirectories have their own AGENTS.md; read it before changing files there.
+- Guardian draft copied prompts describe loaded pets from their own inscription palette, shape metadata and baked geometry, retained beside rendered IDs; never infer a baby's design from its parent or fetch extra prompt data. Why: self-contained prompts preserve on-chain appearance and stay current after late loads.
 - Marketplace Bitmon pattern filter (BitmonPatternFilter + block-stats patternHeightsQuery) matches only verified block_stats.pattern records, separate from Guardian species; groups above PATTERN_GROUP_MAX are refused, never truncated. Why: Bitmons are block shapes, not creatures.
 - Clips: @bitlodo studio vendored unmodified in public/tools/clips. Why: full fidelity.
 - Marketplace ALL-tab filters use fetchRegistryScope (finite candidate sets × height ranges, checked in bitmap_index). Why: exact totals without loading the full index.
