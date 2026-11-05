@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { DataBadge } from "@/components/extenders/DataBadge";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
@@ -103,6 +103,7 @@ function DevToolsPage() {
 
       <CollectionParentPanel />
       <V8ComparePanel />
+      <BeaconTestbench />
       <MasterGeneratorPanel version="v7" />
       <MasterGeneratorPanel version="v6" />
 
@@ -191,6 +192,83 @@ V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleStrin
             <iframe title={label} srcDoc={html} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+/** BIP-352 published test-vector address — a public example, nobody's wallet. */
+const MOCK_SP =
+  "sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv";
+
+/** Test-only fetch stub injected ahead of the V8 page: fakes this Guardian's children. */
+function beaconMock(mode: "live" | "none"): string {
+  const kids = mode === "live" ? ["mockchild0i0", "mockbeacon0i0"] : ["mockchild0i0"];
+  return `<script>(function(){var of=window.fetch.bind(window),K=${JSON.stringify(kids)},SP=${JSON.stringify(MOCK_SP)};
+function R(b,ct){return Promise.resolve(new Response(b,{status:200,headers:{"content-type":ct}}))}
+window.fetch=function(u){u=String(u);
+ if(u.indexOf("/r/children/")===0)return R(JSON.stringify({ids:K,more:false,page:0}),"application/json");
+ if(u==="/content/mockbeacon0i0")return R("BW-BEACON-1 "+SP,"text/plain");
+ if(u==="/content/mockchild0i0")return R("gm","text/plain");
+ return of(u)};
+var C=navigator.clipboard,cw=C&&C.writeText?C.writeText.bind(C):null;
+var w=function(s){parent.postMessage({beaconCopied:String(s)},"*");return cw?cw(s).catch(function(){}):Promise.resolve()};
+try{if(C)C.writeText=w;else Object.defineProperty(navigator,"clipboard",{value:{writeText:w}})}catch(_){}})()</script>`;
+}
+
+/** Silent Beacon testbench — mocked children only, nothing is read from or written to the chain. */
+function BeaconTestbench() {
+  const [mode, setMode] = useState<"live" | "none">("live");
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [copied, setCopied] = useState<string | null>(null);
+  const html = useMemo(() => {
+    const v8 = guardianMasterGeneratorHtmlV8();
+    return v8.replace(/<head[^>]*>/i, (m) => m + beaconMock(mode));
+  }, [mode]);
+  useEffect(() => {
+    const on = (e: MessageEvent) => {
+      if (e.data && typeof e.data.beaconCopied === "string") setCopied(e.data.beaconCopied);
+    };
+    window.addEventListener("message", on);
+    return () => window.removeEventListener("message", on);
+  }, []);
+  useEffect(() => setCopied(null), [mode]);
+  const btn = (on: boolean) =>
+    `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
+  return (
+    <section className="mt-8 border border-border p-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="display text-xl">SILENT BEACON · TESTBENCH</h2>
+        <DataBadge kind="soon" note="MOCK CHILDREN · NOTHING ON CHAIN" />
+      </div>
+      <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        Runs the V8 draft with fake children of the Guardian. Tap TRIBUTE + inside the preview. The address is the public
+        BIP-352 test example, not anyone's wallet — never send to it.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className={btn(mode === "live")} onClick={() => setMode("live")}>BEACON LIT</button>
+        <button type="button" className={btn(mode === "none")} onClick={() => setMode("none")}>NO BEACON</button>
+        <span className="w-4" />
+        <button type="button" className={btn(device === "desktop")} onClick={() => setDevice("desktop")}>DESKTOP</button>
+        <button type="button" className={btn(device === "mobile")} onClick={() => setDevice("mobile")}>MOBILE</button>
+      </div>
+      <iframe
+        key={mode + device}
+        title="Silent Beacon preview"
+        srcDoc={html}
+        sandbox="allow-scripts"
+        allow="clipboard-write"
+        className="mt-4 max-w-full border border-border bg-background"
+        style={device === "desktop" ? { width: 800, height: 450 } : { width: 360, height: 640 }}
+      />
+      <div className="mt-3 font-mono text-xs" aria-live="polite">
+        {copied === null ? (
+          <span className="text-muted-foreground">COPY RESULT · NOT COPIED YET</span>
+        ) : (
+          <span className={copied === MOCK_SP ? "text-signal" : "text-destructive"}>
+            COPY RESULT · {copied === MOCK_SP ? "MATCHES BEACON" : "MISMATCH"} · {copied.slice(0, 18)}…
+          </span>
+        )}
       </div>
     </section>
   );
