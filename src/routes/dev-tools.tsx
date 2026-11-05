@@ -7,7 +7,7 @@ import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TR
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
 import { guardianMasterGeneratorHtmlV8 } from "@/lib/guardian-delegate-v8";
-import { guardianMasterGeneratorHtmlV8Three, guardianV8ThreeByteSize } from "@/lib/guardian-delegate-v8-three";
+import { guardianMasterGeneratorHtmlV8Three, guardianV8ThreeByteSize, THREE_R163_MODULE_ID } from "@/lib/guardian-delegate-v8-three";
 import { prefabById } from "@/lib/forge-prefabs";
 import { BLOCKS } from "@/lib/voxel-world";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
@@ -107,6 +107,7 @@ function DevToolsPage() {
       <CollectionParentPanel />
       <V8ComparePanel />
       <BeaconTestbench />
+      <HolidayTestbench />
       <MasterGeneratorPanel version="v7" />
       <MasterGeneratorPanel version="v6" />
 
@@ -322,6 +323,46 @@ function BeaconTestbench() {
 }
 
 /** The single master inscription every tiny Guardian delegate mint renders with. */
+/** Holiday preview for the V8 Three.js draft. Test-only: maps the on-chain Three.js id to the same r163 build on a CDN. */
+function HolidayTestbench() {
+  const [day, setDay] = useState(24);
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const html = useMemo(() => {
+    const imap = `<script type="importmap">{"imports":{"/content/${THREE_R163_MODULE_ID}":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>`;
+    const pin = day > 0 ? `<script>window.ADVENT_DAY=${day}</script>` : "";
+    return guardianMasterGeneratorHtmlV8Three()
+      .replace(/<head[^>]*>/i, (m) => m + imap + pin + beaconMock("none"))
+      .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200)</script></body>');
+  }, [day]);
+  const btn = (on: boolean) =>
+    `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
+  return (
+    <section className="mt-8 border border-border p-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="display text-xl">V8 · THREE.JS HOLIDAYS · TESTBENCH</h2>
+        <DataBadge kind="soon" note="PINNED DATE · MOCK CHAIN" />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {[1, 15, 21, 24].map((d) => (
+          <button key={d} type="button" className={btn(day === d)} onClick={() => setDay(d)}>DEC {d}</button>
+        ))}
+        <button type="button" className={btn(day === 0)} onClick={() => setDay(0)}>TODAY (REAL DATE)</button>
+        <span className="w-4" />
+        <button type="button" className={btn(device === "desktop")} onClick={() => setDevice("desktop")}>DESKTOP</button>
+        <button type="button" className={btn(device === "mobile")} onClick={() => setDevice("mobile")}>MOBILE</button>
+      </div>
+      <iframe
+        key={day + device}
+        title="Holiday preview"
+        srcDoc={html}
+        sandbox="allow-scripts"
+        className="mt-4 max-w-full border border-border bg-background"
+        style={device === "desktop" ? { width: 800, height: 450 } : { width: 360, height: 640 }}
+      />
+    </section>
+  );
+}
+
 function MasterGeneratorPanel({ version }: { version: "v6" | "v7" }) {
   const v7 = version === "v7";
   const html = useMemo(() => (v7 ? guardianMasterGeneratorHtmlV7() : guardianMasterGeneratorHtml()), [v7]);
