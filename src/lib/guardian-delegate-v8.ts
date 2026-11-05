@@ -287,11 +287,28 @@ var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w
 var PETS=[];
 function petLoad(){if(!SELF)return;kids(SELF,100).then(function(ids){ids=ids.slice(0,24);var i=0;
   (function nx(){if(i>=ids.length||PETS.length>=3)return;var id=ids[i++];
-    metaOf(id).then(function(m){if(m&&m.p==="BITMAPWIN-PET"&&(m.sire===SELF||m.dam===SELF)&&typeof m.v==="string"&&VOX){
-      var C=m.C||["#f7931a"],n=PETS.length,ox=[11,-11,0][n],oz=[6,6,11][n],k=.42,ph=n*1.7;
-      m.v.split(";").forEach(function(r){var a=r.split(",").map(Number);if(a.length<8)return;
-        VOX.push([a[0]/10*k+ox,a[1]/10*k,a[2]/10*k+oz,a[3]/10*k,a[4]/10*k,a[5]/10*k,C[a[6]]||C[0],a[7]?1:0,4,ph])});
-      PETS.push(id)}}).catch(function(){}).then(nx)})()}).catch(function(){})}
+    metaOf(id).catch(function(){return null}).then(function(m){
+      var mine=m&&m.p==="BITMAPWIN-PET"&&(m.sire===SELF||m.dam===SELF);
+      if(m&&m.p==="BITMAPWIN-PET"&&!mine)return;
+      if(mine&&typeof m.v==="string")return{C:m.C||["#f7931a"],V:m.v.split(";").map(function(r){var a=r.split(",").map(Number);return a.length<8?null:[a[0]/10,a[1]/10,a[2]/10,a[3]/10,a[4]/10,a[5]/10,a[6],a[7]]}).filter(Boolean)};
+      return petHtml(id,mine)}).then(function(p){if(!p||!VOX||PETS.length>=3||!p.V.length)return;
+      var C=p.C.length?p.C:["#f7931a"],n=PETS.length,ox=[11,-11,0][n],oz=[6,6,11][n],k=.42,ph=n*1.7;
+      p.V.slice(0,900).forEach(function(a){VOX.push([a[0]*k+ox,a[1]*k,a[2]*k+oz,a[3]*k,a[4]*k,a[5]*k,C[a[6]]||C[0],a[7]?1:0,4,ph])});
+      PETS.push(id)}).catch(function(){}).then(nx)})()}).catch(function(){})}
+/* Standalone HTML pets bake const M={g,sire,dam,…},C=[…],V=[[x,y,z,w,h,d,ci,e],…] into their own body.
+   Read /content/<id> (capped at 160 KB), parse those three JSON literals and require M to name this
+   Guardian unless Tag 5 already did. Nothing is evaluated; malformed pages are skipped. */
+function petLit(s,key,open,close){var i=s.indexOf(key+open);if(i<0)return null;i+=key.length;var d=0,q=0;
+  for(var j=i;j<s.length&&j<i+150000;j++){var ch=s[j];if(q){if(ch==='"'&&s[j-1]!=="\\\\")q=0;continue}
+    if(ch==='"')q=1;else if(ch===open)d++;else if(ch===close){d--;if(!d){try{return JSON.parse(s.slice(i,j+1))}catch(e){return null}}}}return null}
+function petHtml(id,known){return fetch("/content/"+id).then(function(r){if(!r.ok)return null;
+  var ct=r.headers.get("content-type")||"",ln=+(r.headers.get("content-length")||0);if(ct.indexOf("text/html")<0||ln>160000)return null;return r.text()}).then(function(s){
+  if(!s||s.length>160000||s.indexOf("BITMAPWIN PET")<0)return null;
+  var M=petLit(s,"const M=","{","}"),C=petLit(s,",C=","[","]"),V=petLit(s,",V=","[","]");
+  if(!M||!Array.isArray(C)||!Array.isArray(V))return null;
+  if(!known&&M.sire!==SELF&&M.dam!==SELF)return null;
+  V=V.filter(function(a){return Array.isArray(a)&&a.length>=8&&a.slice(0,6).every(function(x){return typeof x==="number"&&isFinite(x)})});
+  return{C:C.filter(function(c){return typeof c==="string"}),V:V}}).catch(function(){return null})}
 setTimeout(petLoad,2200);
 `;
 
