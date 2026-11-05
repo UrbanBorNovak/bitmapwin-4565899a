@@ -284,17 +284,17 @@ var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w
 /* Baby pets: children of this Guardian whose own Tag 5 metadata is BITMAPWIN-PET and names this
    Guardian as sire or dam. Lean pets carry baked voxels (v, ×10); up to 3 stand beside the parent's
    feet at pet scale, appended to VOX so both painters draw them. Pets without baked voxels are skipped. */
-var PETS=[];
+var PETS=[],PETD=[];
 function petLoad(){if(!SELF)return;kids(SELF,100).then(function(ids){ids=ids.slice(0,24);var i=0;
   (function nx(){if(i>=ids.length||PETS.length>=3)return;var id=ids[i++];
     metaOf(id).catch(function(){return null}).then(function(m){
       var mine=m&&m.p==="BITMAPWIN-PET"&&(m.sire===SELF||m.dam===SELF);
       if(m&&m.p==="BITMAPWIN-PET"&&!mine)return;
-      if(mine&&typeof m.v==="string")return{C:m.C||["#f7931a"],V:m.v.split(";").map(function(r){var a=r.split(",").map(Number);return a.length<8?null:[a[0]/10,a[1]/10,a[2]/10,a[3]/10,a[4]/10,a[5]/10,a[6],a[7]]}).filter(Boolean)};
+      if(mine&&typeof m.v==="string")return{sh:m.sh,C:m.C||[],V:m.v.split(";").map(function(r){var a=r.split(",").map(Number);return a.length<8?null:[a[0]/10,a[1]/10,a[2]/10,a[3]/10,a[4]/10,a[5]/10,a[6],a[7]]}).filter(Boolean)};
       return petHtml(id,mine)}).then(function(p){if(!p||!VOX||PETS.length>=3||!p.V.length)return;
       var C=p.C.length?p.C:["#f7931a"],n=PETS.length,ox=[11,-11,0][n],oz=[6,6,11][n],k=.42,ph=n*1.7;
       p.V.slice(0,900).forEach(function(a){VOX.push([a[0]*k+ox,a[1]*k,a[2]*k+oz,a[3]*k,a[4]*k,a[5]*k,C[a[6]]||C[0],a[7]?1:0,4,ph])});
-      PETS.push(id)}).catch(function(){}).then(nx)})()}).catch(function(){})}
+      PETS.push(id);PETD.push({id:id,sh:p.sh,C:p.C,V:p.V.slice(0,900)});if(AIPON)aiPanel()}).catch(function(){}).then(nx)})()}).catch(function(){})}
 /* Standalone HTML pets bake const M={g,sire,dam,…},C=[…],V=[[x,y,z,w,h,d,ci,e],…] into their own body.
    Read /content/<id> (capped at 160 KB), parse those three JSON literals and require M to name this
    Guardian unless Tag 5 already did. Nothing is evaluated; malformed pages are skipped. */
@@ -308,11 +308,21 @@ function petHtml(id,known){return fetch("/content/"+id).then(function(r){if(!r.o
   if(!M||!Array.isArray(C)||!Array.isArray(V))return null;
   if(!known&&M.sire!==SELF&&M.dam!==SELF)return null;
   V=V.filter(function(a){return Array.isArray(a)&&a.length>=8&&a.slice(0,6).every(function(x){return typeof x==="number"&&isFinite(x)})});
-  return{C:C.filter(function(c){return typeof c==="string"}),V:V}}).catch(function(){return null})}
+  return{sh:M.sh,C:C,V:V}}).catch(function(){return null})}
 setTimeout(petLoad,2200);
 /* AI prompts: built only from facts this page already read from the chain (G, CIT, PETS, BEACON).
    Nothing is sent anywhere; the visitor copies text and pastes it into any AI tool. */
 var AIPON=false,AIPT=null;function aiLbl(){var b=document.getElementById("bwai");if(b)b.textContent=AIPON?"PROMPT \u00D7":"PROMPT +"}
+/* Describe only loaded, unscaled inscription geometry and colours actually used by it.
+   Missing shape metadata stays unknown: bounds are proof, not a guessed species. */
+function aiPet(p,n){var shapes={quadruped:"four-legged beast",hexapod:"six-legged insectoid",serpent:"long segmented serpent",biped:"upright two-legged body",avian:"bird-like body",floater:"legless floating body",arachnid:"eight-legged crawler",centaur:"beast body with upright torso"},lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity],cols=[],glow=[],count=0;
+  p.V.forEach(function(v){if(!Array.isArray(v)||v.length<8||!v.slice(0,6).every(function(x){return typeof x==="number"&&isFinite(x)})||v[3]<=0||v[4]<=0||v[5]<=0)return;count++;
+    for(var j=0;j<3;j++){lo[j]=Math.min(lo[j],v[j]-v[j+3]/2);hi[j]=Math.max(hi[j],v[j]+v[j+3]/2)}
+    var c=p.C[v[6]];if(typeof c!=="string"||!/^#[0-9a-f]{3,8}$|^(?:rgb|hsl)a?\([\d.,%\s+-]+\)$/i.test(c))return;
+    if(cols.indexOf(c)<0)cols.push(c);if(v[7]&&glow.indexOf(c)<0)glow.push(c)});
+  var dims=count?hi.map(function(x,j){return +(x-lo[j]).toFixed(2)}).join(" x "):"unknown";
+  return "baby "+(n+1)+" ["+p.id+"]: "+(shapes[p.sh]||"voxel body (shape category not recorded)")+", inscribed width x height x depth "+dims+" voxel units; used palette "+(cols.length?cols.join(", "):"not recorded (do not invent colours)")+(glow.length?"; glowing voxels "+glow.join(", "):"")}
+function aiPets(){return PETD.length?PETD.map(aiPet).join(" | "):"none loaded"}
 function aiFacts(){var h=G&&G.h!=null?G.h:"?",arm=!G?"voxel":G.th==="CLAY"?"genesis clay":G.th==="TERA"?"terahash-armoured":"forged steel",
   ms=!G?"":G.ms==="TITAN"?"titan-class":G.ms==="WRAITH"?"wraith-class":"standard-class",cr=[];
   if(G&&G.tp)cr.push("Taproot crest");if(G&&G.sw)cr.push("SegWit crest");if(G&&G.lz)cr.push("super-zero hash crest");
@@ -328,14 +338,14 @@ function aiShape(){if(!G)return"voxel creature";var S={quadruped:"four-legged be
   H=["short horns","curved tusks","antlers","a crown crest"],p=[];
   if(G.seg)p.push(G.seg+" body segments");if(G.horn!=null&&H[G.horn])p.push(H[G.horn]);if(G.wing)p.push("wings");if(G.spine)p.push("a spined back");if(G.pat)p.push("patterned plates");if(G.tl)p.push("a "+String(G.tl).toLowerCase()+" tail");if(G.dn)p.push(String(G.dn).toLowerCase()+" hide");
   return(S[G.sh]||"voxel creature")+(G.bulk>1.15?", heavy and bulky":G.bulk<.95?", lean":"")+(p.length?", with "+p.join(", "):"")}
-function aiPrompts(){var f=aiFacts(),pet=f.pets?(f.pets===1?" with one small baby companion at its feet":" with "+f.pets+" small baby companions at its feet"):"",
+function aiPrompts(){var f=aiFacts(),pd=aiPets(),pet=f.pets?" with "+f.pets+" small baby companions at its feet ("+pd+"; preserve each baby's own palette and proportions)":"",
   bld=f.build?", standing on a voxel citadel built on its BITMAP":", standing on a flat Mondrian-tiled BITMAP plot",
   cr=f.cr.length?" bearing a "+f.cr.join(" and a "):"";
   var nm=G&&G.nm?' named "'+G.nm+'"':"",look=" — a "+f.shp+", "+f.col;
   return[["IMAGE","A "+f.ms+" "+f.arm+" voxel Guardian"+nm+look+", born from Bitcoin block "+f.h+" in "+f.era+cr+pet+bld+", glowing Bitcoin-orange ground with cyan edge light, ring of tiny sibling Guardians on the horizon, isometric voxel art, volumetric fog, cinematic lighting, highly detailed --ar 16:9"],
     ["VIDEO","Slow cinematic orbit around a "+f.arm+" voxel Guardian"+look+", born from Bitcoin block "+f.h+pet+bld+". It wakes, shakes voxel dust from its shoulders and looks at the camera. Orange glow rises from the ground, fog drifts, small Guardians walk on the horizon. 8 seconds, smooth camera, no text."],
-    ["LORE","Write the legend of the Guardian of Bitcoin block "+f.h+", mined in "+f.era+". Facts from the chain: look: "+f.shp+", "+f.col+"; armour "+f.arm+(f.df?" (difficulty "+f.df+")":"")+", body "+f.ms+(f.wt?" (block weight "+f.wt+")":"")+", crests: "+(f.cr.length?f.cr.join(", "):"none")+", baby pets: "+f.pets+", voxel build on its land: "+(f.build?"yes":"no")+". Keep these facts exact; invent only story, personality and a short battle cry. Under 300 words."],
-    ["MUSIC","Theme song for the Guardian of Bitcoin block "+f.h+" ("+f.era+"). Style: "+(f.arm==="genesis clay"?"ancient ambient, deep drums, chant":f.arm==="terahash-armoured"?"dark synthwave, heavy bass, 128 BPM":"industrial chiptune, 140 BPM")+", instrumental build-up, heroic chorus about guarding the chain."]]}
+    ["LORE","Write the legend of the Guardian of Bitcoin block "+f.h+", mined in "+f.era+". Facts from the chain: look: "+f.shp+", "+f.col+"; armour "+f.arm+(f.df?" (difficulty "+f.df+")":"")+", body "+f.ms+(f.wt?" (block weight "+f.wt+")":"")+", crests: "+(f.cr.length?f.cr.join(", "):"none")+", baby pets: "+f.pets+" ("+pd+"), voxel build on its land: "+(f.build?"yes":"no")+". Keep these facts exact; invent only story, personality and a short battle cry. Under 300 words."],
+    ["MUSIC","Theme song for the Guardian of Bitcoin block "+f.h+" ("+f.era+"). Loaded baby companions from chain: "+pd+". Keep their recorded colours and body shapes exact if mentioned in lyrics. Style: "+(f.arm==="genesis clay"?"ancient ambient, deep drums, chant":f.arm==="terahash-armoured"?"dark synthwave, heavy bass, 128 BPM":"industrial chiptune, 140 BPM")+", instrumental build-up, heroic chorus about guarding the chain."]]}
 function aiCopy(s,b){var ok=function(){b.textContent="COPIED \u2713";setTimeout(function(){b.textContent="COPY"},1400)};
   try{navigator.clipboard.writeText(s).then(ok,function(){fb()})}catch(e){fb()}
   function fb(){var ta=document.createElement("textarea");ta.value=s;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();var done=false;try{done=document.execCommand("copy")}catch(_){}ta.remove();if(done)ok();else man()}
@@ -350,7 +360,7 @@ function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=docum
   var n=document.createElement("div");n.style.cssText="color:#8a949c;margin-bottom:10px";n.textContent="Paste into any image, video, chat or music AI. Facts come from Bitcoin; the AI adds the rest.";d.appendChild(n);
   aiPrompts().forEach(function(p){var r=document.createElement("div");r.style.cssText="border-top:1px solid #1d2730;padding:8px 0";
     var t=document.createElement("div");t.style.cssText="display:flex;justify-content:space-between;align-items:center;color:#3fe0d0";t.textContent=p[0];
-    var b=document.createElement("button");b.textContent="COPY";b.style.cssText="background:#f7931a;color:#04060a;border:0;padding:4px 10px;font:bold 11px monospace;cursor:pointer";b.onclick=function(){aiCopy(p[1],b)};t.appendChild(b);
+    var b=document.createElement("button");b.textContent="COPY";b.style.cssText="background:#f7931a;color:#04060a;border:0;padding:4px 10px;font:bold 11px monospace;cursor:pointer";b.onclick=function(){var latest=aiPrompts().filter(function(x){return x[0]===p[0]})[0];if(latest)aiCopy(latest[1],b)};t.appendChild(b);
     var q=document.createElement("div");q.style.cssText="color:#e6edf2;margin-top:4px;word-break:break-word";q.textContent=p[1];r.appendChild(t);r.appendChild(q);d.appendChild(r)});
   document.body.appendChild(d)}
 addEventListener("keydown",function(e){if(e.key==="Escape"&&AIPON){AIPON=false;aiPanel();aiLbl()}});

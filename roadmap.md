@@ -1,5 +1,9 @@
 # Roadmap
 
+## On-chain baby prompt details
+- [ ] Include each loaded pet's own palette and body geometry in every copied prompt.
+- [ ] Verify both pet inscription formats, late loading, and missing design fields without outside lookups.
+
 ## Guardian popup recovery
 - [x] Keep the Guardian popup within the visible window and above bottom navigation.
 - [x] Clear obsolete ownership-check messages on explicit retry without discarding payments.
