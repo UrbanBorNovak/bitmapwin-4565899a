@@ -283,6 +283,16 @@ function Index() {
   );
 }
 
+function HeroDoor({ n, who, title, body, to, primary }: { n: string; who: string; title: string; body: string; to: "/oasis" | "/forge" | "/marketplace"; primary?: boolean }) {
+  return (
+    <Link to={to} className={`group flex flex-col border p-3 transition-colors ${primary ? "border-bitcoin bg-bitcoin/10 hover:bg-bitcoin/20" : "border-border/60 bg-background/50 hover:border-signal"}`}>
+      <span className="label text-muted-foreground">{n} · {who}</span>
+      <span className={`mt-1 font-mono text-xs font-bold ${primary ? "text-bitcoin" : "text-foreground group-hover:text-signal"}`}>{title} →</span>
+      <span className="mt-1 text-[11px] leading-snug text-muted-foreground">{body}</span>
+    </Link>
+  );
+}
+
 function MarketStat({ k, v }: { k: string; v: string }) {
   return (
     <div className="border-b border-border p-3 last:border-b-0">
