@@ -327,7 +327,10 @@ function aiPrompts(){var f=aiFacts(),pet=f.pets?(f.pets===1?" with one small bab
     ["MUSIC","Theme song for the Guardian of Bitcoin block "+f.h+" ("+f.era+"). Style: "+(f.arm==="genesis clay"?"ancient ambient, deep drums, chant":f.arm==="terahash-armoured"?"dark synthwave, heavy bass, 128 BPM":"industrial chiptune, 140 BPM")+", instrumental build-up, heroic chorus about guarding the chain."]]}
 function aiCopy(s,b){var ok=function(){b.textContent="COPIED \u2713";setTimeout(function(){b.textContent="COPY"},1400)};
   try{navigator.clipboard.writeText(s).then(ok,function(){fb()})}catch(e){fb()}
-  function fb(){var ta=document.createElement("textarea");ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok()}catch(_){window.prompt("Copy this prompt",s)}ta.remove()}}
+  function fb(){var ta=document.createElement("textarea");ta.value=s;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();var done=false;try{done=document.execCommand("copy")}catch(_){}ta.remove();if(done)ok();else man()}
+  function man(){var q=b.parentNode&&b.parentNode.nextSibling;if(!q)return;var t=document.createElement("textarea");t.readOnly=true;t.value=s;
+    t.style.cssText="width:100%;box-sizing:border-box;min-height:96px;background:#0b1118;color:#e6edf2;border:1px solid #3fe0d0;font:12px/1.5 monospace;padding:6px;margin-top:4px";
+    q.replaceWith(t);t.focus();t.select();t.setSelectionRange(0,s.length);b.textContent="SELECT & COPY"}}
 function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=document.createElement("div");AIPT=d;
   d.style.cssText="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:min(440px,92vw);max-height:78vh;overflow:auto;background:#04060ae8;border:1px solid #f7931a;color:#c5d0d9;font:12px/1.5 monospace;padding:14px;box-sizing:border-box";
   d.onclick=function(e){e.stopPropagation()};
@@ -359,6 +362,8 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button"),sb=document.createElement("button"),ab=document.createElement("button");');
   s = swap(s, '"TIMELINE +"}', '"TIMELINE +";sb.textContent=SWARMON?"SWARM \u00D7":"SWARM +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.id="bwcb";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
   s = swap(s, "[mb,tb].forEach", "[mb,tb,sb,pb,rb,ab,cb].forEach");
+  s = swap(s, 'top:2.5%;display:flex;gap:4px;z-index:4"', 'top:2.5%;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:95vw;gap:4px;z-index:4"');
+  s = swap(s, 'padding:4px 7px;cursor:pointer";d.appendChild(b)', 'padding:4px 7px;cursor:pointer;white-space:nowrap;flex:none";d.appendChild(b)');
   s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON){GTLON=false;LASTP=\"s\"}label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;if(TRIBUTEON)LASTP=\"t\";label()};ab.id=\"bwai\";ab.textContent=\"PROMPT +\";ab.onclick=function(e){e.stopPropagation();AIPON=!AIPON;aiPanel();aiLbl()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
