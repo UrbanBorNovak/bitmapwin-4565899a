@@ -154,25 +154,45 @@ var QRM=null,QRFOR="";
 function qrDraw(x,y,sz){if(QRFOR!==BEACON){QRFOR=BEACON;QRM=BEACON?qrMake(BEACON):null}if(!QRM)return;var N=QRM.length,m=sz/(N+8);
   g.fillStyle="#ffffff";g.fillRect(x,y,sz,sz);g.fillStyle="#000000";
   for(var r=0;r<N;r++)for(var c=0;c<N;c++)if(QRM[r][c])g.fillRect(x+(c+4)*m,y+(r+4)*m,Math.ceil(m),Math.ceil(m))}
-/* Sibling sentinels: every other child of the collection root, read from /r/children,
-   stands as a small figure on the far side of the horizon. Colour comes from its own id. */
-function sibHex(id){return"#"+String(id).slice(0,6)}
+/* Sibling sentinels: every other child of the collection root stands on the far horizon as its own
+   on-chain Guardian design — Tag 3 BITMAP parent (OCI first-is-first) -> block -> dnaOf/mutate/blueprint/extras,
+   the same path every Guardian runs on itself (no BITMAP parent = the same RELIC body it shows itself).
+   Lookups are bounded (2 at a time, 96 max), cached in memory and device-local storage (inscriptions and
+   blocks never change); each design is baked once per 45° view into a small sprite. */
+var SIBD={},SIBQ=[],SIBA=0,SIBN=0,SIBB=0,OCIM=null;
+function sibCache(id,v){var k="gv8sib1:"+id;try{if(v===undefined){var s=localStorage.getItem(k);return s?JSON.parse(s):null}localStorage.setItem(k,JSON.stringify(v))}catch(_){return null}}
+function sibBlk(b){if(!b)return null;var o={},k,F=["hash","height","transaction_count","transactions","tx_count","n_tx","size","nonce","merkle_root","timestamp","time","weight","difficulty","version"];for(k=0;k<F.length;k++)if(b[F[k]]!=null)o[F[k]]=b[F[k]];return o}
+function sibResolve(id){var c=sibCache(id);if(c)return Promise.resolve(c);
+  return j("/r/parents/"+id).then(function(p){var ps=((p&&p.ids)||p||[]).filter(function(x){return x!=="9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0"}).slice(0,4),i=0;
+    function nx(){if(i>=ps.length)return Promise.resolve({h:0,b:null});var pid=ps[i++];
+      return t("/content/"+pid).then(function(body){var h=body.length<64?heightFrom(body):null;if(h===null)return nx();
+        return (OCIM||(OCIM=import("/content/0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0"))).then(function(o){return o.getBitmapInscriptionId(h)}).catch(function(){return pid})
+          .then(function(cid){if(cid&&cid!==pid)return{h:0,b:null};return blockData(h).then(function(b){return{h:h,b:sibBlk(b)}})})},function(){return nx()})}
+    return nx()}).then(function(r){sibCache(id,r);return r})}
+function sibDesign(r){var blk=r.b,h=r.h,txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count||blk.n_tx))||1,hash=(blk&&blk.hash)||String(h);
+  var d=dnaOf(h,hash,txs,(blk&&blk.size)||900000);mutate(d,blk);var V=blueprint(d);extras(d,V);
+  var ty=0,ex=0,i;for(i=0;i<V.length;i++){var v=V[i];ty=Math.max(ty,v[1]+v[4]/2);ex=Math.max(ex,Math.abs(v[0])+v[3]/2,Math.abs(v[2])+v[5]/2)}
+  var k=Math.min(1.6,22/ty,14/ex);for(i=0;i<V.length;i++){var w=V[i];w[0]*=k;w[1]*=k;w[2]*=k;w[3]*=k;w[4]*=k;w[5]*=k}return{V:V,sp:{}}}
+function sibPump(){while(SIBA<2&&SIBQ.length){var id=SIBQ.shift();SIBA++;(function(id){sibResolve(id).then(function(r){SIBD[id]=sibDesign(r)},function(){SIBD[id]=null})
+  .then(function(){SIBA--;sibPump()})})(id)}}
+function sibWant(id){if(id in SIBD||SIBN>=96)return;SIBD[id]=0;SIBN++;SIBQ.push(id);sibPump()}
+/* bake one design at one 45° yaw step into a 128px sprite, borrowing the main projection for the moment */
+function sibBake(D,st){var cv=document.createElement("canvas");cv.width=cv.height=128;var sv=[g,OX,OY,SC,CY,SY,AR,XR],yw=st*Math.PI/4,i;
+  g=cv.getContext("2d");AR=false;XR=false;CY=Math.cos(yw);SY=Math.sin(yw);SC=128/40;OX=64;OY=104;g.lineWidth=.5;
+  var V=D.V.slice().sort(function(p,q){return P3(p[0],p[1],p[2])[2]-P3(q[0],q[1],q[2])[2]});
+  try{for(i=0;i<V.length;i++)cube(V[i],V[i][6],V[i][7],0)}catch(_){}
+  g.shadowBlur=0;g=sv[0];OX=sv[1];OY=sv[2];SC=sv[3];CY=sv[4];SY=sv[5];AR=sv[6];XR=sv[7];return cv}
 var _dl8s=drawLand;drawLand=function(pulse){if(LAND&&COLL&&COLL.ids&&COLL.ids.length>1){var L=LAND,ids=COLL.ids,n=Math.min(96,ids.length),R=L.half*2.3,c0=P3(0,0,0)[2],far=[],i,
-    tt=performance.now()/1000,hs=L.half*.07;
+    tt=performance.now()/1000,hs=L.half*.07,st=((Math.round(Math.atan2(SY,CY)/(Math.PI/4))%8)+8)%8;SIBB=0;
   for(i=0;i<n;i++){var id=ids[Math.floor(i*ids.length/n)];if(id===SELF)continue;var a=i/n*Math.PI*2,x=Math.cos(a)*R,z=Math.sin(a)*R;
-    var dp=P3(x,0,z)[2];if(dp<c0)far.push([dp,x,z,id,i])}
+    var dp=P3(x,0,z)[2];if(dp<c0){far.push([dp,x,z,id,i]);sibWant(id)}}
   far.sort(function(p,q){return p[0]-q[0]});g.lineWidth=.5;
-  for(i=0;i<far.length;i++){var f=far[i],sid=String(f[3]),col=sibHex(sid),acc="#"+sid.slice(6,12),hh=parseInt(sid.slice(12,14),16)||0,
-      X=f[1],Z=f[2],bob=Math.sin(tt*1.2+f[4])*hs*.12,q=function(dx,y,dz,w,h,d,c,gl){cube([X+dx*hs,y*hs,Z+dz*hs,w*hs,h*hs,d*hs,c,gl,0,0],c,gl,pulse)},
-      bip=hh%3==0,leg=Math.sin(tt*2+f[4])*.15;
-    q(0,.15,0,2.6,.3,2.6,"#3a2a14",0);
-    if(bip){q(-.35,.9+leg,0,.4,1.2,.4,col,0);q(.35,.9-leg,0,.4,1.2,.4,col,0);
-      q(0,2.1+bob/hs,0,1.2,1.4,.9,col,.3);q(0,3.2+bob/hs,.15,.9,.8,.9,col,.4);q(0,3.2+bob/hs,.65,.5,.35,.4,acc,.3);
-      q(-.8,2.2+bob/hs,0,.3,1,.3,acc,.2);q(.8,2.2+bob/hs,0,.3,1,.3,acc,.2)}
-    else{for(var lg=0;lg<4;lg++)q(lg<2?-.5:.5,.75+(lg%2?leg:-leg),lg%2?.6:-.6,.35,.9,.35,col,0);
-      q(0,1.5+bob/hs,0,1.5,.9,2,col,.3);q(0,2.1+bob/hs,1.2,.9,.8,.9,col,.4);q(0,2,1.75,.5,.35,.4,acc,.3);
-      q(0,1.6,-1.3,.3,.3,.9,acc,.2)}
-    if(hh&4){q(-.3,bip?3.8:2.7,bip?.15:1.2,.15,.5,.15,acc,.6);q(.3,bip?3.8:2.7,bip?.15:1.2,.15,.5,.15,acc,.6)}}
+  for(i=0;i<far.length;i++){var f=far[i],sid=String(f[3]),X=f[1],Z=f[2],D=SIBD[sid],bob=Math.sin(tt*1.2+f[4])*hs*.12;
+    cube([X,.15*hs,Z,2.6*hs,.3*hs,2.6*hs,"#3a2a14",0,0,0],"#3a2a14",0,pulse);
+    if(!D)continue;
+    if(!D.sp[st]&&SIBB<2){SIBB++;D.sp[st]=sibBake(D,st)}var sp=D.sp[st];if(!sp)continue;
+    /* sprite: 40 design units across; designs stand ~4.5 sentinel units tall like the old figures */
+    var p0=P3(X,.3*hs+bob,Z),sw=40*(hs*4.5/22)*SC;g.drawImage(sp,p0[0]-sw/2,p0[1]-sw*104/128,sw,sw)}
   g.shadowBlur=0}
   _dl8s(pulse)};
 /* Swarm telemetry: how the collection is forming on chain (children of the root, in inscription order). */
