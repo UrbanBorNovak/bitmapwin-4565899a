@@ -416,10 +416,10 @@ function boothRun(){var j=BSNAP;BSNAP=0;var o;try{o=boothShot()}catch(_){boothMs
   o.toBlob(function(bl){if(!bl){boothMsg("CAPTURE FAILED");return}var u=URL.createObjectURL(bl);
     if(j.k==="dl"){try{var a=document.createElement("a");a.href=u;a.download=boothName();document.body.appendChild(a);a.click();a.remove()}catch(_){}boothShow(u)}
     else{try{navigator.clipboard.write([new ClipboardItem({"image/png":bl})]).then(function(){j.b.textContent="COPIED \u2713";boothMsg("PASTE STRAIGHT INTO A POST")},function(){boothMsg("CLIPBOARD BLOCKED HERE");boothShow(u)})}catch(_){boothMsg("CLIPBOARD BLOCKED HERE");boothShow(u)}}},"image/png")}
-var _bd8=backdrop;backdrop=function(w,h){if(BOOTH&&BFMTS[BFMT][2]){g.clearRect(0,0,w,h);return}if(BOOTH&&BF===4){g.fillStyle="#061424";g.fillRect(0,0,w,h);return}_bd8(w,h)};
+if(typeof backdrop==="function"&&typeof hud==="function"){var _bd8=backdrop;backdrop=function(w,h){if(BOOTH&&BFMTS[BFMT][2]){g.clearRect(0,0,w,h);return}if(BOOTH&&BF===4){g.fillStyle="#061424";g.fillRect(0,0,w,h);return}_bd8(w,h)};
 var _hu8=hud;hud=function(w,h,p){if(!BOOTH)return _hu8(w,h,p);if(BSNAP)boothRun()};
 var _tk8=tickerHud;tickerHud=function(w,h){if(!BOOTH)_tk8(w,h)};
-var _tl8=timelineHud;timelineHud=function(w,h){if(!BOOTH)_tl8(w,h)};
+var _tl8=timelineHud;timelineHud=function(w,h){if(!BOOTH)_tl8(w,h)};}
 addEventListener("keydown",function(e){if(e.key==="Escape"&&BOOTH)boothToggle()});
 `;
 
