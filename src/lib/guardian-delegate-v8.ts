@@ -150,7 +150,11 @@ swarmHud=function(w,h){if(!SWARMON)return;var fs=Math.max(11,Math.min(13,w*.016)
       fresh=k>=n-5;g.globalAlpha=mine?.75+.25*Math.sin(tp*4):fresh?.95:.55;g.fillStyle=mine?"#f7931a":fresh?"#ffffff":sibHex(ids[k]);
     g.fillRect(cx+1,cy+1,cs-2,cs-2)}g.globalAlpha=1;
   txt(n>500?"ONE CELL \u2248 "+(n/500).toFixed(1)+" GUARDIANS \u00B7 WHITE = NEWEST 5":"ONE CELL = ONE GUARDIAN \u00B7 WHITE = NEWEST 5",x,gy+gh+lh*.9,fs*.9,"#c5d0d9")};
-var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);tributeHud(w,h);swarmHud(w,h)};
+var LASTP="t";
+/* narrow screens show one of TRIBUTE / SWARM at a time: the one opened last */
+var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w<900;
+  if(!one||LASTP==="t")tributeHud(w,h);else{var cbn=document.getElementById("bwcb");if(cbn)cbn.style.display="none"}
+  if(!one||LASTP==="s")swarmHud(w,h)};
 `;
 
 function swap(src: string, from: string, to: string): string {
@@ -170,7 +174,7 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button"),sb=document.createElement("button");');
   s = swap(s, '"TIMELINE +"}', '"TIMELINE +";sb.textContent=SWARMON?"SWARM \u00D7":"SWARM +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.id="bwcb";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
   s = swap(s, "[mb,tb].forEach", "[mb,tb,sb,pb,rb,cb].forEach");
-  s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON)GTLON=false;label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;label()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
+  s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON){GTLON=false;LASTP=\"s\"}label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;if(TRIBUTEON)LASTP=\"t\";label()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
