@@ -159,7 +159,7 @@ function qrDraw(x,y,sz){if(QRFOR!==BEACON){QRFOR=BEACON;QRM=BEACON?qrMake(BEACON
    the same path every Guardian runs on itself (no BITMAP parent = the same RELIC body it shows itself).
    Lookups are bounded (2 at a time, 96 max), cached in memory and device-local storage (inscriptions and
    blocks never change); each design is baked once per 45° view into a small sprite. */
-var SIBO={},SIBD={},SIBQ=[],SIBA=0,SIBN=0,SIBB=0,OCIM=null;
+var SIBO={},SIBW={},SIBR={},SIBK={},SIBP=[],FOC=null,SIBD={},SIBQ=[],SIBA=0,SIBN=0,SIBB=0,OCIM=null;
 function sibCache(id,v){var k="gv8sib1:"+id;try{if(v===undefined){var s=localStorage.getItem(k);return s?JSON.parse(s):null}localStorage.setItem(k,JSON.stringify(v))}catch(_){return null}}
 function sibBlk(b){if(!b)return null;var o={},k,F=["hash","height","transaction_count","transactions","tx_count","n_tx","size","nonce","merkle_root","timestamp","time","weight","difficulty","version"];for(k=0;k<F.length;k++)if(b[F[k]]!=null)o[F[k]]=b[F[k]];return o}
 function sibResolve(id){var c=sibCache(id);if(c)return Promise.resolve(c);
@@ -173,9 +173,9 @@ function sibDesign(r){var blk=r.b,h=r.h,txs=(blk&&(blk.transaction_count||blk.tr
   var d=dnaOf(h,hash,txs,(blk&&blk.size)||900000);mutate(d,blk);var V=blueprint(d);extras(d,V);
   var ty=0,ex=0,i;for(i=0;i<V.length;i++){var v=V[i];ty=Math.max(ty,v[1]+v[4]/2);ex=Math.max(ex,Math.abs(v[0])+v[3]/2,Math.abs(v[2])+v[5]/2)}
   var k=Math.min(1.6,22/ty,14/ex);for(i=0;i<V.length;i++){var w=V[i];w[0]*=k;w[1]*=k;w[2]*=k;w[3]*=k;w[4]*=k;w[5]*=k}return{V:V,sp:{}}}
-function sibPump(){while(SIBA<2&&SIBQ.length){var id=SIBQ.shift();SIBA++;(function(id){sibResolve(id).then(function(r){SIBD[id]=sibDesign(r)},function(){SIBD[id]=null})
+function sibPump(){while(SIBA<2&&SIBQ.length){var id=SIBQ.shift();SIBA++;(function(id){sibResolve(id).then(function(r){SIBR[id]=r;SIBD[id]=sibDesign(r)},function(){SIBD[id]=null})
   /* holder colour: live owner (never cached, Guardians trade) through the same bounded queue */
-  .then(function(){return ownerOf(id).then(function(a){if(a)SIBO[id]=hexOf(a)})}).then(function(){SIBA--;sibPump()})})(id)}}
+  .then(function(){return ownerOf(id).then(function(a){if(a){SIBO[id]=hexOf(a);SIBW[id]=a}})}).then(function(){SIBA--;sibPump()})})(id)}}
 function sibWant(id){if(id in SIBD||SIBN>=96)return;SIBD[id]=0;SIBN++;SIBQ.push(id);sibPump()}
 /* bake one design at one 45° yaw step into a 128px sprite, borrowing the main projection for the moment */
 function sibBake(D,st){var cv=document.createElement("canvas");cv.width=cv.height=128;var sv=[g,OX,OY,SC,CY,SY,AR,XR],yw=st*Math.PI/4,i;
@@ -184,19 +184,24 @@ function sibBake(D,st){var cv=document.createElement("canvas");cv.width=cv.heigh
   try{for(i=0;i<V.length;i++)cube(V[i],V[i][6],V[i][7],0)}catch(_){}
   g.shadowBlur=0;g=sv[0];OX=sv[1];OY=sv[2];SC=sv[3];CY=sv[4];SY=sv[5];AR=sv[6];XR=sv[7];return cv}
 var _dl8s=drawLand;drawLand=function(pulse){if(LAND&&COLL&&COLL.ids&&COLL.ids.length>1){var L=LAND,ids=COLL.ids,n=Math.min(96,ids.length),R=L.half*2.3,c0=P3(0,0,0)[2],far=[],i,
-    tt=performance.now()/1000,hs=L.half*.07,st=((Math.round(Math.atan2(SY,CY)/(Math.PI/4))%8)+8)%8;SIBB=0;
+    tt=performance.now()/1000,hs=L.half*.07,st=((Math.round(Math.atan2(SY,CY)/(Math.PI/4))%8)+8)%8;SIBB=0;SIBP=[];
   for(i=0;i<n;i++){var id=ids[Math.floor(i*ids.length/n)];if(id===SELF)continue;var a=i/n*Math.PI*2,x=Math.cos(a)*R,z=Math.sin(a)*R;
     var dp=P3(x,0,z)[2];if(dp<c0){far.push([dp,x,z,id,i]);sibWant(id)}}
   far.sort(function(p,q){return p[0]-q[0]});g.lineWidth=.5;
   for(i=0;i<far.length;i++){var f=far[i],sid=String(f[3]),X=f[1],Z=f[2],D=SIBD[sid],bob=Math.sin(tt*1.2+f[4])*hs*.12;
     /* orange BITMAP ground; rim in the holder wallet's colour (grey until the owner is read) */
     cube([X,.15*hs,Z,2.6*hs,.3*hs,2.6*hs,"#f7931a",0,0,0],"#f7931a",0,pulse);
-    var rc=SIBO[sid]||"#8a949c",rh=1.3*hs,ry=.3*hs+.01;g.shadowColor=rc;g.shadowBlur=SIBO[sid]?8:0;g.lineWidth=1.5;
+    var rc=SIBO[sid]||"#8a949c",rh=1.3*hs,ry=.3*hs+.01,foc=FOC===sid,kin=FOC&&!foc&&SIBO[sid]&&SIBO[sid]===SIBO[FOC];
+    g.shadowColor=rc;g.shadowBlur=foc||kin?18+6*Math.sin(tt*4):SIBO[sid]?8:0;g.lineWidth=foc?3:kin?2.2:1.5;
     poly([P3(X-rh,ry,Z-rh),P3(X+rh,ry,Z-rh),P3(X+rh,ry,Z+rh),P3(X-rh,ry,Z+rh)],"rgba(0,0,0,0)",rc);g.shadowBlur=0;g.lineWidth=.5;
+    var p0=P3(X,.3*hs+bob,Z),sw=40*(hs*4.5/22)*SC;SIBP.push([p0[0],p0[1]-sw*.35,Math.max(18,sw*.5),sid]);
+    /* focus: a beam of the holder's colour rises from the chosen Guardian's ground */
+    if(foc){var bt=P3(X,hs*14,Z),bw=Math.max(4,sw*.18),gr=g.createLinearGradient(0,p0[1],0,bt[1]);gr.addColorStop(0,rc);gr.addColorStop(1,"rgba(0,0,0,0)");
+      g.globalAlpha=.45+.2*Math.sin(tt*3);g.fillStyle=gr;g.fillRect(p0[0]-bw/2,bt[1],bw,p0[1]-bt[1]);g.globalAlpha=1}
     if(!D)continue;
     if(!D.sp[st]&&SIBB<2){SIBB++;D.sp[st]=sibBake(D,st)}var sp=D.sp[st];if(!sp)continue;
-    /* sprite: 40 design units across; designs stand ~4.5 sentinel units tall like the old figures */
-    var p0=P3(X,.3*hs+bob,Z),sw=40*(hs*4.5/22)*SC;g.drawImage(sp,p0[0]-sw/2,p0[1]-sw*104/128,sw,sw)}
+    /* sprite: 40 design units across; designs stand ~4.5 sentinel units tall like the old figures; the focused one stands taller */
+    var fz=foc?1.35:1;g.drawImage(sp,p0[0]-sw*fz/2,p0[1]-sw*fz*104/128,sw*fz,sw*fz)}
   g.shadowBlur=0}
   _dl8s(pulse)};
 /* Swarm telemetry: how the collection is forming on chain (children of the root, in inscription order). */
@@ -214,6 +219,34 @@ swarmHud=function(w,h){if(!SWARMON)return;var fs=Math.max(11,Math.min(13,w*.016)
       fresh=k>=n-5;g.globalAlpha=mine?.75+.25*Math.sin(tp*4):fresh?.95:.55;g.fillStyle=mine?"#f7931a":fresh?"#ffffff":sibHex(ids[k]);
     g.fillRect(cx+1,cy+1,cs-2,cs-2)}g.globalAlpha=1;
   txt(n>500?"ONE CELL \u2248 "+(n/500).toFixed(1)+" GUARDIANS \u00B7 WHITE = NEWEST 5":"ONE CELL = ONE GUARDIAN \u00B7 WHITE = NEWEST 5",x,gy+gh+lh*.9,fs*.9,"#c5d0d9")};
+/* Explore the pack: tap a horizon Guardian to focus it. The card shows only what the chain says —
+   its BITMAP parent (same first-is-first check as its own page), its live holder and how many
+   children it has. Tap it again, press Esc or × to let it go. */
+function focusSib(id){FOC=FOC===id?null:id;var fd=document.getElementById("bwfoc");if(fd){fd.style.display=FOC?"":"none";var a=fd.firstChild;if(FOC)a.href="/inscription/"+FOC}
+  if(FOC&&!(FOC in SIBK)){SIBK[FOC]=-1;var cid=FOC;j("/r/children/"+cid).then(function(r){SIBK[cid]=((r&&r.ids)||[]).length+(r&&r.more?"+":"")},function(){SIBK[cid]=-2})}}
+(function(){var fd=document.createElement("div"),oa=document.createElement("a"),xb=document.createElement("button");fd.id="bwfoc";fd.style.cssText="position:fixed;right:14px;bottom:64px;display:none;gap:6px;z-index:5";
+  oa.textContent="OPEN ON CHAIN \u2197";oa.target="_blank";oa.rel="noopener";xb.textContent="\u00D7";
+  [oa,xb].forEach(function(b){b.style.cssText="font:600 11px monospace;letter-spacing:.08em;padding:7px 10px;margin-left:6px;background:#04060a;color:#3fe0d0;border:1px solid #3fe0d0;text-decoration:none;cursor:pointer"});
+  xb.onclick=function(e){e.stopPropagation();if(FOC)focusSib(FOC)};fd.appendChild(oa);fd.appendChild(xb);document.body.appendChild(fd);
+  var dn=null;c.addEventListener("pointerdown",function(e){dn=[e.clientX,e.clientY];var h=sibHit(e);if(h){e.stopImmediatePropagation()}},true);
+  c.addEventListener("pointerup",function(e){if(!dn||Math.abs(e.clientX-dn[0])+Math.abs(e.clientY-dn[1])>6){dn=null;return}dn=null;var h=sibHit(e);if(h){e.stopImmediatePropagation();e.stopPropagation();focusSib(h)}},true);
+  addEventListener("keydown",function(e){if(e.key==="Escape"&&FOC)focusSib(FOC)})})();
+function sibHit(e){var r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,best=null,bd=1e9;
+  for(var i=0;i<SIBP.length;i++){var p=SIBP[i],d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]&&d<bd){bd=d;best=p[3]}}return best}
+function focusHud(w,h){if(!FOC)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),pw=Math.min(w-pad*2,330),
+    x=w-pw-pad,R=SIBR[FOC],a=SIBW[FOC],col=SIBO[FOC]||"#8a949c",k=SIBK[FOC],kin=0,i;
+  for(i in SIBO)if(i!==FOC&&SIBO[i]===SIBO[FOC])kin++;
+  var rows=[["INSCRIPTION",String(FOC).slice(0,10)+"\u2026"+String(FOC).slice(-4),"#ffffff"],
+    ["BITMAP",!R?"READING\u2026":R.h?R.h+".BITMAP":"NONE \u00B7 RELIC",R&&R.h?"#f7931a":"#c5d0d9"],
+    ["HOLDER",a?a.slice(0,8)+"\u2026"+a.slice(-6):"READING\u2026",col],
+    ["SAME HOLDER",a?kin?kin+" MORE IN VIEW":"ONLY ONE IN VIEW":"\u2026",kin?col:"#c5d0d9"],
+    ["CHILDREN",k===undefined||k===-1?"READING\u2026":k===-2?"CHAIN UNREADABLE":k===0?"NONE YET":String(k),k>0||typeof k==="string"?"#3fe0d0":"#c5d0d9"]];
+  if(R&&R.b&&R.b.transaction_count!=null)rows.splice(2,0,["PARCELS",String(R.b.transaction_count||R.b.tx_count)+" TX","#ffffff"]);
+  var ph=hs*1.5+lh*(rows.length+.5),y=Math.max(pad+hs*3,h-pad-120-ph+hs*1.3),fd=document.getElementById("bwfoc");
+  if(fd){fd.style.bottom="auto";fd.style.right=(pad-10)+"px";fd.style.top=Math.max(0,y-hs*1.3-36)+"px"}
+  hudBox(x-10,y-hs*1.3,pw+20,ph,col);txt("PACK MEMBER \u00B7 ON CHAIN",x,y,hs,col);
+  for(i=0;i<rows.length;i++){var yy=y+lh*(i+1.1);txt(rows[i][0],x,yy,fs,"#c5d0d9");txt(rows[i][1],x+pw*.38,yy,fs,rows[i][2])}}
+var _ch8f=chainHud;chainHud=function(w,h){_ch8f(w,h);focusHud(w,h)};
 var LASTP="t";
 /* narrow screens show one of TRIBUTE / SWARM at a time: the one opened last */
 var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w<900;
