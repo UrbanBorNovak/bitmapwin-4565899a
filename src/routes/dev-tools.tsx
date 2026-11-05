@@ -236,6 +236,10 @@ function mockBuildB64(): string {
 function beaconMock(mode: "live" | "none"): string {
   const kids = mode === "live" ? ["mockchild0i0", "mockbeacon0i0"] : ["mockchild0i0"];
   return `<script>(function(){var of=window.fetch.bind(window),K=${JSON.stringify(kids)},SP=${JSON.stringify(MOCK_SP)},B=${JSON.stringify(mockBuildB64())};
+var PAR="";function hx(n){return (n<16?"0":"")+n.toString(16)}
+function hd(t,n){return n<24?hx(t<<5|n):n<256?hx(t<<5|24)+hx(n):hx(t<<5|25)+hx(n>>8)+hx(n&255)}
+function cb(o){if(typeof o==="number")return hd(0,o);if(typeof o==="string"){var b=new TextEncoder().encode(o),s=hd(3,b.length);b.forEach(function(x){s+=hx(x)});return s}
+ if(Array.isArray(o))return hd(4,o.length)+o.map(cb).join("");var k=Object.keys(o);return hd(5,k.length)+k.map(function(x){return cb(x)+cb(o[x])}).join("")}
 function R(b,ct){return Promise.resolve(new Response(b,{status:200,headers:{"content-type":ct}}))}
 window.fetch=function(u){u=String(u);
  if(u.indexOf("/r/children/9d1da99c")===0){var S=[];for(var q=0;q<140;q++)S.push(((q*2654435761)>>>0).toString(16).padStart(8,"0")+"mocksibling"+q+"i0");return R(JSON.stringify({ids:S,more:false,page:0}),"application/json")}
@@ -245,7 +249,10 @@ window.fetch=function(u){u=String(u);
  if(u.indexOf("/r/inscription/")===0)return R(JSON.stringify({sat:1234567890,id:"x"}),"application/json");
  if(u.indexOf("/r/sat/")===0)return R(JSON.stringify({id:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbi0"}),"application/json");
  if(u==="/content/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbi0")return R('<div data-b="'+B+'"></div>',"text/html");
- if(u.indexOf("/r/children/")===0)return R(JSON.stringify({ids:K,more:false,page:0}),"application/json");
+ if(u.indexOf("/r/children/")===0){PAR=u.split("/")[3];return R(JSON.stringify({ids:K.concat(["mockpet0i0"]),more:false,page:0}),"application/json")}
+ if(u==="/r/metadata/mockpet0i0"){var V=[[0,30,0,40,30,50,0,0],[0,70,22,30,30,30,0,0],[-10,85,30,6,6,4,1,1],[10,85,30,6,6,4,1,1],[-12,8,-15,10,16,10,0,0],[12,8,-15,10,16,10,0,0],[-12,8,15,10,16,10,0,0],[12,8,15,10,16,10,0,0],[0,40,-30,8,8,20,2,0]].map(function(a){return a.join(",")}).join(";");
+  return R(JSON.stringify(cb({p:"BITMAPWIN-PET",sire:PAR,dam:"mockdam0i0",g:1,C:["#7fd8a8","#ffffff","#f7931a"],v:V})),"application/json")}
+ if(u==="/content/mockpet0i0")return R("mock pet","text/plain");
  if(u==="/content/mockbeacon0i0")return R("BW-BEACON-1 "+SP,"text/plain");
  if(u==="/content/mockchild0i0")return R("gm","text/plain");
  return of(u)};
