@@ -23,6 +23,7 @@ import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
 import { BlockChronicles } from "@/components/BlockChronicles";
 import { LivingBlockShowcase } from "@/components/LivingBlockShowcase";
+import { EarlyBitmapsRail, HubBento } from "@/components/home/EarlyBitmapsRail";
 import { NovemberBuildBanner } from "@/components/NovemberBuildBanner";
 
 
@@ -206,26 +207,11 @@ function Index() {
       <HowItWorks />
       <LivingBlockShowcase />
 
-      <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
-        <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
-        <h2 className="display mt-2 text-2xl md:text-3xl">WORLD · LAND · EXPERIENCES · IDENTITY · CREATION</h2>
-        <div className="mt-3 md:mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
-          <Pillar n="01" name="WORLD" what="The Oasis" body="One shared map of every Bitcoin block. Walk in, no wallet needed." to="/oasis" action="ENTER" />
-          <Pillar n="02" name="LAND" what="BITMAPs" body="Each block is a place you can own, inspect or lease. Ownership is checked on Bitcoin, never self-reported." to="/marketplace" action="FIND LAND" />
-          <Pillar n="03" name="EXPERIENCES" what="Extenders" body="Games, galleries and scenes that run on a BITMAP. Browse, deploy, play." to="/extenders" action="BROWSE" />
-          <Pillar n="04" name="IDENTITY" what="Passport & Guardians" body="Your record of where you've been. Guardians take their form from their block's data." to="/passport" action="OPEN PASSPORT" />
-          <Pillar n="05" name="CREATION" what="Land Forge" body="Build in 3D on your BITMAP and write it onto Bitcoin. Every reused piece pays its maker." to="/forge" action="OPEN FORGE" />
-        </div>
-        <div className="mt-3 md:mt-6 flex flex-wrap gap-2 pb-2">
-          <Link to="/builds" className="btn-term-ghost">[ COMMUNITY BUILDS ]</Link>
-          <Link to="/parcel" className="btn-term-ghost">[ SPLIT A BITMAP INTO PARCELS ]</Link>
-          <Link to="/experiences" className="btn-term-ghost">[ LIVE EXPERIENCES ]</Link>
-        </div>
-      </section>
+      <EarlyBitmapsRail />
+      <HubBento />
 
       <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
-        <div className="label text-signal">LIVE PROOF</div>
-        <h2 className="display mt-2 text-2xl md:text-3xl">WHAT PEOPLE ARE MAKING RIGHT NOW</h2>
+        <h2 className="font-display text-2xl font-bold lowercase tracking-tight md:text-3xl">what people are making right now</h2>
       </section>
       <BlockChronicles />
       <ActiveBuilders />
@@ -233,8 +219,7 @@ function Index() {
       <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
         <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="label text-bitcoin">START EXPLORING</div>
-            <h2 className="display mt-2 text-2xl md:text-3xl">BITMAPS WORTH A CLOSER LOOK</h2>
+            <h2 className="font-display text-2xl font-bold lowercase tracking-tight md:text-3xl">bitmaps worth a closer look</h2>
           </div>
           <Link to="/marketplace" className="label hover:text-foreground">
             VIEW THE FULL MARKET →
