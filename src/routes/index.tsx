@@ -135,50 +135,35 @@ function Index() {
           <div className="relative order-1 flex flex-col bg-card lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
             <GeoTransfers className="opacity-40" heights={recentSales.map((s) => s.bitmap_height)} />
-            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-full overflow-hidden opacity-90 md:w-[70%]">
-              <ClientOnly><Suspense fallback={null}><HeroVoxelDiorama3D /></Suspense></ClientOnly>
-            </div>
-            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,var(--card)_0%,color-mix(in_oklab,var(--card)_85%,transparent)_35%,transparent_75%)]" />
-            <BitmapConstellations className="opacity-35" />
-            <div className="relative flex flex-1 flex-col justify-center p-5 py-7 md:p-8 lg:p-10">
-              <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
-              <h1 className="display mt-3 text-[2rem] leading-none sm:text-5xl lg:text-6xl">
-                THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND</span><br /><span className="text-signal">AND PEOPLE.</span>
-              </h1>
-              <div className="mt-5 grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:gap-6">
-                <div className="max-w-xl">
-                  <p className="max-w-2xl text-sm leading-relaxed text-foreground sm:text-base">
-                    Bitcoin-native worlds built from real block data — and the people who live, build and trade on them.
-                  </p>
-                  <div data-tour="home-flow" className="mt-5 grid gap-px sm:grid-cols-2">
-                    <Link to="/oasis" className="btn-term min-h-14 w-full flex-col items-start justify-center text-left">
-                      <span>STEP INTO THE WORLD →</span>
-                      <span className="mt-1 font-sans text-[11px] font-normal normal-case opacity-80">Explore live BITMAP territory. No wallet required.</span>
-                    </Link>
-                    <Link to="/forge" className="btn-term-ghost min-h-14 w-full flex-col items-start justify-center text-left">
-                      <span>BUILD IN THE FORGE →</span>
-                      <span className="mt-1 font-sans text-[11px] font-normal normal-case text-muted-foreground">Place voxel architecture on your BITMAP.</span>
-                    </Link>
-                  </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <Link to="/guardians" className="group border border-border/60 p-3 hover:border-signal">
-                      <div className="font-mono text-[11px] font-bold text-signal">MEET GUARDIANS & BLOCK MATTER →</div>
-                      <p className="mt-1 text-xs text-muted-foreground">See how verified block data becomes creature identity and traits.</p>
-                    </Link>
-                    <Link to="/marketplace" className="group border border-border/60 p-3 hover:border-signal">
-                      <div className="font-mono text-[11px] font-bold text-signal">EXPLORE THE BITMAP REGISTRY →</div>
-                      <p className="mt-1 text-xs text-muted-foreground">Read provenance, territory facts and market activity.</p>
-                    </Link>
-                  </div>
-                  <p className="mt-4 font-mono text-[10px] text-muted-foreground">
-                    Live Bitcoin blocks become territory, architecture, identity and useful objects.
-                  </p>
-                  <MobileAppInstall />
+            <BitmapConstellations className="opacity-25" />
+            <div className="relative grid flex-1 items-center gap-6 p-5 py-7 md:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:p-10">
+              <div className="min-w-0">
+                <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
+                <h1 className="display mt-3 text-[2.25rem] leading-[0.95] sm:text-5xl lg:text-6xl">
+                  THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND</span><br /><span className="text-signal">AND PEOPLE.</span>
+                </h1>
+                <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  Every Bitcoin block is a BITMAP — land you can walk, build on and trade, with ownership checked on Bitcoin.
+                </p>
+                <div data-tour="home-flow" className="mt-6 grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <HeroDoor n="01" who="VISITOR" title="WALK THE OASIS" body="Step into the shared world. No wallet needed." to="/oasis" primary />
+                  <HeroDoor n="02" who="CREATOR" title="BUILD & CUSTOMIZE" body="Voxel builds and profile pages on your BITMAP." to="/forge" />
+                  <HeroDoor n="03" who="TRADER" title="TRADE & BARTER" body="Buy land or swap wallet-to-wallet." to="/marketplace" />
                 </div>
+                <MobileAppInstall />
+              </div>
 
-
-
-                <div className="min-w-0">
+              <div className="relative min-w-0">
+                <div className="relative aspect-[4/3] w-full overflow-hidden border border-border/60 bg-background/40 backdrop-blur-sm">
+                  <div aria-hidden className="pointer-events-none absolute inset-0">
+                    <ClientOnly><Suspense fallback={null}><HeroVoxelDiorama3D /></Suspense></ClientOnly>
+                  </div>
+                  <span className="label absolute left-3 top-3 flex items-center gap-2 bg-background/70 px-2 py-1 text-signal">
+                    <span className="size-1.5 animate-pulse bg-signal" aria-hidden="true" /> LIVE VOXEL DISTRICT
+                  </span>
+                  <Link to="/builds" className="label absolute bottom-3 right-3 bg-background/70 px-2 py-1 hover:text-bitcoin">INSCRIBED BUILDS →</Link>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {lead && (
                   <Link
                     to="/bitmap/$block"
