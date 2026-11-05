@@ -327,7 +327,10 @@ function aiPrompts(){var f=aiFacts(),pet=f.pets?(f.pets===1?" with one small bab
     ["MUSIC","Theme song for the Guardian of Bitcoin block "+f.h+" ("+f.era+"). Style: "+(f.arm==="genesis clay"?"ancient ambient, deep drums, chant":f.arm==="terahash-armoured"?"dark synthwave, heavy bass, 128 BPM":"industrial chiptune, 140 BPM")+", instrumental build-up, heroic chorus about guarding the chain."]]}
 function aiCopy(s,b){var ok=function(){b.textContent="COPIED \u2713";setTimeout(function(){b.textContent="COPY"},1400)};
   try{navigator.clipboard.writeText(s).then(ok,function(){fb()})}catch(e){fb()}
-  function fb(){var ta=document.createElement("textarea");ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok()}catch(_){window.prompt("Copy this prompt",s)}ta.remove()}}
+  function fb(){var ta=document.createElement("textarea");ta.value=s;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();var done=false;try{done=document.execCommand("copy")}catch(_){}ta.remove();if(done)ok();else man()}
+  function man(){var q=b.parentNode&&b.parentNode.nextSibling;if(!q)return;var t=document.createElement("textarea");t.readOnly=true;t.value=s;
+    t.style.cssText="width:100%;box-sizing:border-box;min-height:96px;background:#0b1118;color:#e6edf2;border:1px solid #3fe0d0;font:12px/1.5 monospace;padding:6px;margin-top:4px";
+    q.replaceWith(t);t.focus();t.select();t.setSelectionRange(0,s.length);b.textContent="SELECT & COPY"}}
 function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=document.createElement("div");AIPT=d;
   d.style.cssText="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:min(440px,92vw);max-height:78vh;overflow:auto;background:#04060ae8;border:1px solid #f7931a;color:#c5d0d9;font:12px/1.5 monospace;padding:14px;box-sizing:border-box";
   d.onclick=function(e){e.stopPropagation()};
@@ -339,6 +342,7 @@ function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=docum
     var b=document.createElement("button");b.textContent="COPY";b.style.cssText="background:#f7931a;color:#04060a;border:0;padding:4px 10px;font:bold 11px monospace;cursor:pointer";b.onclick=function(){aiCopy(p[1],b)};t.appendChild(b);
     var q=document.createElement("div");q.style.cssText="color:#e6edf2;margin-top:4px;word-break:break-word";q.textContent=p[1];r.appendChild(t);r.appendChild(q);d.appendChild(r)});
   document.body.appendChild(d)}
+setTimeout(function(){var b=document.getElementById("bwai"),d=b&&b.parentNode;if(d){d.style.flexWrap="wrap";d.style.justifyContent="flex-end";d.style.maxWidth="95vw"}},0);
 addEventListener("keydown",function(e){if(e.key==="Escape"&&AIPON){AIPON=false;aiPanel();aiLbl()}});
 `;
 
