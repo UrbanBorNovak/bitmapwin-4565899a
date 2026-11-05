@@ -40,9 +40,6 @@ export function EarlyBitmapsRail() {
           </Link>
         ))}
       </div>
-      <div className="mt-2 hidden justify-between border-t border-foreground/[0.06] pt-1 font-mono text-[9px] text-muted-foreground md:flex">
-        <span>0</span><span>100</span><span>1,000</span><span>10,000</span><span>100,000</span>
-      </div>
     </section>
   );
 }
@@ -74,12 +71,12 @@ export function HubBento() {
             </Link>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 content-start gap-2 self-start lg:grid-cols-4">
           {tiles.map((x) => (
             <Link key={x.k} to={x.to} className="group flex flex-col rounded-lg border border-foreground/[0.06] bg-background p-4 transition-colors hover:border-signal/40">
               <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{x.k}</span>
               <span className="mt-2 text-base font-semibold text-foreground group-hover:text-signal">{x.t}</span>
-              <span className="mt-1 text-xs leading-snug text-muted-foreground">{x.b}</span>
+              <span className="mt-1 text-sm leading-snug text-muted-foreground">{x.b}</span>
             </Link>
           ))}
         </div>
