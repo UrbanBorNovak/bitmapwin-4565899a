@@ -10,6 +10,14 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
     if (error != null && typeof error === "object" && "statusCode" in error) {
       throw error;
     }
+    // A page built before a server restart asks for function IDs the new server
+    // no longer knows. Answer with a recognisable 409 so the page reloads itself.
+    if (error instanceof Error && error.message.includes("Invalid server function ID")) {
+      return new Response(JSON.stringify({ staleServerFn: true }), {
+        status: 409,
+        headers: { "content-type": "application/json", "x-stale-server-fn": "1" },
+      });
+    }
     console.error(error);
     return new Response(renderErrorPage(), {
       status: 500,

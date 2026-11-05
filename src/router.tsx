@@ -1,4 +1,5 @@
 import "@/lib/gltf-resilience";
+import "@/lib/stale-serverfn-recovery";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
