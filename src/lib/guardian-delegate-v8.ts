@@ -159,7 +159,7 @@ function qrDraw(x,y,sz){if(QRFOR!==BEACON){QRFOR=BEACON;QRM=BEACON?qrMake(BEACON
    the same path every Guardian runs on itself (no BITMAP parent = the same RELIC body it shows itself).
    Lookups are bounded (2 at a time, 96 max), cached in memory and device-local storage (inscriptions and
    blocks never change); each design is baked once per 45° view into a small sprite. */
-var SIBD={},SIBQ=[],SIBA=0,SIBN=0,SIBB=0,OCIM=null;
+var SIBO={},SIBD={},SIBQ=[],SIBA=0,SIBN=0,SIBB=0,OCIM=null;
 function sibCache(id,v){var k="gv8sib1:"+id;try{if(v===undefined){var s=localStorage.getItem(k);return s?JSON.parse(s):null}localStorage.setItem(k,JSON.stringify(v))}catch(_){return null}}
 function sibBlk(b){if(!b)return null;var o={},k,F=["hash","height","transaction_count","transactions","tx_count","n_tx","size","nonce","merkle_root","timestamp","time","weight","difficulty","version"];for(k=0;k<F.length;k++)if(b[F[k]]!=null)o[F[k]]=b[F[k]];return o}
 function sibResolve(id){var c=sibCache(id);if(c)return Promise.resolve(c);
@@ -174,7 +174,8 @@ function sibDesign(r){var blk=r.b,h=r.h,txs=(blk&&(blk.transaction_count||blk.tr
   var ty=0,ex=0,i;for(i=0;i<V.length;i++){var v=V[i];ty=Math.max(ty,v[1]+v[4]/2);ex=Math.max(ex,Math.abs(v[0])+v[3]/2,Math.abs(v[2])+v[5]/2)}
   var k=Math.min(1.6,22/ty,14/ex);for(i=0;i<V.length;i++){var w=V[i];w[0]*=k;w[1]*=k;w[2]*=k;w[3]*=k;w[4]*=k;w[5]*=k}return{V:V,sp:{}}}
 function sibPump(){while(SIBA<2&&SIBQ.length){var id=SIBQ.shift();SIBA++;(function(id){sibResolve(id).then(function(r){SIBD[id]=sibDesign(r)},function(){SIBD[id]=null})
-  .then(function(){SIBA--;sibPump()})})(id)}}
+  /* holder colour: live owner (never cached, Guardians trade) through the same bounded queue */
+  .then(function(){return ownerOf(id).then(function(a){if(a)SIBO[id]=hexOf(a)})}).then(function(){SIBA--;sibPump()})})(id)}}
 function sibWant(id){if(id in SIBD||SIBN>=96)return;SIBD[id]=0;SIBN++;SIBQ.push(id);sibPump()}
 /* bake one design at one 45° yaw step into a 128px sprite, borrowing the main projection for the moment */
 function sibBake(D,st){var cv=document.createElement("canvas");cv.width=cv.height=128;var sv=[g,OX,OY,SC,CY,SY,AR,XR],yw=st*Math.PI/4,i;
@@ -188,7 +189,10 @@ var _dl8s=drawLand;drawLand=function(pulse){if(LAND&&COLL&&COLL.ids&&COLL.ids.le
     var dp=P3(x,0,z)[2];if(dp<c0){far.push([dp,x,z,id,i]);sibWant(id)}}
   far.sort(function(p,q){return p[0]-q[0]});g.lineWidth=.5;
   for(i=0;i<far.length;i++){var f=far[i],sid=String(f[3]),X=f[1],Z=f[2],D=SIBD[sid],bob=Math.sin(tt*1.2+f[4])*hs*.12;
-    cube([X,.15*hs,Z,2.6*hs,.3*hs,2.6*hs,"#3a2a14",0,0,0],"#3a2a14",0,pulse);
+    /* orange BITMAP ground; rim in the holder wallet's colour (grey until the owner is read) */
+    cube([X,.15*hs,Z,2.6*hs,.3*hs,2.6*hs,"#f7931a",0,0,0],"#f7931a",0,pulse);
+    var rc=SIBO[sid]||"#8a949c",rh=1.3*hs,ry=.3*hs+.01;g.shadowColor=rc;g.shadowBlur=SIBO[sid]?8:0;g.lineWidth=1.5;
+    poly([P3(X-rh,ry,Z-rh),P3(X+rh,ry,Z-rh),P3(X+rh,ry,Z+rh),P3(X-rh,ry,Z+rh)],"rgba(0,0,0,0)",rc);g.shadowBlur=0;g.lineWidth=.5;
     if(!D)continue;
     if(!D.sp[st]&&SIBB<2){SIBB++;D.sp[st]=sibBake(D,st)}var sp=D.sp[st];if(!sp)continue;
     /* sprite: 40 design units across; designs stand ~4.5 sentinel units tall like the old figures */
