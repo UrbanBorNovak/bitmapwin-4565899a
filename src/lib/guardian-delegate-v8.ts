@@ -67,11 +67,11 @@ var _dl8=drawLand;
 var CFACE=[[[0,1,0],[1,1,0],[1,1,1],[0,1,1],0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1],1,.8],[[1,0,0],[1,0,1],[1,1,1],[1,1,0],1,.62],[[0,0,0],[1,0,0],[1,1,0],[0,1,0],1,.7],[[0,0,0],[0,0,1],[0,1,1],[0,1,0],1,.55]];
 drawLand=function(pulse){_dl8(pulse);if(!CIT||!LAND)return;var L=LAND,u=2*L.half/CIT.span,o=-L.half,i,k,S=CIT.s,Q=[];
   for(i=0;i<S.length;i++){var v=S[i],x=o+v[0]*u,z=o+v[2]*u,y=v[1]*u;Q.push([P3(x+u/2,y+u/2,z+u/2)[2],x,y,z,v])}
-  Q.sort(function(p,q){return q[0]-p[0]});
+  Q.sort(function(p,q){return p[0]-q[0]});
   for(i=0;i<Q.length;i++){var w=Q[i],vv=w[4],c=CITP[vv[3]]||CITP[0];
     for(k=0;k<5;k++){if(!(vv[5]&(1<<k)))continue;var F=CFACE[k],cx=0,cy=0,cz=0,n;for(n=0;n<4;n++){cx+=F[n][0]/4;cy+=F[n][1]/4;cz+=F[n][2]/4}
-      /* back faces: the face centre lies farther than the cube centre */
-      if(P3(w[1]+cx*u,w[2]+cy*u,w[3]+cz*u)[2]>w[0]+1e-9)continue;
+      /* back faces: the face centre lies farther (smaller depth) than the cube centre */
+      if(P3(w[1]+cx*u,w[2]+cy*u,w[3]+cz*u)[2]<w[0]-1e-9)continue;
       var pp=[F[0],F[1],F[2],F[3]].map(function(p){return P3(w[1]+p[0]*u,w[2]+p[1]*u,w[3]+p[2]*u)});
       poly(pp,shade(F[4]?c[1]:c[0],F[5]*(k?1:vv[4])))}}};
 setTimeout(function(){citadelLoad(0)},1200);
