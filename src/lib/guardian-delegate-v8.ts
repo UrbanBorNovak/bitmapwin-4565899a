@@ -342,7 +342,7 @@ function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=docum
     var b=document.createElement("button");b.textContent="COPY";b.style.cssText="background:#f7931a;color:#04060a;border:0;padding:4px 10px;font:bold 11px monospace;cursor:pointer";b.onclick=function(){aiCopy(p[1],b)};t.appendChild(b);
     var q=document.createElement("div");q.style.cssText="color:#e6edf2;margin-top:4px;word-break:break-word";q.textContent=p[1];r.appendChild(t);r.appendChild(q);d.appendChild(r)});
   document.body.appendChild(d)}
-setTimeout(function(){var b=document.getElementById("bwai"),d=b&&b.parentNode;if(d){d.style.flexWrap="wrap";d.style.justifyContent="flex-end";d.style.maxWidth="95vw"}},0);
+setTimeout(function(){var b=document.getElementById("bwai"),d=b&&b.parentNode;if(d){d.style.flexWrap="wrap";d.style.justifyContent="flex-end";d.style.maxWidth="95vw";[].forEach.call(d.children,function(k){k.style.whiteSpace="nowrap"})}},0);
 addEventListener("keydown",function(e){if(e.key==="Escape"&&AIPON){AIPON=false;aiPanel();aiLbl()}});
 `;
 
