@@ -87,7 +87,66 @@ tributeHud=function(w,h){var cbn=document.getElementById("bwcb");if(cbn)cbn.styl
   for(var i=0;i<L.length;i++)txt(L[i],x,y+lh*(i+1.2),fs,"#3fe0d0");
   var yy=y+lh*(L.length+1.6);txt("SEND WITH A SILENT-PAYMENTS WALLET.",x,yy,fs,"#ffffff");
   txt("EACH TIP LANDS ON A NEW ONE-TIME ADDRESS,",x,yy+lh,fs,"#c5d0d9");txt("NOT LINKED TO THE HOLDER'S WALLET.",x,yy+lh*2,fs,"#c5d0d9")};
-var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);tributeHud(w,h)};
+/* Micro QR (byte mode, ECC L, versions 1-9, mask 0) built in this page: no library, no network. */
+function qrMake(s){var D=[],i,j;for(i=0;i<s.length;i++)D.push(s.charCodeAt(i)&255);
+  var CAP=[0,19,34,55,80,108,136,156,194,232],ECN=[0,7,10,15,20,26,18,20,24,30],v=1;
+  while(v<10&&4+8+D.length*8>CAP[v]*8)v++;if(v>9)return null;
+  var bits=[],put=function(x,n){for(var k=n-1;k>=0;k--)bits.push((x>>k)&1)};put(4,4);put(D.length,8);for(i=0;i<D.length;i++)put(D[i],8);
+  var cap=CAP[v]*8;put(0,Math.min(4,cap-bits.length));while(bits.length%8)bits.push(0);
+  var dat=[];for(i=0;i<bits.length;i+=8){var b=0;for(j=0;j<8;j++)b=b<<1|bits[i+j];dat.push(b)}for(i=0;dat.length<CAP[v];i++)dat.push(i%2?17:236);
+  var mul=function(x,y){var z=0;for(var k=7;k>=0;k--){z=(z<<1)^((z>>>7)*285);z^=((y>>>k)&1)*x}return z&255},n=ECN[v],dv=[],root=1;
+  for(i=0;i<n;i++)dv.push(0);dv[n-1]=1;for(i=0;i<n;i++){for(j=0;j<n;j++){dv[j]=mul(dv[j],root);if(j+1<n)dv[j]^=dv[j+1]}root=mul(root,2)}
+  var nb=v<6?1:2,bl=CAP[v]/nb,blocks=[],ecs=[];
+  for(i=0;i<nb;i++){var blk=dat.slice(i*bl,(i+1)*bl),r=[];for(j=0;j<n;j++)r.push(0);
+    blk.forEach(function(c){var f=c^r.shift();r.push(0);for(var k=0;k<n;k++)r[k]^=mul(dv[k],f)});blocks.push(blk);ecs.push(r)}
+  var all=[];for(j=0;j<bl;j++)for(i=0;i<nb;i++)all.push(blocks[i][j]);for(j=0;j<n;j++)for(i=0;i<nb;i++)all.push(ecs[i][j]);
+  var N=17+4*v,M=[],F=[];for(i=0;i<N;i++){M.push([]);F.push([]);for(j=0;j<N;j++){M[i].push(0);F[i].push(0)}}
+  var set=function(x,y,d){if(x<0||y<0||x>=N||y>=N)return;M[y][x]=d?1:0;F[y][x]=1};
+  for(i=0;i<N;i++){set(6,i,i%2==0);set(i,6,i%2==0)}
+  [[3,3],[N-4,3],[3,N-4]].forEach(function(c){for(var dy=-4;dy<=4;dy++)for(var dx=-4;dx<=4;dx++){var dd=Math.max(Math.abs(dx),Math.abs(dy));set(c[0]+dx,c[1]+dy,dd!=2&&dd!=4)}});
+  var AP=v<2?[]:v<7?[6,4*v+10]:[[6,22,38],[6,24,42],[6,26,46]][v-7],la=AP.length-1;
+  for(i=0;i<=la;i++)for(j=0;j<=la;j++){if((!i&&!j)||(!i&&j==la)||(i==la&&!j))continue;for(var ay=-2;ay<=2;ay++)for(var ax=-2;ax<=2;ax++)set(AP[i]+ax,AP[j]+ay,Math.max(Math.abs(ax),Math.abs(ay))!=1)}
+  var fmt=function(){var d=8,rem=d;for(var k=0;k<10;k++)rem=(rem<<1)^((rem>>>9)*0x537);var B=((d<<10)|rem)^0x5412,g2=function(q){return(B>>>q)&1};
+    for(k=0;k<6;k++)set(8,k,g2(k));set(8,7,g2(6));set(8,8,g2(7));set(7,8,g2(8));for(k=9;k<15;k++)set(14-k,8,g2(k));
+    for(k=0;k<8;k++)set(N-1-k,8,g2(k));for(k=8;k<15;k++)set(8,N-15+k,g2(k));set(8,N-8,1)};fmt();
+  if(v>=7){var rv=v;for(i=0;i<12;i++)rv=(rv<<1)^((rv>>>11)*0x1F25);var VB=v<<12|rv;for(i=0;i<18;i++){var bt=(VB>>>i)&1,a=N-11+i%3,c=Math.floor(i/3);set(a,c,bt);set(c,a,bt)}}
+  var bi=0;for(var right=N-1;right>=1;right-=2){if(right==6)right=5;for(var vt=0;vt<N;vt++)for(j=0;j<2;j++){var x=right-j,up=((right+1)&2)==0,y=up?N-1-vt:vt;
+    if(!F[y][x]&&bi<all.length*8){M[y][x]=(all[bi>>>3]>>>(7-(bi&7)))&1;bi++}}}
+  for(i=0;i<N;i++)for(j=0;j<N;j++)if(!F[i][j]&&(i+j)%2==0)M[i][j]^=1;return M}
+var QRM=null,QRFOR="";
+function qrDraw(x,y,sz){if(QRFOR!==BEACON){QRFOR=BEACON;QRM=BEACON?qrMake(BEACON):null}if(!QRM)return;var N=QRM.length,m=sz/(N+8);
+  g.fillStyle="#ffffff";g.fillRect(x,y,sz,sz);g.fillStyle="#000000";
+  for(var r=0;r<N;r++)for(var c=0;c<N;c++)if(QRM[r][c])g.fillRect(x+(c+4)*m,y+(r+4)*m,Math.ceil(m),Math.ceil(m))}
+/* Sibling sentinels: every other child of the collection root, read from /r/children,
+   stands as a small figure on the far side of the horizon. Colour comes from its own id. */
+function sibHex(id){return"#"+String(id).slice(0,6)}
+var _dl8s=drawLand;drawLand=function(pulse){if(LAND&&COLL&&COLL.ids&&COLL.ids.length>1){var L=LAND,ids=COLL.ids,n=Math.min(96,ids.length),R=L.half*2.3,c0=P3(0,0,0)[2],far=[],i,
+    tt=performance.now()/1000,hs=L.half*.07;
+  for(i=0;i<n;i++){var id=ids[Math.floor(i*ids.length/n)];if(id===SELF)continue;var a=i/n*Math.PI*2,x=Math.cos(a)*R,z=Math.sin(a)*R;
+    var dp=P3(x,0,z)[2];if(dp<c0)far.push([dp,x,z,id,i])}
+  far.sort(function(p,q){return p[0]-q[0]});g.lineWidth=.5;
+  for(i=0;i<far.length;i++){var f=far[i],col=sibHex(f[3]),bob=Math.sin(tt*1.2+f[4])*hs*.15;
+    cube([f[1],hs*.3,f[2],hs*1.6,hs*.6,hs*1.6,"#3a2a14",0,0,0],"#3a2a14",0,pulse);
+    cube([f[1],hs*1.6+bob,f[2],hs,hs*2,hs,col,.4,0,0],col,.4,pulse);
+    cube([f[1],hs*3.1+bob,f[2],hs*.8,hs*.8,hs*.8,col,.6,0,0],col,.6,pulse)}
+  g.shadowBlur=0}
+  _dl8s(pulse)};
+/* Swarm telemetry: how the collection is forming on chain (children of the root, in inscription order). */
+swarmHud=function(w,h){if(!SWARMON)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
+    pw=Math.min(w-pad*2,380),x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+hs;
+  if(!COLL||!COLL.ids){hudBox(x-10,y-hs*1.3,pw+20,hs*1.5+lh*1.6,"#3fe0d0");txt("COLLECTION FORMATION",x,y,hs,"#3fe0d0");txt("READING CHILDREN FROM THE CHAIN\u2026",x,y+lh*1.2,fs,"#c5d0d9");return}
+  var ids=COLL.ids,n=ids.length,cols=25,cells=Math.min(n,500),rows=Math.max(1,Math.ceil(cells/cols)),cs=pw/cols,me=ids.indexOf(SELF),
+    gh=rows*cs,ph=hs*1.5+lh*3.6+gh+lh*.6;if(y+ph>h-pad)y=Math.max(pad+hs,h-pad-ph);
+  hudBox(x-10,y-hs*1.3,pw+20,ph,"#3fe0d0");
+  txt("COLLECTION FORMATION \u00B7 ON CHAIN",x,y,hs,"#3fe0d0");
+  txt(n+" GUARDIANS INSCRIBED"+(me>=0?" \u00B7 YOU #"+(me+1):""),x,y+lh*1.2,fs,"#ffffff");
+  txt("LATEST "+String(ids[n-1]).slice(0,14)+"\u2026",x,y+lh*2.2,fs,"#c5d0d9");
+  var gy=y+lh*2.9,tp=performance.now()/1000;
+  for(var i=0;i<cells;i++){var k=n>500?Math.floor(i*n/500):i,cx=x+(i%cols)*cs,cy=gy+Math.floor(i/cols)*cs,mine=k===me,
+      fresh=k>=n-5;g.globalAlpha=mine?.75+.25*Math.sin(tp*4):fresh?.95:.55;g.fillStyle=mine?"#f7931a":fresh?"#ffffff":sibHex(ids[k]);
+    g.fillRect(cx+1,cy+1,cs-2,cs-2)}g.globalAlpha=1;
+  txt(n>500?"ONE CELL \u2248 "+(n/500).toFixed(1)+" GUARDIANS \u00B7 WHITE = NEWEST 5":"ONE CELL = ONE GUARDIAN \u00B7 WHITE = NEWEST 5",x,gy+gh+lh*.9,fs*.9,"#c5d0d9")};
+var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);tributeHud(w,h);swarmHud(w,h)};
 `;
 
 function swap(src: string, from: string, to: string): string {
