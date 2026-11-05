@@ -93,14 +93,14 @@ try{
     const sh=SHOWERS.find(s=>s[0]===m&&day>=s[1]&&day<=s[2]);
     return{age,phase:PHASES[Math.floor((age/29.530588853*8+.5))%8],z:zodiac(d),shower:sh?sh[3]:"",blood:BLOODMOON.includes(iso),ecl:SOLARECL.includes(iso)}};
   let SKY=skyNow();setInterval(()=>{SKY=skyNow()},6e4);
-  function sky(put,t){const s=SKY,MX=-24,MY=24,MZ=-20,R=3.2,k=Math.cos(s.age/29.530588853*Math.PI*2),wax=s.age<14.765;
+  function sky(put,t){const s=SKY,MX=-15,MY=15,MZ=-17,R=3.2,k=Math.cos(s.age/29.530588853*Math.PI*2),wax=s.age<14.765;
     /* moon disc of voxels, lit side by phase; blood moon tints the whole disc; solar eclipse = black disc + corona */
     for(let iy=-3;iy<=3;iy++)for(let ix=-3;ix<=3;ix++){const x=ix/R,y=iy/R;if(x*x+y*y>1)continue;const xt=k*Math.sqrt(1-y*y);
       const lit=s.ecl?false:s.blood?true:(wax?x>xt:x<-xt);
       put([MX+ix*.9,MY+iy*.9,MZ,.9,.9,.4],s.ecl?"#05070a":s.blood?"#b3261e":lit?"#eef1e6":"#1b2230",lit?(s.blood?.9+Math.sin(t*2)*.3:1):0)}
     if(s.ecl)for(let i=0;i<20;i++){const a=i/20*Math.PI*2+t*.2;put([MX+Math.cos(a)*3.8,MY+Math.sin(a)*3.8,MZ,.5,.5,.3],"#ffd23f",2+Math.sin(t*3+i))}
     /* zodiac season: 7 stylised stars of the current sign, fixed per sign, twinkling */
-    for(let i=0;i<7;i++){const a=hr(s.z*31+i),b=hr(s.z*17+i+5);put([10+a*16,22+b*7,-24+hr(i+s.z)*3,.35,.35,.35],"#cfe8ff",1.2+Math.sin(t*2+i)*.8)}
+    for(let i=0;i<7;i++){const a=hr(s.z*31+i),b=hr(s.z*17+i+5);put([4+a*13,13+b*6,-18+hr(i+s.z)*3,.35,.35,.35],"#cfe8ff",1.2+Math.sin(t*2+i)*.8)}
     /* meteor shower peak: streaks across the sky */
     if(s.shower)for(let i=0;i<6;i++){const ph=(t*.35+hr(i+900))%1,sx=-30+hr(i+910)*40+ph*40,sy=30-ph*14,sz=-26+hr(i+920)*20;
       for(let j=0;j<5;j++)put([sx-j*.9,sy+j*.35,sz,.3,.3,.3],"#ffffff",2.4-j*.45)}}
@@ -162,9 +162,9 @@ try{
     for(const m of MODS)lines.push(m.on?"\u2605 "+m.label+" \u00b7 COMMUNITY UNLOCKED":m.goal?m.label+" \u00b7 "+fmtS(m.got)+" / "+fmtS(m.goal)+" SATS"+(m.read?"":" \u00b7 SOME TXS UNREADABLE")+(m.addr?" \u00b7 SEND "+m.addr.slice(0,6)+"\u2026"+m.addr.slice(-6):""):"");
     const f=FX[FX.length-1];if(f&&now-f.t0<45)lines.push("\u25c6 NEW BLOCK "+f.h.toLocaleString("en-US")+(f.n?" \u00b7 "+f.n.toLocaleString("en-US")+" TX":"")+(f.tags.length?" \u00b7 "+f.tags.join(" \u00b7 "):""));
     lines.push((SKY.ecl?"\u25cf SOLAR ECLIPSE":SKY.blood?"\u263e BLOOD MOON":"\u263e "+SKY.phase)+" \u00b7 "+ZOD[SKY.z]+" SEASON"+(SKY.shower?" \u00b7 "+SKY.shower+" PEAK":""));
-    g.font=(nar?"9px":"10px")+" monospace";g.textAlign=nar?"center":"left";
+    g.font=(nar?"9px":"10px")+" monospace";g.textAlign="center";
     for(let i=0;i<lines.length;i++){const s=lines[lines.length-1-i];if(!s)continue;g.fillStyle=s.startsWith("\u25c6")?"rgba(247,147,26,.95)":s.startsWith("\u2605")?"rgba(76,255,138,.9)":"rgba(207,232,255,.82)";
-      g.fillText(s,nar?w/2:12,nar?140+(lines.length-1-i)*13:h-14-i*14)}g.textAlign="left"}
+      g.fillText(s,w/2,(nar?140:72)+(lines.length-1-i)*(nar?13:14))}g.textAlign="left"}
   /* ---- Advent engine: client UTC date; unlocks one more thing each December day. ?advent=DD previews. ---- */
   const adventDay=()=>{const q=+(new URLSearchParams(location.search).get("advent")||window.ADVENT_DAY||0);if(q>0)return Math.min(31,q);
     const d=new Date();return d.getUTCMonth()===11?d.getUTCDate():0};
