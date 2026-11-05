@@ -130,7 +130,7 @@ export const HOUSE_PREFABS: Prefab[] = [
   ...biomePresets(),
   { id: "parthenon", name: "The Parthenon", sphere: "kingdom", blocks: dedupe(parthenon()) },
   { id: "tholos", name: "Tholos of Delphi", sphere: "kingdom", blocks: dedupe(tholos()) },
-  { id: "kremlin", name: "Moscow Kremlin", sphere: "kingdom", blocks: kremlin() },
+  { id: "kremlin-plaza", name: "Kremlin · Plaza Ground", sphere: "kingdom", blocks: kremlin("plaza") },
   { id: "kremlin-walls", name: "Kremlin · Walls & Towers", sphere: "kingdom", blocks: kremlin("walls") },
   { id: "kremlin-spasskaya", name: "Kremlin · Spasskaya Tower", sphere: "kingdom", blocks: kremlin("spasskaya") },
   { id: "kremlin-cathedral", name: "Kremlin · Assumption Cathedral", sphere: "kingdom", blocks: kremlin("cathedral") },
@@ -210,7 +210,7 @@ function kremlin(only?: KremlinPart) {
   const N = 61;
   const on = (k: KremlinPart) => !only || only === k;
   // ground plaza
-  if (on("walls")) {
+  if (on("plaza")) {
   s.box(0, N, 0, 0, 0, N, "cobble");
   s.box(4, N - 4, 1, 1, 4, N - 4, "stone");
   }
@@ -306,10 +306,10 @@ function kremlin(only?: KremlinPart) {
   s.box(26, 34, 17, 20, 48, 54, "sand"); onion(30, 51, 21, 2, "gold");
   }
   // Red Square lamps
-  if (on("walls")) for (let x = 8; x <= N - 8; x += 6) s.put(x, 2, 8, "glow");
+  if (on("plaza")) for (let x = 8; x <= N - 8; x += 6) s.put(x, 2, 8, "glow");
   return hollow(dedupe(s.out.filter((t) => t.dx >= 0 && t.dy >= 0 && t.dz >= 0 && t.dx < FORGE_SPAN && t.dz < FORGE_SPAN)));
 }
-type KremlinPart = "walls" | "spasskaya" | "cathedral" | "ivan" | "basil" | "palace";
+type KremlinPart = "plaza" | "walls" | "spasskaya" | "cathedral" | "ivan" | "basil" | "palace";
 /** Drop blocks enclosed on all six sides: the outside looks identical, the inside is empty. */
 function hollow(blocks: TplBlock[]): TplBlock[] {
   const has = new Set(blocks.map((t) => `${t.dx},${t.dy},${t.dz}`));
