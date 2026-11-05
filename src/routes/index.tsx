@@ -143,12 +143,12 @@ function Index() {
             <div className="relative flex flex-1 flex-col justify-center p-5 py-7 md:p-8 lg:p-10">
               <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
               <h1 className="display mt-3 text-[2rem] leading-none sm:text-5xl lg:text-6xl">
-                THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND.</span>
+                THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND</span><br /><span className="text-signal">AND PEOPLE.</span>
               </h1>
               <div className="mt-5 grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:gap-6">
                 <div className="max-w-xl">
                   <p className="max-w-2xl text-sm leading-relaxed text-foreground sm:text-base">
-                    Bitcoin-native worlds built from real block data.
+                    Bitcoin-native worlds built from real block data — and the people who live, build and trade on them.
                   </p>
                   <div data-tour="home-flow" className="mt-5 grid gap-px sm:grid-cols-2">
                     <Link to="/oasis" className="btn-term min-h-14 w-full flex-col items-start justify-center text-left">
