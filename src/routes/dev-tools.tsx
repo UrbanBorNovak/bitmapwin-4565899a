@@ -8,6 +8,8 @@ import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
 import { guardianMasterGeneratorHtmlV8 } from "@/lib/guardian-delegate-v8";
 import { guardianMasterGeneratorHtmlV8Three, guardianV8ThreeByteSize } from "@/lib/guardian-delegate-v8-three";
+import { prefabById } from "@/lib/forge-prefabs";
+import { BLOCKS } from "@/lib/voxel-world";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
 
 
@@ -213,13 +215,33 @@ V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleStrin
 const MOCK_SP =
   "sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv";
 
+/** Sample BWVX1 build for the testbench: real house pieces placed around the BITMAP edges. */
+function mockBuildB64(): string {
+  const out: number[] = [];
+  const seen = new Set<string>();
+  const place = (id: string, ox: number, oz: number) => {
+    for (const t of prefabById(id)?.blocks ?? []) {
+      const x = t.dx + ox, y = t.dy, z = t.dz + oz, k = BLOCKS.findIndex((b) => b.id === t.k);
+      if (x < 0 || z < 0 || x > 63 || z > 63 || y < 0 || y > 63 || k < 0 || seen.has(`${x},${y},${z}`)) continue;
+      seen.add(`${x},${y},${z}`); out.push(x, y, z, k);
+    }
+  };
+  place("watchtower", 2, 2); place("watchtower", 54, 2); place("watchtower", 2, 54); place("watchtower", 54, 54);
+  place("hall", 4, 40); place("oak", 46, 30); place("fountain", 40, 8);
+  let s = ""; for (const n of out) s += String.fromCharCode(n);
+  return btoa(s);
+}
+
 /** Test-only fetch stub injected ahead of the V8 page: fakes this Guardian's children. */
 function beaconMock(mode: "live" | "none"): string {
   const kids = mode === "live" ? ["mockchild0i0", "mockbeacon0i0"] : ["mockchild0i0"];
-  return `<script>(function(){var of=window.fetch.bind(window),K=${JSON.stringify(kids)},SP=${JSON.stringify(MOCK_SP)};
+  return `<script>(function(){var of=window.fetch.bind(window),K=${JSON.stringify(kids)},SP=${JSON.stringify(MOCK_SP)},B=${JSON.stringify(mockBuildB64())};
 function R(b,ct){return Promise.resolve(new Response(b,{status:200,headers:{"content-type":ct}}))}
 window.fetch=function(u){u=String(u);
  if(u.indexOf("/r/children/9d1da99c")===0){var S=[];for(var q=0;q<140;q++)S.push(((q*2654435761)>>>0).toString(16).padStart(8,"0")+"mocksibling"+q+"i0");return R(JSON.stringify({ids:S,more:false,page:0}),"application/json")}
+ if(u.indexOf("/r/inscription/")===0)return R(JSON.stringify({sat:1234567890,id:"x"}),"application/json");
+ if(u.indexOf("/r/sat/")===0)return R(JSON.stringify({id:"mockbuild0i0"}),"application/json");
+ if(u==="/content/mockbuild0i0")return R('<div data-b="'+B+'"></div>',"text/html");
  if(u.indexOf("/r/children/")===0)return R(JSON.stringify({ids:K,more:false,page:0}),"application/json");
  if(u==="/content/mockbeacon0i0")return R("BW-BEACON-1 "+SP,"text/plain");
  if(u==="/content/mockchild0i0")return R("gm","text/plain");

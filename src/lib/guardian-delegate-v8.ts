@@ -129,10 +129,17 @@ var _dl8s=drawLand;drawLand=function(pulse){if(LAND&&COLL&&COLL.ids&&COLL.ids.le
   for(i=0;i<n;i++){var id=ids[Math.floor(i*ids.length/n)];if(id===SELF)continue;var a=i/n*Math.PI*2,x=Math.cos(a)*R,z=Math.sin(a)*R;
     var dp=P3(x,0,z)[2];if(dp<c0)far.push([dp,x,z,id,i])}
   far.sort(function(p,q){return p[0]-q[0]});g.lineWidth=.5;
-  for(i=0;i<far.length;i++){var f=far[i],col=sibHex(f[3]),bob=Math.sin(tt*1.2+f[4])*hs*.15;
-    cube([f[1],hs*.3,f[2],hs*1.6,hs*.6,hs*1.6,"#3a2a14",0,0,0],"#3a2a14",0,pulse);
-    cube([f[1],hs*1.6+bob,f[2],hs,hs*2,hs,col,.4,0,0],col,.4,pulse);
-    cube([f[1],hs*3.1+bob,f[2],hs*.8,hs*.8,hs*.8,col,.6,0,0],col,.6,pulse)}
+  for(i=0;i<far.length;i++){var f=far[i],sid=String(f[3]),col=sibHex(sid),acc="#"+sid.slice(6,12),hh=parseInt(sid.slice(12,14),16)||0,
+      X=f[1],Z=f[2],bob=Math.sin(tt*1.2+f[4])*hs*.12,q=function(dx,y,dz,w,h,d,c,gl){cube([X+dx*hs,y*hs,Z+dz*hs,w*hs,h*hs,d*hs,c,gl,0,0],c,gl,pulse)},
+      bip=hh%3==0,leg=Math.sin(tt*2+f[4])*.15;
+    q(0,.15,0,2.6,.3,2.6,"#3a2a14",0);
+    if(bip){q(-.35,.9+leg,0,.4,1.2,.4,col,0);q(.35,.9-leg,0,.4,1.2,.4,col,0);
+      q(0,2.1+bob/hs,0,1.2,1.4,.9,col,.3);q(0,3.2+bob/hs,.15,.9,.8,.9,col,.4);q(0,3.2+bob/hs,.65,.5,.35,.4,acc,.3);
+      q(-.8,2.2+bob/hs,0,.3,1,.3,acc,.2);q(.8,2.2+bob/hs,0,.3,1,.3,acc,.2)}
+    else{for(var lg=0;lg<4;lg++)q(lg<2?-.5:.5,.75+(lg%2?leg:-leg),lg%2?.6:-.6,.35,.9,.35,col,0);
+      q(0,1.5+bob/hs,0,1.5,.9,2,col,.3);q(0,2.1+bob/hs,1.2,.9,.8,.9,col,.4);q(0,2,1.75,.5,.35,.4,acc,.3);
+      q(0,1.6,-1.3,.3,.3,.9,acc,.2)}
+    if(hh&4){q(-.3,bip?3.8:2.7,bip?.15:1.2,.15,.5,.15,acc,.6);q(.3,bip?3.8:2.7,bip?.15:1.2,.15,.5,.15,acc,.6)}}
   g.shadowBlur=0}
   _dl8s(pulse)};
 /* Swarm telemetry: how the collection is forming on chain (children of the root, in inscription order). */
