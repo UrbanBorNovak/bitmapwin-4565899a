@@ -32,7 +32,7 @@ function citadelPrep(B){var occ={},i,b,key=function(x,y,z){return x+","+y+","+z}
 function citadelLoad(tries){
   if(!BMP){if(tries<40)setTimeout(function(){citadelLoad(tries+1)},500);return}
   j("/r/inscription/"+BMP).then(function(ins){if(!ins||ins.sat==null)throw 0;return t("/r/sat/"+ins.sat+"/at/-1")})
-  .then(function(r){var id=String(r).replace(/[^a-f0-9i]/gi,"");if(!id||id===BMP)throw 0;return t("/content/"+id)})
+  .then(function(r){var id=(String(r).match(/[0-9a-f]{64}i\d+/)||[""])[0];if(!id||id===BMP)throw 0;return t("/content/"+id)})
   .then(function(h){var m=h.match(/<script id="bwvx"[^>]*>([\s\S]*?)<\/script>/)||h.match(/data-b="([A-Za-z0-9+\/=]+)"/);if(!m)return;
     var B=unpackBWVX(atob(m[1].replace(/\s/g,"")));if(B.length)CIT=citadelPrep(B)}).catch(function(){})}
 function shade(h,f){var n=parseInt(h.slice(1),16);return"rgb("+[(n>>16)&255,(n>>8)&255,n&255].map(function(v){return Math.round(v*f)}).join(",")+")"}
