@@ -1,8 +1,8 @@
 # Roadmap
 
 ## On-chain baby prompt details
-- [ ] Include each loaded pet's own palette and body geometry in every copied prompt.
-- [ ] Verify both pet inscription formats, late loading, and missing design fields without outside lookups.
+- [x] Include each loaded pet's own palette and body geometry in every copied prompt.
+- [x] Verify both inscription formats, late loading and missing fields in three passing tests; desktop copying checked with a mocked clipboard and phone panel inspected.
 
 ## Guardian popup recovery
 - [x] Keep the Guardian popup within the visible window and above bottom navigation.
