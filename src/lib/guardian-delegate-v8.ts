@@ -24,11 +24,12 @@ function unpackBWVX(r){var B=[],c=function(i){return r.charCodeAt(i)};
   else for(var k=0;k+3<r.length;k+=4)B.push([c(k),c(k+1),c(k+2),c(k+3)]);return B}
 function citadelPrep(B){var occ={},i,b,key=function(x,y,z){return x+","+y+","+z};
   for(i=0;i<B.length;i++){b=B[i];occ[key(b[0],b[1],b[2])]=1}
-  var S=[],mx=0;for(i=0;i<B.length;i++){b=B[i];if(occ[key(b[0],b[1]+1,b[2])])continue;
-    var ao=0;for(var dx=-1;dx<2;dx++)for(var dz=-1;dz<2;dz++)if((dx||dz)&&occ[key(b[0]+dx,b[1]+1,b[2]+dz)])ao++;
-    S.push([b[0],b[1],b[2],b[3],Math.max(.62,1-ao*.06)]);if(b[0]>mx)mx=b[0];if(b[2]>mx)mx=b[2]}
-  S.sort(function(p,q){return(p[1]-q[1])||((p[0]+p[2])-(q[0]+q[2]))});
-  return{s:S.slice(0,6000),span:SPN||(mx>63?128:64)}}
+  /* face mask bits: 1 top, 2 +z, 4 +x, 8 -z, 16 -x; voxels with no open face are skipped */
+  var S=[],mx=0;for(i=0;i<B.length;i++){b=B[i];var X=b[0],Y=b[1],Z=b[2];if(X>mx)mx=X;if(Z>mx)mx=Z;
+    var f=(occ[key(X,Y+1,Z)]?0:1)|(occ[key(X,Y,Z+1)]?0:2)|(occ[key(X+1,Y,Z)]?0:4)|(occ[key(X,Y,Z-1)]?0:8)|(occ[key(X-1,Y,Z)]?0:16);if(!f)continue;
+    var ao=0;for(var dx=-1;dx<2;dx++)for(var dz=-1;dz<2;dz++)if((dx||dz)&&occ[key(X+dx,Y+1,Z+dz)])ao++;
+    S.push([X,Y,Z,b[3],Math.max(.62,1-ao*.06),f])}
+  return{s:S.slice(0,12000),span:SPN||(mx>63?128:64)}}
 var CBM=null,SPN=0,IDR=/^[0-9a-f]{64}i\d+$/;
 /* minimal CBOR (maps/strings/ints/bytes) for Tag 5 metadata, same as the Land Forge master */
 function cbor(b){var i=0;function L(a){if(a<24)return a;if(a==24)return b[i++];if(a==25){i+=2;return b[i-2]<<8|b[i-1]}if(a==26){i+=4;return(b[i-4]<<24>>>0)+(b[i-3]<<16)+(b[i-2]<<8)+b[i-1]}return 0}
@@ -62,10 +63,15 @@ function citadelLoad(tries){
     (function next(){if(k>=ids.length)return;SPN=0;buildOf(ids[k++]).then(function(B){if(B&&B.length)CIT=citadelPrep(B);else next()})})()}).catch(function(){})}
 function shade(h,f){var n=parseInt(h.slice(1),16);return"rgb("+[(n>>16)&255,(n>>8)&255,n&255].map(function(v){return Math.round(v*f)}).join(",")+")"}
 var _dl8=drawLand;
-drawLand=function(pulse){_dl8(pulse);if(!CIT||!LAND)return;var L=LAND,u=2*L.half/CIT.span,o=-L.half,i;
-  for(i=0;i<CIT.s.length;i++){var v=CIT.s[i],x=o+v[0]*u,z=o+v[2]*u,y=(v[1]+1)*u,c=CITP[v[3]]||CITP[0];
-    var a=P3(x,y,z),b=P3(x+u,y,z),cc=P3(x+u,y,z+u),d=P3(x,y,z+u),e=P3(x,y-u,z+u),f=P3(x+u,y-u,z+u);
-    poly([d,cc,f,e],shade(c[1],.7*v[4]));poly([a,b,cc,d],shade(c[0],v[4]))}};
+/* full cubes for every exposed voxel (same look as the build's own on-chain viewer): faces facing the camera, painter-sorted each frame */
+var CFACE=[[[0,1,0],[1,1,0],[1,1,1],[0,1,1],0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1],1,.8],[[1,0,0],[1,0,1],[1,1,1],[1,1,0],1,.62],[[0,0,0],[1,0,0],[1,1,0],[0,1,0],1,.7],[[0,0,0],[0,0,1],[0,1,1],[0,1,0],1,.55]];
+drawLand=function(pulse){_dl8(pulse);if(!CIT||!LAND)return;var L=LAND,u=2*L.half/CIT.span,o=-L.half,i,k,S=CIT.s,Q=[];
+  for(i=0;i<S.length;i++){var v=S[i],x=o+v[0]*u,z=o+v[2]*u,y=v[1]*u;Q.push([P3(x+u/2,y+u/2,z+u/2)[2],x,y,z,v])}
+  Q.sort(function(p,q){return q[0]-p[0]});
+  for(i=0;i<Q.length;i++){var w=Q[i],vv=w[4],c=CITP[vv[3]]||CITP[0];
+    for(k=0;k<5;k++){if(!(vv[5]&(1<<k)))continue;var F=CFACE[k],pp=[F[0],F[1],F[2],F[3]].map(function(p){return P3(w[1]+p[0]*u,w[2]+p[1]*u,w[3]+p[2]*u)});
+      var ar=(pp[1][0]-pp[0][0])*(pp[2][1]-pp[0][1])-(pp[1][1]-pp[0][1])*(pp[2][0]-pp[0][0]);if(k&&k<3?ar>0:k?ar<0:false)continue;
+      poly(pp,shade(F[4]?c[1]:c[0],F[5]*(k?1:vv[4])))}}};
 setTimeout(function(){citadelLoad(0)},1200);
 /* readable HUD cards: 11px floor, near-solid panels, brighter labels, roomier rows; both start closed */
 function hudBox(x,y,w,h,edge){g.globalAlpha=LM?.96:.92;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x,y,w,h);
