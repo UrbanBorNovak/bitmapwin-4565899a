@@ -7,6 +7,7 @@ import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TR
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
 import { guardianMasterGeneratorHtmlV8 } from "@/lib/guardian-delegate-v8";
+import { guardianMasterGeneratorHtmlV8Three, guardianV8ThreeByteSize } from "@/lib/guardian-delegate-v8-three";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
 
 
@@ -185,6 +186,10 @@ function V8ComparePanel() {
 V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleString()})`}
       </pre>
       <button type="button" className="mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={download}>DOWNLOAD V8 DRAFT .HTML</button>
+      <button type="button" className="ml-2 mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={() => {
+        const url = URL.createObjectURL(new Blob([guardianMasterGeneratorHtmlV8Three()], { type: "text/html" }));
+        const a = document.createElement("a"); a.href = url; a.download = "guardian-master-v8-three.html"; a.click(); URL.revokeObjectURL(url);
+      }}>DOWNLOAD V8 · THREE.JS ON-CHAIN .HTML ({guardianV8ThreeByteSize().toLocaleString()} BYTES)</button>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {[["V7 · ACTIVE", v7], ["V8 · DRAFT", v8]].map(([label, html]) => (
           <div key={label}>
