@@ -130,6 +130,7 @@ export const HOUSE_PREFABS: Prefab[] = [
   ...biomePresets(),
   { id: "parthenon", name: "The Parthenon", sphere: "kingdom", blocks: dedupe(parthenon()) },
   { id: "tholos", name: "Tholos of Delphi", sphere: "kingdom", blocks: dedupe(tholos()) },
+  { id: "kremlin", name: "Moscow Kremlin", sphere: "kingdom", blocks: dedupe(kremlin()) },
 ];
 export const prefabById = (id: string) => HOUSE_PREFABS.find((p) => p.id === id);
 
@@ -193,6 +194,101 @@ function tholos() {
   s.put(C, 15, C, "gold");
   s.put(C, 3, C, "gold"); s.put(C, 4, C, "glow");
   return s.out;
+}
+
+// ---- RUSSIAN LANDMARK ----
+/** Moscow Kremlin: triangular-ish red fortress (square here), swallowtail merlons, 8 tent-roof towers,
+ *  Spasskaya clock tower, Ivan the Great bell tower, cathedral with five gold onion domes. Solid fill, 62×62. */
+function kremlin() {
+  const s = b();
+  const N = 61;
+  // ground plaza
+  s.box(0, N, 0, 0, 0, N, "cobble");
+  s.box(4, N - 4, 1, 1, 4, N - 4, "stone");
+  // solid red walls (3 thick, 12 high) with white belt and swallowtail merlons
+  const wall = (x0: number, x1: number, z0: number, z1: number) => {
+    s.box(x0, x1, 1, 12, z0, z1, "brick");
+    s.box(x0, x1, 6, 6, z0, z1, "stone");
+    const along = x1 - x0 > z1 - z0;
+    const len = along ? x1 - x0 : z1 - z0;
+    for (let i = 0; i <= len; i += 3) {
+      const x = along ? x0 + i : x0, z = along ? z0 : z0 + i;
+      const xe = along ? x : x1, ze = along ? z1 : z;
+      s.box(x, xe, 13, 14, z, ze, "brick");
+      if (along) { s.put(x, 15, z, "brick"); s.put(x, 15, z1, "brick"); }
+      else { s.put(x0, 15, z, "brick"); s.put(x1, 15, z, "brick"); }
+    }
+  };
+  wall(2, N - 2, 2, 4); wall(2, N - 2, N - 4, N - 2); wall(2, 4, 2, N - 2); wall(N - 4, N - 2, 2, N - 2);
+  // tent-roof tower helper (solid)
+  const tower = (cx: number, cz: number, r: number, h: number, round = false) => {
+    for (let x = cx - r; x <= cx + r; x++) for (let z = cz - r; z <= cz + r; z++) {
+      if (round && Math.hypot(x - cx, z - cz) > r + 0.4) continue;
+      for (let y = 1; y <= h; y++) s.put(x, y, z, y % 7 === 0 ? "stone" : "brick");
+    }
+    for (let x = cx - r - 1; x <= cx + r + 1; x++) for (let z = cz - r - 1; z <= cz + r + 1; z++) s.put(x, h + 1, z, "stone");
+    let y = h + 2;
+    for (let k = r; k >= 0; k--, y += 2) { s.box(cx - k, cx + k, y, y + 1, cz - k, cz + k, "grass"); }
+    s.box(cx, cx, y, y + 1, cz, cz, "gold"); s.put(cx, y + 2, cz, "glow");
+  };
+  for (const [x, z] of [[3, 3], [N - 3, 3], [3, N - 3], [N - 3, N - 3]] as const) tower(x, z, 4, 18, true);
+  for (const [x, z] of [[N / 2 + 0.5, N - 3], [3, N / 2 + 0.5], [N - 3, N / 2 + 0.5]] as const) tower(Math.round(x), Math.round(z), 3, 16);
+  // Spasskaya tower on the front wall (z = 3): base, gate, clock, tiers, spire, star
+  const sx = 30;
+  s.box(sx - 5, sx + 5, 1, 24, 0, 7, "brick");
+  s.cut((t) => t.dx >= sx - 2 && t.dx <= sx + 2 && t.dy >= 1 && t.dy <= 7 && t.dz <= 7);
+  for (let y = 3; y <= 23; y += 5) for (const x of [sx - 5, sx + 5]) s.box(x, x, y, y + 1, 0, 7, "stone");
+  s.box(sx - 6, sx + 6, 25, 26, 0, 8, "stone");
+  s.box(sx - 4, sx + 4, 27, 34, 0, 7, "brick");
+  for (let x = sx - 2; x <= sx + 2; x++) for (let y = 29; y <= 33; y++) s.put(x, y, -0, Math.hypot(x - sx, y - 31) < 1.2 ? "gold" : "glass");
+  s.put(sx, 31, 0, "glow");
+  s.box(sx - 3, sx + 3, 35, 40, 1, 6, "stone");
+  for (let k = 3, y = 41; k >= 0; k--, y += 3) s.box(sx - k, sx + k, y, y + 2, 3 - Math.min(k, 3) + 0, 3 + k, "grass");
+  s.box(sx, sx, 53, 56, 3, 3, "gold"); s.box(sx - 1, sx + 1, 57, 57, 3, 3, "glow"); s.box(sx, sx, 56, 58, 3, 3, "glow");
+  // onion dome helper (solid)
+  const onion = (cx: number, cz: number, by: number, R: number, k: BlockId) => {
+    for (let y = 0; y <= R * 2 + 2; y++) {
+      const t = y / (R * 2 + 2);
+      const rr = t < 0.55 ? R * Math.sin((t / 0.55) * Math.PI * 0.62 + 0.5) : R * (1 - (t - 0.55) / 0.45) * 0.95;
+      for (let x = Math.floor(cx - R - 1); x <= cx + R + 1; x++) for (let z = Math.floor(cz - R - 1); z <= cz + R + 1; z++)
+        if (Math.hypot(x - cx, z - cz) <= rr) s.put(x, by + y, z, k);
+    }
+    s.box(cx, cx, by + R * 2 + 3, by + R * 2 + 6, cz, cz, "gold");
+    s.box(cx - 1, cx + 1, by + R * 2 + 5, by + R * 2 + 5, cz, cz, "gold");
+  };
+  // Cathedral of the Assumption: white block, drums, five gold domes
+  const cx = 22, cz = 34;
+  s.box(cx - 8, cx + 8, 2, 16, cz - 7, cz + 7, "stone");
+  for (let x = cx - 6; x <= cx + 6; x += 4) for (const z of [cz - 7, cz + 7]) s.box(x, x + 1, 8, 13, z, z, "glass");
+  for (let x = cx - 8; x <= cx + 8; x += 4) s.box(x, x + 3, 17, 18, cz - 7, cz + 7, x % 8 ? "gold" : "stone");
+  const drum = (x: number, z: number, r: number, h: number) => {
+    for (let a = x - r; a <= x + r; a++) for (let c = z - r; c <= z + r; c++) if (Math.hypot(a - x, c - z) <= r + 0.3) s.box(a, a, 19, 19 + h, c, c, "stone");
+  };
+  drum(cx, cz, 3, 6); onion(cx, cz, 26, 4, "gold");
+  for (const [dx, dz] of [[-5, -4], [5, -4], [-5, 4], [5, 4]] as const) { drum(cx + dx, cz + dz, 2, 4); onion(cx + dx, cz + dz, 24, 3, "gold"); }
+  // Ivan the Great bell tower: stacked octagons to ~52
+  const ix = 42, iz = 40;
+  const oct = (r: number, y0: number, y1: number, k: BlockId) => { for (let x = ix - r; x <= ix + r; x++) for (let z = iz - r; z <= iz + r; z++) if (Math.abs(x - ix) + Math.abs(z - iz) <= r * 1.5) s.box(x, x, y0, y1, z, z, k); };
+  oct(5, 2, 14, "stone"); oct(6, 15, 15, "gold"); oct(4, 16, 26, "stone"); oct(5, 27, 27, "gold"); oct(3, 28, 37, "stone"); oct(4, 38, 38, "gold");
+  s.cut((t) => t.dy >= 30 && t.dy <= 34 && (Math.abs(t.dx - ix) === 3 || Math.abs(t.dz - iz) === 3) && Math.abs(t.dx - ix) + Math.abs(t.dz - iz) <= 4);
+  s.box(ix, ix, 32, 33, iz, iz, "gold");
+  onion(ix, iz, 39, 3, "gold");
+  // St Basil-style colourful domes cluster near the gate
+  const bx = 44, bz = 16;
+  s.box(bx - 6, bx + 6, 2, 10, bz - 6, bz + 6, "brick");
+  for (const [dx, dz, R, k] of [[0, 0, 3, "gold"], [-4, -4, 2, "grass"], [4, -4, 2, "glass"], [-4, 4, 2, "brick"], [4, 4, 2, "sand"]] as const) {
+    const x = bx + dx, z = bz + dz; drum(x, z, R - 1 || 1, 0);
+    for (let a = x - R; a <= x + R; a++) for (let c = z - R; c <= z + R; c++) if (Math.hypot(a - x, c - z) <= R) s.box(a, a, 11, 15 + R * 2, c, c, "stone");
+    onion(x, z, 16 + R * 2, R + 1, k as BlockId);
+  }
+  // Grand Kremlin Palace along the back
+  s.box(10, 50, 2, 14, 46, 56, "sand");
+  for (let x = 12; x <= 48; x += 3) for (const y of [4, 9]) s.box(x, x + 1, y, y + 2, 46, 46, "glass");
+  s.box(10, 50, 15, 16, 46, 56, "grass");
+  s.box(26, 34, 17, 20, 48, 54, "sand"); onion(30, 51, 21, 2, "gold");
+  // Red Square lamps
+  for (let x = 8; x <= N - 8; x += 6) s.put(x, 2, 8, "glow");
+  return s.out.filter((t) => t.dx >= 0 && t.dz >= 0 && t.dx < FORGE_SPAN && t.dz < FORGE_SPAN);
 }
 
 // ---- OASIS & BIOMES: premium house presets, 10–25 BIT per stamp ----
