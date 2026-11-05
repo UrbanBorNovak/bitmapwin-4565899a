@@ -93,7 +93,7 @@ try{
     const sh=SHOWERS.find(s=>s[0]===m&&day>=s[1]&&day<=s[2]);
     return{age,phase:PHASES[Math.floor((age/29.530588853*8+.5))%8],z:zodiac(d),shower:sh?sh[3]:"",blood:BLOODMOON.includes(iso),ecl:SOLARECL.includes(iso)}};
   let SKY=skyNow();setInterval(()=>{SKY=skyNow()},6e4);
-  function sky(put,t){const s=SKY,MX=-16,MY=11,MZ=-18,R=3.2,k=Math.cos(s.age/29.530588853*Math.PI*2),wax=s.age<14.765;
+  function sky(put,t){const s=SKY,MX=-20,MY=6,MZ=-20,R=3.2,k=Math.cos(s.age/29.530588853*Math.PI*2),wax=s.age<14.765;
     /* moon disc of voxels, lit side by phase; blood moon tints the whole disc; solar eclipse = black disc + corona */
     for(let iy=-3;iy<=3;iy++)for(let ix=-3;ix<=3;ix++){const x=ix/R,y=iy/R;if(x*x+y*y>1)continue;const xt=k*Math.sqrt(1-y*y);
       const lit=s.ecl?false:s.blood?true:(wax?x>xt:x<-xt);
