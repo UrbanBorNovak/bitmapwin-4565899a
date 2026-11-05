@@ -212,6 +212,7 @@ function beaconMock(mode: "live" | "none"): string {
   return `<script>(function(){var of=window.fetch.bind(window),K=${JSON.stringify(kids)},SP=${JSON.stringify(MOCK_SP)};
 function R(b,ct){return Promise.resolve(new Response(b,{status:200,headers:{"content-type":ct}}))}
 window.fetch=function(u){u=String(u);
+ if(u.indexOf("/r/children/9d1da99c")===0){var S=[];for(var q=0;q<140;q++)S.push(((q*2654435761)>>>0).toString(16).padStart(8,"0")+"mocksibling"+q+"i0");return R(JSON.stringify({ids:S,more:false,page:0}),"application/json")}
  if(u.indexOf("/r/children/")===0)return R(JSON.stringify({ids:K,more:false,page:0}),"application/json");
  if(u==="/content/mockbeacon0i0")return R("BW-BEACON-1 "+SP,"text/plain");
  if(u==="/content/mockchild0i0")return R("gm","text/plain");
