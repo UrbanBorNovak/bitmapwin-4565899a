@@ -29,7 +29,7 @@ function citadelPrep(B){var occ={},i,b,key=function(x,y,z){return x+","+y+","+z}
     S.push([b[0],b[1],b[2],b[3],Math.max(.62,1-ao*.06)]);if(b[0]>mx)mx=b[0];if(b[2]>mx)mx=b[2]}
   S.sort(function(p,q){return(p[1]-q[1])||((p[0]+p[2])-(q[0]+q[2]))});
   return{s:S.slice(0,6000),span:SPN||(mx>63?128:64)}}
-var SPN=0,IDR=/^[0-9a-f]{64}i\d+$/;
+var CBM=null,SPN=0,IDR=/^[0-9a-f]{64}i\d+$/;
 /* minimal CBOR (maps/strings/ints/bytes) for Tag 5 metadata, same as the Land Forge master */
 function cbor(b){var i=0;function L(a){if(a<24)return a;if(a==24)return b[i++];if(a==25){i+=2;return b[i-2]<<8|b[i-1]}if(a==26){i+=4;return(b[i-4]<<24>>>0)+(b[i-3]<<16)+(b[i-2]<<8)+b[i-1]}return 0}
   function I(){var x=b[i++],t=x>>5,a=x&31,n,s,k,o;if(t==0)return L(a);if(t==1)return-1-L(a);
@@ -53,8 +53,8 @@ function buildOf(id){return metaOf(id).then(function(m){if(m&&/^BWVX/.test(m.f||
       return pieceOf(s[0]).then(function(V){return placeP(V,n[0],n[1],n[2],n[3],sp)})})).then(function(all){all.forEach(function(v){B=B.concat(v)});return B})})})}
 function citadelLoad(tries){
   /* the BITMAP: the verified Tag 3 parent, else the canonical OCI id for this Guardian's block (Guardians inscribed under the root only) */
-  var bm=BMP||BID;
-  if(!bm){if(typeof G!=="undefined"&&G&&G.h!=null&&tries>=6){bitmapId(G.h).then(function(id){if(id&&IDR.test(id)){BMP=BMP||id;citadelLoad(tries+1)}}).catch(function(){});return}
+  var bm=BMP||BID||CBM;
+  if(!bm){if(typeof G!=="undefined"&&G&&G.h!=null&&tries>=6){bitmapId(G.h).then(function(id){if(id&&IDR.test(id)){CBM=id;citadelLoad(tries+1)}}).catch(function(){});return}
     if(tries<120)setTimeout(function(){citadelLoad(tries+1)},500);return}
   /* same order the site verifies: sat's newest reinscription first, then older ones (max 8) */
   j("/r/inscription/"+bm).then(function(ins){if(!ins||ins.sat==null)throw 0;return j("/r/sat/"+ins.sat)})
