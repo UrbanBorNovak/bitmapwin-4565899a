@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
+import { guardianMasterGeneratorHtmlV8 } from "@/lib/guardian-delegate-v8";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
 
 
@@ -101,6 +102,7 @@ function DevToolsPage() {
       </div>
 
       <CollectionParentPanel />
+      <V8ComparePanel />
       <MasterGeneratorPanel version="v7" />
       <MasterGeneratorPanel version="v6" />
 
@@ -153,6 +155,46 @@ STATUS               ${d?.ready ? "READY" : d?.reason ?? (q.isLoading ? "CHECKIN
 }
 
 
+
+/** Draft V8 beside active V7 — preview only, nothing is inscribed from here. */
+function V8ComparePanel() {
+  const v7 = useMemo(() => guardianMasterGeneratorHtmlV7(), []);
+  const v8 = useMemo(() => guardianMasterGeneratorHtmlV8(), []);
+  const size = (s: string) => new TextEncoder().encode(s).length;
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([v8], { type: "text/html" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "guardian-master-v8-draft.html";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <section className="mt-8 border border-border p-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="display text-xl">V7 vs V8 DRAFT · SIDE BY SIDE</h2>
+        <DataBadge kind="soon" note="V8 NOT INSCRIBED · V7 STAYS ACTIVE" />
+      </div>
+      <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        V8 adds the Land Forge build under the Guardian. Outside an ordinals explorer both show the stone relic, so the
+        build only appears when the page can read its BITMAP parent on chain.
+      </p>
+      <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
+{`V7   ${size(v7).toLocaleString()} BYTES
+V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleString()})`}
+      </pre>
+      <button type="button" className="mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={download}>DOWNLOAD V8 DRAFT .HTML</button>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {[["V7 · ACTIVE", v7], ["V8 · DRAFT", v8]].map(([label, html]) => (
+          <div key={label}>
+            <div className="label text-signal">{label}</div>
+            <iframe title={label} srcDoc={html} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /** The single master inscription every tiny Guardian delegate mint renders with. */
 function MasterGeneratorPanel({ version }: { version: "v6" | "v7" }) {
