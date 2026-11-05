@@ -16,11 +16,9 @@
 import { guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
 import { BLOCKS } from "@/lib/voxel-world";
 
-const PALETTE = BLOCKS.map((b) => [b.top, b.side]);
-
-const V8_BLOCK = String.raw`
+const v8Block = () => String.raw`
 /* ================= V8 ================= */
-var CIT=null,CITP=${JSON.stringify(PALETTE)};
+var CIT=null,CITP=${JSON.stringify(BLOCKS.map((b) => [b.top, b.side]))};
 function unpackBWVX(r){var B=[],c=function(i){return r.charCodeAt(i)};
   if(r.length>3&&c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(var i=4;i+6<r.length;i+=7)for(var x=c(i);x<=c(i+3);x++)for(var y=c(i+1);y<=c(i+4);y++)for(var z=c(i+2);z<=c(i+5);z++)B.push([x,y,z,c(i+6)])}
   else for(var k=0;k+3<r.length;k+=4)B.push([c(k),c(k+1),c(k+2),c(k+3)]);return B}
@@ -59,7 +57,7 @@ export function guardianMasterGeneratorHtmlV8(): string {
   let s = guardianMasterGeneratorHtmlV7();
   s = swap(s, "<title>BLOCK-DNA GUARDIAN V7</title>", "<title>BLOCK-DNA GUARDIAN V8</title>");
   s = swap(s, "MASTER CODE DELEGATE V7", "MASTER CODE DELEGATE V8");
-  s = swap(s, "bar();fit();requestAnimationFrame(frame);", V8_BLOCK + "bar();fit();requestAnimationFrame(frame);");
+  s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
 }
