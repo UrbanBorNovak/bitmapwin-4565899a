@@ -342,7 +342,6 @@ function aiPanel(){if(AIPT){AIPT.remove();AIPT=null}if(!AIPON)return;var d=docum
     var b=document.createElement("button");b.textContent="COPY";b.style.cssText="background:#f7931a;color:#04060a;border:0;padding:4px 10px;font:bold 11px monospace;cursor:pointer";b.onclick=function(){aiCopy(p[1],b)};t.appendChild(b);
     var q=document.createElement("div");q.style.cssText="color:#e6edf2;margin-top:4px;word-break:break-word";q.textContent=p[1];r.appendChild(t);r.appendChild(q);d.appendChild(r)});
   document.body.appendChild(d)}
-setTimeout(function(){var b=document.getElementById("bwai"),d=b&&b.parentNode;if(d){d.style.flexWrap="wrap";d.style.justifyContent="flex-end";d.style.maxWidth="95vw";[].forEach.call(d.children,function(k){k.style.whiteSpace="nowrap"})}},0);
 addEventListener("keydown",function(e){if(e.key==="Escape"&&AIPON){AIPON=false;aiPanel();aiLbl()}});
 `;
 
@@ -363,6 +362,7 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button"),sb=document.createElement("button"),ab=document.createElement("button");');
   s = swap(s, '"TIMELINE +"}', '"TIMELINE +";sb.textContent=SWARMON?"SWARM \u00D7":"SWARM +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.id="bwcb";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
   s = swap(s, "[mb,tb].forEach", "[mb,tb,sb,pb,rb,ab,cb].forEach");
+  s = swap(s, 'top:2.5%;display:flex;gap:4px;z-index:4"', 'top:2.5%;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:95vw;gap:4px;z-index:4"');
   s = swap(s, 'padding:4px 7px;cursor:pointer";d.appendChild(b)', 'padding:4px 7px;cursor:pointer;white-space:nowrap;flex:none";d.appendChild(b)');
   s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON){GTLON=false;LASTP=\"s\"}label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;if(TRIBUTEON)LASTP=\"t\";label()};ab.id=\"bwai\";ab.textContent=\"PROMPT +\";ab.onclick=function(e){e.stopPropagation();AIPON=!AIPON;aiPanel();aiLbl()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
