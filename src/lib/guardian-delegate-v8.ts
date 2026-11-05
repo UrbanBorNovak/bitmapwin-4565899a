@@ -52,10 +52,13 @@ function buildOf(id){return metaOf(id).then(function(m){if(m&&/^BWVX/.test(m.f||
     return Promise.all(segs.map(function(sg){var s=sg.split("@"),n=(s[1]||"").split(",").map(Number);if(!IDR.test(s[0])||n.length<4)return[];
       return pieceOf(s[0]).then(function(V){return placeP(V,n[0],n[1],n[2],n[3],sp)})})).then(function(all){all.forEach(function(v){B=B.concat(v)});return B})})})}
 function citadelLoad(tries){
-  if(!BMP){if(tries<40)setTimeout(function(){citadelLoad(tries+1)},500);return}
+  /* the BITMAP: the verified Tag 3 parent, else the canonical OCI id for this Guardian's block (Guardians inscribed under the root only) */
+  var bm=BMP||BID;
+  if(!bm){if(typeof G!=="undefined"&&G&&G.h!=null&&tries>=6){bitmapId(G.h).then(function(id){if(id&&IDR.test(id)){BMP=BMP||id;citadelLoad(tries+1)}}).catch(function(){});return}
+    if(tries<120)setTimeout(function(){citadelLoad(tries+1)},500);return}
   /* same order the site verifies: sat's newest reinscription first, then older ones (max 8) */
-  j("/r/inscription/"+BMP).then(function(ins){if(!ins||ins.sat==null)throw 0;return j("/r/sat/"+ins.sat)})
-  .then(function(r){var ids=((r&&r.ids)||[]).slice().reverse().filter(function(x){return x!==BMP&&IDR.test(x)}).slice(0,8),k=0;
+  j("/r/inscription/"+bm).then(function(ins){if(!ins||ins.sat==null)throw 0;return j("/r/sat/"+ins.sat)})
+  .then(function(r){var ids=((r&&r.ids)||[]).slice().reverse().filter(function(x){return x!==bm&&IDR.test(x)}).slice(0,8),k=0;
     (function next(){if(k>=ids.length)return;SPN=0;buildOf(ids[k++]).then(function(B){if(B&&B.length)CIT=citadelPrep(B);else next()})})()}).catch(function(){})}
 function shade(h,f){var n=parseInt(h.slice(1),16);return"rgb("+[(n>>16)&255,(n>>8)&255,n&255].map(function(v){return Math.round(v*f)}).join(",")+")"}
 var _dl8=drawLand;
