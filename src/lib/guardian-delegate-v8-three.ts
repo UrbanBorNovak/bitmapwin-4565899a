@@ -72,7 +72,7 @@ try{
       put([Math.sin(a)*16,3+Math.sin(t*1.5+i)*1.2+(i%3)*2,Math.cos(a)*16,.55,.55,.55],"#f7931a",1.4)}}
     if(!stone){advent(put,t);sky(put,t);chainFx(put,t);for(const f of window.BW_HOOKS.slice()){try{f(put,t)}catch(_){window.BW_HOOKS.splice(window.BW_HOOKS.indexOf(f),1)}}}
     M.count=n;M.instanceMatrix.needsUpdate=true;if(M.instanceColor)M.instanceColor.needsUpdate=true;
-    R.render(S,C);g.shadowBlur=0;g.drawImage(cv,0,0,w,h);
+    R.render(S,C);g.shadowBlur=0;if(!stone)moon2d(w,h,t);g.drawImage(cv,0,0,w,h);
     const ad=adventDay();if(ad&&!stone){const left=Math.max(1,Math.ceil((864e5-Date.now()%864e5)/36e5)),nar=w<600;
       g.font="11px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign=nar?"center":"right";
       g.fillText(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad+" \u00b7 NEXT GIFT IN "+left+"H",nar?w/2:w-12,nar?122:h-14);g.textAlign="left"}
@@ -93,12 +93,14 @@ try{
     const sh=SHOWERS.find(s=>s[0]===m&&day>=s[1]&&day<=s[2]);
     return{age,phase:PHASES[Math.floor((age/29.530588853*8+.5))%8],z:zodiac(d),shower:sh?sh[3]:"",blood:BLOODMOON.includes(iso),ecl:SOLARECL.includes(iso)}};
   let SKY=skyNow();setInterval(()=>{SKY=skyNow()},6e4);
-  function sky(put,t){const s=SKY,MX=-20,MY=6,MZ=-20,R=3.2,k=Math.cos(s.age/29.530588853*Math.PI*2),wax=s.age<14.765;
-    /* moon disc of voxels, lit side by phase; blood moon tints the whole disc; solar eclipse = black disc + corona */
+  /* moon: pinned in screen space (left, below the stats column / clear of the centre HUD) so orbiting never drags it over text */
+  function moon2d(w,h,t){const s=SKY,nar=w<600,px=nar?7:8,R=3.2,k=Math.cos(s.age/29.530588853*Math.PI*2),wax=s.age<14.765;
+    const cx=nar?w-px*5:Math.round(w*.62),cy=nar?Math.round(h*.30):Math.round(h*.30);
     for(let iy=-3;iy<=3;iy++)for(let ix=-3;ix<=3;ix++){const x=ix/R,y=iy/R;if(x*x+y*y>1)continue;const xt=k*Math.sqrt(1-y*y);
       const lit=s.ecl?false:s.blood?true:(wax?x>xt:x<-xt);
-      put([MX+ix*.9,MY+iy*.9,MZ,.9,.9,.4],s.ecl?"#05070a":s.blood?"#b3261e":lit?"#eef1e6":"#1b2230",lit?(s.blood?.9+Math.sin(t*2)*.3:1):0)}
-    if(s.ecl)for(let i=0;i<20;i++){const a=i/20*Math.PI*2+t*.2;put([MX+Math.cos(a)*3.8,MY+Math.sin(a)*3.8,MZ,.5,.5,.3],"#ffd23f",2+Math.sin(t*3+i))}
+      g.fillStyle=s.ecl?"#05070a":s.blood?"rgba(179,38,30,"+(.8+Math.sin(t*2)*.2)+")":lit?"#eef1e6":"#1b2230";g.fillRect(cx+ix*px-px/2,cy+iy*px-px/2,px-1,px-1)}
+    if(s.ecl){g.fillStyle="#ffd23f";for(let i=0;i<20;i++){const a=i/20*Math.PI*2+t*.2;g.fillRect(cx+Math.cos(a)*px*4.2-2,cy+Math.sin(a)*px*4.2-2,4,4)}}}
+  function sky(put,t){const s=SKY;
     /* zodiac season: 7 stylised stars of the current sign, fixed per sign, twinkling */
     for(let i=0;i<7;i++){const a=hr(s.z*31+i),b=hr(s.z*17+i+5);put([4+a*13,13+b*6,-18+hr(i+s.z)*3,.35,.35,.35],"#cfe8ff",1.2+Math.sin(t*2+i)*.8)}
     /* meteor shower peak: streaks across the sky */
