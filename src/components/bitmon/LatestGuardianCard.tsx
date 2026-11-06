@@ -8,7 +8,7 @@ import { GuardianName } from "@/components/bitmon/GuardianName";
 const Territory3D = lazy(() => import("@/components/BitmapTerritory3D"));
 
 /** Featured Guardian: the newest on-chain inscribed one, else the newest awakened. */
-export function LatestGuardianCard() {
+export function LatestGuardianCard({ compact = false }: { compact?: boolean } = {}) {
   const q = useQuery({ ...allGuardiansQuery(), refetchInterval: 15_000 });
   const list = q.data ?? [];
   const g = list.find((x) => x.inscriptionId) ?? list[0];
@@ -18,7 +18,7 @@ export function LatestGuardianCard() {
   if (!g) return null;
   const box = <div className="aspect-square w-full border border-border bg-background" />;
   return (
-    <div className="mt-3 border border-border bg-background p-3">
+    <div className={compact ? "grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 border border-border bg-background p-3" : "mt-3 border border-border bg-background p-3"}>
       <Link to="/bitmap/$block" params={{ block: String(g.height) }} className="block hover:opacity-90">
         <ClientOnly fallback={box}>
           <Suspense fallback={box}>
@@ -26,7 +26,8 @@ export function LatestGuardianCard() {
           </Suspense>
         </ClientOnly>
       </Link>
-      <div className={`label mt-3 flex items-center gap-2 ${g.inscriptionId ? "text-bitcoin" : "text-signal"}`}>
+      <div className="min-w-0">
+      <div className={`label ${compact ? "" : "mt-3"} flex items-center gap-2 ${g.inscriptionId ? "text-bitcoin" : "text-signal"}`}>
         <span className={`size-1.5 ${g.inscriptionId ? "bg-bitcoin" : "bg-signal"}`} aria-hidden="true" />
         {g.inscriptionId ? "FEATURED · INSCRIBED ON-CHAIN" : "LATEST GUARDIAN AWAKENED"}
       </div>
@@ -50,6 +51,7 @@ export function LatestGuardianCard() {
       >
         FIND IN OASIS
       </a>
+      </div>
     </div>
   );
 }

@@ -32,8 +32,9 @@ export function SiteFundTracker() {
   const bw = halfAt(botY, false);
 
   return (
-    <div className="mt-5 flex items-center gap-4 border border-border p-3">
-      <svg viewBox="0 0 60 100" className="h-28 w-16 shrink-0 text-bitcoin" aria-hidden="true">
+    <div className="@container mt-5 border border-border p-3">
+    <div className="flex flex-col items-start gap-3 @[15rem]:flex-row @[15rem]:items-center @[15rem]:gap-4">
+      <svg viewBox="0 0 60 100" className="h-20 w-12 shrink-0 text-bitcoin @[15rem]:h-28 @[15rem]:w-16" aria-hidden="true">
         <line x1="4" y1="5" x2="56" y2="5" className="stroke-signal" strokeWidth="2" />
         <line x1="4" y1="95" x2="56" y2="95" className="stroke-signal" strokeWidth="2" />
         <path d="M8 8 L52 8 L32 50 L52 92 L8 92 L28 50 Z" fill="none" className="stroke-border" strokeWidth="1.5" />
@@ -55,6 +56,7 @@ export function SiteFundTracker() {
         <div className="text-[10px] text-muted-foreground">{daysLeft ?? "—"} DAYS UNTIL THE GLASS TURNS</div>
         <Link to="/donate" className="mt-1 inline-flex text-xs font-bold text-bitcoin hover:text-foreground">SHARE & FUEL →</Link>
       </div>
+    </div>
     </div>
   );
 }
