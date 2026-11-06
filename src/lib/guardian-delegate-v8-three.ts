@@ -67,19 +67,56 @@ try{
     const w=Math.max(1,W),h=Math.max(1,H);if(cv.width!==Math.round(w*R.getPixelRatio()))R.setSize(w,h,false);
     C.left=-OX/SC;C.right=(w-OX)/SC;C.top=OY/SC;C.bottom=-(h-OY)/SC;
     C.position.set(SY*CP*300,SP*300,CY*CP*300);C.up.set(0,1,0);C.lookAt(0,0,0);C.updateProjectionMatrix();
-    let n=0;const put=(v,c,gl)=>{if(n>=N)return;o.position.set(v[0],v[1],v[2]);o.scale.set(Math.max(.01,v[3]),Math.max(.01,v[4]),Math.max(.01,v[5]));
-      o.updateMatrix();M.setMatrixAt(n,o.matrix);col.set(c);if(gl>0)col.lerp(new T.Color(1,1,1),Math.min(.45,gl*.18*(1+pulse*.5)));M.setColorAt(n,col);n++};
-    for(let i=0;i<VOX.length;i++){const v=anim(VOX[i],t,!stone);put(v,stone?gray.clone().lerp(dk,(i%5)/6).getStyle():v[6],stone?0:v[7])}
-    if(AGE&&!stone){const ne=Math.min(16,AGE.ep);for(let i=0;i<ne;i++){const a=i/ne*Math.PI*2+t*.25;
-      put([Math.sin(a)*16,3+Math.sin(t*1.5+i)*1.2+(i%3)*2,Math.cos(a)*16,.55,.55,.55],"#f7931a",1.4)}}
-    if(!stone){advent(put,t);sky(put,t);chainFx(put,t);for(const f of window.BW_HOOKS.slice()){try{f(put,t)}catch(_){window.BW_HOOKS.splice(window.BW_HOOKS.indexOf(f),1)}}}
-    M.count=n;M.instanceMatrix.needsUpdate=true;if(M.instanceColor)M.instanceColor.needsUpdate=true;
+    if(R.xr.isPresenting)return;
+    fill(pulse,stone,t);
     R.render(S,C);g.shadowBlur=0;if(!stone)moon2d(w,h,t);g.drawImage(cv,0,0,w,h);
     const ad=adventDay();if(ad&&!stone&&!(w<600&&h<760)){const left=Math.max(1,Math.ceil((864e5-Date.now()%864e5)/36e5)),nar=w<600;
       g.font="15px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign=nar?"center":"right";
       g.fillText(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad+" \u00b7 NEXT GIFT IN "+left+"H",nar?w/2:w-12,nar?Math.max(122,window.BW_TOPY||0):h-14);g.textAlign="left"}
     if(!stone)eventHud(w,h);
   };
+  function fill(pulse,stone,t,vr){
+    let n=0;const put=(v,c,gl)=>{if(n>=N)return;o.position.set(v[0],v[1],v[2]);o.scale.set(Math.max(.01,v[3]),Math.max(.01,v[4]),Math.max(.01,v[5]));
+      o.updateMatrix();M.setMatrixAt(n,o.matrix);col.set(c);if(gl>0)col.lerp(new T.Color(1,1,1),Math.min(.45,gl*.18*(1+pulse*.5)));M.setColorAt(n,col);n++};
+    for(let i=0;i<VOX.length;i++){const v=anim(VOX[i],t,!stone);put(v,stone?gray.clone().lerp(dk,(i%5)/6).getStyle():v[6],stone?0:v[7])}
+    if(AGE&&!stone){const ne=Math.min(16,AGE.ep);for(let i=0;i<ne;i++){const a=i/ne*Math.PI*2+t*.25;
+      put([Math.sin(a)*16,3+Math.sin(t*1.5+i)*1.2+(i%3)*2,Math.cos(a)*16,.55,.55,.55],"#f7931a",1.4)}}
+    if(!stone){advent(put,t);sky(put,t);chainFx(put,t);for(const f of window.BW_HOOKS.slice()){try{f(put,t)}catch(_){window.BW_HOOKS.splice(window.BW_HOOKS.indexOf(f),1)}}}
+    /* VR: the 2D land is painted on the canvas, so in the headset the BITMAP parcels become thin voxel tiles */
+    if(vr&&LAND&&LAND.p)for(let i=0;i<LAND.p.length&&n<N-64;i++){const q=LAND.p[i],s=Math.max(.05,q[2]-.08);put([q[0]+q[2]/2,-.06,q[1]+q[2]/2,s,.12,s],q[3],0)}
+    M.count=n;M.instanceMatrix.needsUpdate=true;if(M.instanceColor)M.instanceColor.needsUpdate=true;
+  }
+  /* ================= WebXR: stand beside your Guardian (Quest / Vision Pro / Android + viewer) =================
+     1 voxel = 10 cm. Left stick walks (head-relative), right stick snap-turns 30deg, trigger cycles stance,
+     grip = REC-free ROAR. The button appears only when navigator.xr reports immersive-vr. */
+  R.xr.enabled=true;
+  const WORLD=new T.Group();WORLD.scale.setScalar(.1);S.remove(M,FL);WORLD.add(M,FL);S.add(WORLD);
+  const RIG=new T.Group(),PC=new T.PerspectiveCamera(70,1,.05,200);RIG.add(PC);S.add(RIG);
+  const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const u=hr(i+3000)*2-1,ph=hr(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
+    a[i*3]=Math.cos(ph)*s*r;a[i*3+1]=Math.abs(u)*r;a[i*3+2]=Math.sin(ph)*s*r}gm.setAttribute("position",new T.BufferAttribute(a,3));return gm})(),new T.PointsMaterial({color:0xcfe8ff,size:.25}));
+  STARS.visible=false;S.add(STARS);
+  const pads=[];for(let i=0;i<2;i++){const c=R.xr.getController(i);RIG.add(c);
+    const ray=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3(0,0,-1)]),new T.LineBasicMaterial({color:0xf7931a}));ray.scale.z=2;c.add(ray);
+    c.addEventListener("selectstart",()=>{if(typeof stance==="function")stance(((typeof STANCE!=="undefined"?STANCE:0)+1)%4)});
+    c.addEventListener("squeezestart",()=>{if(typeof stance==="function")stance(3)});
+    c.addEventListener("connected",(e)=>{c.userData.src=e.data});c.addEventListener("disconnected",()=>{c.userData.src=null});pads.push(c)}
+  let turnLock=false,vt0=performance.now();const fw=new T.Vector3(),rt=new T.Vector3();
+  const vrFrame=()=>{const t=(performance.now()-vt0)/1e3+50,dt=1/72;
+    for(const c of pads){const src=c.userData.src;if(!src||!src.gamepad)continue;const ax=src.gamepad.axes,x=ax[2]||0,y=ax[3]||0;
+      if(src.handedness==="right"){if(Math.abs(x)>.7&&!turnLock){RIG.rotation.y-=Math.sign(x)*Math.PI/6;turnLock=true}else if(Math.abs(x)<.3)turnLock=false}
+      else if(Math.abs(x)+Math.abs(y)>.15){PC.getWorldDirection(fw);fw.y=0;fw.normalize();rt.crossVectors(fw,RIG.up);
+        RIG.position.addScaledVector(fw,-y*1.4*dt).addScaledVector(rt,x*1.4*dt);
+        const lim=Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2);RIG.position.x=Math.max(-lim,Math.min(lim,RIG.position.x));RIG.position.z=Math.max(-lim,Math.min(lim,RIG.position.z))}}
+    const stone=typeof STATE!=="undefined"&&STATE!=="AWAKE"&&STATE!=="LIVE"&&STATE==="DORMANT";
+    fill(0,stone,t,true);R.render(S,PC)};
+  const vrStart=async()=>{try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor","bounded-floor"]});
+    R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;
+    R.setClearColor(0x04060a,1);R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
+    s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
+  const VB=document.createElement("button");VB.textContent="\u{1F97D} ENTER VR";
+  VB.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;font:bold 15px ui-monospace,monospace;letter-spacing:.08em;color:#04060a;background:#3fe0d0;border:0;padding:9px 16px;cursor:pointer;display:none";
+  VB.onclick=(e)=>{e.stopPropagation();const s=R.xr.getSession();if(s)s.end();else vrStart()};document.body.appendChild(VB);
+  try{if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported("immersive-vr").then(ok=>{if(ok)VB.style.display="block"},()=>{})}catch(_){}
   /* ================= Sky, chain events and community modules ================= */
   /* Sky: viewer's real date (UTC). Moon phase from the mean synodic month; blood moon / solar eclipse only on listed
      real eclipse dates; meteor showers on their yearly peak windows; zodiac = tropical sun sign. ?sky=YYYY-MM-DD previews. */
