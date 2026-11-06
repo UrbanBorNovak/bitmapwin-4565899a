@@ -356,7 +356,13 @@ window.fetch=function(u){u=String(u);
 
 /** Test-only: adds a BW-PAGE-1 profile child to every Guardian's children so tapping one shows a claimed page. */
 const pageMock = `<script>(function(){var of=window.fetch.bind(window);
+var LP="",PF="cafe".repeat(16)+"i0";
 window.fetch=function(u){u=String(u);
+ if(u==="/r/parents/mockpage0i0")return Promise.resolve(new Response(JSON.stringify({ids:[LP],more:false,page:0}),{headers:{"content-type":"application/json"}}));
+ if(u==="/r/inscription/"+PF)return Promise.resolve(new Response(JSON.stringify({content_type:"image/svg+xml"}),{headers:{"content-type":"application/json"}}));
+ if(u==="/content/"+PF)return Promise.resolve(new Response('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8" fill="#04060a"/><rect x="2" y="2" width="4" height="4" fill="#f7931a"/></svg>',{headers:{"content-type":"image/svg+xml"}}));
+ if(u==="/r/inscription/mockpage0i0")return Promise.resolve(new Response(JSON.stringify({address:"bc1pmockpreviousholderxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}),{headers:{"content-type":"application/json"}}));
+ if(u.indexOf("/r/children/")===0&&u.indexOf("/r/children/9d1da99c")!==0)LP=u.split("/")[3];
  if(u.indexOf("/r/children/")===0&&u.indexOf("/r/children/9d1da99c")!==0)return of(u).then(function(r){return r.json()}).catch(function(){return{ids:[],more:false}}).then(function(j){j.ids=(j.ids||[]).concat(["mockpage0i0"]);return new Response(JSON.stringify(j),{headers:{"content-type":"application/json"}})});
  if(u==="/content/mockpage0i0")return Promise.resolve(new Response('BW-PAGE-1\\n{"title":"TITAN OF THE RIDGE","status":"Raiding shards at the Oasis","bio":"Protecting my block since genesis. Wanders Mondrian parcels hunting relics under low-fee night skies.","likes":["Low fees","Mondrian symmetry","Shard raids"],"dislikes":["Fee spikes","Empty blocks"],"top8":["aaaaaa0i0","bbbbbb0i0","cccccc0i0"],"theme":{"accent":"#f7931a"},"socials":{"x":"bitmapwin"},"pfp":"'+PF+'"}',{headers:{"content-type":"text/plain"}}));
  return of(u)}})()</script>`;
