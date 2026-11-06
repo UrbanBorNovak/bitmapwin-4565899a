@@ -15,7 +15,6 @@ import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "
 import { formatSats } from "@/lib/trades";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
-import { MobileAppInstall } from "@/components/MobileAppInstall";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
@@ -144,7 +143,6 @@ function Index() {
                   <HeroDoor n="02" who="CREATOR" title="BUILD & CUSTOMIZE" body="Voxel builds and profile pages on your BITMAP." to="/forge" />
                   <HeroDoor n="03" who="EXPLORER" title="EXPLORE LAND" body="Look up any BITMAP, see asks and real sales." to="/marketplace" />
                 </div>
-                <MobileAppInstall />
               </div>
 
               <div className="relative min-w-0">
