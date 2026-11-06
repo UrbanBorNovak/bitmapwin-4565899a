@@ -101,7 +101,7 @@ export function HowItWorks() {
           {steps.map((step, i) => (
             <li
               key={step.n}
-              className="group relative flex flex-col bg-background p-4 transition-colors hover:bg-muted/20 @2xl:p-6"
+              className="group relative flex flex-col bg-background p-4 transition-colors hover:bg-muted/20 @2xl:p-6 @2xl:last:col-span-2 @6xl:last:col-span-1"
             >
               <div className="flex items-center gap-2">
                 <span className="label text-bitcoin">{step.n}</span>
