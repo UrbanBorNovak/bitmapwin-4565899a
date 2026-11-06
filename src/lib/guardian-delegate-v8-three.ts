@@ -13,6 +13,9 @@ import { guardianMasterGeneratorHtmlV8 } from "@/lib/guardian-delegate-v8";
 /** Three.js r163 ES module inscribed on Bitcoin (checked live on ordinals.com: 200, text/javascript, 671,193 bytes). */
 export const THREE_R163_MODULE_ID = "0d013bb60fc5bf5a6c77da7371b07dc162ebc7d7f3af0ff3bd00ae5f0c546445i0";
 
+/** Default horizon backdrop parent: Genesis Consensus (Watsny's Mind: Consensus Drift children). */
+export const BG_PARENT_ID = "81e34a81adaa8152f09ee31ef554a9de22de0cf9b5a2266c90513c315463b376i0";
+
 const threeBlock = (id: string) => String.raw`<script type="module">
 /* ================= V8-THREE: WebGL creature painter from on-chain Three.js ================= */
 /* ---- Exact parcels: /r/block/<height> raw hex -> each tx's total output sats -> Bitmap side
@@ -98,7 +101,7 @@ try{
   /* ================= Horizon backdrop: children of a parent collection, rendered by the parent's own on-chain engine =================
      Default parent = Genesis Consensus (WMCD). Child seeds come from each child's own wmcd-child-meta JSON and must name this parent;
      the art is drawn by the parent's window.WM_RENDER (same-origin /content iframe). ?bg=<parent_id> swaps, ?bg=off hides. Any failure = no backdrop. */
-  const BG_DEF="${BG_PARENT_ID}";const bgQ=QS0.get("bg")||window.BW_BG||BG_DEF;
+  const BG_DEF="${BG_PARENT_ID}";const bgQ=new URLSearchParams(location.search).get("bg")||window.BW_BG||BG_DEF;
   const BGR=new T.Group();BGR.visible=false;BGR.renderOrder=-1;S.add(BGR);
   if(bgQ!=="off"&&/^[0-9a-f]{64}i\d+$/.test(bgQ))(async()=>{try{
     const r=await fetch("/r/children/"+bgQ);if(!r.ok)return;const ids=((await r.json()).ids||[]).filter(x=>/^[0-9a-f]{64}i\d+$/.test(x));if(!ids.length)return;
