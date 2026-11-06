@@ -457,6 +457,36 @@ function swap(src: string, from: string, to: string): string {
 
 let cached: string | null = null;
 
+/* Phones (<600px): the background scene text moves clear of the top and bottom button bars,
+   right-hand top labels are dropped, and long lines shrink to fit (11px floor). Panels are untouched. */
+const PHONE_BG_HUD = `
+var BGT=0,BGB=0,BGON=0,_tx8=txt;window.BW_TOPY=0;
+function bgBars(){var t=0,b=innerHeight,bs=document.querySelectorAll("button");
+  for(var i=0;i<bs.length;i++){var r=bs[i].getBoundingClientRect();if(!r.width||!r.height)continue;
+    if(r.top<innerHeight*.35)t=Math.max(t,r.bottom);else if(r.top>innerHeight*.55&&r.left<innerWidth*.55)b=Math.min(b,r.top)}
+  BGT=t;BGB=b}
+setTimeout(bgBars,2600);setInterval(bgBars,1000);
+txt=function(s,x,y,size,col,a){if(!BGON||innerWidth>=600)return _tx8(s,x,y,size,col,a);var w=innerWidth,h=innerHeight;
+  if(y<h*.5){if(x>w*.45)return;if(BGON===1)y+=BGT}else if(BGON===1)y-=Math.max(0,h-BGB);
+  s=String(s).replace(" EPOCHS SURVIVED"," EPOCHS").replace(" HALVINGS WITNESSED"," HALVINGS").replace(" HALVING WITNESSED"," HALVING")
+    .replace(" \\u00B7 FIRST-IS-FIRST CHECK IN APP","").replace(" \\u00B7 FIRST-IS-FIRST BITMAP (OCI)"," (OCI)");
+  if(s.indexOf("DNA ")===0)s=s.split("  ")[0];
+  g.font=size+"px ui-monospace,monospace";var room=w-8-x,mw=g.measureText(s).width;
+  if(mw>room){size=Math.max(11,size*room/mw);g.font=size+"px ui-monospace,monospace";
+    var parts=s.split(" \\u00B7 "),k=parts.length;while(k>1&&g.measureText(s).width>room){k--;s=parts.slice(0,k).join(" \\u00B7 ")+" \\u2026"}}
+  _tx8(s,x,y,size,col,a)};
+var _hu9=hud;hud=function(w,h,p){if(w>=600||(typeof BOOTH!=="undefined"&&BOOTH))return _hu9(w,h,p);BGON=1;try{_hu9(w,h,p)}finally{BGON=0}};
+var _tk9=tickerHud;tickerHud=function(w,h){if(w>=600){window.BW_TOPY=0;return _tk9(w,h)}var ch=chainHud;chainHud=function(){};
+  chainHud=ch;var pad=Math.max(14,w*.035),small=Math.max(14,Math.min(17,w*.016)),y=BGT+pad+small*8.8,lh=small*1.25,k,tot=0;
+  /* phones: the same three ticker facts without the step chart, so the scene keeps room */
+  for(k=0;k<SALES.length;k++)tot+=SALES[k];BGON=2;
+  try{txt("LAST SALE \\u00B7 "+(TRD&&typeof TRD.sats==="number"?TRD.sats.toLocaleString()+" SATS":TRD===false?"NO TRADES YET":"LOOKING\\u2026"),pad,y,small*.8,"#f7931a",.9);
+    txt("ALL SALES \\u00B7 "+(tot?tot.toLocaleString()+" SATS":"WAITING FOR THE FIRST SALE"),pad,y+lh,small*.8,"#3fe0d0",.85);
+    if(typeof GMASTER!=="undefined"){if(GMASTER)txt("GUARDIAN MASTER \\u00B7 "+GMASTER.toUpperCase(),pad,y+lh*2,small*.85,"#f7931a",.95);
+      else txt("GUARDIAN MASTER \\u00B7 "+(SKFOR?"UNCLAIMED":"SCANNING\\u2026"),pad,y+lh*2,small*.8,"#8a949c",.7)}}finally{BGON=0}
+  window.BW_TOPY=y+lh*3.2;chainHud(w,h)};
+`;
+
 /** The draft V8 master generator page. */
 export function guardianMasterGeneratorHtmlV8(): string {
   if (cached) return cached;
@@ -477,7 +507,7 @@ export function guardianMasterGeneratorHtmlV8(): string {
   s = swap(s, 'top:2.5%;display:flex;gap:4px;z-index:4"', 'top:2.5%;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:95vw;gap:4px;z-index:4"');
   s = swap(s, 'padding:4px 7px;cursor:pointer";d.appendChild(b)', 'padding:4px 7px;cursor:pointer;white-space:nowrap;flex:none";d.appendChild(b)');
   s = swap(s, "GTLON=!GTLON;label()};", "GTLON=!GTLON;if(GTLON)SWARMON=false;label()};sb.onclick=function(e){e.stopPropagation();SWARMON=!SWARMON;if(SWARMON){GTLON=false;LASTP=\"s\"}label()};pb.onclick=function(e){e.stopPropagation();PROOFON=!PROOFON;label()};rb.onclick=function(e){e.stopPropagation();TRIBUTEON=!TRIBUTEON;if(TRIBUTEON)LASTP=\"t\";label()};bb.id=\"bwbooth\";bb.textContent=\"PHOTO BOOTH\";bb.onclick=function(e){e.stopPropagation();boothToggle()};ab.id=\"bwai\";ab.textContent=\"PROMPT +\";ab.onclick=function(e){e.stopPropagation();AIPON=!AIPON;aiPanel();aiLbl()};cb.onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(BEACON)}catch(_){}this.textContent=\"COPIED\"};");
-  s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + "bar();fit();requestAnimationFrame(frame);");
+  s = swap(s, "bar();fit();requestAnimationFrame(frame);", v8Block() + PHONE_BG_HUD + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
 }
