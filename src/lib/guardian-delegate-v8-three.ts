@@ -44,13 +44,15 @@ window.BW_PARCELS="seeded";
   LAND={p,half,depth:LAND.depth,n:LAND.n,exact:true};window.BW_PARCELS="block";
 }catch(_){window.BW_PARCELS="seeded"}})();
 try{
+  const cv=document.createElement("canvas");
+  {const t=document.createElement("canvas");if(!(t.getContext("webgl2")||t.getContext("webgl")))throw 0}
   const T=await import("/content/${id}");
-  const cv=document.createElement("canvas"),R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  const R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
   R.setPixelRatio(Math.min(2,window.devicePixelRatio||1));R.setClearColor(0,0);
   R.shadowMap.enabled=true;R.outputColorSpace=T.SRGBColorSpace;R.toneMapping=T.ACESFilmicToneMapping;
   const S=new T.Scene(),C=new T.OrthographicCamera(-1,1,1,-1,.1,800);
   S.add(new T.HemisphereLight(0xbcd2ee,0x1a1410,1.5));
-  const K=new T.DirectionalLight(0xfff1dc,2.6);K.position.set(30,60,25);K.castShadow=true;K.shadow.mapSize.set(1024,1024);
+  const K=new T.DirectionalLight(0xfff1dc,2.6);K.position.set(30,60,25);K.castShadow=true;K.shadow.mapSize.set(512,512);
   Object.assign(K.shadow.camera,{left:-30,right:30,top:30,bottom:-30,near:1,far:160});K.shadow.bias=-.0008;S.add(K,K.target);
   const RIM=new T.DirectionalLight(0x3fe0d0,1.2);RIM.position.set(-30,20,-30);S.add(RIM);
   const FL=new T.Mesh(new T.PlaneGeometry(200,200),new T.ShadowMaterial({opacity:.38}));FL.rotation.x=-Math.PI/2;FL.receiveShadow=true;S.add(FL);
@@ -144,7 +146,7 @@ try{
     try{skip(4);let ni=vi();if(ni===0){if(b()!==1)return null;ni=vi()}for(let k=0;k<ni;k++){skip(36);skip(vi());skip(4)}
       const no=vi(),o=[];for(let k=0;k<no;k++){const lo=u32(),hi=u32(),n2=vi(),spk=hx.substr(p,n2*2).toLowerCase();skip(n2);o.push([lo+hi*4294967296,spk])}return o}catch(_){return null}};
   const runMod=(m)=>{if(m.on)return;m.on=true;try{new Function("api",m.code)({T,scene:S,G:typeof G!=="undefined"?G:null,hr,on:(f)=>{if(typeof f==="function")window.BW_HOOKS.push(f)}})}catch(_){m.err=true}};
-  (async()=>{const mid=window.BW_MASTER_ID;if(!/^[0-9a-f]{64}i\d+$/.test(mid||""))return;
+  (async()=>{const mid=window.BW_MASTER_ID||(typeof MASTER!=="undefined"&&MASTER&&typeof SELF!=="undefined"?SELF:"");if(!/^[0-9a-f]{64}i\d+$/.test(mid||""))return;
     try{let ids=[];for(let pg=0;pg<4;pg++){const r=await fetch("/r/children/"+mid+"/"+pg);if(!r.ok)break;const j=await r.json();ids=ids.concat(j.ids||[]);if(!j.more)break}
       const funds={};
       for(const id of ids.slice(0,60)){let s="";try{const r=await fetch("/content/"+id);if(!r.ok)continue;s=await r.text()}catch(_){continue}
