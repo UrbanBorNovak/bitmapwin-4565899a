@@ -57,7 +57,7 @@ try{
   const N=4096,M=new T.InstancedMesh(new T.BoxGeometry(1,1,1),new T.MeshStandardMaterial({roughness:.55,metalness:.15}),N);
   M.castShadow=true;M.frustumCulled=false;M.instanceMatrix.setUsage(T.DynamicDrawUsage);S.add(M);
   const o=new T.Object3D(),col=new T.Color(),gray=new T.Color("#6b6f74"),dk=new T.Color("#2a2d31");
-  M.setColorAt(0,col);
+  M.setColorAt(0,col);window.BW_MOON2D=true;
   const paint2d=drawVox;
   drawVox=function(pulse,stone,t){
     if(XR||AR||!VOX)return paint2d(pulse,stone,t);
@@ -212,7 +212,11 @@ let cached: string | null = null;
 /** The draft V8 master with the on-chain Three.js creature painter. */
 export function guardianMasterGeneratorHtmlV8Three(threeId: string = THREE_R163_MODULE_ID): string {
   if (cached && threeId === THREE_R163_MODULE_ID) return cached;
-  const s = guardianMasterGeneratorHtmlV8();
+  let s = guardianMasterGeneratorHtmlV8();
+  /* night sky disc yields to the phase moon once the WebGL painter is running (BW_MOON2D) */
+  const disc = "g.beginPath();g.arc(sx,sy,day>0?18:12,0,6.283);g.fill();";
+  if (s.split(disc).length !== 2) throw new Error("V8-THREE: sky disc changed, refusing to patch");
+  s = s.replace(disc, "g.beginPath();if(day>0||!window.BW_MOON2D)g.arc(sx,sy,day>0?18:12,0,6.283);g.fill();");
   const end = "</script></body></html>";
   if (!s.endsWith(end)) throw new Error("V8-THREE: V8 tail changed, refusing to patch");
   const out = s.slice(0, -"</body></html>".length) + threeBlock(threeId) + "</body></html>";
