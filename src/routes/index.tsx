@@ -13,7 +13,6 @@ import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
-import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
@@ -210,6 +209,7 @@ function Index() {
         <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold lowercase tracking-tight md:text-3xl">bitmaps worth a closer look</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Open one to see its holder, price history and Guardian.</p>
           </div>
           <Link to="/marketplace" className="label hover:text-foreground">
             VIEW THE FULL MARKET →
@@ -239,11 +239,11 @@ function Index() {
 
 
       <section className="mx-auto max-w-[1600px] px-3 pt-6 pb-10 md:px-5 md:pt-10 md:pb-16">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
           <div>
             <div className="label text-bitcoin">FIRST TIME HERE?</div>
             <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              Take the 60-second tour of this page, or follow the step-by-step checklist below — it saves your progress on this device.
+              Take the 60-second tour of this page, or read the 2-minute primer on what a BITMAP is.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -251,7 +251,6 @@ function Index() {
             <Link to="/land-101" className="btn-term-ghost">[ READ THE 2-MINUTE PRIMER ]</Link>
           </div>
         </div>
-        <FirstTenMinutes compact />
       </section>
     </div>
   );

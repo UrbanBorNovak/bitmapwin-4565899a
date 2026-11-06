@@ -9,10 +9,10 @@ export function ActiveBuilders() {
     <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
       <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="label text-bitcoin">LIVE ON THE JUMBOTRON</div>
+          <div className="label text-bitcoin">LAND FORGE MAKERS</div>
           <h2 className="display mt-2 text-2xl md:text-3xl">ACTIVE BUILDERS</h2>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Makers whose pieces others build with. Each use pays them BIT, each inscription pays them sats.
+            People whose priced pieces others build with. Each use pays them BIT; each inscribed build that includes a piece pays them sats.
           </p>
         </div>
         <Link to="/forge" className="btn-term">[ PUBLISH YOUR OWN PIECE ]</Link>
@@ -27,7 +27,7 @@ export function ActiveBuilders() {
       {isLoading ? (
         <p className="mt-6 font-mono text-sm text-muted-foreground">&gt; LOADING BUILDERS<span className="blink">_</span></p>
       ) : data.length === 0 ? (
-        <p className="mt-6 font-mono text-sm text-muted-foreground">&gt; NO PIECES PUBLISHED YET — BE THE FIRST BUILDER ON THE JUMBOTRON</p>
+        <p className="mt-6 font-mono text-sm text-muted-foreground">&gt; NO PIECES PUBLISHED YET — PUBLISH THE FIRST ONE IN THE LAND FORGE</p>
       ) : (
         <div className="mt-3 grid gap-px bg-border sm:grid-cols-2 md:mt-4 lg:grid-cols-4">
           {data.slice(0, 8).map((b, i) => (
