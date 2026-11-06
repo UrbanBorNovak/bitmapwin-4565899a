@@ -129,10 +129,8 @@ function skinApply(o,id){SKIN={id:id,name:String(o.name||"SKIN").slice(0,32)};
     st.webkitMaskImage=st.maskImage="url("+u+")";st.webkitMaskSize=st.maskSize="100% 100%";st.webkitMaskRepeat=st.maskRepeat="no-repeat"}});
   skinImg(o.frame).then(function(u){var d=document.createElement("div");d.id="bwskin";
     d.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:40;"+(u?"background:url("+u+") center/100% 100% no-repeat;":"");
-    if(sc)d.style.boxShadow="inset 0 0 0 9999px transparent";
     if(sc){var l=document.createElement("div");l.style.cssText="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,"+(sc*.5).toFixed(2)+") 0 1px,transparent 1px 3px)";d.appendChild(l)}
-    if(ac){var e=document.createElement("div");e.style.cssText="position:absolute;inset:0;box-shadow:inset 0 0 40px "+ac+"66,inset 0 0 0 1px "+ac+"aa"}
-    if(ac)d.appendChild(e);
+    if(ac){var e=document.createElement("div");e.style.cssText="position:absolute;inset:0;box-shadow:inset 0 0 40px "+ac+"66,inset 0 0 0 1px "+ac+"aa";d.appendChild(e)}
     var tg=document.createElement("div");tg.textContent="SKIN \u00B7 "+SKIN.name;tg.style.cssText="position:absolute;left:10px;bottom:8px;font:9px monospace;color:"+(ac||"#3fe0d0")+";opacity:.75";d.appendChild(tg);
     document.body.appendChild(d)})}
 setTimeout(skinLoad,1800);
