@@ -385,9 +385,13 @@ function pageTick(w,h){try{if(VOX&&VOX!==PGVX){PGVX=VOX;PGTY=0;for(var i=0;i<VOX
     if(VOX&&typeof P3==="function"){var a=P3(0,0,0),b=P3(0,PGTY,0);SELFP=[b[0],b[1],Math.max(40,Math.abs(a[1]-b[1])*.6),(a[1]+b[1])/2]}}catch(_){}
   var p=document.getElementById("bwpage");if(!p||!PGID||p.style.display==="none")return;var ax=null,ay=null,r=c.getBoundingClientRect();
   if(PGID===SELF&&SELFP){ax=SELFP[0];ay=SELFP[1]}else for(var k=0;k<SIBP.length;k++)if(SIBP[k][3]===PGID){ax=SIBP[k][0];ay=SIBP[k][1]-SIBP[k][2];break}
-  var top0=innerWidth<600?122:70;p.style.maxHeight=Math.max(160,innerHeight-top0-8)+"px";var pw=p.offsetWidth,ph=p.offsetHeight;
+  /* phones: keep the card between the top bar and the highest bottom control row (IDLE/PROWL…), scrolling inside */
+  var top0=innerWidth<600?122:70,bot=innerHeight-8;
+  if(innerWidth<600){var bs=document.querySelectorAll("button"),k2;for(k2=0;k2<bs.length;k2++){if(p.contains(bs[k2]))continue;var br=bs[k2].getBoundingClientRect();
+    if(br.height&&br.top>innerHeight*.6&&br.left<innerWidth*.5&&br.top-6<bot)bot=br.top-6}}
+  p.style.maxHeight=Math.max(160,bot-top0)+"px";var pw=p.offsetWidth,ph=p.offsetHeight;
   if(ax==null){ax=w/2;ay=h*.5}
-  var L=Math.max(8,Math.min(innerWidth-pw-8,r.left+ax-pw/2)),T=r.top+ay-ph-14;if(T<top0)T=top0;if(T+ph>innerHeight-8)T=Math.max(8,innerHeight-8-ph);
+  var L=Math.max(8,Math.min(innerWidth-pw-8,r.left+ax-pw/2)),T=r.top+ay-ph-14;if(T<top0)T=top0;if(T+ph>bot)T=Math.max(8,bot-ph);
   p.style.left=L+"px";p.style.top=T+"px"}
 function selfHit(e){if(!SELFP||!SELF)return false;var r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
   return Math.abs(x-SELFP[0])<SELFP[2]&&y>SELFP[1]-10&&y<SELFP[3]+SELFP[2]}
