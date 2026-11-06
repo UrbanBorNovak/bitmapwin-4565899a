@@ -367,6 +367,8 @@ function selfHit(e){if(!SELFP||!SELF)return false;var r=c.getBoundingClientRect(
   c.addEventListener("pointerup",function(e){if(!dn||Math.abs(e.clientX-dn[0])+Math.abs(e.clientY-dn[1])>6){dn=null;return}dn=null;
     var h=sibHit(e);if(h){pageOpen(h);return}if(selfHit(e)){e.stopImmediatePropagation();e.stopPropagation();pageOpen(SELF);return}if(PGID)pageClose()},true);
   addEventListener("keydown",function(e){if(e.key==="Escape"&&PGID)pageClose()})})();
+/* horizon taps are caught by the pack-focus handler first; open/close the page with the focus */
+var _fsPg=focusSib;focusSib=function(id){_fsPg(id);if(FOC){PGID=null;pageOpen(FOC)}else pageClose()};
 var LASTP="t";
 /* narrow screens show one of TRIBUTE / SWARM at a time: the one opened last */
 var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w<900;
