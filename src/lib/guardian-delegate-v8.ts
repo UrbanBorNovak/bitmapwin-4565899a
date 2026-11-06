@@ -90,9 +90,9 @@ timelineHud=function(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),fs=Math.m
   if(!GTL.length){txt("READING GUARDIANS FROM THE CHAIN…",x,y+lh*1.2,fs,"#c5d0d9");return}
   for(var i=0;i<GTL.length;i++){var r=GTL[i],yy=y+lh*(i+1.15),em=r.h%2016,bm=r.h>0&&(em>=1944||em<=72),date=r.at?new Date(r.at*(r.at<1e12?1000:1)).toISOString().slice(0,10):"CHAIN";
     txt((i+1)+" · "+r.h+".BITMAP",x,yy,fs,r.id===SELF?"#f7931a":"#3fe0d0");
-    txt("D "+fmtD(r.df)+" · W "+(r.wt?(r.wt/1e6).toFixed(2)+"M":"…")+(pw>420?" · "+date:"")+(bm?" · BLOOD MOON":""),x+pw*.38,yy,fs,bm?"#ff5a4a":"#ffffff")}};
+    txt("D "+fmtD(r.df)+" · W "+(r.wt?(r.wt/1e6).toFixed(2)+"M":"…")+(pw>420?" · "+date:"")+(bm?" · BLOOD MOON":""),x+pw*(pw<420?.56:.38),yy,fs,bm?"#ff5a4a":"#ffffff")}};
 chainHud=function(w,h){if(!G||!PROOFON)return;
-  var fs=Math.max(15,Math.min(18,w*.016)),hs=fs+1.5,lh=fs*1.65,pad=Math.max(14,w*.035),pw=Math.min(w-pad*2,340),x=w-pw-pad,y=pad+fs*5.2;
+  var fs=Math.max(15,Math.min(18,w*.016)),hs=fs+1.5,lh=fs*1.65,pad=Math.max(14,w*.035),pw=Math.min(w-pad*2,340),x=w-pw-pad,y=pad+fs*5.2;if(w<600)y=Math.max(y,122+hs*1.3);
   var arm=G.th==="CLAY"?"GENESIS CLAY":G.th==="TERA"?"TERAHASH ARMOUR":"FORGED STEEL",ms=G.ms==="TITAN"?"TITAN":G.ms==="WRAITH"?"WRAITH":"STANDARD";
   var cr=[];if(G.tp)cr.push("TAPROOT");if(G.sw)cr.push("SEGWIT");if(G.lz)cr.push("SUPER-ZERO");
   var R=[["PARENT 1",G.h+".BITMAP","#3fe0d0"],["PARENT 2","ROOT 9d1da99c\u2026i0","#3fe0d0"],
@@ -137,7 +137,7 @@ function skinApply(o,id){SKIN={id:id,name:String(o.name||"SKIN").slice(0,32)};
     document.body.appendChild(d)})}
 setTimeout(skinLoad,1800);
 tributeHud=function(w,h){var cbn=document.getElementById("bwcb");if(cbn)cbn.style.display=TRIBUTEON&&BEACON?"":"none";if(!TRIBUTEON)return;var fs=Math.max(15,Math.min(18,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
-    pw=Math.min(w-pad*2,360),x=w-pw-pad,y=pad+fs*(w<520?7.4:5.2)+(PROOFON&&G?lh*7.6:0),L=[];
+    pw=Math.min(w-pad*2,360),x=w-pw-pad,y=(w<600?122+hs*1.3:pad+fs*5.2)+(PROOFON&&G?lh*7.6:0),L=[];
   if(BEACON){for(var k=0;k<BEACON.length;k+=Math.max(16,Math.floor(pw/(fs*.62))))L.push(BEACON.slice(k,k+Math.max(16,Math.floor(pw/(fs*.62)))))}
   var qs=BEACON?Math.min(150,pw*.5,h*.22):0;
   hudBox(x-10,y-hs*1.3,pw+20,hs*1.5+lh*(5+L.length)+(qs?qs+lh*.6:0),"#f7931a");
