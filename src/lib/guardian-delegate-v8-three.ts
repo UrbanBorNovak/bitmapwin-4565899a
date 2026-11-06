@@ -217,6 +217,10 @@ export function guardianMasterGeneratorHtmlV8Three(threeId: string = THREE_R163_
   const disc = "g.beginPath();g.arc(sx,sy,day>0?18:12,0,6.283);g.fill();";
   if (s.split(disc).length !== 2) throw new Error("V8-THREE: sky disc changed, refusing to patch");
   s = s.replace(disc, "g.beginPath();if(day>0||!window.BW_MOON2D)g.arc(sx,sy,day>0?18:12,0,6.283);g.fill();");
+  /* keep the sun below the top HUD lines (they end near 25% of the height) */
+  const sun = "sy=h*(.6-Math.abs(el)*.45);";
+  if (s.split(sun).length !== 2) throw new Error("V8-THREE: sun path changed, refusing to patch");
+  s = s.replace(sun, "sy=h*Math.max(.34,.6-Math.abs(el)*.45);");
   const end = "</script></body></html>";
   if (!s.endsWith(end)) throw new Error("V8-THREE: V8 tail changed, refusing to patch");
   const out = s.slice(0, -"</body></html>".length) + threeBlock(threeId) + "</body></html>";
