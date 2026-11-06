@@ -358,7 +358,7 @@ window.fetch=function(u){u=String(u);
 const pageMock = `<script>(function(){var of=window.fetch.bind(window);
 window.fetch=function(u){u=String(u);
  if(u.indexOf("/r/children/")===0&&u.indexOf("/r/children/9d1da99c")!==0)return of(u).then(function(r){return r.json()}).catch(function(){return{ids:[],more:false}}).then(function(j){j.ids=(j.ids||[]).concat(["mockpage0i0"]);return new Response(JSON.stringify(j),{headers:{"content-type":"application/json"}})});
- if(u==="/content/mockpage0i0")return Promise.resolve(new Response('BW-PAGE-1\\n{"title":"TITAN OF THE RIDGE","status":"Raiding shards at the Oasis","bio":"Protecting my block since genesis. Wanders Mondrian parcels hunting relics under low-fee night skies.","likes":["Low fees","Mondrian symmetry","Shard raids"],"dislikes":["Fee spikes","Empty blocks"],"top8":["aaaaaa0i0","bbbbbb0i0","cccccc0i0"],"theme":{"accent":"#f7931a"},"socials":{"x":"bitmapwin"}}',{headers:{"content-type":"text/plain"}}));
+ if(u==="/content/mockpage0i0")return Promise.resolve(new Response('BW-PAGE-1\\n{"title":"TITAN OF THE RIDGE","status":"Raiding shards at the Oasis","bio":"Protecting my block since genesis. Wanders Mondrian parcels hunting relics under low-fee night skies.","likes":["Low fees","Mondrian symmetry","Shard raids"],"dislikes":["Fee spikes","Empty blocks"],"top8":["aaaaaa0i0","bbbbbb0i0","cccccc0i0"],"theme":{"accent":"#f7931a"},"socials":{"x":"bitmapwin"},"pfp":"'+PF+'"}',{headers:{"content-type":"text/plain"}}));
  return of(u)}})()</script>`;
 
 /** Holiday preview for the V8 Three.js draft. Test-only: maps the on-chain Three.js id to the same r163 build on a CDN. */
