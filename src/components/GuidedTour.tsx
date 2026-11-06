@@ -190,6 +190,10 @@ function markSeen(id: string) {
   }
 }
 
+function pageZoom(): number {
+  return Number((document.documentElement.style as CSSStyleDeclaration & { zoom: string }).zoom) || 1;
+}
+
 export const TOUR_EVENT = "bitmapwin:start-tour";
 
 export function startGuidedTour() {
@@ -248,7 +252,13 @@ export function GuidedTour() {
     const rect = el.getBoundingClientRect();
     if (rect.bottom < 8 || rect.top > window.innerHeight - 8)
       el.scrollIntoView({ block: "center", behavior: "smooth" });
-    const measure = () => setBox(el.getBoundingClientRect());
+    // Page-size zoom on <html> scales fixed positions too, so convert the
+    // measured (visual) rect back into the zoomed layout's own pixels.
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      const z = pageZoom();
+      setBox(new DOMRect(r.left / z, r.top / z, r.width / z, r.height / z));
+    };
     measure();
     const timer = window.setTimeout(measure, 350);
     window.addEventListener("scroll", measure, true);
@@ -273,18 +283,21 @@ export function GuidedTour() {
 
   const total = tour.steps.length;
   const pad = 6;
-  const cardWidth = Math.min(320, window.innerWidth - 24);
-  const below = box.bottom + 200 < window.innerHeight;
+  const z = pageZoom();
+  const vw = window.innerWidth / z;
+  const vh = window.innerHeight / z;
+  const cardWidth = Math.min(320, vw - 24);
+  const below = box.bottom + 200 < vh;
   // Keep the card fully on screen — on a phone the highlighted area often fills
   // the whole viewport, which used to push the card past the bottom edge.
   const cardHeight = cardRef.current?.offsetHeight ?? 220;
   const top = Math.min(
     Math.max(12, below ? box.bottom + 12 : box.top - 12 - cardHeight),
-    Math.max(12, window.innerHeight - cardHeight - 12),
+    Math.max(12, vh - cardHeight - 12),
   );
   const left = Math.min(
     Math.max(12, box.left + box.width / 2 - cardWidth / 2),
-    window.innerWidth - cardWidth - 12,
+    vw - cardWidth - 12,
   );
 
   return (
