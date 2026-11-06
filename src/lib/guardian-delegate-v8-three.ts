@@ -107,7 +107,7 @@ try{
       else if(Math.abs(x)+Math.abs(y)>.15){PC.getWorldDirection(fw);fw.y=0;fw.normalize();rt.crossVectors(fw,RIG.up);
         RIG.position.addScaledVector(fw,-y*1.4*dt).addScaledVector(rt,x*1.4*dt);
         const lim=Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2);RIG.position.x=Math.max(-lim,Math.min(lim,RIG.position.x));RIG.position.z=Math.max(-lim,Math.min(lim,RIG.position.z))}}
-    const stone=typeof STATE!=="undefined"&&STATE==="DORMANT";
+    const stone=typeof STATE!=="undefined"&&STATE==="RELIC";
     fill(0,stone,t,true);R.render(S,PC)};
   const vrStart=async()=>{try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor","bounded-floor"]});
     R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;WORLD.scale.setScalar(.1);
