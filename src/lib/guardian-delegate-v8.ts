@@ -75,6 +75,8 @@ drawLand=function(pulse){_dl8(pulse);if(!CIT||!LAND)return;var L=LAND,u=2*L.half
       var pp=[F[0],F[1],F[2],F[3]].map(function(p){return P3(w[1]+p[0]*u,w[2]+p[1]*u,w[3]+p[2]*u)});
       poly(pp,shade(F[4]?c[1]:c[0],F[5]*(k?1:vv[4])))}}};
 setTimeout(function(){citadelLoad(0)},1200);
+/* master preview: each cycled block drops the previous build and reads its own */
+if(typeof pvCycle==="function"){var _pv8=pvCycle;pvCycle=function(){CIT=null;CBM=null;SPN=0;_pv8();setTimeout(function(){citadelLoad(0)},300)}}
 /* readable HUD cards: 11px floor, near-solid panels, brighter labels, roomier rows; both start closed */
 function hudBox(x,y,w,h,edge){g.globalAlpha=LM?.96:.92;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x,y,w,h);
   g.globalAlpha=.8;g.strokeStyle=edge;g.lineWidth=1;g.strokeRect(x,y,w,h);g.globalAlpha=1}
