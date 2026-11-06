@@ -149,7 +149,7 @@ function Index() {
               </div>
 
               <div className="@container relative min-w-0">
-                <div className="relative aspect-[4/3] w-full overflow-hidden border border-border/60 bg-background/40 backdrop-blur-sm">
+                <div className="relative aspect-[4/3] w-full overflow-hidden @xl:aspect-[16/9] border border-border/60 bg-background/40 backdrop-blur-sm">
                   <div aria-hidden className="pointer-events-none absolute inset-0">
                     <ClientOnly><Suspense fallback={null}><HeroVoxelDiorama3D /></Suspense></ClientOnly>
                   </div>
