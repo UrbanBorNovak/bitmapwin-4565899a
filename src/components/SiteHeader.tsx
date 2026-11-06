@@ -111,7 +111,7 @@ const NAV_GROUPS: NavGroup[] = [
         items: [
           { to: "/studio", label: "BITMAPWIN STUDIO", note: "Creator home: build, script, publish, sell" },
           { to: "/build", label: "START BUILDING", note: "Solo, with crew, lightweight or Outpost" },
-          { to: "/create", label: "CREATE WITH AI", note: "Describe it, get a working experience" },
+          // "CREATE WITH AI" (/create) stays hidden while AI building is switched off; the route still exists.
           { to: "/tools", label: "ALL TOOLS", note: "Every free and on-chain tool" },
         ],
       },
