@@ -17,6 +17,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteTickerTape } from "@/components/SiteTickerTape";
 
 import { SiteFooter } from "@/components/SiteFooter";
+import { LeftRail } from "@/components/navigation/LeftRail";
 import { BitTransitBar } from "@/components/BitTransitBar";
 import { Toaster } from "@/components/ui/sonner";
 import { TransferTrackerHost } from "@/components/TransferTracker";
@@ -238,7 +239,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-      <div className="relative flex min-h-screen flex-col bg-background">
+      <LeftRail />
+      <div className="relative flex min-h-screen flex-col bg-background lg:pl-20">
         <SalesBackdrop />
         <div className="relative z-40">
           <SiteTickerTape />
