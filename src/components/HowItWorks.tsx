@@ -61,7 +61,7 @@ export function HowItWorks() {
 
   return (
     <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-8 md:pt-16">
-      <div className="border border-border-strong">
+      <div className="@container border border-border-strong">
         <header className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-end sm:justify-between md:p-6">
           <div>
             <div className="label text-bitcoin">NEW HERE? START WITH THIS</div>
@@ -97,16 +97,16 @@ export function HowItWorks() {
           </div>
         </header>
 
-        <ol className="grid md:grid-cols-5">
+        <ol className="grid gap-px bg-border @2xl:grid-cols-2 @6xl:grid-cols-5">
           {steps.map((step, i) => (
             <li
               key={step.n}
-              className={`group relative flex flex-col border-b border-border p-4 md:p-6 transition-colors hover:bg-muted/20 md:border-b-0 ${i > 0 ? "md:border-l md:border-border" : ""}`}
+              className="group relative flex flex-col bg-background p-4 transition-colors hover:bg-muted/20 @2xl:p-6"
             >
               <div className="flex items-center gap-2">
                 <span className="label text-bitcoin">{step.n}</span>
                 {i < steps.length - 1 && <span className="h-px flex-1 bg-border" aria-hidden="true" />}
-                <span className="label text-bitcoin md:hidden" aria-hidden="true">↓</span>
+                <span className="label text-bitcoin @2xl:hidden" aria-hidden="true">↓</span>
               </div>
               {"tag" in step && (
                 <div className="label mt-3 md:mt-4 w-fit border border-signal/40 px-2 py-0.5 text-signal">{step.tag}</div>
