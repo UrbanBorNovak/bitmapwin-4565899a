@@ -396,7 +396,7 @@ function pageTick(w,h){try{if(VOX&&VOX!==PGVX){PGVX=VOX;PGTY=0;for(var i=0;i<VOX
 function selfHit(e){if(!SELFP||!SELF)return false;var r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
   return Math.abs(x-SELFP[0])<SELFP[2]&&y>SELFP[1]-10&&y<SELFP[3]+SELFP[2]}
 (function(){var p=document.createElement("div");p.id="bwpage";
-  p.style.cssText="position:fixed;display:none;z-index:7;width:min(86vw,320px);max-height:70vh;overflow:auto;padding:10px 12px;background:rgba(4,6,10,.95);border:1px solid #3fe0d0;color:#c5d0d9;font:600 13px ui-monospace,monospace;letter-spacing:.04em";
+  p.style.cssText="position:fixed;display:none;z-index:7;box-sizing:border-box;width:min(86vw,320px);max-height:70vh;overflow:auto;padding:10px 12px;background:rgba(4,6,10,.95);border:1px solid #3fe0d0;color:#c5d0d9;font:600 13px ui-monospace,monospace;letter-spacing:.04em";
   p.addEventListener("pointerdown",function(e){e.stopPropagation()});document.body.appendChild(p);
   var dn=null;c.addEventListener("pointerdown",function(e){dn=[e.clientX,e.clientY]},true);
   c.addEventListener("pointerup",function(e){if(!dn||Math.abs(e.clientX-dn[0])+Math.abs(e.clientY-dn[1])>6){dn=null;return}dn=null;
