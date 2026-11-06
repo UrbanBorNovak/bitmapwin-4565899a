@@ -369,13 +369,14 @@ function HolidayTestbench() {
   const [fx, setFx] = useState(0);
   const [mods, setMods] = useState(false);
   const [skin, setSkin] = useState(false);
+  const [page, setPage] = useState(false);
   const html = useMemo(() => {
     const imap = `<script type="importmap">{"imports":{"/content/${THREE_R163_MODULE_ID}":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>`;
     const pin = `<script>window.ADVENT_DAY=${day};${sky ? `window.BW_SKY="${sky}";` : ""}${fx ? `window.BW_FX=${fx};` : ""}</script>`;
     return guardianMasterGeneratorHtmlV8Three()
-      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none") + (skin ? skinMock : "") + (mods ? moduleMock : ""))
+      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none") + (skin ? skinMock : "") + (page ? pageMock : "") + (mods ? moduleMock : ""))
       .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200);setInterval(function(){if(STATE==="RELIC")STATE="AWAKE"},300)</script></body>');
-  }, [day, sky, fx, mods, skin]);
+  }, [day, sky, fx, mods, skin, page]);
   const btn = (on: boolean) =>
     `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
   const skies: [string, string][] = [["", "SKY TODAY"], ["2026-11-17", "LEONIDS"], ["2026-11-24", "FULL MOON"], ["2026-03-03", "BLOOD MOON"], ["2026-08-12", "SOLAR ECLIPSE"]];
