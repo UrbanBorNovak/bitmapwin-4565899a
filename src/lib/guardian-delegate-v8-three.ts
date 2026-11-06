@@ -92,7 +92,7 @@ try{
   R.xr.enabled=true;
   const WORLD=new T.Group();S.remove(M,FL);WORLD.add(M,FL);S.add(WORLD);
   const RIG=new T.Group(),PC=new T.PerspectiveCamera(70,1,.05,200);RIG.add(PC);S.add(RIG);
-  const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const u=hr(i+3000)*2-1,ph=hr(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
+  const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const q=(k)=>{const x=Math.sin(k*12.9898)*43758.5453;return x-Math.floor(x)},u=q(i+3000)*2-1,ph=q(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
     a[i*3]=Math.cos(ph)*s*r;a[i*3+1]=Math.abs(u)*r;a[i*3+2]=Math.sin(ph)*s*r}gm.setAttribute("position",new T.BufferAttribute(a,3));return gm})(),new T.PointsMaterial({color:0xcfe8ff,size:.25}));
   STARS.visible=false;S.add(STARS);
   const pads=[];for(let i=0;i<2;i++){const c=R.xr.getController(i);RIG.add(c);
