@@ -302,7 +302,73 @@ function focusHud(w,h){if(!FOC)return;var fs=Math.max(15,Math.min(18,w*.016)),hs
   if(fd){fd.style.bottom="auto";fd.style.right=(pad-10)+"px";fd.style.top=Math.max(0,y-hs*1.3-36)+"px"}
   hudBox(x-10,y-hs*1.3,pw+20,ph,col);txt("PACK MEMBER \u00B7 ON CHAIN",x,y,hs,col);
   for(i=0;i<rows.length;i++){var yy=y+lh*(i+1.1);txt(rows[i][0],x,yy,fs,"#c5d0d9");txt(rows[i][1],x+pw*.38,yy,fs,rows[i][2])}}
-var _ch8f=chainHud;chainHud=function(w,h){_ch8f(w,h);focusHud(w,h)};
+var _ch8f=chainHud;chainHud=function(w,h){_ch8f(w,h);focusHud(w,h);pageTick(w,h)};
+/* Guardian Page (BW-PAGE-1): tap any Guardian (this one or a horizon sibling) to open a small profile card
+   above it. The card is the newest text child of that Guardian starting "BW-PAGE-1\n{json}". Only the holder
+   of a Guardian can inscribe its children, so the page is chain-proved. Fields are clipped and shown as plain
+   text (never HTML), so a page cannot run code. No page child = UNCLAIMED. */
+var PAGES={},PGID=null,SELFP=null,PGVX=null,PGTY=0;
+function pgS(v,n){return typeof v==="string"?v.replace(/[\u0000-\u001f]/g," ").trim().slice(0,n):""}
+function pgL(v,n,m){return Array.isArray(v)?v.map(function(x){return pgS(x,m)}).filter(Boolean).slice(0,n):[]}
+function pgClean(o){var t=o.theme||{};return{title:pgS(o.title,48),status:pgS(o.status,64),bio:pgS(o.bio,280),
+  likes:pgL(o.likes,6,32),dislikes:pgL(o.dislikes,6,32),
+  top8:(Array.isArray(o.top8)?o.top8:[]).filter(function(x){return typeof x==="string"&&/^[0-9a-z]{6,64}i\d+$/.test(x)}).slice(0,8),
+  accent:/^#[0-9a-f]{6}$/i.test(t.accent||o.accent||"")?(t.accent||o.accent):"",
+  x:/^[A-Za-z0-9_]{1,15}$/.test((o.socials&&o.socials.x)||"")?o.socials.x:""}}
+function pageLoad(id){if(PAGES[id])return;PAGES[id]={st:"READING"};
+  kids(id,200).then(function(ids){ids=ids.slice().reverse();var i=0;
+    (function nx(){if(i>=ids.length||i>=40){PAGES[id]={st:"NONE"};pageDraw();return}var cid=ids[i++];
+      t("/content/"+cid).then(function(s){s=String(s);if(s.slice(0,10)!=="BW-PAGE-1\n"||s.length>4000)return nx();var o;try{o=JSON.parse(s.slice(10))}catch(_){return nx()}
+        if(!o||typeof o!=="object")return nx();PAGES[id]={st:"LIVE",d:pgClean(o),ins:cid};pageDraw()}).catch(nx)})()},
+    function(){PAGES[id]={st:"UNREADABLE"};pageDraw()})}
+function pageOpen(id){if(PGID===id){pageClose();return}PGID=id;pageLoad(id);
+  if(id!==SELF&&!(id in SIBW))ownerOf(id).then(function(a){if(a){SIBW[id]=a;SIBO[id]=hexOf(a);pageDraw()}},function(){});pageDraw()}
+function pageClose(){PGID=null;var p=document.getElementById("bwpage");if(p)p.style.display="none"}
+function pgEl(tag,txt,css){var e=document.createElement(tag);if(txt)e.textContent=txt;if(css)e.style.cssText=css;return e}
+function pageDraw(){var p=document.getElementById("bwpage");if(!p||!PGID)return;var id=PGID,P=PAGES[id]||{st:"READING"},d=P.d||{},
+    a=id===SELF?(typeof OWNER!=="undefined"&&OWNER)||SIBW[id]:SIBW[id],col=d.accent||(SIBO[id])||"#3fe0d0",fs=innerWidth<600?13:14;
+  p.innerHTML="";p.style.borderColor=col;p.style.boxShadow="0 0 18px "+col+"55";p.style.display="";
+  var hd=pgEl("div","","display:flex;justify-content:space-between;gap:8px;align-items:flex-start");
+  hd.appendChild(pgEl("div",(P.st==="LIVE"&&d.title?d.title:"GUARDIAN PAGE"),"color:"+col+";font:bold "+(fs+2)+"px monospace;letter-spacing:.04em;word-break:break-word"));
+  var x=pgEl("button","\u00D7","font:bold 16px monospace;background:none;border:0;color:#c5d0d9;cursor:pointer;padding:0 2px");x.onclick=function(e){e.stopPropagation();pageClose()};hd.appendChild(x);p.appendChild(hd);
+  p.appendChild(pgEl("div",String(id).slice(0,10)+"\u2026"+String(id).slice(-4)+(id===SELF?" \u00B7 THIS GUARDIAN":""),"color:#c5d0d9;margin-top:2px"));
+  p.appendChild(pgEl("div","OWNER "+(a?a.slice(0,8)+"\u2026"+a.slice(-6):"READING\u2026"),"color:"+(SIBO[id]||"#ffffff")+";margin-top:2px"));
+  var body=pgEl("div","","margin-top:8px;border-top:1px solid #23303a;padding-top:8px;line-height:1.45");
+  if(P.st!=="LIVE"){body.appendChild(pgEl("div",P.st==="READING"?"READING THIS GUARDIAN'S CHILDREN\u2026":P.st==="UNREADABLE"?"CHAIN UNREADABLE \u00B7 TRY AGAIN":"UNCLAIMED PAGE","color:#ffffff"));
+    if(P.st==="NONE"){body.appendChild(pgEl("div","THE HOLDER HAS NOT INSCRIBED A PAGE YET.","color:#c5d0d9;margin-top:4px"));body.appendChild(pgEl("div","HOLDER: INSCRIBE A TEXT CHILD \"BW-PAGE-1\" + JSON.","color:#3fe0d0;margin-top:4px"))}}
+  else{if(d.status)body.appendChild(pgEl("div","MOOD \u00B7 "+d.status,"color:#f7931a"));
+    if(d.bio)body.appendChild(pgEl("div","\u201C"+d.bio+"\u201D","color:#ffffff;margin-top:6px;font-family:ui-sans-serif,system-ui,sans-serif;letter-spacing:0"));
+    if(d.likes.length)body.appendChild(pgEl("div","\u2665 LIKES \u00B7 "+d.likes.join(" \u00B7 "),"color:#3fe0d0;margin-top:6px"));
+    if(d.dislikes.length)body.appendChild(pgEl("div","\u2716 DISLIKES \u00B7 "+d.dislikes.join(" \u00B7 "),"color:#c5d0d9;margin-top:4px"));
+    if(d.top8.length){body.appendChild(pgEl("div","TOP "+d.top8.length+" \u00B7 PACK ALLIES","color:#c5d0d9;margin-top:8px"));var g8=pgEl("div","","display:flex;flex-wrap:wrap;gap:4px;margin-top:4px");
+      d.top8.forEach(function(fid){var b=pgEl("button","","width:22px;height:22px;border:1px solid #23303a;cursor:pointer;background:"+sibHex(fid));b.title=fid;
+        b.onclick=function(e){e.stopPropagation();pageOpen(fid)};g8.appendChild(b)});body.appendChild(g8)}
+    if(d.x)body.appendChild(pgEl("div","X \u00B7 @"+d.x+" (SELF-STATED)","color:#c5d0d9;margin-top:6px"))}
+  p.appendChild(body);
+  var ft=pgEl("div","","display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"),oa=pgEl("a","OPEN \u2197","");oa.href="/inscription/"+id;oa.target="_blank";oa.rel="noopener";ft.appendChild(oa);
+  if(P.ins){var pa=pgEl("a","PAGE PROOF \u2197","");pa.href="/inscription/"+P.ins;pa.target="_blank";pa.rel="noopener";ft.appendChild(pa)}
+  [].forEach.call(ft.children,function(b){b.style.cssText="font:600 11px monospace;letter-spacing:.06em;padding:5px 8px;background:#04060a;color:"+col+";border:1px solid "+col+";text-decoration:none"});
+  p.appendChild(ft);pageTick(innerWidth,innerHeight)}
+/* anchor: horizon Guardians use their drawn sprite point; this Guardian uses the top of its own body */
+function pageTick(w,h){try{if(VOX&&VOX!==PGVX){PGVX=VOX;PGTY=0;for(var i=0;i<VOX.length;i++)PGTY=Math.max(PGTY,VOX[i][1]+VOX[i][4]/2)}
+    if(VOX&&typeof P3==="function"){var a=P3(0,0,0),b=P3(0,PGTY,0);SELFP=[b[0],b[1],Math.max(40,Math.abs(a[1]-b[1])*.6),(a[1]+b[1])/2]}}catch(_){}
+  var p=document.getElementById("bwpage");if(!p||!PGID||p.style.display==="none")return;var ax=null,ay=null,r=c.getBoundingClientRect();
+  if(PGID===SELF&&SELFP){ax=SELFP[0];ay=SELFP[1]}else for(var k=0;k<SIBP.length;k++)if(SIBP[k][3]===PGID){ax=SIBP[k][0];ay=SIBP[k][1]-SIBP[k][2];break}
+  var top0=innerWidth<600?122:70;p.style.maxHeight=Math.max(160,innerHeight-top0-8)+"px";var pw=p.offsetWidth,ph=p.offsetHeight;
+  if(ax==null){ax=w/2;ay=h*.5}
+  var L=Math.max(8,Math.min(innerWidth-pw-8,r.left+ax-pw/2)),T=r.top+ay-ph-14;if(T<top0)T=top0;if(T+ph>innerHeight-8)T=Math.max(8,innerHeight-8-ph);
+  p.style.left=L+"px";p.style.top=T+"px"}
+function selfHit(e){if(!SELFP||!SELF)return false;var r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  return Math.abs(x-SELFP[0])<SELFP[2]&&y>SELFP[1]-10&&y<SELFP[3]+SELFP[2]}
+(function(){var p=document.createElement("div");p.id="bwpage";
+  p.style.cssText="position:fixed;display:none;z-index:7;width:min(86vw,320px);max-height:70vh;overflow:auto;padding:10px 12px;background:rgba(4,6,10,.95);border:1px solid #3fe0d0;color:#c5d0d9;font:600 13px ui-monospace,monospace;letter-spacing:.04em";
+  p.addEventListener("pointerdown",function(e){e.stopPropagation()});document.body.appendChild(p);
+  var dn=null;c.addEventListener("pointerdown",function(e){dn=[e.clientX,e.clientY]},true);
+  c.addEventListener("pointerup",function(e){if(!dn||Math.abs(e.clientX-dn[0])+Math.abs(e.clientY-dn[1])>6){dn=null;return}dn=null;
+    var h=sibHit(e);if(h){pageOpen(h);return}if(selfHit(e)){e.stopImmediatePropagation();e.stopPropagation();pageOpen(SELF);return}if(PGID)pageClose()},true);
+  addEventListener("keydown",function(e){if(e.key==="Escape"&&PGID)pageClose()})})();
+/* horizon taps are caught by the pack-focus handler first; open/close the page with the focus */
+var _fsPg=focusSib;focusSib=function(id){_fsPg(id);if(FOC){PGID=null;pageOpen(FOC)}else pageClose()};
 var LASTP="t";
 /* narrow screens show one of TRIBUTE / SWARM at a time: the one opened last */
 var _ch8=chainHud;chainHud=function(w,h){_ch8(w,h);var one=TRIBUTEON&&SWARMON&&w<900;

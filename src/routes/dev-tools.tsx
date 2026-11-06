@@ -354,6 +354,13 @@ window.fetch=function(u){u=String(u);
  if(u==="/content/mockmask0i0")return Promise.resolve(new Response(M,{headers:{"content-type":"image/svg+xml"}}));
  return of(u)}})()</script>`;
 
+/** Test-only: adds a BW-PAGE-1 profile child to every Guardian's children so tapping one shows a claimed page. */
+const pageMock = `<script>(function(){var of=window.fetch.bind(window);
+window.fetch=function(u){u=String(u);
+ if(u.indexOf("/r/children/")===0&&u.indexOf("/r/children/9d1da99c")!==0)return of(u).then(function(r){return r.json()}).catch(function(){return{ids:[],more:false}}).then(function(j){j.ids=(j.ids||[]).concat(["mockpage0i0"]);return new Response(JSON.stringify(j),{headers:{"content-type":"application/json"}})});
+ if(u==="/content/mockpage0i0")return Promise.resolve(new Response('BW-PAGE-1\\n{"title":"TITAN OF THE RIDGE","status":"Raiding shards at the Oasis","bio":"Protecting my block since genesis. Wanders Mondrian parcels hunting relics under low-fee night skies.","likes":["Low fees","Mondrian symmetry","Shard raids"],"dislikes":["Fee spikes","Empty blocks"],"top8":["aaaaaa0i0","bbbbbb0i0","cccccc0i0"],"theme":{"accent":"#f7931a"},"socials":{"x":"bitmapwin"}}',{headers:{"content-type":"text/plain"}}));
+ return of(u)}})()</script>`;
+
 /** Holiday preview for the V8 Three.js draft. Test-only: maps the on-chain Three.js id to the same r163 build on a CDN. */
 function HolidayTestbench() {
   const [day, setDay] = useState(24);
@@ -362,13 +369,14 @@ function HolidayTestbench() {
   const [fx, setFx] = useState(0);
   const [mods, setMods] = useState(false);
   const [skin, setSkin] = useState(false);
+  const [page, setPage] = useState(false);
   const html = useMemo(() => {
     const imap = `<script type="importmap">{"imports":{"/content/${THREE_R163_MODULE_ID}":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>`;
     const pin = `<script>window.ADVENT_DAY=${day};${sky ? `window.BW_SKY="${sky}";` : ""}${fx ? `window.BW_FX=${fx};` : ""}</script>`;
     return guardianMasterGeneratorHtmlV8Three()
-      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none") + (skin ? skinMock : "") + (mods ? moduleMock : ""))
+      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none") + (skin ? skinMock : "") + (page ? pageMock : "") + (mods ? moduleMock : ""))
       .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200);setInterval(function(){if(STATE==="RELIC")STATE="AWAKE"},300)</script></body>');
-  }, [day, sky, fx, mods, skin]);
+  }, [day, sky, fx, mods, skin, page]);
   const btn = (on: boolean) =>
     `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
   const skies: [string, string][] = [["", "SKY TODAY"], ["2026-11-17", "LEONIDS"], ["2026-11-24", "FULL MOON"], ["2026-03-03", "BLOOD MOON"], ["2026-08-12", "SOLAR ECLIPSE"]];
@@ -394,6 +402,7 @@ function HolidayTestbench() {
         ))}
         <button type="button" className={btn(mods)} onClick={() => setMods(!mods)}>MOCK MODULES {mods ? "ON" : "OFF"}</button>
         <button type="button" className={btn(skin)} onClick={() => setSkin(!skin)}>MOCK SKIN {skin ? "ON" : "OFF"}</button>
+        <button type="button" className={btn(page)} onClick={() => setPage(!page)}>MOCK PAGE {page ? "ON" : "OFF"}</button>
         <span className="w-4" />
         <button type="button" className={btn(device === "desktop")} onClick={() => setDevice("desktop")}>DESKTOP</button>
         <button type="button" className={btn(device === "mobile")} onClick={() => setDevice("mobile")}>MOBILE</button>
