@@ -54,7 +54,7 @@ export function PillarDock() {
       {!immersive && (
         <nav
           aria-label="Pillars"
-          className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded-full border border-border/60 bg-background/70 p-1 shadow-lg backdrop-blur-md"
+          className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 lg:hidden items-center gap-0.5 rounded-full border border-border/60 bg-background/70 p-1 shadow-lg backdrop-blur-md"
         >
           {PILLARS.map(({ to, label, icon: Icon }) => {
             const active = path === to || path.startsWith(to + "/");
