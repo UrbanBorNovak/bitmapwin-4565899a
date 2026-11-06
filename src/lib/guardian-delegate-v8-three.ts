@@ -106,9 +106,9 @@ try{
   const voSave=()=>{try{localStorage.setItem("bw-vr",JSON.stringify(VO))}catch(_){}};
   const SEAT_H=.45,lim=()=>Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2),clampRig=()=>{const l=lim();RIG.position.x=Math.max(-l,Math.min(l,RIG.position.x));RIG.position.z=Math.max(-l,Math.min(l,RIG.position.z))};
   const TPM=new T.Mesh(new T.RingGeometry(.18,.26,32),new T.MeshBasicMaterial({color:0x3fe0d0,transparent:true,opacity:.9}));TPM.rotation.x=-Math.PI/2;TPM.visible=false;S.add(TPM);
-  let turnLock=false,tpAim=false,tpOk=false,vt0=performance.now();const fw=new T.Vector3(),rt=new T.Vector3(),cp=new T.Vector3(),cd=new T.Vector3(),hp=new T.Vector3(),tp=new T.Vector3(),cq=new T.Quaternion();
+  let turnLock=false,tpAim=false,tpOk=false,vt0=performance.now(),vlast=0;const fw=new T.Vector3(),rt=new T.Vector3(),cp=new T.Vector3(),cd=new T.Vector3(),hp=new T.Vector3(),tp=new T.Vector3(),cq=new T.Quaternion();
   const btn=(gp,i)=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
-  const vrFrame=()=>{const t=(performance.now()-vt0)/1e3+50,dt=1/72;
+  const vrFrame=()=>{const now=performance.now(),t=(now-vt0)/1e3+50,dt=vlast?Math.min(.1,(now-vlast)/1e3):1/72;vlast=now;
     for(const c of pads){const src=c.userData.src;if(!src||!src.gamepad)continue;const gp=src.gamepad,ax=gp.axes,x=ax[2]||0,y=ax[3]||0;
       if(src.handedness==="right"){if(Math.abs(x)>.7&&!turnLock){RIG.rotation.y-=Math.sign(x)*Math.PI/6;turnLock=true}else if(Math.abs(x)<.3)turnLock=false;continue}
       const bx=btn(gp,4),by=btn(gp,5);
@@ -126,7 +126,7 @@ try{
     fill(0,stone,t,true);R.render(S,PC)};
   const vrStart=async()=>{try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor","bounded-floor"]});
     R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,VO.seat?SEAT_H:0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;WORLD.scale.setScalar(.1);
-    R.setClearColor(0x04060a,1);R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
+    R.setClearColor(0x04060a,1);vlast=0;R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
     s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;TPM.visible=false;tpAim=false;WORLD.scale.setScalar(1);R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
   /* VR bar: hidden unless the device reports immersive-vr, so the normal screen layout is untouched */
   const VBAR=document.createElement("div");VBAR.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;display:none;gap:6px;align-items:center";
