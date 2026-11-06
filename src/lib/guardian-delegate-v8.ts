@@ -205,6 +205,7 @@ var _dl8s=drawLand;drawLand=function(pulse){if(LAND&&COLL&&COLL.ids&&COLL.ids.le
   g.shadowBlur=0}
   _dl8s(pulse)};
 /* Swarm telemetry: how the collection is forming on chain (children of the root, in inscription order). */
+function sibHex(id){return(typeof SIBO!=="undefined"&&SIBO[id])||"#"+String(id).slice(0,6)}
 swarmHud=function(w,h){if(!SWARMON)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
     pw=Math.min(w-pad*2,380),x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+hs;
   if(!COLL||!COLL.ids){hudBox(x-10,y-hs*1.3,pw+20,hs*1.5+lh*1.6,"#3fe0d0");txt("COLLECTION FORMATION",x,y,hs,"#3fe0d0");txt("READING CHILDREN FROM THE CHAIN\u2026",x,y+lh*1.2,fs,"#c5d0d9");return}
