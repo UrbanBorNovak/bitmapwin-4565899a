@@ -100,23 +100,44 @@ try{
     c.addEventListener("selectstart",()=>{if(typeof stance==="function")stance(((typeof STANCE!=="undefined"?STANCE:0)+1)%4)});
     c.addEventListener("squeezestart",()=>{if(typeof stance==="function")stance(3)});
     c.addEventListener("connected",(e)=>{c.userData.src=e.data});c.addEventListener("disconnected",()=>{c.userData.src=null});pads.push(c)}
-  let turnLock=false,vt0=performance.now();const fw=new T.Vector3(),rt=new T.Vector3();
+  /* movement options (device-local): MOVE = teleport (default) or smooth walk; SEAT raises the eyes ~45 cm for seated play.
+     In VR: left X button toggles MOVE, left Y button toggles SEAT. Snap turn (right stick, 30deg) stays in every mode. */
+  const VO={move:"tp",seat:false};try{const j=JSON.parse(localStorage.getItem("bw-vr")||"{}");if(j.move==="smooth")VO.move="smooth";VO.seat=!!j.seat}catch(_){}
+  const voSave=()=>{try{localStorage.setItem("bw-vr",JSON.stringify(VO))}catch(_){}};
+  const SEAT_H=.45,lim=()=>Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2),clampRig=()=>{const l=lim();RIG.position.x=Math.max(-l,Math.min(l,RIG.position.x));RIG.position.z=Math.max(-l,Math.min(l,RIG.position.z))};
+  const TPM=new T.Mesh(new T.RingGeometry(.18,.26,32),new T.MeshBasicMaterial({color:0x3fe0d0,transparent:true,opacity:.9}));TPM.rotation.x=-Math.PI/2;TPM.visible=false;S.add(TPM);
+  let turnLock=false,tpAim=false,tpOk=false,vt0=performance.now();const fw=new T.Vector3(),rt=new T.Vector3(),cp=new T.Vector3(),cd=new T.Vector3(),hp=new T.Vector3(),tp=new T.Vector3(),cq=new T.Quaternion();
+  const btn=(gp,i)=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
   const vrFrame=()=>{const t=(performance.now()-vt0)/1e3+50,dt=1/72;
-    for(const c of pads){const src=c.userData.src;if(!src||!src.gamepad)continue;const ax=src.gamepad.axes,x=ax[2]||0,y=ax[3]||0;
-      if(src.handedness==="right"){if(Math.abs(x)>.7&&!turnLock){RIG.rotation.y-=Math.sign(x)*Math.PI/6;turnLock=true}else if(Math.abs(x)<.3)turnLock=false}
-      else if(Math.abs(x)+Math.abs(y)>.15){PC.getWorldDirection(fw);fw.y=0;fw.normalize();rt.crossVectors(fw,RIG.up);
-        RIG.position.addScaledVector(fw,-y*1.4*dt).addScaledVector(rt,x*1.4*dt);
-        const lim=Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2);RIG.position.x=Math.max(-lim,Math.min(lim,RIG.position.x));RIG.position.z=Math.max(-lim,Math.min(lim,RIG.position.z))}}
+    for(const c of pads){const src=c.userData.src;if(!src||!src.gamepad)continue;const gp=src.gamepad,ax=gp.axes,x=ax[2]||0,y=ax[3]||0;
+      if(src.handedness==="right"){if(Math.abs(x)>.7&&!turnLock){RIG.rotation.y-=Math.sign(x)*Math.PI/6;turnLock=true}else if(Math.abs(x)<.3)turnLock=false;continue}
+      const bx=btn(gp,4),by=btn(gp,5);
+      if(bx&&!c.userData.bx){VO.move=VO.move==="tp"?"smooth":"tp";voSave();vbSync()}
+      if(by&&!c.userData.by){VO.seat=!VO.seat;voSave();RIG.position.y=VO.seat?SEAT_H:0;vbSync()}
+      c.userData.bx=bx;c.userData.by=by;
+      if(VO.move==="smooth"){if(Math.abs(x)+Math.abs(y)>.15){PC.getWorldDirection(fw);fw.y=0;fw.normalize();rt.crossVectors(fw,RIG.up);
+        RIG.position.addScaledVector(fw,-y*1.4*dt).addScaledVector(rt,x*1.4*dt);clampRig()}continue}
+      /* teleport: push stick forward to aim from the controller to the floor, release to jump there */
+      if(y<-.6){tpAim=true;c.getWorldPosition(cp);c.getWorldQuaternion(cq);cd.set(0,-.35,-1).applyQuaternion(cq).normalize();
+        tpOk=cd.y<-.05;if(tpOk){const k=-cp.y/cd.y;tp.copy(cp).addScaledVector(cd,Math.min(k,12));tp.y=0;const l=lim();tpOk=Math.abs(tp.x)<=l&&Math.abs(tp.z)<=l}
+        TPM.visible=true;TPM.position.set(tp.x,.01,tp.z);TPM.material.color.setHex(tpOk?0x3fe0d0:0xb3261e)}
+      else if(tpAim&&y>-.3){tpAim=false;TPM.visible=false;if(tpOk){PC.getWorldPosition(hp);RIG.position.x+=tp.x-hp.x;RIG.position.z+=tp.z-hp.z;clampRig()}}}
     const stone=typeof STATE!=="undefined"&&STATE==="RELIC";
     fill(0,stone,t,true);R.render(S,PC)};
   const vrStart=async()=>{try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor","bounded-floor"]});
-    R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;WORLD.scale.setScalar(.1);
+    R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,VO.seat?SEAT_H:0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;WORLD.scale.setScalar(.1);
     R.setClearColor(0x04060a,1);R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
-    s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;WORLD.scale.setScalar(1);R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
-  const VB=document.createElement("button");VB.textContent="\u{1F97D} ENTER VR";
-  VB.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;font:bold 15px ui-monospace,monospace;letter-spacing:.08em;color:#04060a;background:#3fe0d0;border:0;padding:9px 16px;cursor:pointer;display:none";
-  VB.onclick=(e)=>{e.stopPropagation();const s=R.xr.getSession();if(s)s.end();else vrStart()};document.body.appendChild(VB);
-  try{if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported("immersive-vr").then(ok=>{if(ok)VB.style.display="block"},()=>{})}catch(_){}
+    s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;TPM.visible=false;tpAim=false;WORLD.scale.setScalar(1);R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
+  /* VR bar: hidden unless the device reports immersive-vr, so the normal screen layout is untouched */
+  const VBAR=document.createElement("div");VBAR.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;display:none;gap:6px;align-items:center";
+  const mk=(txt,bg)=>{const b=document.createElement("button");b.textContent=txt;b.style.cssText="font:bold 15px ui-monospace,monospace;letter-spacing:.08em;color:#04060a;background:"+bg+";border:0;padding:9px 14px;cursor:pointer";VBAR.appendChild(b);return b};
+  const VB=mk("\u{1F97D} ENTER VR","#3fe0d0"),VM=mk("","#f7931a"),VS=mk("","#f7931a");
+  const vbSync=()=>{VM.textContent=VO.move==="tp"?"MOVE: TELEPORT":"MOVE: SMOOTH";VS.textContent=VO.seat?"SEATED":"STANDING"};vbSync();
+  VB.onclick=(e)=>{e.stopPropagation();const s=R.xr.getSession();if(s)s.end();else vrStart()};
+  VM.onclick=(e)=>{e.stopPropagation();VO.move=VO.move==="tp"?"smooth":"tp";voSave();vbSync()};
+  VS.onclick=(e)=>{e.stopPropagation();VO.seat=!VO.seat;voSave();if(R.xr.isPresenting)RIG.position.y=VO.seat?SEAT_H:0;vbSync()};
+  document.body.appendChild(VBAR);
+  try{if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported("immersive-vr").then(ok=>{if(ok)VBAR.style.display="flex"},()=>{})}catch(_){}
   /* ================= Sky, chain events and community modules ================= */
   /* Sky: viewer's real date (UTC). Moon phase from the mean synodic month; blood moon / solar eclipse only on listed
      real eclipse dates; meteor showers on their yearly peak windows; zodiac = tropical sun sign. ?sky=YYYY-MM-DD previews. */
