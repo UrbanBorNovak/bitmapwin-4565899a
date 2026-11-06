@@ -477,9 +477,14 @@ txt=function(s,x,y,size,col,a){if(!BGON||innerWidth>=600)return _tx8(s,x,y,size,
   _tx8(s,x,y,size,col,a)};
 var _hu9=hud;hud=function(w,h,p){if(w>=600||(typeof BOOTH!=="undefined"&&BOOTH))return _hu9(w,h,p);BGON=1;try{_hu9(w,h,p)}finally{BGON=0}};
 var _tk9=tickerHud;tickerHud=function(w,h){if(w>=600){window.BW_TOPY=0;return _tk9(w,h)}var ch=chainHud;chainHud=function(){};
-  var pad=Math.max(14,w*.035),small=Math.max(14,Math.min(17,w*.016));
-  g.save();g.translate(0,BGT);BGON=2;try{_tk9(w,h)}finally{BGON=0;g.restore();chainHud=ch}
-  window.BW_TOPY=BGT+pad+small*18.4;chainHud(w,h)};
+  chainHud=ch;var pad=Math.max(14,w*.035),small=Math.max(14,Math.min(17,w*.016)),y=BGT+pad+small*8.8,lh=small*1.25,k,tot=0;
+  /* phones: the same three ticker facts without the step chart, so the scene keeps room */
+  for(k=0;k<SALES.length;k++)tot+=SALES[k];BGON=2;
+  try{txt("LAST SALE \\u00B7 "+(TRD&&typeof TRD.sats==="number"?TRD.sats.toLocaleString()+" SATS":TRD===false?"NO TRADES YET":"LOOKING\\u2026"),pad,y,small*.8,"#f7931a",.9);
+    txt("ALL SALES \\u00B7 "+(tot?tot.toLocaleString()+" SATS":"WAITING FOR THE FIRST SALE"),pad,y+lh,small*.8,"#3fe0d0",.85);
+    if(typeof GMASTER!=="undefined"){if(GMASTER)txt("GUARDIAN MASTER \\u00B7 "+GMASTER.toUpperCase(),pad,y+lh*2,small*.85,"#f7931a",.95);
+      else txt("GUARDIAN MASTER \\u00B7 "+(SKFOR?"UNCLAIMED":"SCANNING\\u2026"),pad,y+lh*2,small*.8,"#8a949c",.7)}}finally{BGON=0}
+  window.BW_TOPY=y+lh*3.2;chainHud(w,h)};
 `;
 
 /** The draft V8 master generator page. */
