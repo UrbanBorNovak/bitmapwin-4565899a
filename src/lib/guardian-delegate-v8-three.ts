@@ -78,7 +78,7 @@ try{
   function fill(pulse,stone,t,vr){
     let n=0;const put=(v,c,gl)=>{if(n>=N)return;o.position.set(v[0],v[1],v[2]);o.scale.set(Math.max(.01,v[3]),Math.max(.01,v[4]),Math.max(.01,v[5]));
       o.updateMatrix();M.setMatrixAt(n,o.matrix);col.set(c);if(gl>0)col.lerp(new T.Color(1,1,1),Math.min(.45,gl*.18*(1+pulse*.5)));M.setColorAt(n,col);n++};
-    for(let i=0;i<VOX.length;i++){const v=anim(VOX[i],t,!stone);put(v,stone?gray.clone().lerp(dk,(i%5)/6).getStyle():v[6],stone?0:v[7])}
+    if(VOX)for(let i=0;i<VOX.length;i++){const v=anim(VOX[i],t,!stone);put(v,stone?gray.clone().lerp(dk,(i%5)/6).getStyle():v[6],stone?0:v[7])}
     if(AGE&&!stone){const ne=Math.min(16,AGE.ep);for(let i=0;i<ne;i++){const a=i/ne*Math.PI*2+t*.25;
       put([Math.sin(a)*16,3+Math.sin(t*1.5+i)*1.2+(i%3)*2,Math.cos(a)*16,.55,.55,.55],"#f7931a",1.4)}}
     if(!stone){advent(put,t);sky(put,t);chainFx(put,t);for(const f of window.BW_HOOKS.slice()){try{f(put,t)}catch(_){window.BW_HOOKS.splice(window.BW_HOOKS.indexOf(f),1)}}}
@@ -137,6 +137,7 @@ try{
   VM.onclick=(e)=>{e.stopPropagation();VO.move=VO.move==="tp"?"smooth":"tp";voSave();vbSync()};
   VS.onclick=(e)=>{e.stopPropagation();VO.seat=!VO.seat;voSave();if(R.xr.isPresenting)RIG.position.y=VO.seat?SEAT_H:0;vbSync()};
   document.body.appendChild(VBAR);
+  window.BW_VR={RIG,VO,TPM,WORLD,STARS,PC,R};
   try{if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported("immersive-vr").then(ok=>{if(ok)VBAR.style.display="flex"},()=>{})}catch(_){}
   /* ================= Sky, chain events and community modules ================= */
   /* Sky: viewer's real date (UTC). Moon phase from the mean synodic month; blood moon / solar eclipse only on listed
