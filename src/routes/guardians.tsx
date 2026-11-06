@@ -80,7 +80,7 @@ function GuardiansPromo() {
   return (
     <div className="mx-auto max-w-[1300px] px-4 py-10 md:px-8">
       {/* Announcement */}
-      <p className="label inline-block border border-bitcoin/60 px-2 py-1 text-bitcoin">● MINT LIVE · V7 MASTER ON BITCOIN</p>
+      <p className="label inline-block border border-bitcoin/60 px-2 py-1 text-bitcoin">● MINT LIVE · V8 MASTER ON BITCOIN</p>
       <h1 className="display mt-5 text-4xl leading-tight md:text-6xl">
         1 BLOCK = 1 BITMAP = <span className="text-bitcoin">1 GUARDIAN.</span>
       </h1>
