@@ -266,7 +266,7 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        <nav ref={desktopNavRef} className="relative hidden min-w-0 items-center divide-x divide-border border-x border-border min-[1900px]:flex" aria-label="Main navigation">
+        <nav ref={desktopNavRef} className="relative hidden" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => {
             const here = groupItems(group).some((i) => itemIsActive(i.to));
             return (
@@ -386,7 +386,7 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="relative border-t border-border min-[1900px]:hidden" aria-label="Main navigation">
+      <nav className="relative border-t border-border lg:hidden" aria-label="Main navigation">
         <button
           type="button"
           aria-expanded={mobileOpen}
