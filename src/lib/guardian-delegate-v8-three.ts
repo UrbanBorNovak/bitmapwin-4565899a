@@ -76,7 +76,7 @@ try{
     M.count=n;M.instanceMatrix.needsUpdate=true;if(M.instanceColor)M.instanceColor.needsUpdate=true;
     R.render(S,C);g.shadowBlur=0;if(!stone)moon2d(w,h,t);g.drawImage(cv,0,0,w,h);
     const ad=adventDay();if(ad&&!stone){const left=Math.max(1,Math.ceil((864e5-Date.now()%864e5)/36e5)),nar=w<600;
-      g.font="11px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign=nar?"center":"right";
+      g.font="15px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign=nar?"center":"right";
       g.fillText(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad+" \u00b7 NEXT GIFT IN "+left+"H",nar?w/2:w-12,nar?122:h-14);g.textAlign="left"}
     if(!stone)eventHud(w,h);
   };
@@ -166,9 +166,9 @@ try{
     for(const m of MODS)lines.push(m.on?"\u2605 "+m.label+" \u00b7 COMMUNITY UNLOCKED":m.goal?m.label+" \u00b7 "+fmtS(m.got)+" / "+fmtS(m.goal)+" SATS"+(m.read?"":" \u00b7 SOME TXS UNREADABLE")+(m.addr?" \u00b7 SEND "+m.addr.slice(0,6)+"\u2026"+m.addr.slice(-6):""):"");
     const f=FX[FX.length-1];if(f&&now-f.t0<45)lines.push("\u25c6 NEW BLOCK "+f.h.toLocaleString("en-US")+(f.n?" \u00b7 "+f.n.toLocaleString("en-US")+" TX":"")+(f.tags.length?" \u00b7 "+f.tags.join(" \u00b7 "):""));
     lines.push((SKY.ecl?"\u25cf SOLAR ECLIPSE":SKY.blood?"\u263e BLOOD MOON":"\u263e "+SKY.phase)+" \u00b7 "+ZOD[SKY.z]+" SEASON"+(SKY.shower?" \u00b7 "+SKY.shower+" PEAK":""));
-    g.font=(nar?"9px":"10px")+" monospace";g.textAlign="center";
+    g.font=(nar?"13px":"15px")+" monospace";g.textAlign="center";
     for(let i=0;i<lines.length;i++){const s=lines[lines.length-1-i];if(!s)continue;g.fillStyle=s.startsWith("\u25c6")?"rgba(247,147,26,.95)":s.startsWith("\u2605")?"rgba(76,255,138,.9)":"rgba(207,232,255,.82)";
-      g.fillText(s,w/2,(nar?140:72)+(lines.length-1-i)*(nar?13:14))}g.textAlign="left"}
+      g.fillText(s,w/2,(nar?140:72)+(lines.length-1-i)*(nar?18:20))}g.textAlign="left"}
   /* ---- Advent engine: client UTC date; unlocks one more thing each December day. ?advent=DD previews. ---- */
   const adventDay=()=>{const q=+(new URLSearchParams(location.search).get("advent")||window.ADVENT_DAY||0);if(q>0)return Math.min(31,q);
     const d=new Date();return d.getUTCMonth()===11?d.getUTCDate():0};
