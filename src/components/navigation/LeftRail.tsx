@@ -15,6 +15,7 @@ const CORE: Item[] = [
 
 const MORE: { title: string; items: { to: string; label: string }[] }[] = [
   { title: "LAND & MARKET", items: [
+    { to: "/registry", label: "Registry" }, { to: "/collections", label: "Land clubs" },
     { to: "/traits", label: "Traits" }, { to: "/history", label: "Sales history" }, { to: "/leases", label: "Leases" },
     { to: "/barter", label: "Barter" }, { to: "/ownership", label: "Verify ownership" }, { to: "/archaeology", label: "Archaeology" },
     { to: "/world-stats", label: "World stats" },
