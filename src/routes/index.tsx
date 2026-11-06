@@ -1,4 +1,3 @@
-import { CinemaPremiere } from "@/components/home/CinemaPremiere";
 import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 const HeroVoxelDiorama3D = lazy(() => import("@/components/home/HeroVoxelDiorama3D"));
@@ -21,10 +20,7 @@ import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
-import { BlockChronicles } from "@/components/BlockChronicles";
-import { LivingBlockShowcase } from "@/components/LivingBlockShowcase";
 import { EarlyBitmapsRail, HubBento } from "@/components/home/EarlyBitmapsRail";
-import { NovemberBuildBanner } from "@/components/NovemberBuildBanner";
 
 
 export const Route = createFileRoute("/")({
@@ -103,9 +99,6 @@ function Index() {
 
   return (
     <div className="pb-10">
-      <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
-        <NovemberBuildBanner />
-      </section>
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="grid overflow-hidden border border-border-strong lg:min-h-[560px] lg:grid-cols-12">
           <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-4 lg:order-1 lg:col-span-3 lg:border-r lg:border-t-0 lg:p-5">
@@ -149,7 +142,7 @@ function Index() {
                 <div data-tour="home-flow" className="mt-6 grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                   <HeroDoor n="01" who="VISITOR" title="WALK THE OASIS" body="Step into the shared world. No wallet needed." to="/oasis" primary />
                   <HeroDoor n="02" who="CREATOR" title="BUILD & CUSTOMIZE" body="Voxel builds and profile pages on your BITMAP." to="/forge" />
-                  <HeroDoor n="03" who="TRADER" title="TRADE & BARTER" body="Buy land or swap wallet-to-wallet." to="/marketplace" />
+                  <HeroDoor n="03" who="EXPLORER" title="EXPLORE LAND" body="Look up any BITMAP, see asks and real sales." to="/marketplace" />
                 </div>
                 <MobileAppInstall />
               </div>
@@ -205,15 +198,10 @@ function Index() {
       </section>
 
       <HowItWorks />
-      <LivingBlockShowcase />
 
       <EarlyBitmapsRail />
       <HubBento />
 
-      <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
-        <h2 className="font-display text-2xl font-bold lowercase tracking-tight md:text-3xl">what people are making right now</h2>
-      </section>
-      <BlockChronicles />
       <ActiveBuilders />
 
       <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
@@ -247,7 +235,6 @@ function Index() {
         )}
       </section>
 
-      <CinemaPremiere />
 
       <section className="mx-auto max-w-[1600px] px-3 pt-6 pb-10 md:px-5 md:pt-10 md:pb-16">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
