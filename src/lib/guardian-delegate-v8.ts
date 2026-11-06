@@ -110,6 +110,30 @@ function beaconLoad(){kids(SELF,200).then(function(ids){ids=ids.slice().reverse(
     t("/content/"+id).then(function(s){var m=String(s).slice(0,400).match(/^\s*BW-BEACON-1\s+(sp1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{100,120}|bc1p[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}|bc1q[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38})\s*$/);
       if(m){BEACON=m[1];BEACONST="LIVE"}else nx()}).catch(nx)})()}).catch(function(){BEACONST="UNREADABLE"})}
 setTimeout(beaconLoad,1600);
+/* Holder Skin (BW-SKIN-1): the holder inscribes a text child of this Guardian
+   "BW-SKIN-1\n{"name","frame":<image id>,"mask":<image id>,"accent":"#rrggbb","scan":0-1}".
+   frame = transparent PNG/WebP/SVG drawn over the scene; mask = alpha image that clips the scene (visor).
+   Images are read as blobs from /content and must be image/*, so they render as pictures and never run
+   code. Overlays ignore clicks. Newest skin child wins; ?skin=off hides it. */
+var SKIN=null;
+function skinLoad(){if(/[?&]skin=off/.test(location.search))return;kids(SELF,200).then(function(ids){ids=ids.slice().reverse();var i=0;
+  (function nx(){if(i>=ids.length||i>=40)return;var id=ids[i++];
+    t("/content/"+id).then(function(s){s=String(s);if(s.slice(0,10)!=="BW-SKIN-1\n"||s.length>4000)return nx();var o;try{o=JSON.parse(s.slice(10))}catch(_){return nx()}
+      if(!o||typeof o!=="object")return nx();skinApply(o,id)}).catch(nx)})()}).catch(function(){})}
+function skinImg(id){if(!/^[0-9a-z]{6,64}i\d+$/.test(id||""))return Promise.resolve(null);
+  return fetch("/content/"+id).then(function(r){if(!r.ok)return null;var ct=r.headers.get("content-type")||"";if(ct.indexOf("image/")!==0)return null;
+    return r.blob().then(function(b){return b.size<=400000?URL.createObjectURL(b):null})}).catch(function(){return null})}
+function skinApply(o,id){SKIN={id:id,name:String(o.name||"SKIN").slice(0,32)};
+  var ac=/^#[0-9a-f]{6}$/i.test(o.accent||"")?o.accent:null,sc=Math.max(0,Math.min(1,+o.scan||0));
+  skinImg(o.mask).then(function(u){if(!u)return;var cs=document.querySelectorAll("canvas");for(var k=0;k<cs.length;k++){var st=cs[k].style;
+    st.webkitMaskImage=st.maskImage="url("+u+")";st.webkitMaskSize=st.maskSize="100% 100%";st.webkitMaskRepeat=st.maskRepeat="no-repeat"}});
+  skinImg(o.frame).then(function(u){var d=document.createElement("div");d.id="bwskin";
+    d.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:40;"+(u?"background:url("+u+") center/100% 100% no-repeat;":"");
+    if(sc){var l=document.createElement("div");l.style.cssText="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,"+(sc*.5).toFixed(2)+") 0 1px,transparent 1px 3px)";d.appendChild(l)}
+    if(ac){var e=document.createElement("div");e.style.cssText="position:absolute;inset:0;box-shadow:inset 0 0 40px "+ac+"66,inset 0 0 0 1px "+ac+"aa";d.appendChild(e)}
+    var tg=document.createElement("div");tg.textContent="SKIN \u00B7 "+SKIN.name;tg.style.cssText="position:absolute;left:10px;bottom:8px;font:9px monospace;color:"+(ac||"#3fe0d0")+";opacity:.75";d.appendChild(tg);
+    document.body.appendChild(d)})}
+setTimeout(skinLoad,1800);
 tributeHud=function(w,h){var cbn=document.getElementById("bwcb");if(cbn)cbn.style.display=TRIBUTEON&&BEACON?"":"none";if(!TRIBUTEON)return;var fs=Math.max(11,Math.min(13,w*.016)),hs=fs+1.5,lh=fs*1.6,pad=Math.max(14,w*.035),
     pw=Math.min(w-pad*2,360),x=w-pw-pad,y=pad+fs*(w<520?7.4:5.2)+(PROOFON&&G?lh*7.6:0),L=[];
   if(BEACON){for(var k=0;k<BEACON.length;k+=Math.max(16,Math.floor(pw/(fs*.62))))L.push(BEACON.slice(k,k+Math.max(16,Math.floor(pw/(fs*.62)))))}
