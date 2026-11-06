@@ -261,10 +261,13 @@ export function GuidedTour() {
     };
     measure();
     const timer = window.setTimeout(measure, 350);
+    // Late-loading images and data shift the page; keep the highlight on target.
+    const follow = window.setInterval(measure, 500);
     window.addEventListener("scroll", measure, true);
     window.addEventListener("resize", measure);
     return () => {
       window.clearTimeout(timer);
+      window.clearInterval(follow);
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("resize", measure);
     };
