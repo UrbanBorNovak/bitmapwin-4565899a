@@ -4,11 +4,11 @@ import { Link } from "@tanstack/react-router";
 const WORLD_STEPS = [
   {
     n: "01",
-    title: "LOOK UP ANY BITMAP",
+    title: "SEE REAL PRICES",
     tag: "READ FROM BITCOIN",
-    body: "See who holds a block's BITMAP right now, plus its asks and confirmed sales.",
-    to: "/registry",
-    cta: "OPEN REGISTRY",
+    body: "Every confirmed BITMAP sale, traced from the Bitcoin transaction that paid the seller.",
+    to: "/history",
+    cta: "SALES HISTORY",
   },
   {
     n: "02",
