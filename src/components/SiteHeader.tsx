@@ -92,6 +92,7 @@ const NAV_GROUPS: NavGroup[] = [
       {
         title: "RECORDS",
         items: [
+          { to: "/collections", label: "LAND CLUBS", note: "BITMAPs grouped by block range" },
           { to: "/ownership", label: "VERIFY OWNERSHIP", note: "Who holds a BITMAP on-chain" },
           { to: "/traits", label: "TRAITS", note: "Official BITMAP trait collections" },
           { to: "/archaeology", label: "ARCHAEOLOGY", note: "Block history and records" },

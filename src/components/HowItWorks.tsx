@@ -4,41 +4,41 @@ import { Link } from "@tanstack/react-router";
 const WORLD_STEPS = [
   {
     n: "01",
-    title: "BLOCK INTO LAND",
-    tag: "L1 PROVENANCE",
-    body: "A Bitcoin block is inscribed once as <height>.bitmap — permanent, scarce territory you can verify on-chain.",
-    to: "/registry",
-    cta: "EXPLORE REGISTRY",
+    title: "SEE REAL PRICES",
+    tag: "READ FROM BITCOIN",
+    body: "Every confirmed BITMAP sale, traced from the Bitcoin transaction that paid the seller.",
+    to: "/history",
+    cta: "SALES HISTORY",
   },
   {
     n: "02",
-    title: "STEP INTO THE WORLD",
-    tag: "THE OASIS ATLAS",
-    body: "The Oasis turns 900k+ blocks into one continuous 3D atlas you can walk, explore and return to.",
+    title: "WALK THE LAND",
+    tag: "NO WALLET NEEDED",
+    body: "Every block is a place in the Oasis. Walk it in 3D in your browser.",
     to: "/oasis",
     cta: "ENTER OASIS",
   },
   {
     n: "03",
-    title: "FORGE & ARCHITECTURE",
-    tag: "3D BLOCKS ON BITCOIN",
-    body: "Build voxel structures in Land Forge, saved in a lightweight Bitcoin voxel format (4 bytes per block) and permanently etched onto the BITMAP's own sat.",
+    title: "BUILD AND INSCRIBE",
+    tag: "LAND FORGE",
+    body: "Build with voxels on your BITMAP, then inscribe the build on Bitcoin.",
     to: "/forge",
     cta: "OPEN LAND FORGE",
   },
   {
     n: "04",
-    title: "GUARDIANS & BLOCK MATTER",
-    tag: "BLOCK DNA",
-    body: "Immutable block facts — height, fees, tx count — become the DNA and elemental matter of each Guardian.",
-    to: "/codex/morphs",
-    cta: "INSPECT CODEX",
+    title: "MEET ITS GUARDIAN",
+    tag: "ONE PER BLOCK",
+    body: "Each block grows one Guardian from its own data. Preview any block for free.",
+    to: "/guardians",
+    cta: "SEE GUARDIANS",
   },
   {
     n: "05",
-    title: "SOVEREIGN UTILITY",
-    tag: "ZERO CUSTODY",
-    body: "Trade with wallet-signed PSBTs, earn BIT through attention, and hold experimental Shadow keycards and relics.",
+    title: "TRADE WITHOUT CUSTODY",
+    tag: "YOUR WALLET SIGNS",
+    body: "List or buy with your own wallet. The BITMAP and the sats move in one transaction.",
     to: "/marketplace",
     cta: "OPEN MARKETPLACE",
   },
@@ -61,7 +61,7 @@ export function HowItWorks() {
 
   return (
     <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-8 md:pt-16">
-      <div className="border border-border-strong">
+      <div className="@container border border-border-strong">
         <header className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-end sm:justify-between md:p-6">
           <div>
             <div className="label text-bitcoin">NEW HERE? START WITH THIS</div>
@@ -97,16 +97,16 @@ export function HowItWorks() {
           </div>
         </header>
 
-        <ol className="grid md:grid-cols-5">
+        <ol className="grid gap-px bg-border @2xl:grid-cols-2 @6xl:grid-cols-5">
           {steps.map((step, i) => (
             <li
               key={step.n}
-              className={`group relative flex flex-col border-b border-border p-4 md:p-6 transition-colors hover:bg-muted/20 md:border-b-0 ${i > 0 ? "md:border-l md:border-border" : ""}`}
+              className="group relative flex flex-col bg-background p-4 transition-colors hover:bg-muted/20 @2xl:p-6 @2xl:last:col-span-2 @6xl:last:col-span-1"
             >
               <div className="flex items-center gap-2">
                 <span className="label text-bitcoin">{step.n}</span>
                 {i < steps.length - 1 && <span className="h-px flex-1 bg-border" aria-hidden="true" />}
-                <span className="label text-bitcoin md:hidden" aria-hidden="true">↓</span>
+                <span className="label text-bitcoin @2xl:hidden" aria-hidden="true">↓</span>
               </div>
               {"tag" in step && (
                 <div className="label mt-3 md:mt-4 w-fit border border-signal/40 px-2 py-0.5 text-signal">{step.tag}</div>

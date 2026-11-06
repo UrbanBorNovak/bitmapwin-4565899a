@@ -15,13 +15,14 @@ const CORE: Item[] = [
 
 const MORE: { title: string; items: { to: string; label: string }[] }[] = [
   { title: "LAND & MARKET", items: [
+    { to: "/collections", label: "Land clubs" },
     { to: "/traits", label: "Traits" }, { to: "/history", label: "Sales history" }, { to: "/leases", label: "Leases" },
     { to: "/barter", label: "Barter" }, { to: "/ownership", label: "Verify ownership" }, { to: "/archaeology", label: "Archaeology" },
     { to: "/world-stats", label: "World stats" },
   ] },
   { title: "CREATE", items: [
     { to: "/studio", label: "Studio" }, { to: "/builds", label: "Community builds" }, { to: "/builders", label: "Builders" },
-    { to: "/extenders", label: "Extenders" }, { to: "/tools", label: "All tools" },
+    { to: "/extenders", label: "Extenders" }, { to: "/registry", label: "3D model registry" }, { to: "/tools", label: "All tools" },
   ] },
   { title: "GUARDIANS", items: [
     { to: "/mint", label: "Mint Guardian" }, { to: "/breed", label: "Breeding lab" }, { to: "/command", label: "Command centre" },
