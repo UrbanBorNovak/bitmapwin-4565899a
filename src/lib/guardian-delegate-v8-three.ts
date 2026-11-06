@@ -90,7 +90,7 @@ try{
      1 voxel = 10 cm. Left stick walks (head-relative), right stick snap-turns 30deg, trigger cycles stance,
      grip = REC-free ROAR. The button appears only when navigator.xr reports immersive-vr. */
   R.xr.enabled=true;
-  const WORLD=new T.Group();WORLD.scale.setScalar(.1);S.remove(M,FL);WORLD.add(M,FL);S.add(WORLD);
+  const WORLD=new T.Group();S.remove(M,FL);WORLD.add(M,FL);S.add(WORLD);
   const RIG=new T.Group(),PC=new T.PerspectiveCamera(70,1,.05,200);RIG.add(PC);S.add(RIG);
   const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const u=hr(i+3000)*2-1,ph=hr(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
     a[i*3]=Math.cos(ph)*s*r;a[i*3+1]=Math.abs(u)*r;a[i*3+2]=Math.sin(ph)*s*r}gm.setAttribute("position",new T.BufferAttribute(a,3));return gm})(),new T.PointsMaterial({color:0xcfe8ff,size:.25}));
@@ -107,12 +107,12 @@ try{
       else if(Math.abs(x)+Math.abs(y)>.15){PC.getWorldDirection(fw);fw.y=0;fw.normalize();rt.crossVectors(fw,RIG.up);
         RIG.position.addScaledVector(fw,-y*1.4*dt).addScaledVector(rt,x*1.4*dt);
         const lim=Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2);RIG.position.x=Math.max(-lim,Math.min(lim,RIG.position.x));RIG.position.z=Math.max(-lim,Math.min(lim,RIG.position.z))}}
-    const stone=typeof STATE!=="undefined"&&STATE!=="AWAKE"&&STATE!=="LIVE"&&STATE==="DORMANT";
+    const stone=typeof STATE!=="undefined"&&STATE==="DORMANT";
     fill(0,stone,t,true);R.render(S,PC)};
   const vrStart=async()=>{try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor","bounded-floor"]});
-    R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;
+    R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;WORLD.scale.setScalar(.1);
     R.setClearColor(0x04060a,1);R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
-    s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
+    s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;WORLD.scale.setScalar(1);R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
   const VB=document.createElement("button");VB.textContent="\u{1F97D} ENTER VR";
   VB.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;font:bold 15px ui-monospace,monospace;letter-spacing:.08em;color:#04060a;background:#3fe0d0;border:0;padding:9px 16px;cursor:pointer;display:none";
   VB.onclick=(e)=>{e.stopPropagation();const s=R.xr.getSession();if(s)s.end();else vrStart()};document.body.appendChild(VB);
