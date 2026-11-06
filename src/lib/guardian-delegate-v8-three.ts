@@ -130,7 +130,7 @@ try{
     s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;TPM.visible=false;tpAim=false;WORLD.scale.setScalar(1);R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
   /* VR bar: hidden unless the device reports immersive-vr, so the normal screen layout is untouched */
   const VBAR=document.createElement("div");VBAR.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;display:none;gap:6px;align-items:center";
-  const mk=(txt,bg)=>{const b=document.createElement("button");b.textContent=txt;b.style.cssText="font:bold 15px ui-monospace,monospace;letter-spacing:.08em;color:#04060a;background:"+bg+";border:0;padding:9px 14px;cursor:pointer";VBAR.appendChild(b);return b};
+  const mk=(txt,bg)=>{const b=document.createElement("button");b.textContent=txt;b.style.cssText="font:bold 13px ui-monospace,monospace;letter-spacing:.06em;white-space:nowrap;color:#04060a;background:"+bg+";border:0;padding:7px 10px;cursor:pointer";VBAR.appendChild(b);return b};
   const VB=mk("\u{1F97D} ENTER VR","#3fe0d0"),VM=mk("","#f7931a"),VS=mk("","#f7931a");
   const vbSync=()=>{VM.textContent=VO.move==="tp"?"MOVE: TELEPORT":"MOVE: SMOOTH";VS.textContent=VO.seat?"SEATED":"STANDING"};vbSync();
   VB.onclick=(e)=>{e.stopPropagation();const s=R.xr.getSession();if(s)s.end();else vrStart()};
