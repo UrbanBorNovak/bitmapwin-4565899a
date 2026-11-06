@@ -250,9 +250,9 @@ export function SiteHeader() {
   return (
     <header className="site-header sticky top-0 z-50 border-b border-border">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 md:flex md:justify-between md:gap-3 md:px-5">
-        <Link to="/" className="site-brand flex min-w-0 items-center gap-2 leading-none">
+        <Link to="/" aria-label="BITMAP UNHINGED home" className="site-brand @container flex min-w-0 items-center gap-2 leading-none">
           <MonolithCell className="size-7 shrink-0" />
-          <div className="min-w-0">
+          <div className="hidden min-w-0 @[6.5rem]:block">
           <div className="display flex items-end gap-1 text-sm sm:text-base">
             <span className="text-bitcoin">BITMAP</span>
             <span className="relative hidden sm:inline">
