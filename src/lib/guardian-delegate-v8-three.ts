@@ -75,7 +75,7 @@ try{
     if(!stone){advent(put,t);sky(put,t);chainFx(put,t);for(const f of window.BW_HOOKS.slice()){try{f(put,t)}catch(_){window.BW_HOOKS.splice(window.BW_HOOKS.indexOf(f),1)}}}
     M.count=n;M.instanceMatrix.needsUpdate=true;if(M.instanceColor)M.instanceColor.needsUpdate=true;
     R.render(S,C);g.shadowBlur=0;if(!stone)moon2d(w,h,t);g.drawImage(cv,0,0,w,h);
-    const ad=adventDay();if(ad&&!stone){const left=Math.max(1,Math.ceil((864e5-Date.now()%864e5)/36e5)),nar=w<600;
+    const ad=adventDay();if(ad&&!stone&&!(w<600&&h<760)){const left=Math.max(1,Math.ceil((864e5-Date.now()%864e5)/36e5)),nar=w<600;
       g.font="15px monospace";g.fillStyle="rgba(234,246,255,.85)";g.textAlign=nar?"center":"right";
       g.fillText(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad+" \u00b7 NEXT GIFT IN "+left+"H",nar?w/2:w-12,nar?Math.max(122,window.BW_TOPY||0):h-14);g.textAlign="left"}
     if(!stone)eventHud(w,h);
@@ -166,6 +166,10 @@ try{
     for(const m of MODS)lines.push(m.on?"\u2605 "+m.label+" \u00b7 COMMUNITY UNLOCKED":m.goal?m.label+" \u00b7 "+fmtS(m.got)+" / "+fmtS(m.goal)+" SATS"+(m.read?"":" \u00b7 SOME TXS UNREADABLE")+(m.addr?" \u00b7 SEND "+m.addr.slice(0,6)+"\u2026"+m.addr.slice(-6):""):"");
     const f=FX[FX.length-1];if(f&&now-f.t0<45)lines.push("\u25c6 NEW BLOCK "+f.h.toLocaleString("en-US")+(f.n?" \u00b7 "+f.n.toLocaleString("en-US")+" TX":"")+(f.tags.length?" \u00b7 "+f.tags.join(" \u00b7 "):""));
     lines.push((SKY.ecl?"\u25cf SOLAR ECLIPSE":SKY.blood?"\u263e BLOOD MOON":"\u263e "+SKY.phase)+" \u00b7 "+ZOD[SKY.z]+" SEASON"+(SKY.shower?" \u00b7 "+SKY.shower+" PEAK":""));
+    if(nar&&h<760){const ad=adventDay();if(ad)lines.unshift(ad>=24?"\u2605 CHRISTMAS EVE \u2605":"ADVENT DAY "+ad);
+      /* short phones: one rotating line so the Guardian keeps its space */
+      const L=lines.filter(Boolean);if(L.length){const s=L[Math.floor(now/4)%L.length];g.font="13px monospace";const mw=g.measureText(s).width;if(mw>w-16)g.font=Math.max(10,Math.floor(13*(w-16)/mw))+"px monospace";
+        g.textAlign="center";g.fillStyle=s.startsWith("\u25c6")?"rgba(247,147,26,.95)":s.startsWith("\u2605")?"rgba(76,255,138,.9)":"rgba(207,232,255,.82)";g.fillText(s,w/2,Math.max(122,window.BW_TOPY||0));g.textAlign="left"}return}
     g.font=(nar?"13px":"15px")+" monospace";g.textAlign="center";
     for(let i=0;i<lines.length;i++){const s=lines[lines.length-1-i];if(!s)continue;const fz=nar?13:15;g.font=fz+"px monospace";const mw=g.measureText(s).width;if(mw>w-16)g.font=Math.max(10,Math.floor(fz*(w-16)/mw))+"px monospace";g.fillStyle=s.startsWith("\u25c6")?"rgba(247,147,26,.95)":s.startsWith("\u2605")?"rgba(76,255,138,.9)":"rgba(207,232,255,.82)";
       g.fillText(s,w/2,(nar?Math.max(140,(window.BW_TOPY||0)+(adventDay()?20:0)):72)+(lines.length-1-i)*(nar?18:20))}g.textAlign="left"}
