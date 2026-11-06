@@ -168,7 +168,7 @@ try{
     lines.push((SKY.ecl?"\u25cf SOLAR ECLIPSE":SKY.blood?"\u263e BLOOD MOON":"\u263e "+SKY.phase)+" \u00b7 "+ZOD[SKY.z]+" SEASON"+(SKY.shower?" \u00b7 "+SKY.shower+" PEAK":""));
     g.font=(nar?"13px":"15px")+" monospace";g.textAlign="center";
     for(let i=0;i<lines.length;i++){const s=lines[lines.length-1-i];if(!s)continue;const fz=nar?13:15;g.font=fz+"px monospace";const mw=g.measureText(s).width;if(mw>w-16)g.font=Math.max(10,Math.floor(fz*(w-16)/mw))+"px monospace";g.fillStyle=s.startsWith("\u25c6")?"rgba(247,147,26,.95)":s.startsWith("\u2605")?"rgba(76,255,138,.9)":"rgba(207,232,255,.82)";
-      g.fillText(s,w/2,(nar?140:72)+(lines.length-1-i)*(nar?18:20))}g.textAlign="left"}
+      g.fillText(s,w/2,(nar?Math.max(140,window.BW_TOPY||0):72)+(lines.length-1-i)*(nar?18:20))}g.textAlign="left"}
   /* ---- Advent engine: client UTC date; unlocks one more thing each December day. ?advent=DD previews. ---- */
   const adventDay=()=>{const q=+(new URLSearchParams(location.search).get("advent")||window.ADVENT_DAY||0);if(q>0)return Math.min(31,q);
     const d=new Date();return d.getUTCMonth()===11?d.getUTCDate():0};
