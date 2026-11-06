@@ -81,14 +81,14 @@ if(typeof pvCycle==="function"){var _pv8=pvCycle;pvCycle=function(){CIT=null;CBM
 function hudBox(x,y,w,h,edge){g.globalAlpha=LM?.96:.92;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x,y,w,h);
   g.globalAlpha=.8;g.strokeStyle=edge;g.lineWidth=1;g.strokeRect(x,y,w,h);g.globalAlpha=1}
 timelineHud=function(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),fs=Math.max(15,Math.min(18,w*.015)),hs=fs+1.5,lh=fs*1.6,
-    pw=Math.min(w-pad*2,560),x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+hs,rows=GTL.length||1,ph=hs*1.6+lh*(rows+.6);
+    pw=Math.min(w-pad*2,560),x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+hs,rows=Math.min(GTL.length||1,h<760?7:12),ph=hs*1.6+lh*(rows+.6);
   if(y+ph>h-pad)y=Math.max(pad+hs,h-pad-ph);
   hudBox(x-10,y-hs*1.3,pw+20,ph,"#f7931a");
   var pn=PCY.n<0?"WAITING":["PULL-IN","PARCEL WAVE","ROAR + LIGHTNING","SPINE SURGE"][PCY.n],left=Math.max(0,4-(performance.now()/1000-PCY.t));
-  txt("PACK CHAIN TIMELINE · LATEST 12",x,y,hs,"#f7931a");
+  txt("PACK CHAIN TIMELINE · LATEST "+rows,x,y,hs,"#f7931a");
   if(pw>420)txt("PULSE · "+pn+" · "+left.toFixed(1)+"S",x+pw*.6,y,fs,"#3fe0d0");
   if(!GTL.length){txt("READING GUARDIANS FROM THE CHAIN…",x,y+lh*1.2,fs,"#c5d0d9");return}
-  for(var i=0;i<GTL.length;i++){var r=GTL[i],yy=y+lh*(i+1.15),em=r.h%2016,bm=r.h>0&&(em>=1944||em<=72),date=r.at?new Date(r.at*(r.at<1e12?1000:1)).toISOString().slice(0,10):"CHAIN";
+  for(var i=0;i<rows&&i<GTL.length;i++){var r=GTL[i],yy=y+lh*(i+1.15),em=r.h%2016,bm=r.h>0&&(em>=1944||em<=72),date=r.at?new Date(r.at*(r.at<1e12?1000:1)).toISOString().slice(0,10):"CHAIN";
     txt((i+1)+" · "+r.h+".BITMAP",x,yy,fs,r.id===SELF?"#f7931a":"#3fe0d0");
     txt("D "+fmtD(r.df)+" · W "+(r.wt?(r.wt/1e6).toFixed(2)+"M":"…")+(pw>420?" · "+date:"")+(bm?" · BLOOD MOON":""),x+pw*(pw<420?.56:.38),yy,fs,bm?"#ff5a4a":"#ffffff")}};
 chainHud=function(w,h){if(!G||!PROOFON)return;
