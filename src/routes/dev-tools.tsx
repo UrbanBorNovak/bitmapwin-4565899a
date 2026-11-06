@@ -343,6 +343,17 @@ window.fetch=function(u){u=String(u);if(u.indexOf("/r/children/"+MID)===0)return
 var m=u.match(/^\\/content\\/(m1|m2|f1)$/);if(m)return Promise.resolve(new Response(C[m[1]]));
 if(u.indexOf("/r/tx/")===0)return Promise.resolve(new Response(TX));return of(u)}})()</script>`;
 
+/** Test-only: adds a BW-SKIN-1 child (sci-fi SVG frame + rounded visor mask) to the mocked Guardian's children. */
+const SKIN_FRAME_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90" preserveAspectRatio="none"><g fill="none" stroke="#00ffc2" stroke-width="1.2"><path d="M4 18V4h18M138 4h18v14M156 72v14h-18M22 86H4V72"/><circle cx="80" cy="45" r="7" stroke-width=".6"/><path d="M80 34v5M80 51v5M69 45h5M86 45h5" stroke-width=".6"/></g><rect x="60" y="3" width="40" height="3" fill="#00ffc2" opacity=".6"/></svg>`;
+const SKIN_MASK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90" preserveAspectRatio="none"><rect x="3" y="3" width="154" height="84" rx="22" fill="#fff"/></svg>`;
+const skinMock = `<script>(function(){var of=window.fetch.bind(window),F=${JSON.stringify(SKIN_FRAME_SVG)},M=${JSON.stringify(SKIN_MASK_SVG)};
+window.fetch=function(u){u=String(u);
+ if(u.indexOf("/r/children/")===0&&u.indexOf("/r/children/9d1da99c")!==0)return of(u).then(function(r){return r.json()}).then(function(j){j.ids=(j.ids||[]).concat(["mockskin0i0"]);return new Response(JSON.stringify(j),{headers:{"content-type":"application/json"}})});
+ if(u==="/content/mockskin0i0")return Promise.resolve(new Response('BW-SKIN-1\\n{"name":"CYBER VISOR MK-II","frame":"mockframe0i0","mask":"mockmask0i0","accent":"#00ffc2","scan":0.4}',{headers:{"content-type":"text/plain"}}));
+ if(u==="/content/mockframe0i0")return Promise.resolve(new Response(F,{headers:{"content-type":"image/svg+xml"}}));
+ if(u==="/content/mockmask0i0")return Promise.resolve(new Response(M,{headers:{"content-type":"image/svg+xml"}}));
+ return of(u)}})()</script>`;
+
 /** Holiday preview for the V8 Three.js draft. Test-only: maps the on-chain Three.js id to the same r163 build on a CDN. */
 function HolidayTestbench() {
   const [day, setDay] = useState(24);
@@ -350,13 +361,14 @@ function HolidayTestbench() {
   const [sky, setSky] = useState("");
   const [fx, setFx] = useState(0);
   const [mods, setMods] = useState(false);
+  const [skin, setSkin] = useState(false);
   const html = useMemo(() => {
     const imap = `<script type="importmap">{"imports":{"/content/${THREE_R163_MODULE_ID}":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>`;
     const pin = `<script>window.ADVENT_DAY=${day};${sky ? `window.BW_SKY="${sky}";` : ""}${fx ? `window.BW_FX=${fx};` : ""}</script>`;
     return guardianMasterGeneratorHtmlV8Three()
-      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none") + (mods ? moduleMock : ""))
+      .replace(/<head[^>]*>/i, (m) => m + imap + pin + realBlockShim + beaconMock("none") + (skin ? skinMock : "") + (mods ? moduleMock : ""))
       .replace("</body>", '<script>setTimeout(function(){if(!BMP)BMP="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaai0"},200);setInterval(function(){if(STATE==="RELIC")STATE="AWAKE"},300)</script></body>');
-  }, [day, sky, fx, mods]);
+  }, [day, sky, fx, mods, skin]);
   const btn = (on: boolean) =>
     `border px-3 py-2 font-mono text-xs ${on ? "border-signal text-signal" : "border-border hover:border-signal"}`;
   const skies: [string, string][] = [["", "SKY TODAY"], ["2026-11-17", "LEONIDS"], ["2026-11-24", "FULL MOON"], ["2026-03-03", "BLOOD MOON"], ["2026-08-12", "SOLAR ECLIPSE"]];
@@ -381,12 +393,13 @@ function HolidayTestbench() {
           <button key={l} type="button" className={btn(fx === v)} onClick={() => setFx(v)}>{l}</button>
         ))}
         <button type="button" className={btn(mods)} onClick={() => setMods(!mods)}>MOCK MODULES {mods ? "ON" : "OFF"}</button>
+        <button type="button" className={btn(skin)} onClick={() => setSkin(!skin)}>MOCK SKIN {skin ? "ON" : "OFF"}</button>
         <span className="w-4" />
         <button type="button" className={btn(device === "desktop")} onClick={() => setDevice("desktop")}>DESKTOP</button>
         <button type="button" className={btn(device === "mobile")} onClick={() => setDevice("mobile")}>MOBILE</button>
       </div>
       <iframe
-        key={`${day}${device}${sky}${fx}${mods}`}
+        key={`${day}${device}${sky}${fx}${mods}${skin}`}
         title="Holiday preview"
         srcDoc={html}
         sandbox="allow-scripts"
