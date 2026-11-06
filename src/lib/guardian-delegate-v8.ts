@@ -463,6 +463,8 @@ export function guardianMasterGeneratorHtmlV8(): string {
   let s = guardianMasterGeneratorHtmlV7();
   s = swap(s, "<title>BLOCK-DNA GUARDIAN V7</title>", "<title>BLOCK-DNA GUARDIAN V8</title>");
   s = swap(s, "MASTER CODE DELEGATE V7", "MASTER CODE DELEGATE V8");
+  // Phones: the action buttons wrap to three rows, so lift REC above PARTY instead of behind them.
+  s = swap(s, 'b.style.cssText="position:fixed;right:2.5%;bottom:14%;font:10px', 'b.style.cssText="position:fixed;right:2.5%;bottom:"+(innerWidth<600?"29%":"14%")+";font:10px');
   // Phones: the top button bar wraps to two rows, so drop PREV / RANDOM / NEXT below it instead of underneath.
   s = swap(s, 'd.style.cssText="position:fixed;left:50%;top:2.5%;transform:translateX(-50%);display:flex;gap:4px;z-index:2";', 'd.style.cssText="position:fixed;left:50%;top:"+(innerWidth<600?"76px":"2.5%")+";transform:translateX(-50%);display:flex;gap:4px;z-index:5";');
   s = swap(s, "GTLON=true,", "GTLON=false,PROOFON=false,TRIBUTEON=false,SWARMON=false,tributeHud=function(){},swarmHud=function(){},");
