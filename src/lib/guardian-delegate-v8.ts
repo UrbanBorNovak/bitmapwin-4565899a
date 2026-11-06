@@ -463,6 +463,8 @@ export function guardianMasterGeneratorHtmlV8(): string {
   let s = guardianMasterGeneratorHtmlV7();
   s = swap(s, "<title>BLOCK-DNA GUARDIAN V7</title>", "<title>BLOCK-DNA GUARDIAN V8</title>");
   s = swap(s, "MASTER CODE DELEGATE V7", "MASTER CODE DELEGATE V8");
+  // Phones: the top button bar wraps to two rows, so drop PREV / RANDOM / NEXT below it instead of underneath.
+  s = swap(s, 'd.style.cssText="position:fixed;left:50%;top:2.5%;transform:translateX(-50%);display:flex;gap:4px;z-index:2";', 'd.style.cssText="position:fixed;left:50%;top:"+(innerWidth<600?"76px":"2.5%")+";transform:translateX(-50%);display:flex;gap:4px;z-index:5";');
   s = swap(s, "GTLON=true,", "GTLON=false,PROOFON=false,TRIBUTEON=false,SWARMON=false,tributeHud=function(){},swarmHud=function(){},");
   s = swap(s, 'tb=document.createElement("button");', 'tb=document.createElement("button"),pb=document.createElement("button"),rb=document.createElement("button"),cb=document.createElement("button"),sb=document.createElement("button"),ab=document.createElement("button"),bb=document.createElement("button");');
   s = swap(s, '"TIMELINE +"}', '"TIMELINE +";sb.textContent=SWARMON?"SWARM \u00D7":"SWARM +";pb.textContent=PROOFON?"PROOF \u00D7":"PROOF +";rb.textContent=TRIBUTEON?"TRIBUTE \u00D7":"TRIBUTE +";cb.textContent="COPY BEACON";cb.id="bwcb";cb.style.display=TRIBUTEON&&typeof BEACON!=="undefined"&&BEACON?"":"none"}');
