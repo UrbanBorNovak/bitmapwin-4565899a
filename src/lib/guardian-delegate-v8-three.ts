@@ -95,6 +95,29 @@ try{
   const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const q=(k)=>{const x=Math.sin(k*12.9898)*43758.5453;return x-Math.floor(x)},u=q(i+3000)*2-1,ph=q(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
     a[i*3]=Math.cos(ph)*s*r;a[i*3+1]=Math.abs(u)*r;a[i*3+2]=Math.sin(ph)*s*r}gm.setAttribute("position",new T.BufferAttribute(a,3));return gm})(),new T.PointsMaterial({color:0xcfe8ff,size:.25}));
   STARS.visible=false;S.add(STARS);
+  /* ================= Horizon backdrop: children of a parent collection, rendered by the parent's own on-chain engine =================
+     Default parent = Genesis Consensus (WMCD). Child seeds come from each child's own wmcd-child-meta JSON and must name this parent;
+     the art is drawn by the parent's window.WM_RENDER (same-origin /content iframe). ?bg=<parent_id> swaps, ?bg=off hides. Any failure = no backdrop. */
+  const BG_DEF="${BG_PARENT_ID}";const bgQ=QS0.get("bg")||window.BW_BG||BG_DEF;
+  const BGR=new T.Group();BGR.visible=false;BGR.renderOrder=-1;S.add(BGR);
+  if(bgQ!=="off"&&/^[0-9a-f]{64}i\d+$/.test(bgQ))(async()=>{try{
+    const r=await fetch("/r/children/"+bgQ);if(!r.ok)return;const ids=((await r.json()).ids||[]).filter(x=>/^[0-9a-f]{64}i\d+$/.test(x));if(!ids.length)return;
+    const NT=8,off=(typeof G!=="undefined"&&G&&G.h>0?G.h:0)%ids.length,pick=[];for(let i=0;i<Math.min(NT,ids.length);i++)pick.push(ids[(off+i*Math.max(1,Math.floor(ids.length/NT)))%ids.length]);
+    const metas=(await Promise.all(pick.map(async id=>{try{const t=await (await fetch("/content/"+id)).text();const m=t.match(/<script id="wmcd-child-meta" type="application\/json">([^<]+)<\/script>/);
+      if(!m)return null;const j=JSON.parse(m[1]);return j.parent_inscription_id===bgQ&&Number.isFinite(+j.seed)?j:null}catch(_){return null}}))).filter(Boolean);
+    if(!metas.length)return;
+    const fr=document.createElement("iframe");fr.style.cssText="position:fixed;width:1px;height:1px;left:-9px;top:-9px;opacity:0;pointer-events:none;border:0";fr.src="/content/"+bgQ;
+    document.body.appendChild(fr);await new Promise((ok,no)=>{fr.onload=ok;setTimeout(no,15e3)});
+    const RND=fr.contentWindow&&fr.contentWindow.WM_RENDER;if(typeof RND!=="function")return;
+    const TS=256,cvb=document.createElement("canvas");cvb.width=TS*metas.length;cvb.height=TS;const bx=cvb.getContext("2d");
+    const tile=document.createElement("canvas");tile.width=tile.height=TS;const tx=tile.getContext("2d");
+    metas.forEach((m,i)=>{try{tx.setTransform(1,0,0,1,0,0);RND(tx,+m.seed,TS,m.paletteType||"monochrome");bx.drawImage(tile,i*TS,0)}catch(_){}});
+    fr.remove();
+    const tex=new T.CanvasTexture(cvb);tex.colorSpace=T.SRGBColorSpace;tex.wrapS=T.RepeatWrapping;tex.repeat.x=2;
+    const cyl=new T.Mesh(new T.CylinderGeometry(46,46,22,64,1,true),new T.MeshBasicMaterial({map:tex,transparent:true,opacity:.22,side:T.BackSide,depthWrite:false,blending:T.AdditiveBlending,fog:false}));
+    cyl.position.y=16;cyl.renderOrder=-1;BGR.add(cyl);BGR.visible=true;window.BW_BG_TILES=metas.length;
+    (function spin(){BGR.rotation.y=performance.now()*2e-5;requestAnimationFrame(spin)})();
+  }catch(_){}})();
   const pads=[];for(let i=0;i<2;i++){const c=R.xr.getController(i);RIG.add(c);
     const ray=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3(0,0,-1)]),new T.LineBasicMaterial({color:0xf7931a}));ray.scale.z=2;c.add(ray);
     c.addEventListener("selectstart",()=>{if(typeof stance==="function")stance(((typeof STANCE!=="undefined"?STANCE:0)+1)%4)});
