@@ -314,15 +314,37 @@ function pgClean(o){var t=o.theme||{};return{title:pgS(o.title,48),status:pgS(o.
   likes:pgL(o.likes,6,32),dislikes:pgL(o.dislikes,6,32),
   top8:(Array.isArray(o.top8)?o.top8:[]).filter(function(x){return typeof x==="string"&&/^[0-9a-z]{6,64}i\d+$/.test(x)}).slice(0,8),
   accent:/^#[0-9a-f]{6}$/i.test(t.accent||o.accent||"")?(t.accent||o.accent):"",
-  x:/^[A-Za-z0-9_]{1,15}$/.test((o.socials&&o.socials.x)||"")?o.socials.x:""}}
+  x:/^[A-Za-z0-9_]{1,15}$/.test((o.socials&&o.socials.x)||"")?o.socials.x:"",
+  pfp:[o.pfp,o.avatar,o.image].filter(function(v){return typeof v==="string"&&/^[0-9a-f]{64}i\d+$/.test(v)})[0]||""}}
+/* /r/children/<id>/<page> is oldest-first; walk every page (more:true) so the newest children are seen (cap 50 pages).
+   A failed page after page 0 keeps what was read and marks it partial. */
+function pgKids(id){var out=[];function pg(n){return j("/r/children/"+id+"/"+n).then(function(r){out=out.concat((r&&Array.isArray(r.ids))?r.ids:[]);
+  if(r&&r.more&&n<49)return pg(n+1);return{ids:out,partial:!!(r&&r.more)}},function(e){if(n===0)throw e;return{ids:out,partial:true}})}return pg(0)}
+/* owner = indexer's address field only; a satpoint txid is never shown as an owner */
+var PGO={};
+function pgOwner(id){if(id in PGO)return Promise.resolve(PGO[id]);
+  return j("/r/inscription/"+id).then(function(r){var a=r&&typeof r.address==="string"&&/^(bc1[02-9ac-hj-np-z]{11,87}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|tb1[02-9ac-hj-np-z]{11,87})$/.test(r.address)?r.address:null;
+    PGO[id]=a;return a},function(){return null})}
 function pageLoad(id){if(PAGES[id])return;PAGES[id]={st:"READING"};
-  kids(id,200).then(function(ids){ids=ids.slice().reverse();var i=0;
-    (function nx(){if(i>=ids.length||i>=40){PAGES[id]={st:"NONE"};pageDraw();return}var cid=ids[i++];
+  pgKids(id).then(function(K){var ids=K.ids.slice().reverse(),i=0;
+    (function nx(){if(i>=ids.length||i>=60){PAGES[id]={st:K.partial?"PARTIAL":"NONE"};pageDraw();return}var cid=ids[i++];
       t("/content/"+cid).then(function(s){s=String(s);if(s.slice(0,10)!=="BW-PAGE-1\n"||s.length>4000)return nx();var o;try{o=JSON.parse(s.slice(10))}catch(_){return nx()}
-        if(!o||typeof o!=="object")return nx();PAGES[id]={st:"LIVE",d:pgClean(o),ins:cid};pageDraw()}).catch(nx)})()},
+        if(!o||typeof o!=="object"||Array.isArray(o))return nx();
+        /* provenance: the child must list this Guardian as a parent */
+        j("/r/parents/"+cid).then(function(pr){var ps=(pr&&Array.isArray(pr.ids))?pr.ids:Array.isArray(pr)?pr:[];if(ps.indexOf(id)<0)return nx();
+          PAGES[id]={st:"LIVE",d:pgClean(o),ins:cid,cus:"CHECKING"};pageDraw();
+          Promise.all([pgOwner(id),pgOwner(cid)]).then(function(v){PAGES[id].cus=!v[0]||!v[1]?"UNKNOWN":v[0]===v[1]?"CURRENT":"HISTORICAL";pageDraw()})},
+          function(){nx()})}).catch(nx)})()},
     function(){PAGES[id]={st:"UNREADABLE"};pageDraw()})}
-function pageOpen(id){if(PGID===id){pageClose();return}PGID=id;pageLoad(id);
-  if(id!==SELF&&!(id in SIBW))ownerOf(id).then(function(a){if(a){SIBW[id]=a;SIBO[id]=hexOf(a);pageDraw()}},function(){});pageDraw()}
+function pageOpen(id){if(PGID===id){pageClose();return}PGID=id;if(PAGES[id]&&PAGES[id].st==="UNREADABLE")delete PAGES[id];pageLoad(id);
+  pgOwner(id).then(function(a){if(a){SIBW[id]=a;SIBO[id]=hexOf(a)}else if(!(id in SIBW))SIBW[id]=null;pageDraw()});pageDraw()}
+/* avatar: image/* → <img>; text/html → scripts-only sandboxed iframe; anything else is refused */
+function pgAvatar(pid,col){var box=pgEl("div","","width:72px;height:72px;flex:none;border:1px solid "+col+";background:#04060a;overflow:hidden");
+  j("/r/inscription/"+pid).then(function(m){var ct=String((m&&m.content_type)||"").toLowerCase();
+    if(ct.indexOf("image/")===0){var im=document.createElement("img");im.src="/content/"+pid;im.alt="";im.style.cssText="width:100%;height:100%;object-fit:cover;image-rendering:pixelated";box.appendChild(im)}
+    else if(ct.indexOf("text/html")===0){var f=document.createElement("iframe");f.src="/content/"+pid;f.setAttribute("sandbox","allow-scripts");f.setAttribute("loading","lazy");f.style.cssText="width:100%;height:100%;border:0;pointer-events:none";box.appendChild(f)}
+    else box.appendChild(pgEl("div","NO IMAGE","font:10px monospace;color:#c5d0d9;padding:4px"))},
+    function(){box.appendChild(pgEl("div","UNREADABLE","font:10px monospace;color:#c5d0d9;padding:4px"))});return box}
 function pageClose(){PGID=null;var p=document.getElementById("bwpage");if(p)p.style.display="none"}
 function pgEl(tag,txt,css){var e=document.createElement(tag);if(txt)e.textContent=txt;if(css)e.style.cssText=css;return e}
 function pageDraw(){var p=document.getElementById("bwpage");if(!p||!PGID)return;var id=PGID,P=PAGES[id]||{st:"READING"},d=P.d||{},
@@ -332,9 +354,14 @@ function pageDraw(){var p=document.getElementById("bwpage");if(!p||!PGID)return;
   hd.appendChild(pgEl("div",(P.st==="LIVE"&&d.title?d.title:"GUARDIAN PAGE"),"color:"+col+";font:bold "+(fs+2)+"px monospace;letter-spacing:.04em;word-break:break-word"));
   var x=pgEl("button","\u00D7","font:bold 16px monospace;background:none;border:0;color:#c5d0d9;cursor:pointer;padding:0 2px");x.onclick=function(e){e.stopPropagation();pageClose()};hd.appendChild(x);p.appendChild(hd);
   p.appendChild(pgEl("div",String(id).slice(0,10)+"\u2026"+String(id).slice(-4)+(id===SELF?" \u00B7 THIS GUARDIAN":""),"color:#c5d0d9;margin-top:2px"));
-  p.appendChild(pgEl("div","OWNER "+(a?a.slice(0,8)+"\u2026"+a.slice(-6):"READING\u2026"),"color:"+(SIBO[id]||"#ffffff")+";margin-top:2px"));
+  p.appendChild(pgEl("div","CURRENT HOLDER "+(a?a.slice(0,8)+"\u2026"+a.slice(-6):a===null||(id in SIBW&&!SIBW[id])?"UNAVAILABLE":"READING\u2026"),"color:"+(SIBO[id]||"#ffffff")+";margin-top:2px"));
+  if(P.st==="LIVE"){var CU={CHECKING:["CHECKING CUSTODY\u2026","#c5d0d9"],CURRENT:["\u2713 INSCRIBED BY A PAST OR PRESENT HOLDER \u00B7 PAGE HELD WITH THE GUARDIAN","#3fe0d0"],
+      HISTORICAL:["HISTORICAL PAGE \u00B7 GUARDIAN HAS MOVED SINCE \u00B7 NOT A CLAIM BY THE CURRENT HOLDER","#f7931a"],UNKNOWN:["PROVENANCE PROVEN \u00B7 CURRENT CUSTODY UNAVAILABLE","#c5d0d9"]}[P.cus||"UNKNOWN"];
+    p.appendChild(pgEl("div",CU[0],"color:"+CU[1]+";margin-top:4px;font-size:11px;border:1px solid "+CU[1]+";padding:3px 5px"))}
   var body=pgEl("div","","margin-top:8px;border-top:1px solid #23303a;padding-top:8px;line-height:1.45");
-  if(P.st!=="LIVE"){body.appendChild(pgEl("div",P.st==="READING"?"READING THIS GUARDIAN'S CHILDREN\u2026":P.st==="UNREADABLE"?"CHAIN UNREADABLE \u00B7 TRY AGAIN":"UNCLAIMED PAGE","color:#ffffff"));
+  if(P.st==="LIVE"&&d.pfp){var av=pgEl("div","","display:flex;gap:8px;align-items:center;margin-bottom:6px");av.appendChild(pgAvatar(d.pfp,col));
+    av.appendChild(pgEl("div","PROFILE IMAGE \u00B7 "+d.pfp.slice(0,8)+"\u2026","color:#c5d0d9;font-size:11px"));body.appendChild(av)}
+  if(P.st!=="LIVE"){body.appendChild(pgEl("div",P.st==="READING"?"READING THIS GUARDIAN'S CHILDREN\u2026":P.st==="UNREADABLE"?"CHAIN UNREADABLE \u00B7 TAP AGAIN TO RETRY":P.st==="PARTIAL"?"NO PAGE IN THE CHILDREN READ \u00B7 LIST INCOMPLETE":"UNCLAIMED PAGE","color:#ffffff"));
     if(P.st==="NONE"){body.appendChild(pgEl("div","THE HOLDER HAS NOT INSCRIBED A PAGE YET.","color:#c5d0d9;margin-top:4px"));body.appendChild(pgEl("div","HOLDER: INSCRIBE A TEXT CHILD \"BW-PAGE-1\" + JSON.","color:#3fe0d0;margin-top:4px"))}}
   else{if(d.status)body.appendChild(pgEl("div","MOOD \u00B7 "+d.status,"color:#f7931a"));
     if(d.bio)body.appendChild(pgEl("div","\u201C"+d.bio+"\u201D","color:#ffffff;margin-top:6px;font-family:ui-sans-serif,system-ui,sans-serif;letter-spacing:0"));
