@@ -275,31 +275,3 @@ function MarketStat({ k, v }: { k: string; v: string }) {
   );
 }
 
-function Pillar({
-  n,
-  name,
-  what,
-  body,
-  to,
-  action,
-}: {
-  n: string;
-  name: string;
-  what: string;
-  body: string;
-  to: "/oasis" | "/marketplace" | "/extenders" | "/passport" | "/studio" | "/forge";
-  action: string;
-}) {
-  return (
-    <div className="border-b border-border py-3 last:border-b-0 md:py-7 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
-      <div className="flex items-baseline gap-2">
-        <span className="label text-bitcoin">{n}</span>
-        <span className="display text-lg md:text-xl">{name}</span>
-      </div>
-      <div className="label mt-1.5 text-muted-foreground">{what}</div>
-      <p className="mt-1.5 max-w-sm text-sm leading-normal text-muted-foreground md:mt-3 md:leading-relaxed">{body}</p>
-      <Link to={to} className="mt-2.5 md:mt-5 inline-flex font-mono text-[11px] font-bold text-foreground hover:text-bitcoin">{action} →</Link>
-    </div>
-  );
-}
-
