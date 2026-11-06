@@ -78,7 +78,7 @@ try{
   function fill(pulse,stone,t,vr){
     let n=0;const put=(v,c,gl)=>{if(n>=N)return;o.position.set(v[0],v[1],v[2]);o.scale.set(Math.max(.01,v[3]),Math.max(.01,v[4]),Math.max(.01,v[5]));
       o.updateMatrix();M.setMatrixAt(n,o.matrix);col.set(c);if(gl>0)col.lerp(new T.Color(1,1,1),Math.min(.45,gl*.18*(1+pulse*.5)));M.setColorAt(n,col);n++};
-    for(let i=0;i<VOX.length;i++){const v=anim(VOX[i],t,!stone);put(v,stone?gray.clone().lerp(dk,(i%5)/6).getStyle():v[6],stone?0:v[7])}
+    if(VOX)for(let i=0;i<VOX.length;i++){const v=anim(VOX[i],t,!stone);put(v,stone?gray.clone().lerp(dk,(i%5)/6).getStyle():v[6],stone?0:v[7])}
     if(AGE&&!stone){const ne=Math.min(16,AGE.ep);for(let i=0;i<ne;i++){const a=i/ne*Math.PI*2+t*.25;
       put([Math.sin(a)*16,3+Math.sin(t*1.5+i)*1.2+(i%3)*2,Math.cos(a)*16,.55,.55,.55],"#f7931a",1.4)}}
     if(!stone){advent(put,t);sky(put,t);chainFx(put,t);for(const f of window.BW_HOOKS.slice()){try{f(put,t)}catch(_){window.BW_HOOKS.splice(window.BW_HOOKS.indexOf(f),1)}}}
@@ -92,7 +92,7 @@ try{
   R.xr.enabled=true;
   const WORLD=new T.Group();S.remove(M,FL);WORLD.add(M,FL);S.add(WORLD);
   const RIG=new T.Group(),PC=new T.PerspectiveCamera(70,1,.05,200);RIG.add(PC);S.add(RIG);
-  const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const u=hr(i+3000)*2-1,ph=hr(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
+  const STARS=new T.Points((()=>{const gm=new T.BufferGeometry(),a=new Float32Array(1800);for(let i=0;i<600;i++){const q=(k)=>{const x=Math.sin(k*12.9898)*43758.5453;return x-Math.floor(x)},u=q(i+3000)*2-1,ph=q(i+4000)*6.283,r=60,s=Math.sqrt(1-u*u);
     a[i*3]=Math.cos(ph)*s*r;a[i*3+1]=Math.abs(u)*r;a[i*3+2]=Math.sin(ph)*s*r}gm.setAttribute("position",new T.BufferAttribute(a,3));return gm})(),new T.PointsMaterial({color:0xcfe8ff,size:.25}));
   STARS.visible=false;S.add(STARS);
   const pads=[];for(let i=0;i<2;i++){const c=R.xr.getController(i);RIG.add(c);
@@ -106,9 +106,9 @@ try{
   const voSave=()=>{try{localStorage.setItem("bw-vr",JSON.stringify(VO))}catch(_){}};
   const SEAT_H=.45,lim=()=>Math.max(3,(LAND&&LAND.half?LAND.half:14)*.1+2),clampRig=()=>{const l=lim();RIG.position.x=Math.max(-l,Math.min(l,RIG.position.x));RIG.position.z=Math.max(-l,Math.min(l,RIG.position.z))};
   const TPM=new T.Mesh(new T.RingGeometry(.18,.26,32),new T.MeshBasicMaterial({color:0x3fe0d0,transparent:true,opacity:.9}));TPM.rotation.x=-Math.PI/2;TPM.visible=false;S.add(TPM);
-  let turnLock=false,tpAim=false,tpOk=false,vt0=performance.now();const fw=new T.Vector3(),rt=new T.Vector3(),cp=new T.Vector3(),cd=new T.Vector3(),hp=new T.Vector3(),tp=new T.Vector3(),cq=new T.Quaternion();
+  let turnLock=false,tpAim=false,tpOk=false,vt0=performance.now(),vlast=0;const fw=new T.Vector3(),rt=new T.Vector3(),cp=new T.Vector3(),cd=new T.Vector3(),hp=new T.Vector3(),tp=new T.Vector3(),cq=new T.Quaternion();
   const btn=(gp,i)=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
-  const vrFrame=()=>{const t=(performance.now()-vt0)/1e3+50,dt=1/72;
+  const vrFrame=()=>{const now=performance.now(),t=(now-vt0)/1e3+50,dt=vlast?Math.min(.1,(now-vlast)/1e3):1/72;vlast=now;
     for(const c of pads){const src=c.userData.src;if(!src||!src.gamepad)continue;const gp=src.gamepad,ax=gp.axes,x=ax[2]||0,y=ax[3]||0;
       if(src.handedness==="right"){if(Math.abs(x)>.7&&!turnLock){RIG.rotation.y-=Math.sign(x)*Math.PI/6;turnLock=true}else if(Math.abs(x)<.3)turnLock=false;continue}
       const bx=btn(gp,4),by=btn(gp,5);
@@ -126,17 +126,18 @@ try{
     fill(0,stone,t,true);R.render(S,PC)};
   const vrStart=async()=>{try{const s=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor","bounded-floor"]});
     R.xr.setReferenceSpaceType("local-floor");await R.xr.setSession(s);RIG.position.set(0,VO.seat?SEAT_H:0,2.4);RIG.rotation.set(0,0,0);STARS.visible=true;WORLD.scale.setScalar(.1);
-    R.setClearColor(0x04060a,1);R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
+    R.setClearColor(0x04060a,1);vlast=0;R.setAnimationLoop(vrFrame);VB.textContent="EXIT VR";
     s.addEventListener("end",()=>{R.setAnimationLoop(null);STARS.visible=false;TPM.visible=false;tpAim=false;WORLD.scale.setScalar(1);R.setClearColor(0,0);VB.textContent="\u{1F97D} ENTER VR"})}catch(_){VB.textContent="VR REFUSED"}};
   /* VR bar: hidden unless the device reports immersive-vr, so the normal screen layout is untouched */
   const VBAR=document.createElement("div");VBAR.style.cssText="position:fixed;left:50%;bottom:2%;transform:translateX(-50%);z-index:6;display:none;gap:6px;align-items:center";
-  const mk=(txt,bg)=>{const b=document.createElement("button");b.textContent=txt;b.style.cssText="font:bold 15px ui-monospace,monospace;letter-spacing:.08em;color:#04060a;background:"+bg+";border:0;padding:9px 14px;cursor:pointer";VBAR.appendChild(b);return b};
+  const mk=(txt,bg)=>{const b=document.createElement("button");b.textContent=txt;b.style.cssText="font:bold 13px ui-monospace,monospace;letter-spacing:.06em;white-space:nowrap;color:#04060a;background:"+bg+";border:0;padding:7px 10px;cursor:pointer";VBAR.appendChild(b);return b};
   const VB=mk("\u{1F97D} ENTER VR","#3fe0d0"),VM=mk("","#f7931a"),VS=mk("","#f7931a");
   const vbSync=()=>{VM.textContent=VO.move==="tp"?"MOVE: TELEPORT":"MOVE: SMOOTH";VS.textContent=VO.seat?"SEATED":"STANDING"};vbSync();
   VB.onclick=(e)=>{e.stopPropagation();const s=R.xr.getSession();if(s)s.end();else vrStart()};
   VM.onclick=(e)=>{e.stopPropagation();VO.move=VO.move==="tp"?"smooth":"tp";voSave();vbSync()};
   VS.onclick=(e)=>{e.stopPropagation();VO.seat=!VO.seat;voSave();if(R.xr.isPresenting)RIG.position.y=VO.seat?SEAT_H:0;vbSync()};
   document.body.appendChild(VBAR);
+  window.BW_VR={RIG,VO,TPM,WORLD,STARS,PC,R};
   try{if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported("immersive-vr").then(ok=>{if(ok)VBAR.style.display="flex"},()=>{})}catch(_){}
   /* ================= Sky, chain events and community modules ================= */
   /* Sky: viewer's real date (UTC). Moon phase from the mean synodic month; blood moon / solar eclipse only on listed
