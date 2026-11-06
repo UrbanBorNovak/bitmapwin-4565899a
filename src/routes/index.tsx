@@ -130,7 +130,7 @@ function Index() {
             <div className="pointer-events-none absolute inset-0 dot-bg" />
             <GeoTransfers className="opacity-40" heights={recentSales.map((s) => s.bitmap_height)} />
             <BitmapConstellations className="opacity-25" />
-            <div className="relative grid flex-1 items-center gap-6 p-5 py-7 @xl:p-8 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] @3xl:p-10">
+            <div className="relative grid flex-1 items-start gap-6 p-5 py-7 @xl:p-8 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] @3xl:p-10">
               <div className="min-w-0">
                 <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
                 <h1 className="display mt-3 text-[2.25rem] leading-[0.95] @lg:text-5xl @5xl:text-6xl">
@@ -163,11 +163,11 @@ function Index() {
                   <Link
                     to="/bitmap/$block"
                     params={{ block: String(lead.bitmapHeight) }}
-                    className="group grid w-full grid-cols-[96px_minmax(0,1fr)] items-center gap-3 border border-border bg-background p-3 hover:border-foreground @md:block"
+                    className="group grid w-full grid-cols-[96px_minmax(0,1fr)] items-center gap-3 border border-border bg-background p-3 hover:border-foreground"
                   >
                     <BlockMosaic height={lead.bitmapHeight} animate className="aspect-square" />
-                    <div className="min-w-0 @md:contents">
-                      <div className="label text-bitcoin @md:mt-3">FEATURED BITMAP</div>
+                    <div className="min-w-0">
+                      <div className="label text-bitcoin">FEATURED BITMAP</div>
                       <div className="display mt-1 truncate text-sm">{lead.bitmapHeight}.BITMAP</div>
                       <div className="mt-2 font-mono text-[10px] text-muted-foreground">
                         {lead.listedSats ? `ASK ${formatSats(lead.listedSats)}` : lead.lastSaleSats ? `LAST ${formatSats(lead.lastSaleSats)}` : "VIEW ON-CHAIN RECORD"}
@@ -176,7 +176,7 @@ function Index() {
                     </div>
                   </Link>
                 )}
-                <LatestGuardianCard />
+                <LatestGuardianCard compact />
                 </div>
               </div>
             </div>
