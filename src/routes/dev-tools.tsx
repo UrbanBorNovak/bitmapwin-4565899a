@@ -401,6 +401,7 @@ function HolidayTestbench() {
         ))}
         <button type="button" className={btn(mods)} onClick={() => setMods(!mods)}>MOCK MODULES {mods ? "ON" : "OFF"}</button>
         <button type="button" className={btn(skin)} onClick={() => setSkin(!skin)}>MOCK SKIN {skin ? "ON" : "OFF"}</button>
+        <button type="button" className={btn(page)} onClick={() => setPage(!page)}>MOCK PAGE {page ? "ON" : "OFF"}</button>
         <span className="w-4" />
         <button type="button" className={btn(device === "desktop")} onClick={() => setDevice("desktop")}>DESKTOP</button>
         <button type="button" className={btn(device === "mobile")} onClick={() => setDevice("mobile")}>MOBILE</button>
