@@ -322,6 +322,9 @@ function pgKids(id){var out=[];function pg(n){return j("/r/children/"+id+"/"+n).
   if(r&&r.more&&n<49)return pg(n+1);return{ids:out,partial:!!(r&&r.more)}},function(e){if(n===0)throw e;return{ids:out,partial:true}})}return pg(0)}
 /* owner = indexer's address field only; a satpoint txid is never shown as an owner */
 var PGO={};
+/* custody is a snapshot of where the two inscriptions sit NOW. Same address = co-located now, nothing more;
+   different addresses say nothing about past transfers or who wrote the page. */
+function pgCus(ga,pa){return !ga||!pa?"UNKNOWN":ga===pa?"SAME":"SPLIT"}
 function pgOwner(id){if(id in PGO)return Promise.resolve(PGO[id]);
   return j("/r/inscription/"+id).then(function(r){var a=r&&typeof r.address==="string"&&/^(bc1[02-9ac-hj-np-z]{11,87}|[13][1-9A-HJ-NP-Za-km-z]{25,34}|tb1[02-9ac-hj-np-z]{11,87})$/.test(r.address)?r.address:null;
     PGO[id]=a;return a},function(){return null})}
@@ -333,7 +336,7 @@ function pageLoad(id){if(PAGES[id])return;PAGES[id]={st:"READING"};
         /* provenance: the child must list this Guardian as a parent */
         j("/r/parents/"+cid).then(function(pr){var ps=(pr&&Array.isArray(pr.ids))?pr.ids:Array.isArray(pr)?pr:[];if(ps.indexOf(id)<0)return nx();
           PAGES[id]={st:"LIVE",d:pgClean(o),ins:cid,cus:"CHECKING"};pageDraw();
-          Promise.all([pgOwner(id),pgOwner(cid)]).then(function(v){PAGES[id].cus=!v[0]||!v[1]?"UNKNOWN":v[0]===v[1]?"CURRENT":"HISTORICAL";pageDraw()})},
+          Promise.all([pgOwner(id),pgOwner(cid)]).then(function(v){PAGES[id].cus=pgCus(v[0],v[1]);pageDraw()})},
           function(){nx()})}).catch(nx)})()},
     function(){PAGES[id]={st:"UNREADABLE"};pageDraw()})}
 function pageOpen(id){if(PGID===id){pageClose();return}PGID=id;if(PAGES[id]&&PAGES[id].st==="UNREADABLE")delete PAGES[id];pageLoad(id);
@@ -355,9 +358,10 @@ function pageDraw(){var p=document.getElementById("bwpage");if(!p||!PGID)return;
   var x=pgEl("button","\u00D7","font:bold 16px monospace;background:none;border:0;color:#c5d0d9;cursor:pointer;padding:0 2px");x.onclick=function(e){e.stopPropagation();pageClose()};hd.appendChild(x);p.appendChild(hd);
   p.appendChild(pgEl("div",String(id).slice(0,10)+"\u2026"+String(id).slice(-4)+(id===SELF?" \u00B7 THIS GUARDIAN":""),"color:#c5d0d9;margin-top:2px"));
   p.appendChild(pgEl("div","CURRENT HOLDER "+(a?a.slice(0,8)+"\u2026"+a.slice(-6):a===null||(id in SIBW&&!SIBW[id])?"UNAVAILABLE":"READING\u2026"),"color:"+(SIBO[id]||"#ffffff")+";margin-top:2px"));
-  if(P.st==="LIVE"){var CU={CHECKING:["CHECKING CUSTODY\u2026","#c5d0d9"],CURRENT:["\u2713 INSCRIBED BY A PAST OR PRESENT HOLDER \u00B7 PAGE HELD WITH THE GUARDIAN","#3fe0d0"],
-      HISTORICAL:["HISTORICAL PAGE \u00B7 GUARDIAN HAS MOVED SINCE \u00B7 NOT A CLAIM BY THE CURRENT HOLDER","#f7931a"],UNKNOWN:["PROVENANCE PROVEN \u00B7 CURRENT CUSTODY UNAVAILABLE","#c5d0d9"]}[P.cus||"UNKNOWN"];
-    p.appendChild(pgEl("div",CU[0],"color:"+CU[1]+";margin-top:4px;font-size:11px;border:1px solid "+CU[1]+";padding:3px 5px"))}
+  if(P.st==="LIVE"){p.appendChild(pgEl("div","\u2713 PARENT PROVEN \u00B7 INSCRIBED AS A CHILD OF THIS GUARDIAN","color:#3fe0d0;margin-top:4px;font-size:11px;border:1px solid #3fe0d0;padding:3px 5px"));
+    var CU={CHECKING:["NOW \u00B7 CHECKING WALLETS\u2026","#c5d0d9"],SAME:["NOW \u00B7 PAGE AND GUARDIAN SIT IN THE SAME WALLET","#c5d0d9"],
+      SPLIT:["NOW \u00B7 PAGE AND GUARDIAN SIT IN DIFFERENT WALLETS (SAYS NOTHING ABOUT PAST OWNERS)","#c5d0d9"],UNKNOWN:["NOW \u00B7 WALLET OF PAGE OR GUARDIAN UNAVAILABLE","#c5d0d9"]}[P.cus||"UNKNOWN"];
+    p.appendChild(pgEl("div",CU[0],"color:"+CU[1]+";margin-top:4px;font-size:11px;border:1px dashed #23303a;padding:3px 5px"))}
   var body=pgEl("div","","margin-top:8px;border-top:1px solid #23303a;padding-top:8px;line-height:1.45");
   if(P.st==="LIVE"&&d.pfp){var av=pgEl("div","","display:flex;gap:8px;align-items:center;margin-bottom:6px");av.appendChild(pgAvatar(d.pfp,col));
     av.appendChild(pgEl("div","PROFILE IMAGE \u00B7 "+d.pfp.slice(0,8)+"\u2026","color:#c5d0d9;font-size:11px"));body.appendChild(av)}
