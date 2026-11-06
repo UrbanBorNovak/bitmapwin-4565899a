@@ -460,18 +460,18 @@ let cached: string | null = null;
 /* Phones (<600px): the background scene text moves clear of the top and bottom button bars,
    right-hand top labels are dropped, and long lines shrink to fit (11px floor). Panels are untouched. */
 const PHONE_BG_HUD = `
-var BGT=0,BGB=0,BGON=0,_tx8=txt;window.BW_TOPY=0;
-function bgBars(){var t=0,b=innerHeight,bs=document.querySelectorAll("button");
+var BGT=0,BGB=0,BGR=1e4,BGON=0,_tx8=txt;window.BW_TOPY=0;
+function bgBars(){var t=0,b=innerHeight,rr=1e4,bs=document.querySelectorAll("button");
   for(var i=0;i<bs.length;i++){var r=bs[i].getBoundingClientRect();if(!r.width||!r.height)continue;
-    if(r.top<innerHeight*.35)t=Math.max(t,r.bottom);else if(r.top>innerHeight*.55&&r.left<innerWidth*.55)b=Math.min(b,r.top)}
-  BGT=t;BGB=b}
+    if(r.top<innerHeight*.35)t=Math.max(t,r.bottom);else if(r.top>innerHeight*.55&&r.left<innerWidth*.55)b=Math.min(b,r.top);else if(r.top>innerHeight*.5)rr=Math.min(rr,r.left)}
+  BGT=t;BGB=b;BGR=rr}
 setTimeout(bgBars,2600);setInterval(bgBars,1000);
 txt=function(s,x,y,size,col,a){if(!BGON||innerWidth>=600)return _tx8(s,x,y,size,col,a);var w=innerWidth,h=innerHeight;
-  if(y<h*.5){if(x>w*.45)return;if(BGON===1)y+=BGT}else if(BGON===1)y-=Math.max(0,h-BGB);
+  if(y<h*.5){if(x>w*.45)return;if(BGON===1)y+=BGT}else if(BGON===1){y-=Math.max(0,h-BGB);if(h<760&&y<h*.64)return}
   s=String(s).replace(" EPOCHS SURVIVED"," EPOCHS").replace(" HALVINGS WITNESSED"," HALVINGS").replace(" HALVING WITNESSED"," HALVING")
     .replace(" \\u00B7 FIRST-IS-FIRST CHECK IN APP","").replace(" \\u00B7 FIRST-IS-FIRST BITMAP (OCI)"," (OCI)");
   if(s.indexOf("DNA ")===0)s=s.split("  ")[0];
-  g.font=size+"px ui-monospace,monospace";var room=w-8-x,mw=g.measureText(s).width;
+  g.font=size+"px ui-monospace,monospace";var room=(y>=h*.5?Math.min(w,BGR):w)-8-x,mw=g.measureText(s).width;
   if(mw>room){size=Math.max(11,size*room/mw);g.font=size+"px ui-monospace,monospace";
     var parts=s.split(" \\u00B7 "),k=parts.length;while(k>1&&g.measureText(s).width>room){k--;s=parts.slice(0,k).join(" \\u00B7 ")+" \\u2026"}}
   _tx8(s,x,y,size,col,a)};
