@@ -468,8 +468,13 @@ function bgBars(){var t=0,b=innerHeight,bs=document.querySelectorAll("button");
 setTimeout(bgBars,2600);setInterval(bgBars,1000);
 txt=function(s,x,y,size,col,a){if(!BGON||innerWidth>=600)return _tx8(s,x,y,size,col,a);var w=innerWidth,h=innerHeight;
   if(y<h*.5){if(x>w*.45)return;if(BGON===1)y+=BGT}else if(BGON===1)y-=Math.max(0,h-BGB);
-  g.font=size+"px ui-monospace,monospace";var mw=g.measureText(String(s)).width;
-  if(x+mw>w-8)size=Math.max(11,size*(w-8-x)/mw);_tx8(s,x,y,size,col,a)};
+  s=String(s).replace(" EPOCHS SURVIVED"," EPOCHS").replace(" HALVINGS WITNESSED"," HALVINGS").replace(" HALVING WITNESSED"," HALVING")
+    .replace(" \\u00B7 FIRST-IS-FIRST CHECK IN APP","").replace(" \\u00B7 FIRST-IS-FIRST BITMAP (OCI)"," (OCI)");
+  if(s.indexOf("DNA ")===0)s=s.split("  ")[0];
+  g.font=size+"px ui-monospace,monospace";var room=w-8-x,mw=g.measureText(s).width;
+  if(mw>room){size=Math.max(11,size*room/mw);g.font=size+"px ui-monospace,monospace";
+    var parts=s.split(" \\u00B7 "),k=parts.length;while(k>1&&g.measureText(s).width>room){k--;s=parts.slice(0,k).join(" \\u00B7 ")+" \\u2026"}}
+  _tx8(s,x,y,size,col,a)};
 var _hu9=hud;hud=function(w,h,p){if(w>=600||(typeof BOOTH!=="undefined"&&BOOTH))return _hu9(w,h,p);BGON=1;try{_hu9(w,h,p)}finally{BGON=0}};
 var _tk9=tickerHud;tickerHud=function(w,h){if(w>=600){window.BW_TOPY=0;return _tk9(w,h)}var ch=chainHud;chainHud=function(){};
   var pad=Math.max(14,w*.035),small=Math.max(14,Math.min(17,w*.016));
