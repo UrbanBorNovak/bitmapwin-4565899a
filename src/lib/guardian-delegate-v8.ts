@@ -81,7 +81,7 @@ if(typeof pvCycle==="function"){var _pv8=pvCycle;pvCycle=function(){CIT=null;CBM
 function hudBox(x,y,w,h,edge){g.globalAlpha=LM?.96:.92;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x,y,w,h);
   g.globalAlpha=.8;g.strokeStyle=edge;g.lineWidth=1;g.strokeRect(x,y,w,h);g.globalAlpha=1}
 timelineHud=function(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),fs=Math.max(15,Math.min(18,w*.015)),hs=fs+1.5,lh=fs*1.6,
-    pw=Math.min(w-pad*2,560),x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+hs,rows=Math.min(GTL.length||1,h<760?7:12),ph=hs*1.6+lh*(rows+.6);
+    pw=Math.min(w-pad*2,560),x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+hs,rows=Math.min(GTL.length||1,w<600||h<760?7:12),ph=hs*1.6+lh*(rows+.6);
   if(y+ph>h-pad)y=Math.max(pad+hs,h-pad-ph);
   hudBox(x-10,y-hs*1.3,pw+20,ph,"#f7931a");
   var pn=PCY.n<0?"WAITING":["PULL-IN","PARCEL WAVE","ROAR + LIGHTNING","SPINE SURGE"][PCY.n],left=Math.max(0,4-(performance.now()/1000-PCY.t));
