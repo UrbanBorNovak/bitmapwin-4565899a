@@ -38,13 +38,18 @@ export const ACCEPTED_TRIBUTE_ADDRESSES: readonly string[] = [MINT_TRIBUTE_ADDRE
 export const GUARDIAN_V6_MASTER_ID =
   "9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0";
 
-/** Active master generator (Tag 11 delegate): V7, inscription #127,517,786, block 969,894. */
+/** Active master generator (Tag 11 delegate): V8 Three.js, inscription #127,831,725, block 974,766. */
 export const GUARDIAN_MASTER_DELEGATE_ID =
+  "a3a5a15e80460a794e452dc65ddce9bb289fc7dd1bd69ac47a7bd7b1fceca9b4i0";
+
+/** V7 master (#127,517,786): earlier delegate, still accepted for existing Guardians. */
+export const GUARDIAN_V7_MASTER_ID =
   "4bf943b16b00addd1d667dea9df048a05ad9146687893002cb21b2d0c075075di0";
 
 /** Every generator Guardians may delegate to: the current one first, then older versions still on chain. */
 export const GUARDIAN_MASTER_DELEGATE_IDS: readonly string[] = [
   GUARDIAN_MASTER_DELEGATE_ID,
+  GUARDIAN_V7_MASTER_ID,
   GUARDIAN_V6_MASTER_ID,
   "cafa642afc2fd984beeae8648c46fbfdf45e8b4082ca6c057d29465f871573f5i0",
   "a44f4d01312f944260d59a770e08d63ac3d7c6c9c99177183b50c784837a8de1i0",
