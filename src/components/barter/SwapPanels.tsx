@@ -82,6 +82,7 @@ export function ProposeSwap({ ticket, assets, wallet }: {
             <span>I understand this signature lets the maker complete the swap exactly as shown, at any time until my item or fee sats move.</span>
           </label>
           <button disabled={!agree} className="w-full border border-primary px-2 py-1 text-primary disabled:opacity-40" onClick={signAndSend}>SIGN & SEND TO MAKER</button>
+          <button className="w-full border border-border px-2 py-1" onClick={() => { setBuilt(null); setAgree(false); setPhase("idle"); }}>CANCEL · NOTHING SIGNED</button>
         </div>
       )}
       {msg && <p className={phase === "error" ? "text-destructive" : phase === "done" ? "text-accent" : "text-muted-foreground"}>{msg}</p>}
