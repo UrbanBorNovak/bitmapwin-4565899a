@@ -70,6 +70,8 @@ async function carriesInscription(outpoint: string): Promise<boolean> {
 export type SwapBuild = {
   psbtBase64: string; feeSats: number; feeRate: number; changeSats: number;
   takerAssetIndex: number; takerAssetIndices: number[]; fundingIndices: number[];
+  /** live postage of each taker item, for the pre-signing summary */
+  items?: { id: string; value: number }[];
 };
 
 /** Assembles the swap for a taker after live checks on both assets. */
@@ -134,7 +136,7 @@ export async function buildSwap(args: {
   });
   const verdict = await reviewSwap(built.psbtBase64, t);
   if (!verdict.ok) throw new Error(`Swap failed its own check: ${verdict.reason}`);
-  return { ...built, feeRate: rate };
+  return { ...built, feeRate: rate, items: takers.map((x) => ({ id: x.inscriptionId, value: x.value })) };
 }
 
 export type SwapReview =
