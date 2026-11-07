@@ -9,10 +9,9 @@
  *
  *  - mutual : landlord + tenant 2-of-2 (CHECKSIGADD), any time.
  *  - refund : tenant alone after `refundCsv` blocks (CSV).
- *  - slash  : anyone holding the tenant's equivocation key `E`, while the lock time
- *             is before `slashDeadline` is irrelevant on chain; the window is enforced
- *             by CSV ordering: slash needs only `slashCsv` (< refundCsv) blocks, so a
- *             challenger always has (refundCsv - slashCsv) blocks before the refund.
+ *  - slash  : anyone holding the tenant's equivocation key `E`, after `slashCsv`
+ *             blocks (< refundCsv), so a challenger always has at least
+ *             (refundCsv - slashCsv) blocks before the tenant can refund.
  *
  * Write-once cell (BitAt-style): the tenant publishes E and a committed nonce R.
  * Each lease attestation ("rent paid for period k", "vacated", …) is a BIP-340
