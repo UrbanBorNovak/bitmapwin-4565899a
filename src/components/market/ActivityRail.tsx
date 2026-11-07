@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { formatSats } from "@/lib/trades";
-import { timeAgo } from "@/lib/bitmap";
 import type { TradeRow } from "@/lib/trade-store";
 
+function ago(iso: string) {
+  const m = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
+  return m < 60 ? `${Math.round(m)}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`;
+}
 const short = (a: string | null) => (a ? a.slice(-3) : "—");
 
 /** Right-hand live activity rail: confirmed on-chain sales only. */
@@ -24,7 +27,7 @@ export function ActivityRail({ trades, loading }: { trades: TradeRow[]; loading:
         <ul className="max-h-[70vh] divide-y divide-border overflow-y-auto" data-no-translate>
           {rows.map((t) => (
             <li key={t.txid + t.hop} className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-2 px-3 py-1.5 font-mono text-[11px]">
-              <span className="text-muted-foreground">{timeAgo(t.block_time ?? t.created_at).replace(" ago", "")}</span>
+              <span className="text-muted-foreground">{ago(t.block_time ?? t.created_at)}</span>
               <span className="min-w-0">
                 <Link to="/bitmap/$block" params={{ block: String(t.bitmap_height) }} className="block truncate text-foreground hover:text-bitcoin">
                   {t.bitmap_height.toLocaleString("en-US")}.BITMAP

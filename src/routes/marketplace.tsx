@@ -418,7 +418,7 @@ function Marketplace() {
               </div>
             </div>
           </div>
-          <dl data-tour="market-stats" className="grid grid-cols-3 gap-x-6 gap-y-2 sm:grid-cols-6" data-no-translate>
+          <dl data-tour="market-stats" className="grid grid-cols-3 gap-x-5 gap-y-2 @container sm:grid-cols-6" data-no-translate>
             <HeadStat k="FLOOR" v={listedFloor ? `₿ ${formatSats(listedFloor)}` : "—"} accent />
             <HeadStat k="LISTED" v={listed.length.toLocaleString("en-US")} />
             <HeadStat k="TRADED" v={(crawl.data ? crawl.data.tradedBitmaps : traded.length).toLocaleString("en-US")} />
@@ -741,7 +741,7 @@ function HeadStat({ k, v, accent }: { k: string; v: string; accent?: boolean }) 
   return (
     <div className="text-right">
       <dt className="font-mono text-[9px] tracking-widest text-muted-foreground">{k}</dt>
-      <dd className={`font-mono text-sm font-bold ${accent ? "text-bitcoin" : "text-foreground"}`}>{v}</dd>
+      <dd className={`whitespace-nowrap font-mono text-sm font-bold ${accent ? "text-bitcoin" : "text-foreground"}`}>{v}</dd>
     </div>
   );
 }
