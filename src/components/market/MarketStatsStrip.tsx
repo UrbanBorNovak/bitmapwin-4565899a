@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { satflowStatsFn } from "@/lib/satflow-stats.functions";
 
-const btc = (sats: number | null) => (sats == null ? "—" : `${(sats / 1e8).toLocaleString(undefined, { maximumFractionDigits: sats >= 1e7 ? 2 : 5 })} ₿`);
+const btc = (sats: number | null) => (sats == null ? "—" : `${(sats / 1e8).toLocaleString("en-US", { maximumFractionDigits: sats >= 1e7 ? 2 : 5 })} ₿`);
 const compact = (n: number | null) => (n == null ? "—" : n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n));
 
 /** Satflow-style collection stats row. Venue-reported numbers, labelled as such. */
