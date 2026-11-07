@@ -90,8 +90,8 @@ async function main() {
   { const b = spend("refund", r); await attempt(`refund: next block is only confirmation ${CSV - 1}`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
   { const b = spend("refund", r, CSV - 1); await attempt(`refund: nSequence lowered to ${CSV - 1} to dodge the script lock`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
   { const b = spend("refund", r, 0xfffffffd); await attempt("refund: relative lock disabled in nSequence", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
-  { const b = spend("refund", r); await attempt("refund: landlord signs instead of tenant", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, landlordSk) }), "reject"); }
   await mine(1);
+  { const b = spend("refund", r); await attempt("refund: landlord signs instead of tenant, after the lock", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, landlordSk) }), "reject"); }
   { const b = spend("refund", r); await attempt(`refund: tenant once ${CSV} confirmations are reached`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "accept"); }
 
   // 3. PENALTY (slash)
