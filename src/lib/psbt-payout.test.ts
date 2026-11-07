@@ -10,7 +10,7 @@ describe("listing payout address", () => {
     const b64 = buildListingPsbt({ txid: "a".repeat(64), vout: 0, utxoValueSats: 546, sellerAddress: holder, payoutAddress: payment, priceSats: 15000 });
     const psbt = bitcoin.Psbt.fromBase64(b64);
     expect(bitcoin.address.fromOutputScript(psbt.txOutputs[0].script)).toBe(payment);
-    expect(psbt.txOutputs[0].value).toBe(15000);
+    expect(psbt.txOutputs[0].value).toBe(15000n);
   });
   it("defaults the payout to the holder address", () => {
     const psbt = bitcoin.Psbt.fromBase64(buildListingPsbt({ txid: "a".repeat(64), vout: 0, utxoValueSats: 546, sellerAddress: holder, priceSats: 15000 }));
