@@ -126,6 +126,22 @@ export async function fetchSellerOffers(address: string) {
   return (data ?? []).map((row) => toOffer(row as OfferRow));
 }
 
+/**
+ * One open listing per outpoint, preferring the newest. A reprice keeps the old
+ * ask open if its unlist signature is declined, so the newest ask must win.
+ */
+export function openOffersByOutpoint<T extends { outpoint: string; status: string; createdAt?: string | null }>(
+  offers: T[],
+): Map<string, T> {
+  const map = new Map<string, T>();
+  for (const offer of offers) {
+    if (offer.status !== "open") continue;
+    const prev = map.get(offer.outpoint);
+    if (!prev || String(offer.createdAt ?? "") > String(prev.createdAt ?? "")) map.set(offer.outpoint, offer);
+  }
+  return map;
+}
+
 export const sellerOffersQuery = (address: string) =>
   queryOptions({
     queryKey: ["offers", "seller", address.toLowerCase()],
