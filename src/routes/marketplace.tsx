@@ -747,7 +747,7 @@ function Marketplace() {
 
 function HeadStat({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
-    <div className="text-right">
+    <div className="text-left xl:text-right">
       <dt className="font-mono text-[9px] tracking-widest text-muted-foreground">{k}</dt>
       <dd className={`whitespace-nowrap font-mono text-sm font-bold ${accent ? "text-bitcoin" : "text-foreground"}`}>{v}</dd>
     </div>

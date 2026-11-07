@@ -27,7 +27,7 @@ export function BitmapLotteryWidget() {
   const pot = jackpot.data != null ? `${jackpot.data.toFixed(2)} BTC` : "7.10 BTC";
 
   return (
-    <div className="fixed bottom-20 right-3 z-50 font-mono text-xs sm:bottom-4" data-no-translate={false}>
+    <div className="fixed bottom-20 right-3 z-50 font-mono text-xs lg:bottom-4" data-no-translate={false}>
       {open && (
         <div className="mb-2 max-h-[70vh] w-72 overflow-y-auto rounded border border-border bg-background/85 p-3 shadow-lg backdrop-blur-md">
           <div className="flex items-center justify-between">

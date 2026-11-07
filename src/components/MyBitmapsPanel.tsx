@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { walletQuery } from "@/lib/wallet";
@@ -19,6 +19,7 @@ import { BulkListBar } from "@/components/market/BulkListBar";
 import { ListPriceHint } from "@/components/market/ListPriceHint";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fetchBlockStatsMany, fetchPatternSiblings, type BlockStats } from "@/lib/block-stats";
 import { Link } from "@tanstack/react-router";
 
@@ -67,7 +68,7 @@ export function MyBitmapsPanel() {
 
   if (!wallet) {
     return (
-      <section id="sell-bitmap" className="border border-border">
+      <section id="sell-bitmap" className="border border-border bg-card/80 backdrop-blur-md">
         <header className="border-b border-border p-5">
           <h2 className="display text-xl">MY BITMAPS</h2>
           <p className="label mt-2">CONNECT A WALLET TO LIST, REPRICE OR UNLIST YOUR OWN BITMAPS</p>
@@ -84,7 +85,7 @@ export function MyBitmapsPanel() {
   }
 
   return (
-    <section id="sell-bitmap" className="border border-border" data-tour="my-bitmaps">
+    <section id="sell-bitmap" className="border border-border bg-card/80 backdrop-blur-md" data-tour="my-bitmaps">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
         <div>
           <h2 className="display text-xl">MY BITMAPS</h2>
@@ -109,6 +110,13 @@ export function MyBitmapsPanel() {
         <p className="p-5 font-mono text-[11px] text-muted-foreground">
           &gt; READING YOUR WALLET FROM CHAIN<span className="blink">_</span>
         </p>
+      ) : snapshot.isError ? (
+        <div className="space-y-3 p-5" role="alert">
+          <p className="font-mono text-[11px] text-destructive">
+            &gt; COULD NOT READ {shortenAddress(wallet.ordinalsAddress)} FROM CHAIN — YOUR BITMAPS ARE NOT SHOWN, NOT MISSING
+          </p>
+          <button className="btn-term-ghost !px-3 !py-1.5" onClick={() => void snapshot.refetch()}>[ TRY AGAIN ]</button>
+        </div>
       ) : held.length === 0 ? (
         <p className="p-5 font-mono text-[11px] text-muted-foreground">
           &gt; NO BITMAP INSCRIPTION FOUND IN {shortenAddress(wallet.ordinalsAddress)}
@@ -287,7 +295,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
       {rows.length === 0 && (
         <p className="p-5 font-mono text-[11px] text-muted-foreground">&gt; NONE OF YOUR BITMAPS MATCH THESE FILTERS</p>
       )}
-      <ul className="divide-y divide-border">
+      <ul className="@container divide-y divide-border">
         {rows.slice(p * PAGE, p * PAGE + PAGE).map((bitmap) => (
           <HeldRow
             key={`${bitmap.outpoint}-${bitmap.bitmapHeight}`}
@@ -411,8 +419,9 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
 
   return (
     <li className="p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-start gap-3">
+      {/* Actions sit in their own column once the list has room, so every row lines up. */}
+      <div className="grid gap-3 @lg:grid-cols-[minmax(0,1fr)_auto] @lg:items-center">
+        <div className="flex min-w-0 items-start gap-3">
           <input type="checkbox" className="mt-1" checked={selected} onChange={(e) => onSelect(e.target.checked)}
             aria-label={`Select ${bitmap.bitmapHeight}.bitmap`} />
         <BlockPreview height={bitmap.bitmapHeight} stats={stats} shape={shape} traits={traits} bitmon={bitmon}>
@@ -420,7 +429,7 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
             <BlockMosaic height={bitmap.bitmapHeight} txCount={stats?.txCount ?? null} className="h-full w-full" />
           </button>
         </BlockPreview>
-        <div>
+        <div className="min-w-0">
           <BlockPreview height={bitmap.bitmapHeight} stats={stats} shape={shape} traits={traits} bitmon={bitmon}>
             <button type="button" className="font-mono text-sm font-bold text-foreground hover:text-primary">
               {bitmap.bitmapHeight}.BITMAP
@@ -455,7 +464,7 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
           )}
         </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 @lg:justify-end">
           <button
             className={editing ? "btn-term !px-3 !py-1.5" : "btn-term-ghost !px-3 !py-1.5"}
             onClick={() => setEditing((o) => !o)}
@@ -532,19 +541,42 @@ function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
     : shape.kind === "unique" ? "UNIQUE SHAPE — NOT A BITMON"
     : shape.kind === "bitmon" ? `#${shape.pattern}${shape.siblings ? ` · ${shape.siblings + 1} BLOCKS` : ""}`
     : "NONE ON RECORD";
+  // Touch/pen taps open a centred sheet: anchored popovers are placed off-screen
+  // under the page-size zoom on <html>. Mouse hover keeps the anchored preview.
+  const [sheet, setSheet] = useState(false);
+  const lastPointer = useRef("mouse");
   const hover = (on: boolean) => (e: React.PointerEvent) => { if (e.pointerType === "mouse") setOpen(on); };
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
+      <PopoverTrigger asChild onPointerEnter={hover(true)} onPointerLeave={hover(false)}
+        onPointerDown={(e) => { lastPointer.current = e.pointerType; }}
+        onClick={(e) => { if (lastPointer.current !== "mouse") { e.preventDefault(); setOpen(false); setSheet(true); } }}>
         {children}
       </PopoverTrigger>
       <PopoverContent className="w-[min(18rem,calc(100vw-1.5rem))] p-3" side="right" align="start" collisionPadding={12}
         onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
-        {open && (
-          <div className="aspect-square w-full overflow-hidden border border-border">
+        {open && <PreviewBody height={height} stats={stats} traits={traits} bitmon={bitmon} patternLine={patternLine} />}
+      </PopoverContent>
+    </Popover>
+    <Dialog open={sheet} onOpenChange={setSheet}>
+      <DialogContent className="max-h-[85vh] w-[min(22rem,calc(100%-1.5rem))] overflow-y-auto p-4">
+        <DialogTitle className="sr-only">{height}.BITMAP preview</DialogTitle>
+        {sheet && <PreviewBody height={height} stats={stats} traits={traits} bitmon={bitmon} patternLine={patternLine} />}
+      </DialogContent>
+    </Dialog>
+    </>
+  );
+}
+
+function PreviewBody({ height, stats, traits, bitmon, patternLine }: {
+  height: number; stats: BlockStats | null; traits: ReturnType<typeof traitsOf>; bitmon: BitmonCheck | null; patternLine: string;
+}) {
+  return (
+    <>
+          <div className="mx-auto aspect-square w-full max-w-[min(100%,12rem)] overflow-hidden border border-border">
             <BlockMosaic height={height} txCount={stats?.txCount ?? null} className="h-full w-full" />
           </div>
-        )}
         <p className="mt-2 font-mono text-sm font-bold text-foreground">{height}.BITMAP</p>
         <dl className="mt-1 space-y-0.5 font-mono text-[10px]">
           {stats?.txCount != null && (
@@ -567,7 +599,6 @@ function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
         <Link to="/bitmap/$block" params={{ block: String(height) }} className="btn-term-ghost mt-3 block !px-2 !py-1 text-center">
           [ OPEN DOSSIER ]
         </Link>
-      </PopoverContent>
-    </Popover>
+    </>
   );
 }

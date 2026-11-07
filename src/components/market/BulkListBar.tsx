@@ -157,7 +157,7 @@ export function BulkListBar({
   const doneN = Object.values(status).filter((s) => s === "done").length;
 
   return (
-    <div className="sticky bottom-0 z-20 border-t border-primary/60 bg-background/95 p-4 backdrop-blur" data-testid="bulk-bar">
+    <div className="sticky bottom-0 z-20 border-t border-primary/60 bg-background p-4 shadow-lg" data-testid="bulk-bar">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-mono text-[11px] font-bold text-primary">{items.length} SELECTED</span>
         <span className="label">PRICE:</span>

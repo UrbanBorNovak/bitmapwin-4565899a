@@ -10,6 +10,8 @@ const ESPLORA_HOSTS = [
 ];
 
 let lastFailure = "";
+/** Inscription ids per index lookup — keeps the request URL near 4 KB. */
+const INDEX_CHUNK = 60;
 
 async function ordJson<T>(path: string, attempts = 5): Promise<T | null> {
   for (let i = 0; i < attempts; i++) {
@@ -51,10 +53,10 @@ export function parcelClaimOf(inscriptionId: string) {
 
 async function bitmapHeightOf(inscriptionId: string): Promise<number | null> {
   try {
-    const resp = await fetch(`${ORD}/content/${inscriptionId}`, {
-      headers: { "user-agent": UA, accept: "*/*" },
-    });
-    if (!resp.ok) return null;
+    // ordinals.com first, then the UniSat content mirror (same immutable bytes).
+    const { ordContent } = await import("@/lib/ord-fallback.server");
+    const resp = await ordContent(inscriptionId);
+    if (!resp) return null;
     const body = (await resp.text()).trim();
     const parcel = /^(\d+)\.(\d+)\.bitmap$/.exec(body);
     if (parcel) parcelClaims.set(inscriptionId, { index: Number(parcel[1]), height: Number(parcel[2]) });
@@ -211,16 +213,25 @@ async function indexedHeights(ids: string[]): Promise<Map<string, number>> {
   const client = createClient(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
-  for (let i = 0; i < ids.length; i += 300) {
-    const chunk = ids.slice(i, i + 300);
-    const { data } = await client
-      .from("bitmap_index")
-      .select("block_height, inscription_id")
-      .in("inscription_id", chunk);
-    for (const row of (data ?? []) as Array<{ block_height: number; inscription_id: string }>) {
-      out.set(row.inscription_id, Number(row.block_height));
+  // Each id is ~67 URL characters; large `in.(...)` lists overflow the request
+  // line (fetch fails outright), which silently hid every BITMAP in big wallets.
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += INDEX_CHUNK) chunks.push(ids.slice(i, i + INDEX_CHUNK));
+  await mapWithConcurrency(chunks, 4, async (chunk) => {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { data, error } = await client
+        .from("bitmap_index")
+        .select("block_height, inscription_id")
+        .in("inscription_id", chunk);
+      if (!error) {
+        for (const row of (data ?? []) as Array<{ block_height: number; inscription_id: string }>) {
+          out.set(row.inscription_id, Number(row.block_height));
+        }
+        return;
+      }
+      lastFailure = `index read: ${error.message}`;
     }
-  }
+  });
   return out;
 }
 

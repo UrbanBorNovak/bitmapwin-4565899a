@@ -30,6 +30,19 @@ export function PillarDock() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const immersive = path.startsWith("/oasis") || isTransitPath(path);
+  // Labels need ~640 CSS px of real room; viewport breakpoints ignore the page-size zoom on <html>.
+  const [roomy, setRoomy] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const zoom = Number((document.documentElement.style as CSSStyleDeclaration & { zoom: string }).zoom) || 1;
+      setRoomy(window.innerWidth / zoom >= 640);
+    };
+    check();
+    window.addEventListener("resize", check);
+    const mo = new MutationObserver(check);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+    return () => { window.removeEventListener("resize", check); mo.disconnect(); };
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -68,7 +81,7 @@ export function PillarDock() {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                <span className="hidden md:inline">{label}</span>
+                {roomy ? <span>{label}</span> : <span className="sr-only">{label}</span>}
               </Link>
             );
           })}
@@ -79,7 +92,7 @@ export function PillarDock() {
             className="flex items-center gap-1.5 rounded-full px-3 py-2 font-mono text-[10px] text-muted-foreground hover:text-accent"
           >
             <Search className="h-4 w-4" />
-            <kbd className="hidden md:inline">⌘K</kbd>
+            {roomy && <kbd>⌘K</kbd>}
           </button>
         </nav>
       )}
