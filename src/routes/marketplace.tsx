@@ -598,14 +598,14 @@ function Marketplace() {
                 <span className="label text-muted-foreground group-open:rotate-180" aria-hidden>▾</span>
               </summary>
               <div className="max-h-[70vh] min-w-0 space-y-4 overflow-y-auto overflow-x-hidden p-2">
-      <div className="[&>*]:!m-0">
+      <div className="min-w-0 [&>*]:!m-0">
         <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
-      <div className="[&>*]:!m-0">
+      <div className="min-w-0 [&>*]:!m-0">
         <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
       </div>
 
-      <div className="[&>*]:!m-0">
+      <div className="min-w-0 [&>*]:!m-0">
         <TraitMatrix
           activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
           scoped={tab === "inhabited" || club !== "any" || trait !== "any" || gallery !== "any"}
