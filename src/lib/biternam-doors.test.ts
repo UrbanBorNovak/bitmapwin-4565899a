@@ -5,7 +5,7 @@ import { LANDMARKS, landmarkSolids } from "./world-landmarks";
 describe("oasis interior doors", () => {
   it("has ten doors, including Urban's Island", () => {
     expect(Object.keys(INTERIOR_DOORS)).toHaveLength(10);
-    expect(INTERIOR_DOORS.torii?.to).toBe("/biternam/island");
+    expect(INTERIOR_DOORS["torii"]?.to).toBe("/biternam/island");
   });
   for (const id of Object.keys(INTERIOR_DOORS)) {
     it(`${id} door is reachable and outside every building`, () => {

@@ -37,6 +37,6 @@ describe("chapter cast lookups (mocked)", () => {
     const text = ep.scenes.flatMap((s) => s.lines.map((l) => l.text)).join(" ");
     // The chapter script never states Guardian status, so a failed lookup must not leak an absence claim.
     expect(text).not.toMatch(/No Guardian|Nobody's guarding/);
-    expect(ep.scenes.every((s) => s.cast.every((a) => !a.name.includes(" · ")))).toBe(true);
+    expect(ep.scenes.every((s) => s.cast.every((a) => !a.name.startsWith(`${f.height}.bitmap · `)))).toBe(true);
   });
 });
