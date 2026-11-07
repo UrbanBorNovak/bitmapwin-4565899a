@@ -22,6 +22,7 @@ import { fetchBarterTickets, describeCriteria, type FeedTicket } from "@/lib/bar
 import {
   matchesCriteria, ticketProblem, ticketTags, satpointProblem, offerProofMessage, DUST_SATS,
   type AssetFacts, type BarterCriteria, type BarterTicket,
+  BARTER_MAX_BUNDLE,
 } from "@/lib/barter-protocol";
 
 export const Route = createFileRoute("/barter")({
