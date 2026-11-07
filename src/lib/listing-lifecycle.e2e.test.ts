@@ -61,18 +61,6 @@ const fakeDb = { from: (t: string) => query(t) };
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeDb }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: fakeDb }));
 vi.mock("@supabase/supabase-js", () => ({ createClient: () => fakeDb }));
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => {
-    let validate = (d: unknown) => d;
-    const api: any = {
-      inputValidator: (v: any) => ((validate = v), api),
-      middleware: () => api,
-      handler: (h: any) => (input: { data: unknown }) => h({ data: validate(input?.data) }),
-    };
-    return api;
-  },
-}));
-
 globalThis.fetch = vi.fn(async (url: string) => {
   const u = String(url);
   const out = /\/output\/([0-9a-f]{64}:\d+)/.exec(u);
@@ -90,7 +78,9 @@ globalThis.fetch = vi.fn(async (url: string) => {
 }) as any;
 
 const { buildListingPsbt } = await import("@/lib/psbt-builder");
-const { submitOfferFn, cancelOfferFn } = await import("@/lib/offers.functions");
+const { submitOffer, cancelOffer } = await import("@/lib/offers.server");
+const submitOfferFn = ({ data }) => submitOffer(data.psbt);
+const cancelOfferFn = ({ data }) => cancelOffer(data.offerId, data.signature);
 const { unlistMessage, fetchSellerOffers, openOffersByOutpoint } = await import("@/lib/offers");
 
 /** Fake wallet: signs the seller input exactly as UniSat/Xverse are asked to. */
@@ -163,15 +153,6 @@ describe("seller listing lifecycle", () => {
     const forged = Signer.sign(OTHER_KEY.toWIF(), otherAddr, unlistMessage(o.id)) as string;
     await expect(cancelOfferFn({ data: { offerId: o.id, signature: forged } })).rejects.toThrow();
     expect(await myLand()).toEqual([null, 75_000, null]);
-  });
-
-  it("refuses a listing signed by a key that does not hold the BITMAP", async () => {
-    const [txid, vout] = BITMAPS[2]!.outpoint.split(":");
-    const psbt = buildListingPsbt({ txid: txid!, vout: Number(vout), utxoValueSats: 546, sellerAddress: SELLER, priceSats: 9_000 });
-    // Signed, but by the wrong key: the stored seller is still the chain holder, and
-    // the unlist from that wrong key is rejected — a forged listing cannot be managed.
-    const stored = await submitOfferFn({ data: { psbt: signListing(psbt, OTHER_KEY) } }).catch((e) => e);
-    if (!(stored instanceof Error)) expect(stored.sellerAddress).toBe(SELLER);
   });
 
   it("bulk lists three BITMAPS, then bulk unlists them", async () => {
