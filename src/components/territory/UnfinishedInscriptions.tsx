@@ -24,7 +24,15 @@ export function UnfinishedInscriptions() {
     let stop = false;
     void (async () => {
       const out: Found[] = [];
-      for (const job of listUnrevealedJobs()) {
+      // Only recent drafts can still have a payment waiting; check a few, paced,
+      // so the block explorer never rate-limits the page.
+      const recent = listUnrevealedJobs()
+        .filter((j) => j.commitTxid || Date.now() - Date.parse(j.createdAt) < 7 * 86_400_000)
+        .sort((a, b) => Number(!!b.commitTxid) - Number(!!a.commitTxid) || b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 4);
+      for (const [i, job] of recent.entries()) {
+        if (stop) return;
+        if (i) await new Promise((r) => setTimeout(r, 400));
         const utxo = await findCommitOutput(job).catch(() => null);
         if (utxo) out.push({ job: { ...job, commitTxid: job.commitTxid ?? utxo.txid }, value: utxo.value });
       }
