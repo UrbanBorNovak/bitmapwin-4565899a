@@ -41,7 +41,7 @@ export function isWebGLStartupError(error: unknown): boolean {
   return /webgl|creating .*context|context could not be created/i.test(msg);
 }
 
-function NoWebGLPanel({ className, style, children }: { className?: string; style?: CanvasProps["style"]; children?: ReactNode }) {
+function NoWebGLPanel({ className, style, children }: { className?: string | undefined; style?: CanvasProps["style"]; children?: ReactNode }) {
   return (
     <div
       role="img"
@@ -62,11 +62,11 @@ type GuardProps = { fallback: ReactNode; children: ReactNode };
 /** Catches only WebGL startup failures; every other error still reaches the
  *  surrounding boundary unchanged. */
 class WebGLGuard extends Component<GuardProps, { error: unknown; failed: boolean }> {
-  state = { error: null as unknown, failed: false };
+  override state = { error: null as unknown, failed: false };
   static getDerivedStateFromError(error: unknown) {
     return { error, failed: true };
   }
-  render() {
+  override render() {
     if (this.state.failed) {
       if (!isWebGLStartupError(this.state.error)) throw this.state.error;
       return this.props.fallback;
