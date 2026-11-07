@@ -511,7 +511,7 @@ function Marketplace() {
         )}
       </div>
 
-      <div className="mt-4 grid gap-4 @3xl/mkt:grid-cols-[15rem_minmax(0,1fr)] @6xl/mkt:grid-cols-[16rem_minmax(0,1fr)_19rem] @[100rem]/mkt:grid-cols-[18rem_minmax(0,1fr)_21rem]">
+      <div className="mt-4 grid gap-4 @2xl/mkt:grid-cols-[14rem_minmax(0,1fr)] @4xl/mkt:grid-cols-[15rem_minmax(0,1fr)] @6xl/mkt:grid-cols-[16rem_minmax(0,1fr)_19rem] @[100rem]/mkt:grid-cols-[18rem_minmax(0,1fr)_21rem]">
         <aside className="min-w-0">
           <div data-tour="market-filters" className="border border-border bg-card/60 backdrop-blur-md lg:sticky lg:top-36">
             <details className="group" open>
@@ -624,7 +624,7 @@ function Marketplace() {
           </div>
         </aside>
 
-        <section id="market-grid" data-tour="market-grid" className="min-w-0 scroll-mt-20">
+        <section id="market-grid" data-tour="market-grid" className="@container min-w-0 scroll-mt-20">
           <div id="floor-sweeper" className="scroll-mt-24" />
           <FloorSweeper listed={tab === "inhabited" ? listed : visible.filter((p) => p.listedSats !== null)} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
@@ -668,7 +668,7 @@ function Marketplace() {
               {view === "table" ? (
                 <ProTable parcels={pageWithOwners} inhabited={inhabitedSet} built={builtSet} bitmons={bitmonChecks} floorSats={listedFloor} />
               ) : (
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5">
+              <div className="mt-3 grid grid-cols-2 gap-2 @md:grid-cols-3 @2xl:grid-cols-4 @5xl:grid-cols-5">
                 {pageWithOwners.map((p) => (
                   <CompactParcelCard key={p.inscriptionId} parcel={p} />
                 ))}
