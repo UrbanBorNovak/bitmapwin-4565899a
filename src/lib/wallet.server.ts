@@ -10,6 +10,8 @@ const ESPLORA_HOSTS = [
 ];
 
 let lastFailure = "";
+/** Inscription ids per index lookup — keeps the request URL near 4 KB. */
+const INDEX_CHUNK = 60;
 
 async function ordJson<T>(path: string, attempts = 5): Promise<T | null> {
   for (let i = 0; i < attempts; i++) {
@@ -51,10 +53,10 @@ export function parcelClaimOf(inscriptionId: string) {
 
 async function bitmapHeightOf(inscriptionId: string): Promise<number | null> {
   try {
-    const resp = await fetch(`${ORD}/content/${inscriptionId}`, {
-      headers: { "user-agent": UA, accept: "*/*" },
-    });
-    if (!resp.ok) return null;
+    // ordinals.com first, then the UniSat content mirror (same immutable bytes).
+    const { ordContent } = await import("@/lib/ord-fallback.server");
+    const resp = await ordContent(inscriptionId);
+    if (!resp) return null;
     const body = (await resp.text()).trim();
     const parcel = /^(\d+)\.(\d+)\.bitmap$/.exec(body);
     if (parcel) parcelClaims.set(inscriptionId, { index: Number(parcel[1]), height: Number(parcel[2]) });
