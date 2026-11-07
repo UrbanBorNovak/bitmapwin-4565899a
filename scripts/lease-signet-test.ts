@@ -43,7 +43,7 @@ async function main() {
   if (info.chain !== "signet") throw new Error(`refusing to run on chain "${info.chain}"`);
   try { await rpc("createwallet", ["lease"]); } catch { try { await rpc("loadwallet", ["lease"]); } catch { /* loaded */ } }
   miner = await rpc<string>("getnewaddress", [], "lease");
-  if ((await tip()) < 110) await mine(110 - (await tip()));
+  if ((await rpc<number>("getbalance", [], "lease")) < 1) await mine(101); // coinbase maturity
 
   const landlordSk = sec(), tenantSk = sec();
   const cell = newCellKey(randomBytes(32), randomBytes(32));
