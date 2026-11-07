@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { SafeCanvas as Canvas } from "@/components/game/SafeCanvas";
 import { OrbitControls } from "@react-three/drei";
 import { useQuery } from "@tanstack/react-query";
 import { storefrontQuery } from "@/components/BitmapStorefront";
