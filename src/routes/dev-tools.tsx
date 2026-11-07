@@ -205,7 +205,7 @@ V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleStrin
         {[["V7 · ACTIVE", v7], ["V8 · DRAFT", v8]].map(([label, html]) => (
           <div key={label}>
             <div className="label text-signal">{label}</div>
-            <iframe title={label} srcDoc={offlinePreview(html)} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
+            <iframe title={label} srcDoc={offlinePreview(html ?? "")} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
           </div>
         ))}
       </div>
