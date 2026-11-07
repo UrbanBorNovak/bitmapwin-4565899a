@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { useEffect, useMemo, useState } from "react";
+import { offlinePreview } from "@/lib/offline-preview";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
@@ -232,10 +233,6 @@ function mockBuildB64(): string {
   let s = ""; for (const n of out) s += String.fromCharCode(n);
   return btoa(s);
 }
-
-/** Preview-only prelude: a srcdoc frame has no ord server, so chain lookups answer 404 locally instead of hitting this site. Never inscribed. */
-const OFFLINE_PREVIEW = `<script>(function(){var of=window.fetch.bind(window);window.fetch=function(u){var s=String(u);if(/^\\/(r|content|blockheight)\\b/.test(s))return Promise.resolve(new Response("",{status:404}));return of(u)}})()</script>`;
-const offlinePreview = (html: string) => OFFLINE_PREVIEW + html;
 
 /** Test-only fetch stub injected ahead of the V8 page: fakes this Guardian's children. */
 function beaconMock(mode: "live" | "none"): string {
