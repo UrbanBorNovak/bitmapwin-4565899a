@@ -49,12 +49,12 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
   const loading = offers.isPending || bids.isPending;
 
   return (
-    <section className="min-w-0 max-w-full rounded border border-border bg-card/60 backdrop-blur-sm" aria-label="Trait floor radar">
+    <section className="@container min-w-0 max-w-full rounded border border-border bg-card/60 backdrop-blur-sm" aria-label="Trait floor radar">
       <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 font-mono text-[11px]">
         <span className="tracking-widest text-accent">TRAIT FLOOR RADAR</span>
         <span className="text-muted-foreground">CLICK A ROW TO PIVOT BOOK · DEPTH · TAPE</span>
         <div className="ml-auto flex flex-wrap items-center gap-1">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="FILTER TRAITS" aria-label="Filter traits" className="w-32 rounded border border-border bg-background px-2 py-1 text-[11px]" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="FILTER TRAITS" aria-label="Filter traits" className="w-32 min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[11px] @md:flex-none" />
           {(["listed", "floor", "volume"] as MatrixSort[]).map((s) => (
             <button key={s} onClick={() => setSort(s)} className={`rounded border px-2 py-1 ${sort === s ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{s === "listed" ? "DENSITY" : s === "floor" ? "FLOOR" : "24H VOL"}</button>
           ))}
@@ -65,7 +65,7 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
       <div className="max-h-80 overflow-auto">
         <table className="w-full font-mono text-[11px]">
           <thead className="sticky top-0 bg-card text-muted-foreground">
-            <tr className="text-left"><th className="px-3 py-1">TRAIT</th><th className="px-2">GROUP</th><th className="px-2 text-right">FLOOR</th><th className="px-2 text-right">BEST BID</th><th className="px-2 text-right">LISTED</th><th className="px-2 text-right">DENSITY</th><th className="px-3 text-right">24H VOL</th></tr>
+            <tr className="text-left"><th className="px-3 py-1">TRAIT</th><th className="hidden @md:table-cell px-2">GROUP</th><th className="px-2 text-right">FLOOR</th><th className="hidden @md:table-cell px-2 text-right">BEST BID</th><th className="px-2 text-right">LISTED</th><th className="hidden @md:table-cell px-2 text-right">DENSITY</th><th className="hidden @md:table-cell px-3 text-right">24H VOL</th></tr>
           </thead>
           <tbody>
             {loading ? (
@@ -76,15 +76,15 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
               const active = r.seg.key === activeKey;
               return (
                 <tr key={r.seg.key} onClick={() => onPick(active ? null : r.seg)} aria-pressed={active} className={`cursor-pointer border-t border-border/50 hover:bg-accent/10 ${active ? "bg-accent/15 text-accent" : ""}`}>
-                  <td className="px-3 py-1">{active ? "◉ " : ""}{r.seg.label}{r.seg.note && <span className={`ml-2 text-[10px] ${r.seg.note === "INDEX UNAVAILABLE" ? "text-destructive" : "text-muted-foreground"}`}>{r.seg.note}</span>}</td>
-                  <td className="px-2 text-muted-foreground">{r.seg.group}</td>
+                  <td className="break-words px-3 py-1">{active ? "◉ " : ""}{r.seg.label}{r.seg.note && <span className={`ml-2 text-[10px] ${r.seg.note === "INDEX UNAVAILABLE" ? "text-destructive" : "text-muted-foreground"}`}>{r.seg.note}</span>}</td>
+                  <td className="hidden @md:table-cell px-2 text-muted-foreground">{r.seg.group}</td>
                   <td className="px-2 text-right text-primary">{r.floor !== null ? formatSats(r.floor) : "—"}</td>
-                  <td className="px-2 text-right">{r.bestBid !== null ? formatSats(r.bestBid) : "—"}</td>
+                  <td className="hidden @md:table-cell px-2 text-right">{r.bestBid !== null ? formatSats(r.bestBid) : "—"}</td>
                   <td className="px-2 text-right">{r.listed}</td>
-                  <td className="px-2 text-right">
+                  <td className="hidden @md:table-cell px-2 text-right">
                     <span className="inline-block h-1.5 w-12 rounded bg-muted align-middle"><span className="block h-full rounded bg-accent" style={{ width: `${Math.round(r.share * 100)}%` }} /></span> {(r.share * 100).toFixed(0)}%
                   </td>
-                  <td className="px-3 text-right">{r.vol24 ? `${formatSats(r.vol24)} · ${r.fills24}` : "—"}</td>
+                  <td className="hidden @md:table-cell px-3 text-right">{r.vol24 ? `${formatSats(r.vol24)} · ${r.fills24}` : "—"}</td>
                 </tr>
               );
             })}
