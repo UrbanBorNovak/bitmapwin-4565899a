@@ -17,19 +17,22 @@ const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 type Phase = "idle" | "building" | "review" | "signing" | "done" | "error";
 
 /** Taker side: build the swap from live chain facts, sign own inputs, send it to the maker. */
-export function ProposeSwap({ ticket, asset, wallet }: {
-  ticket: FeedTicket; asset: { inscriptionId: string; outpoint: string; label: string }; wallet: ConnectedWallet;
+export function ProposeSwap({ ticket, assets, wallet }: {
+  ticket: FeedTicket; assets: { inscriptionId: string; outpoint: string; label: string }[]; wallet: ConnectedWallet;
 }) {
+  const asset = assets[0]!;
+  const label = assets.map((a) => a.label).join(" + ");
   const [phase, setPhase] = useState<Phase>("idle");
   const [msg, setMsg] = useState("");
   const [agree, setAgree] = useState(false);
-  const [built, setBuilt] = useState<{ psbtBase64: string; feeSats: number; feeRate: number; changeSats: number; takerAssetIndex: number; fundingIndices: number[] } | null>(null);
+  const [built, setBuilt] = useState<{ psbtBase64: string; feeSats: number; feeRate: number; changeSats: number; takerAssetIndex: number; takerAssetIndices: number[]; fundingIndices: number[] } | null>(null);
   const [relays, setRelays] = useState<string[]>([]);
 
   const build = async () => {
     setPhase("building"); setMsg("Reading both items and your fee sats from Bitcoin…");
     const r = await buildBarterSwapFn({ data: {
       ticket: ticketOf(ticket), takerInscription: asset.inscriptionId, takerOutpoint: asset.outpoint,
+      ...(assets.length > 1 ? { moreItems: assets.slice(1).map((a) => ({ inscription: a.inscriptionId, outpoint: a.outpoint })) } : {}),
       takerOrdinalsAddress: wallet.ordinalsAddress, takerPaymentAddress: wallet.paymentAddress,
       ...(wallet.publicKey ? { takerPublicKey: wallet.publicKey } : {}),
       ...(wallet.paymentPublicKey ? { takerPaymentPublicKey: wallet.paymentPublicKey } : {}),
@@ -42,8 +45,8 @@ export function ProposeSwap({ ticket, asset, wallet }: {
     if (!built) return;
     setPhase("signing");
     try {
-      setMsg("Sign your item in the wallet…");
-      let psbt = await signParentInputsPsbt(wallet.provider as WalletProviderId, built.psbtBase64, wallet.ordinalsAddress, [built.takerAssetIndex]);
+      setMsg(assets.length > 1 ? `Sign your ${assets.length} items in the wallet…` : "Sign your item in the wallet…");
+      let psbt = await signParentInputsPsbt(wallet.provider as WalletProviderId, built.psbtBase64, wallet.ordinalsAddress, built.takerAssetIndices);
       if (wallet.paymentAddress === wallet.ordinalsAddress) {
         psbt = await signParentInputsPsbt(wallet.provider as WalletProviderId, psbt, wallet.paymentAddress, built.fundingIndices);
       } else {
@@ -68,10 +71,10 @@ export function ProposeSwap({ ticket, asset, wallet }: {
   const sweet = ticket.sweetenerDir === "demand" ? ticket.sweetenerSats : 0;
   return (
     <div className="mt-2 space-y-2 border-t border-border pt-2">
-      {phase === "idle" && <button className="w-full border border-primary px-2 py-1 text-primary" onClick={build}>PROPOSE SWAP WITH {asset.label}</button>}
+      {phase === "idle" && <button className="w-full border border-primary px-2 py-1 text-primary" onClick={build}>PROPOSE SWAP WITH {label}</button>}
       {phase === "review" && built && (
         <div className="space-y-1">
-          <p>You give <span className="text-foreground">{asset.label}</span> and get the offered item.</p>
+          <p>You give <span className="text-foreground">{label}</span> and get the offered item.</p>
           {sweet > 0 && <p>You also pay the maker <span className="text-foreground">{sweet.toLocaleString()} sats</span>.</p>}
           <p>Miner fee: <span className="text-foreground">{built.feeSats.toLocaleString()} sats</span> (~{built.feeRate} sat/vB), paid by you.</p>
           <label className="flex items-start gap-2">
@@ -146,7 +149,9 @@ function ProposalRow({ p, t, wallet }: { p: SwapProposal; t: FeedTicket; wallet:
       {r && !r.ok && <p className="text-destructive">Refused: {r.reason}</p>}
       {r && r.ok && (
         <div className="mt-1 space-y-1">
-          <p className="text-accent">✓ You would receive {r.takerAsset.height !== null ? `${r.takerAsset.height}.bitmap` : `${r.takerAsset.id.slice(0, 12)}…`} ({r.takerAsset.value.toLocaleString()} sats postage)</p>
+          {(r.takerAssets ?? [r.takerAsset]).map((x) => (
+            <p key={x.id} className="text-accent">✓ You would receive {x.height !== null ? `${x.height}.bitmap` : `${x.id.slice(0, 12)}…`} ({x.value.toLocaleString()} sats postage)</p>
+          ))}
           {t.sweetenerDir === "demand" && t.sweetenerSats > 0 && <p className="text-accent">✓ Plus {t.sweetenerSats.toLocaleString()} sats</p>}
           <p className="text-muted-foreground">Miner fee {r.feeSats.toLocaleString()} sats, paid by the taker.</p>
           {!r.takerSigned && <p className="text-destructive">The taker has not signed every input.</p>}

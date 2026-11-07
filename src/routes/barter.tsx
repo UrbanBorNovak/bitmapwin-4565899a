@@ -256,6 +256,10 @@ function MatchDrawer({ ticket, mine, wallet, verdict, onClose }: { ticket: FeedT
   const unsupported = ticket.sweetenerDir === "give" && ticket.sweetenerSats > 0;
   const ok = mine.filter((a) => matchesCriteria(ticket.criteria, a));
   const usesTx = ticket.criteria.minTxCount !== undefined || ticket.criteria.maxTxCount !== undefined;
+  const [sel, setSel] = useState<string[]>([]);
+  const canSwap = !!wallet && !!verdict?.ok && !unsupported;
+  const chosen = ok.filter((a) => !a.block && sel.includes(a.inscriptionId));
+  const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length >= BARTER_MAX_BUNDLE ? s : [...s, id]));
   return (
     <Sheet title="MATCHING ASSETS" onClose={onClose}>
       <p className="text-muted-foreground">Wants: <span className="text-foreground">{describeCriteria(ticket.criteria)}</span></p>
@@ -271,11 +275,20 @@ function MatchDrawer({ ticket, mine, wallet, verdict, onClose }: { ticket: FeedT
               <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
             </div>
             <p className={`mt-1 ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ Position checked: first sat of its own output"}</p>
-            {!a.block && wallet && verdict?.ok && !unsupported && <ProposeSwap ticket={ticket} wallet={wallet} asset={{ inscriptionId: a.inscriptionId, outpoint: a.outpoint, label: assetLabel(a) }} />}
+            {!a.block && canSwap && (
+              <label className="mt-2 flex items-center gap-2">
+                <input type="checkbox" checked={sel.includes(a.inscriptionId)} disabled={!sel.includes(a.inscriptionId) && sel.length >= BARTER_MAX_BUNDLE} onChange={() => toggle(a.inscriptionId)} />
+                <span>Include in my proposal</span>
+              </label>
+            )}
           </li>
         ))}
       </ul>
       {ok.length > 0 && <p className="mt-2 text-muted-foreground">{ok.filter((a) => !a.block).length} of {ok.length} matching items can be used.</p>}
+      {canSwap && ok.some((a) => !a.block) && <p className="mt-2 text-muted-foreground">Tick up to {BARTER_MAX_BUNDLE} items to offer together for this one item. Each must meet the rules above.</p>}
+      {canSwap && wallet && chosen.length > 0 && (
+        <ProposeSwap key={chosen.map((a) => a.inscriptionId).join(",")} ticket={ticket} wallet={wallet} assets={chosen.map((a) => ({ inscriptionId: a.inscriptionId, outpoint: a.outpoint, label: assetLabel(a) }))} />
+      )}
       <div className="mt-4 space-y-2">
         {!verdict?.ok && <p className="text-destructive">Swaps open only on offers whose wallet proof is verified.</p>}
         {unsupported && <Unavailable>Offers where the maker adds sats can't be swapped yet.</Unavailable>}
