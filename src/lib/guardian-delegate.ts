@@ -79,9 +79,6 @@ var TRIBUTE_TO=${JSON.stringify(TRIBUTE_ADDRESS)},TRIBUTE_SCRIPT=${JSON.stringif
 var SELF=(window.location.pathname.split("/").filter(Boolean).pop()||"");
 var REVEAL=SELF.indexOf("i")>0?SELF.slice(0,SELF.lastIndexOf("i")):"";
 
-/* in-browser previews (about:srcdoc) have no ord server: skip network instead of hitting the host page */
-var OFFLINE=window.location.protocol==="about:"||!/^[0-9a-f]{64}i\\d+$/.test(SELF);
-if(OFFLINE){var _f=window.fetch;window.fetch=function(u){return /^\\/(r|content)\\//.test(String(u))?Promise.reject(new Error("offline preview")):_f.apply(this,arguments)}}
 function j(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.json()})}
 function t(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()})}
 
