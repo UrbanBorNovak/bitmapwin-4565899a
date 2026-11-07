@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { walletQuery } from "@/lib/wallet";
-import { sellerOffersQuery, type Offer } from "@/lib/offers";
+import { openOffersByOutpoint, sellerOffersQuery, type Offer } from "@/lib/offers";
 import { submitOfferFn, cancelOfferFn } from "@/lib/offers.functions";
 import { buildListingPsbt } from "@/lib/psbt-builder";
 import { signListingPsbt, signMessageWithWallet, xOnlyPubKeyHex } from "@/lib/browser-wallet";
@@ -58,13 +58,10 @@ export function MyBitmapsPanel() {
       .sort((a, b) => a.bitmapHeight - b.bitmapHeight);
   }, [snapshot.data]);
 
-  const openByOutpoint = useMemo(() => {
-    const map = new Map<string, Offer>();
-    for (const offer of offers.data ?? []) {
-      if (offer.status === "open") map.set(offer.outpoint, offer);
-    }
-    return map;
-  }, [offers.data]);
+  const openByOutpoint = useMemo(
+    () => openOffersByOutpoint<Offer>(offers.data ?? []),
+    [offers.data],
+  );
 
   if (!wallet) {
     return (
