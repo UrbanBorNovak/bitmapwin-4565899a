@@ -294,7 +294,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
       {rows.length === 0 && (
         <p className="p-5 font-mono text-[11px] text-muted-foreground">&gt; NONE OF YOUR BITMAPS MATCH THESE FILTERS</p>
       )}
-      <ul className="divide-y divide-border">
+      <ul className="@container divide-y divide-border">
         {rows.slice(p * PAGE, p * PAGE + PAGE).map((bitmap) => (
           <HeldRow
             key={`${bitmap.outpoint}-${bitmap.bitmapHeight}`}
@@ -418,8 +418,9 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
 
   return (
     <li className="p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-start gap-3">
+      {/* Actions sit in their own column once the list has room, so every row lines up. */}
+      <div className="grid gap-3 @lg:grid-cols-[minmax(0,1fr)_auto] @lg:items-center">
+        <div className="flex min-w-0 items-start gap-3">
           <input type="checkbox" className="mt-1" checked={selected} onChange={(e) => onSelect(e.target.checked)}
             aria-label={`Select ${bitmap.bitmapHeight}.bitmap`} />
         <BlockPreview height={bitmap.bitmapHeight} stats={stats} shape={shape} traits={traits} bitmon={bitmon}>
@@ -427,7 +428,7 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
             <BlockMosaic height={bitmap.bitmapHeight} txCount={stats?.txCount ?? null} className="h-full w-full" />
           </button>
         </BlockPreview>
-        <div>
+        <div className="min-w-0">
           <BlockPreview height={bitmap.bitmapHeight} stats={stats} shape={shape} traits={traits} bitmon={bitmon}>
             <button type="button" className="font-mono text-sm font-bold text-foreground hover:text-primary">
               {bitmap.bitmapHeight}.BITMAP
@@ -462,7 +463,7 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
           )}
         </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 @lg:justify-end">
           <button
             className={editing ? "btn-term !px-3 !py-1.5" : "btn-term-ghost !px-3 !py-1.5"}
             onClick={() => setEditing((o) => !o)}
