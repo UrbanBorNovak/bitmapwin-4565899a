@@ -88,8 +88,8 @@ export const cellMessage = (leaseId: string, cell: number, statement: string) =>
 
 /** Equivocation key + its single committed nonce for one cell. Device-local secrets. */
 export function newCellKey(secret: Uint8Array, nonce: Uint8Array) {
-  let d = mod(toBig(secret)); let P = Point.BASE.multiply(d); if (!P.hasEvenY()) { d = N - d; P = P.negate(); }
-  let k = mod(toBig(nonce)); let R = Point.BASE.multiply(k); if (!R.hasEvenY()) { k = N - k; R = R.negate(); }
+  let d = mod(toBig(secret)); let P = Point.BASE.multiply(d); if ((P.y & 1n) === 1n) { d = N - d; P = P.negate(); }
+  let k = mod(toBig(nonce)); let R = Point.BASE.multiply(k); if ((R.y & 1n) === 1n) { k = N - k; R = R.negate(); }
   return { d, k, pub: bytesToHex(P.toBytes(true).slice(1)), r: bytesToHex(R.toBytes(true).slice(1)) };
 }
 const challenge = (r: string, pub: string, m: Uint8Array) => mod(toBig(tagged("BIP0340/challenge", hexToBytes(r), hexToBytes(pub), m)));
