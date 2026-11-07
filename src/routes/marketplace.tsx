@@ -454,7 +454,7 @@ function Marketplace() {
 
       {section === "land" && (<>
       {/* Sticky control bar */}
-      <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
+      <div className="z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md lg:sticky lg:top-16">
         <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex flex-wrap gap-1" role="tablist" aria-label="Market status">
             {([
@@ -512,7 +512,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-12">
-        <aside className="lg:col-span-3 xl:col-span-2">
+        <aside className="min-w-0 lg:col-span-3 xl:col-span-2">
           <div data-tour="market-filters" className="border border-border bg-card/60 backdrop-blur-md lg:sticky lg:top-36">
             <details className="group" open>
               <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border p-4">
@@ -597,7 +597,7 @@ function Marketplace() {
                 <span className="label text-foreground">GUARDIANS · PATTERNS · TRAIT MAP</span>
                 <span className="label text-muted-foreground group-open:rotate-180" aria-hidden>▾</span>
               </summary>
-              <div className="max-h-[70vh] space-y-4 overflow-y-auto p-2">
+              <div className="max-h-[70vh] min-w-0 space-y-4 overflow-y-auto overflow-x-hidden p-2">
       <div className="[&>*]:!m-0">
         <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
@@ -624,7 +624,7 @@ function Marketplace() {
           </div>
         </aside>
 
-        <section id="market-grid" data-tour="market-grid" className="scroll-mt-20 lg:col-span-9 xl:col-span-7">
+        <section id="market-grid" data-tour="market-grid" className="min-w-0 scroll-mt-20 lg:col-span-9 xl:col-span-7">
           <div id="floor-sweeper" className="scroll-mt-24" />
           <FloorSweeper listed={tab === "inhabited" ? listed : visible.filter((p) => p.listedSats !== null)} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
@@ -732,11 +732,11 @@ function Marketplace() {
         <TrendExplorer parcels={parcels} />
         <BitmapOrderBook />
       </section>)}
-      <div className="sticky bottom-0 z-30 -mx-3 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5">
-        <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
-          {liveOci.data?.tip ? `TIP #${liveOci.data.tip.toLocaleString("en-US")} · ` : ""}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
+      <div className="z-30 -mx-3 mb-20 mt-6 flex items-center justify-between gap-3 border-y border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5 lg:sticky lg:bottom-0 lg:mb-0 lg:border-b-0">
+        <span className="min-w-0 font-mono text-[10px] text-muted-foreground" data-no-translate>
+          {liveOci.data?.tip ? <span className="hidden sm:inline">{`TIP #${liveOci.data.tip.toLocaleString("en-US")} · `}</span> : null}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
         </span>
-        <span className="flex gap-2">
+        <span className="flex shrink-0 gap-2">
           <button type="button" onClick={() => setSection("offers")} className="btn-term-ghost !py-1.5">MAKE OFFER</button>
           <button type="button" onClick={() => { setSection("land"); setTimeout(() => document.getElementById("floor-sweeper")?.scrollIntoView({ behavior: "smooth" }), 50); }} className="btn-term !py-1.5">BUY FLOOR</button>
         </span>
