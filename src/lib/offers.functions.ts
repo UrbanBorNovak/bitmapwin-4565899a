@@ -55,44 +55,6 @@ export const cancelOfferFn = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { Verifier } = await import("bip322-js");
-    const { unlistMessage } = await import("@/lib/offers");
-
-    const { data: offer, error } = await supabaseAdmin
-      .from("offers")
-      .select("id, status, seller_address, bitmap_height")
-      .eq("id", data.offerId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!offer) throw new Error("LISTING NOT FOUND");
-    if (offer.status !== "open") throw new Error("LISTING IS NOT OPEN ANY MORE");
-    if (!offer.seller_address) throw new Error("LISTING HAS NO SELLER ADDRESS");
-
-    let valid = false;
-    try {
-      valid = Verifier.verifySignature(
-        offer.seller_address,
-        unlistMessage(offer.id),
-        data.signature,
-      );
-    } catch (e) {
-      throw new Error(`SIGNATURE REJECTED: ${(e as Error).message.toUpperCase()}`);
-    }
-    if (!valid) throw new Error("SIGNATURE DOES NOT MATCH THE SELLER ADDRESS");
-
-    const { error: updateError } = await supabaseAdmin
-      .from("offers")
-      .update({ status: "cancelled", updated_at: new Date().toISOString() })
-      .eq("id", offer.id)
-      .eq("status", "open");
-    if (updateError) throw new Error(updateError.message);
-
-    await supabaseAdmin.from("activity").insert({
-      type: "listing_cancelled",
-      wallet_address: offer.seller_address,
-      metadata: { offer_id: offer.id, bitmap_height: offer.bitmap_height },
-    });
-
-    return { ok: true, offerId: offer.id };
+    const { cancelOffer } = await import("@/lib/offers.server");
+    return cancelOffer(data.offerId, data.signature);
   });
