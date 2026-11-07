@@ -41,10 +41,10 @@ function LiveMetrics() {
   const tip = useChainTip();
   const nextHalving = tip ? (Math.floor(tip / HALVING) + 1) * HALVING : 0;
   const cells: [string, string][] = [
-    ["LIVE CHAIN TIP", tip ? `#${tip.toLocaleString()}` : "…"],
-    ["BITMAPS MINEABLE", tip ? (tip + 1).toLocaleString() : "…"],
+    ["LIVE CHAIN TIP", tip ? `#${tip.toLocaleString("en-US")}` : "…"],
+    ["BITMAPS MINEABLE", tip ? (tip + 1).toLocaleString("en-US") : "…"],
     ["CURRENT EPOCH", tip ? `HALVING ERA ${Math.floor(tip / HALVING) + 1}` : "…"],
-    ["BLOCKS TO NEXT HALVING", tip ? (nextHalving - tip).toLocaleString() : "…"],
+    ["BLOCKS TO NEXT HALVING", tip ? (nextHalving - tip).toLocaleString("en-US") : "…"],
     ["SUB-10K SHARE OF LAND", tip ? `${((10_000 / (tip + 1)) * 100).toFixed(2)}%` : "…"],
     ["NEW LAND / DAY", "≈144"],
   ];

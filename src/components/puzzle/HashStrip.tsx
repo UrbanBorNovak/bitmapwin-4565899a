@@ -38,7 +38,7 @@ export function HashStrip({ nears, bestNear, scanned, on }: { nears: NearMiss[];
         <Stat label="THIS HASH" value={shown ? `${n}/40 · ${nearTier(n).id}` : "—"} />
         <Stat label="SESSION BEST" value={sessionBest ? `${sessionBest}/40` : "—"} />
         <Stat label="DEVICE BEST" value={bestNear ? `${bestNear}/40` : "—"} />
-        <Stat label="4+ MATCHES" value={`${nears.length} · ${scanned.toLocaleString()} keys`} />
+        <Stat label="4+ MATCHES" value={`${nears.length} · ${scanned.toLocaleString("en-US")} keys`} />
       </div>
       {nears.length > 1 && (
         <div className="mt-2 flex flex-wrap gap-1">

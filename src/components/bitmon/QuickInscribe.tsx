@@ -58,7 +58,7 @@ export function QuickInscribe({ current, onPick, onAwaken }: { current: number; 
         <p className="font-mono text-[10px] text-muted-foreground">{live.isLoading ? "SCANNING WALLET…" : `${heights.length} HELD`}</p>
       </div>
       <p className="mt-2 max-w-2xl font-mono text-[11px] text-muted-foreground">
-        PICK A BITMAP → ONE WALLET SIGNATURE INSCRIBES ITS GUARDIAN AS A CHILD OF THAT BITMAP. COST: LIVE MINER FEE + {TRIBUTE_SATS.toLocaleString()} SAT TRIBUTE INSIDE THE SAME TRANSACTION. YOUR BITMAP RETURNS TO YOUR WALLET. CHOOSE THE ENGINE (V8 THREE.JS OR V7) IN THE INSCRIBE PANEL BELOW.
+        PICK A BITMAP → ONE WALLET SIGNATURE INSCRIBES ITS GUARDIAN AS A CHILD OF THAT BITMAP. COST: LIVE MINER FEE + {TRIBUTE_SATS.toLocaleString("en-US")} SAT TRIBUTE INSIDE THE SAME TRANSACTION. YOUR BITMAP RETURNS TO YOUR WALLET. CHOOSE THE ENGINE (V8 THREE.JS OR V7) IN THE INSCRIBE PANEL BELOW.
       </p>
       <p className="mt-2 max-w-2xl font-mono text-[10px] text-muted-foreground">
         RARITY IS FIXED BY EACH BLOCK'S HASH: COMMON 68% · RARE 22% · EPIC 8% · MYTHIC 2%. ERA 0 BLOCKS MOVE UP ONE TIER; BLOCKS UNDER 10,000 ARE ALWAYS MYTHIC.
@@ -104,7 +104,7 @@ function GuardianCard({ height: h, chainId, current, filter, onPick, onAwaken }:
         ) : g.data ? (
           <button type="button" onClick={() => onPick(h)} className="text-bitcoin underline hover:text-foreground">◆ INSCRIBE →</button>
         ) : g.isPending ? null : (
-          <button type="button" onClick={() => onAwaken(h)} className="text-bitcoin underline hover:text-foreground">⚡ AWAKEN · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
+          <button type="button" onClick={() => onAwaken(h)} className="text-bitcoin underline hover:text-foreground">⚡ AWAKEN · {GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS</button>
         )}
       </div>
     </li>

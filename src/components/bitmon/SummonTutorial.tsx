@@ -45,15 +45,15 @@ const STEPS_EN: Step[] = [
   {
     key: "summon",
     title: "PAY THE SUMMON",
-    short: `One payment of ${GUARDIAN_PRICE_SATS.toLocaleString()} sats to the treasury wakes it.`,
+    short: `One payment of ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} sats to the treasury wakes it.`,
     body:
       "Press SUMMON and your wallet shows one normal payment — no inscription is involved yet. Scan the QR code from a phone wallet if you prefer. This payment wakes the Guardian in the app; it is not the on-chain inscription.",
     bullets: [
-      `Amount: exactly ${GUARDIAN_PRICE_SATS.toLocaleString()} sats, plus the small miner fee your wallet sets.`,
+      `Amount: exactly ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} sats, plus the small miner fee your wallet sets.`,
       "One popup, one payment — if you see more, close it and start again.",
       "Already paid but the page froze? The console remembers your order — reopening the summon resumes it instead of charging twice.",
     ],
-    cost: `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS`,
+    cost: `${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS`,
   },
   {
     key: "awake",
@@ -75,10 +75,10 @@ const STEPS_EN: Step[] = [
       "Only after the summon confirms does the inscribe panel unlock. Inscribing creates a real Ordinal child of your BITMAP in your own wallet, so it joins the on-chain collection and becomes listable. Your wallet will show a small funding payment (the commit), then the reveal — where your BITMAP is spent and returned to you in the same transaction.",
     bullets: [
       "Popups: SUMMON was step 3; the COMMIT is a small ~2,000-sat funding payment; the REVEAL returns your BITMAP to your own address and mints the 546-sat Guardian child.",
-      `A ${TRIBUTE_SATS.toLocaleString()}-sat treasury tribute is paid inside the reveal.`,
+      `A ${TRIBUTE_SATS.toLocaleString("en-US")}-sat treasury tribute is paid inside the reveal.`,
       "The full popup-by-popup walkthrough for UniSat and Xverse is in the WALLET GUIDE tab.",
     ],
-    cost: `+${TRIBUTE_SATS.toLocaleString()} SATS TRIBUTE`,
+    cost: `+${TRIBUTE_SATS.toLocaleString("en-US")} SATS TRIBUTE`,
   },
 ];
 
@@ -108,14 +108,14 @@ const STEPS_ZH: Step[] = [
   {
     key: "summon",
     title: "支付召唤费用",
-    short: `向金库支付一次 ${GUARDIAN_PRICE_SATS.toLocaleString()} 聪即可唤醒守护者。`,
+    short: `向金库支付一次 ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} 聪即可唤醒守护者。`,
     body: "点击“召唤”后，钱包会显示一笔普通付款——此时尚未进行铭刻。你也可以使用手机钱包扫描二维码。该付款只负责在应用中唤醒守护者，并不是链上铭文。",
     bullets: [
-      `金额：准确支付 ${GUARDIAN_PRICE_SATS.toLocaleString()} 聪，另加钱包设置的少量矿工费。`,
+      `金额：准确支付 ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} 聪，另加钱包设置的少量矿工费。`,
       "一次弹窗，一笔付款——如果看到更多付款请求，请关闭并重新开始。",
       "已经付款但页面中断？控制台会记住订单；重新打开即可继续，不会重复收费。",
     ],
-    cost: `${GUARDIAN_PRICE_SATS.toLocaleString()} 聪`,
+    cost: `${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} 聪`,
   },
   {
     key: "awake",
@@ -135,10 +135,10 @@ const STEPS_ZH: Step[] = [
     body: "召唤确认后，铭刻面板才会解锁。铭刻会在你的钱包中创建一个真实的 Ordinal，并成为你的 BITMAP 的子铭文，因此它会加入链上合集并可供交易。钱包先显示一笔小额注资付款（Commit），随后显示揭示交易（Reveal）；你的 BITMAP 会在揭示交易中支出并原路返回。",
     bullets: [
       "弹窗顺序：第 3 步是召唤；COMMIT 是约 2,000 聪的小额注资；REVEAL 会把 BITMAP 返回你的地址，并铸造一枚 546 聪的守护者子铭文。",
-      `揭示交易内会向金库支付 ${TRIBUTE_SATS.toLocaleString()} 聪贡金。`,
+      `揭示交易内会向金库支付 ${TRIBUTE_SATS.toLocaleString("en-US")} 聪贡金。`,
       "UniSat 与 Xverse 的完整逐弹窗说明，请查看“钱包指南”标签页。",
     ],
-    cost: `+${TRIBUTE_SATS.toLocaleString()} 聪贡金`,
+    cost: `+${TRIBUTE_SATS.toLocaleString("en-US")} 聪贡金`,
   },
 ];
 
@@ -146,7 +146,7 @@ const TUTORIAL_COPY = {
   en: {
     label: "SUMMON TUTORIAL · FIRST TIME HERE",
     titleA: "FIVE STEPS.", titleB: "ONE GUARDIAN.",
-    summary: `SUMMON = ${GUARDIAN_PRICE_SATS.toLocaleString()} SATS · INSCRIBE = SEPARATE, LATER, OPTIONAL`,
+    summary: `SUMMON = ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS · INSCRIBE = SEPARATE, LATER, OPTIONAL`,
     intro: (height: number) => `New to Guardians? This is exactly what happens when you summon one on ${height}.bitmap — in order, with the real costs. Nothing is paid before the wallet checks pass.`,
     safety: "SAFETY: THE APP CHECKS YOUR WALLET HOLDS THE BITMAP BEFORE ANY PAYMENT. IF THE CHECK FAILS, NOTHING IS PAID. YOUR BITMAP IS NEVER MOVED BY THE SUMMON ITSELF.",
     steps: STEPS_EN,
@@ -154,7 +154,7 @@ const TUTORIAL_COPY = {
   zh: {
     label: "召唤教程 · 初次体验",
     titleA: "五个步骤。", titleB: "一尊守护者。",
-    summary: `召唤 = ${GUARDIAN_PRICE_SATS.toLocaleString()} 聪 · 铭刻 = 独立、稍后、可选`,
+    summary: `召唤 = ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} 聪 · 铭刻 = 独立、稍后、可选`,
     intro: (height: number) => `第一次接触守护者？这里按真实顺序与实际费用说明如何在 ${height}.bitmap 上召唤。钱包验证通过前不会产生任何付款。`,
     safety: "安全提示：付款前系统会确认你的钱包持有该 BITMAP。验证失败则不会付款。召唤本身绝不会转移你的 BITMAP。",
     steps: STEPS_ZH,

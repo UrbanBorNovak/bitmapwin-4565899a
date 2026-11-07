@@ -74,7 +74,7 @@ function MatterPage() {
         {PRESETS.map((p) => (
           <button type="button" key={p} onClick={() => go(p)}
             className={`border px-2 py-1 font-mono text-[10px] tracking-widest ${p === height ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
-            {p.toLocaleString()}
+            {p.toLocaleString("en-US")}
           </button>
         ))}
       </form>
@@ -83,10 +83,10 @@ function MatterPage() {
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Panel step="1" title="THE FORGED BLOCK · ITS LAND">
-          <Row k="HEIGHT" v={`${height.toLocaleString()}`} />
+          <Row k="HEIGHT" v={`${height.toLocaleString("en-US")}`} />
           <Row k="HASH" v={b ? `${b.hash.slice(0, 10)}…${b.hash.slice(-8)}` : "…"} />
-          <Row k="TRANSACTIONS" v={b ? b.txCount.toLocaleString() : "…"} />
-          <Row k="SIZE" v={b ? `${Math.floor(b.size / 1024).toLocaleString()} KB` : "…"} />
+          <Row k="TRANSACTIONS" v={b ? b.txCount.toLocaleString("en-US") : "…"} />
+          <Row k="SIZE" v={b ? `${Math.floor(b.size / 1024).toLocaleString("en-US")} KB` : "…"} />
           <Row k="WEIGHT" v={b ? `${(b.weight / 1e6).toFixed(2)} MWU` : "…"} />
           <Row k="NONCE" v={b ? String(b.nonce) : "…"} />
           <div className="mt-3 border-t border-border pt-3">
@@ -94,7 +94,7 @@ function MatterPage() {
             {bitmap.data?.inscriptionId ? (
               <>
                 <Row k="INSCRIPTION" v={`${bitmap.data.inscriptionId.slice(0, 10)}…${bitmap.data.inscriptionId.slice(-4)}`} />
-                {bitmap.data.sat != null ? <Row k="SAT" v={bitmap.data.sat.toLocaleString()} /> : null}
+                {bitmap.data.sat != null ? <Row k="SAT" v={bitmap.data.sat.toLocaleString("en-US")} /> : null}
                 <Row k="SOURCE" v={bitmap.data.source ?? ""} />
                 <div className="mt-2 flex gap-3 font-mono text-[10px] tracking-widest">
                   <a className="text-accent hover:underline" href={`https://ordinals.com/inscription/${bitmap.data.inscriptionId}`} target="_blank" rel="noreferrer">ORDINALS.COM ↗</a>
@@ -240,18 +240,18 @@ function TraitInputs({ b, dna, m }: { b: Block; dna: ReturnType<typeof guardianF
   const roll = hi(t, 4, 4) / 0xffff;
   const live: [string, string, string, string][] = [
     ["SPECIES", `hash tail [0..4] = ${hx(t, 0, 4)}`, `${hi(t, 0, 4)} mod 8`, dna.species],
-    ["EPOCH", `height ${b.height.toLocaleString()}`, "⌊height ÷ 210,000⌋", String(dna.epoch)],
+    ["EPOCH", `height ${b.height.toLocaleString("en-US")}`, "⌊height ÷ 210,000⌋", String(dna.epoch)],
     ["RARITY", `hash tail [4..8] = ${hx(t, 4, 4)} · height`, `roll ${roll.toFixed(4)}; <0.02 Mythic, <0.10 Epic, <0.32 Rare; epoch 0 +1 tier; height <10,000 Mythic`, dna.rarity],
-    ["HP", `${b.txCount.toLocaleString()} transactions`, "(120 + √tx × 18) × tier boost", String(dna.hp)],
+    ["HP", `${b.txCount.toLocaleString("en-US")} transactions`, "(120 + √tx × 18) × tier boost", String(dna.hp)],
     ["BITE", `weight ÷ size = ${density.toFixed(2)} · tail [8..10] = ${hx(t, 8, 2)}`, "(18 + (4 − density) × 12 + byte ÷ 12) × tier boost", String(dna.bite)],
     ["SPEED", `hash tail [10..12] = ${hx(t, 10, 2)}`, "(20 + byte ÷ 6) × tier boost", String(dna.speed)],
-    ["ARMOR", `${b.size.toLocaleString()} bytes · epoch ${dna.epoch}`, "(10 + min(40, size ÷ 50,000) + (4 − epoch) × 4) × tier boost", String(dna.armor)],
+    ["ARMOR", `${b.size.toLocaleString("en-US")} bytes · epoch ${dna.epoch}`, "(10 + min(40, size ÷ 50,000) + (4 − epoch) × 4) × tier boost", String(dna.armor)],
     ["COLOURS", `hash tail [12..16] = ${hx(t, 12, 4)}`, "hue = value ÷ 0xFFFF × 360°; Mythic accent is Bitcoin orange", `${Math.round((hi(t, 12, 4) / 0xffff) * 360)}°`],
     ["BODY SHAPE", "full block hash", "seeded generator picks body plan, limbs, horns, wings, pattern", "see portrait"],
   ];
   const draft: [string, string, string, string][] = [
-    ["ELEMENT", `height ${b.height.toLocaleString()}`, "era × 8 + stratum", `${m.element.symbol} · ${m.element.name}`],
-    ["PHASE", `${b.txCount.toLocaleString()} tx · ${Math.floor(b.size / 1024).toLocaleString()} KB`, "transactions per whole KB", m.phase],
+    ["ELEMENT", `height ${b.height.toLocaleString("en-US")}`, "era × 8 + stratum", `${m.element.symbol} · ${m.element.name}`],
+    ["PHASE", `${b.txCount.toLocaleString("en-US")} tx · ${Math.floor(b.size / 1024).toLocaleString("en-US")} KB`, "transactions per whole KB", m.phase],
     ["VITALITY · STRIKE · ARMOR · CADENCE", "height, tx count, size", "BW-MATTER-1 draft formulas", `${m.hp} · ${m.atk} · ${m.def} · ${fmt100(m.spd100)}×`],
   ];
   const Table = ({ rows }: { rows: [string, string, string, string][] }) => (
@@ -293,7 +293,7 @@ function BlueprintPanel({ b, m }: { b: Block; m: NonNullable<ReturnType<typeof d
         <div className="flex gap-1">{bp.palette.map((c, i) => <span key={i} title={c} className="h-8 w-8 border border-border" style={{ background: c }} />)}</div>
       </div>
       <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
-        <Row k="FOOTPRINT" v={`${bp.footprint} · ${b.txCount.toLocaleString()} TX`} />
+        <Row k="FOOTPRINT" v={`${bp.footprint} · ${b.txCount.toLocaleString("en-US")} TX`} />
         <Row k="TERRACES" v={`${bp.terraces} · 1 + ⌊tx ÷ 500⌋, max 7`} />
         <Row k="CEILING" v={`${bp.ceiling} VOXELS · 8 + ⌊weight ÷ 80,000⌋`} />
         <Row k="INNER CORE" v={`${bp.core} · nonce mod 8`} />

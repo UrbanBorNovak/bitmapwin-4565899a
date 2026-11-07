@@ -74,7 +74,7 @@ export function BitmapManager({
       <div className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="label">VISITS</p>
-          <p className="display mt-1 text-2xl">{(data?.totals.visits ?? 0).toLocaleString()}</p>
+          <p className="display mt-1 text-2xl">{(data?.totals.visits ?? 0).toLocaleString("en-US")}</p>
         </div>
         <div>
           <p className="label">NEW BIDS</p>
@@ -115,7 +115,7 @@ export function BitmapManager({
                     params={{ block: String(p.height) }}
                     className="font-mono text-xs hover:text-primary"
                   >
-                    #{p.height.toLocaleString()}
+                    #{p.height.toLocaleString("en-US")}
                     {p.watched && !p.held ? (
                       <span className="ml-2 label text-primary">WATCHING</span>
                     ) : null}
@@ -143,7 +143,7 @@ export function BitmapManager({
                     params={{ block: String(a.height) }}
                     className="hover:text-primary"
                   >
-                    #{a.height.toLocaleString()}
+                    #{a.height.toLocaleString("en-US")}
                   </Link>{" "}
                   <span className="text-muted-foreground">— {a.reason.toUpperCase()}</span>
                 </li>

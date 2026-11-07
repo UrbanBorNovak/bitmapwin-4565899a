@@ -25,7 +25,7 @@ function SwapSummary({ send, receive, fee }: { send: Line[]; receive: Line[]; fe
       {ls.length === 0 ? <p className="text-muted-foreground">Nothing</p> : ls.map((l, i) => (
         <div key={i} className="flex flex-wrap justify-between gap-x-2 border-b border-border/50 py-0.5">
           <span className="text-foreground" title={l.what}>{short(l.what)}</span>
-          <span className="font-mono">{l.sats.toLocaleString()} sats → <span className="text-accent" title={l.to}>{short(l.to)}</span></span>
+          <span className="font-mono">{l.sats.toLocaleString("en-US")} sats → <span className="text-accent" title={l.to}>{short(l.to)}</span></span>
         </div>
       ))}
     </div>
@@ -36,8 +36,8 @@ function SwapSummary({ send, receive, fee }: { send: Line[]; receive: Line[]; fe
       {rows("YOU RECEIVE", receive)}
       <div>
         <p className="font-mono text-[10px] tracking-widest text-muted-foreground">MINER FEE</p>
-        <p><span className="font-mono">{fee.sats.toLocaleString()} sats</span>{fee.rate ? ` (~${fee.rate} sat/vB)` : ""}, paid by {fee.payer}.</p>
-        {fee.change && fee.change.sats > 0 && <p>Change <span className="font-mono">{fee.change.sats.toLocaleString()} sats</span> → <span className="text-accent" title={fee.change.to}>{short(fee.change.to)}</span></p>}
+        <p><span className="font-mono">{fee.sats.toLocaleString("en-US")} sats</span>{fee.rate ? ` (~${fee.rate} sat/vB)` : ""}, paid by {fee.payer}.</p>
+        {fee.change && fee.change.sats > 0 && <p>Change <span className="font-mono">{fee.change.sats.toLocaleString("en-US")} sats</span> → <span className="text-accent" title={fee.change.to}>{short(fee.change.to)}</span></p>}
       </div>
     </div>
   );

@@ -147,7 +147,7 @@ function StudioPage() {
                   <Link to="/forge" search={{ height } as never} className="text-primary hover:underline">Build one in Land Forge →</Link>
                 </>
               : <>
-                  <p className="text-signal">◆ Inscribed · {build.blockCount.toLocaleString()} blocks{build.archetype ? ` · ${build.archetype}` : ""}</p>
+                  <p className="text-signal">◆ Inscribed · {build.blockCount.toLocaleString("en-US")} blocks{build.archetype ? ` · ${build.archetype}` : ""}</p>
                   <a href={`https://ordinals.com/inscription/${build.inscriptionId}`} target="_blank" rel="noreferrer" className="block text-primary hover:underline">{build.inscriptionId.slice(0, 8)}…{build.inscriptionId.slice(-4)}</a>
                   <button type="button" onClick={() => setShowBuild((s) => !s)} className="mt-1 rounded border border-border px-2 py-0.5">{showBuild ? "HIDE IN 3D" : "SHOW IN 3D"}</button>
                 </>}

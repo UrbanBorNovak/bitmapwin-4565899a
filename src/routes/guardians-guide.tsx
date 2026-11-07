@@ -42,7 +42,7 @@ const COPY = {
     howTitle: "HOW TO GET ONE",
     steps: [
       ["01", "PICK A BITMAP", "Go to the summon page and type any block number — for example 715093. You'll see a live 3D preview of the Guardian that block grows."],
-      ["02", "SUMMON IN THE OASIS", `Pay ${GUARDIAN_PRICE_SATS.toLocaleString()} sats. After one confirmation your Guardian wakes up and starts patrolling its BITMAP in the Oasis world.`],
+      ["02", "SUMMON IN THE OASIS", `Pay ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} sats. After one confirmation your Guardian wakes up and starts patrolling its BITMAP in the Oasis world.`],
       ["03", "INSCRIBE ON-CHAIN", "Once it's awake, inscribe it as a real Ordinal child of its BITMAP. It lands in your own wallet — and only inscribed Guardians can be listed on the market."],
     ],
     cta: "◆ SUMMON A GUARDIAN",
@@ -81,7 +81,7 @@ const COPY = {
     howTitle: "如何获得一只",
     steps: [
       ["01", "选择一个 BITMAP", "前往召唤页面,输入任意区块号——例如 715093。你会看到该区块长出的守护者的实时 3D 预览。"],
-      ["02", "在绿洲中召唤", `支付 ${GUARDIAN_PRICE_SATS.toLocaleString()} sats。经过一个区块确认后,你的守护者就会苏醒,并开始在绿洲世界中巡逻它的 BITMAP。`],
+      ["02", "在绿洲中召唤", `支付 ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} sats。经过一个区块确认后,你的守护者就会苏醒,并开始在绿洲世界中巡逻它的 BITMAP。`],
       ["03", "链上铭刻", "守护者苏醒后,将它铭刻为其 BITMAP 的真正序数子铭文。它会进入你自己的钱包——只有铭刻过的守护者才能在市场上架。"],
     ],
     cta: "◆ 召唤一只守护者",

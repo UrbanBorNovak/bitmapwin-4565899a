@@ -103,8 +103,8 @@ function TinyStudio() {
           <button onClick={() => save(html, "tiny-studio.html", "text/html")} className="w-full rounded border border-primary px-3 py-2 text-primary hover:bg-primary/10">DOWNLOAD STUDIO (.HTML)</button>
           {ready ? (
             <>
-              <button onClick={() => save(ready.bytes as BlobPart, "tiny-studio.html.br", "application/octet-stream")} className="w-full rounded border border-accent px-3 py-2 text-accent hover:bg-accent/10">DOWNLOAD FOR INSCRIPTION · {ready.size.toLocaleString()} BYTES</button>
-              <p className="text-muted-foreground">PACKED {ready.raw.toLocaleString()} → {ready.size.toLocaleString()} BYTES · CHECKED: UNPACKS TO THE EXACT SAME FILE</p>
+              <button onClick={() => save(ready.bytes as BlobPart, "tiny-studio.html.br", "application/octet-stream")} className="w-full rounded border border-accent px-3 py-2 text-accent hover:bg-accent/10">DOWNLOAD FOR INSCRIPTION · {ready.size.toLocaleString("en-US")} BYTES</button>
+              <p className="text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME FILE</p>
             </>
           ) : (
             <button disabled={busy} onClick={pack} className="w-full rounded border border-border px-3 py-2 hover:bg-muted disabled:opacity-50">{busy ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}</button>

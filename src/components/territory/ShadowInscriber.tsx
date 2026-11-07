@@ -415,7 +415,7 @@ export function ShadowInscriber(props: {
             ))}
           </div>
           <p className="label text-muted-foreground">
-            {variant?.note ?? ""} · {artifactBytes.toLocaleString()} BYTES ON CHAIN
+            {variant?.note ?? ""} · {artifactBytes.toLocaleString("en-US")} BYTES ON CHAIN
           </p>
         </div>
       ) : null}
@@ -494,7 +494,7 @@ export function ShadowInscriber(props: {
         </>
       ) : (
         <div className="space-y-1 font-mono text-[11px]">
-          <p>PAID {job.commitAmount.toLocaleString()} SATS · {job.feeRate} SAT/VB · 546 STAY ON YOUR ARTIFACT</p>
+          <p>PAID {job.commitAmount.toLocaleString("en-US")} SATS · {job.feeRate} SAT/VB · 546 STAY ON YOUR ARTIFACT</p>
           <a className="text-signal underline" target="_blank" rel="noreferrer" href={`https://mempool.space/tx/${job.commitTxid}`}>
             STEP 1 · PAYMENT ↗
           </a>

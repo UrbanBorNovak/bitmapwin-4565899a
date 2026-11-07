@@ -496,7 +496,7 @@ function BitmapDetail() {
             />
             <Field
               k="INDEX SAT"
-              v={oci.data?.sat ? oci.data.sat.toLocaleString() : oci.isLoading ? "…" : "—"}
+              v={oci.data?.sat ? oci.data.sat.toLocaleString("en-US") : oci.isLoading ? "…" : "—"}
             />
             <Field
               k="ON-CHAIN CONTENT"

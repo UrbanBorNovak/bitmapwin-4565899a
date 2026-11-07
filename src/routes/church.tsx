@@ -104,7 +104,7 @@ function Church() {
             return (
               <Link key={p.height} to="/bitmap/$block" params={{ block: String(p.height) }} onClick={() => { if (!done) { save(pilgrimage(v, p.height)); toast.success(`PILGRIMAGE COMPLETE: ${p.name}`); } }}
                 className={`block rounded border p-3 transition-colors hover:border-primary ${done ? "border-primary/60" : "border-border"}`}>
-                <span className={done ? "text-primary" : ""}>{done ? "✓" : "→"} {p.height.toLocaleString()}.BITMAP · {p.name}</span>
+                <span className={done ? "text-primary" : ""}>{done ? "✓" : "→"} {p.height.toLocaleString("en-US")}.BITMAP · {p.name}</span>
                 <span className="block text-muted-foreground">{p.why}</span>
               </Link>
             );

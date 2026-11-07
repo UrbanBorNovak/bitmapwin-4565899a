@@ -91,8 +91,8 @@ export function SpeedBountyPool() {
           </p>
           <div className="mt-4 grid gap-2 sm:grid-cols-4">
             <Cell k="STATUS" v={b.status.toUpperCase()} />
-            <Cell k="POOL DPs" v={(st?.totalDps ?? 0).toLocaleString()} />
-            <Cell k="POOL HOPS" v={`${(st?.totalSteps ?? 0).toLocaleString()} / ~${Math.round(expected).toLocaleString()}`} />
+            <Cell k="POOL DPs" v={(st?.totalDps ?? 0).toLocaleString("en-US")} />
+            <Cell k="POOL HOPS" v={`${(st?.totalSteps ?? 0).toLocaleString("en-US")} / ~${Math.round(expected).toLocaleString("en-US")}`} />
             <Cell k="LIVE HUNTERS" v={String(st?.hunters ?? 0)} />
           </div>
           {b.status !== "open" ? b.status !== "solved" ? <p className="mt-4 text-muted-foreground">Round closed.</p> : (
@@ -108,7 +108,7 @@ export function SpeedBountyPool() {
           )}
           {(hunting || mine.steps > 0) && (
             <p className="mt-3 text-xs text-muted-foreground">
-              YOU · {mine.steps.toLocaleString()} hops · {Math.round(rate).toLocaleString()}/s · {mine.accepted} DPs verified of {mine.sent} sent
+              YOU · {mine.steps.toLocaleString("en-US")} hops · {Math.round(rate).toLocaleString("en-US")}/s · {mine.accepted} DPs verified of {mine.sent} sent
             </p>
           )}
           {msg && <p className="mt-3 text-accent">{msg}</p>}
@@ -122,7 +122,7 @@ export function SpeedBountyPool() {
               {(st?.board ?? []).map((r, i) => (
                 <li key={r.name} className="flex justify-between border-b border-border/50 py-1">
                   <span>{i + 1}. {r.name} {r.live && <span className="text-accent">● LIVE</span>}{b.winnerName === r.name && " 🏆"}</span>
-                  <span className="text-muted-foreground">{r.dps} DPs · {r.steps.toLocaleString()} hops</span>
+                  <span className="text-muted-foreground">{r.dps} DPs · {r.steps.toLocaleString("en-US")} hops</span>
                 </li>
               ))}
             </ol>

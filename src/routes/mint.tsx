@@ -137,7 +137,7 @@ function MintPage() {
                   ) : (
                     <>
                       <p className="font-mono text-[11px] text-signal">{t.available}</p>
-                      <button type="button" onClick={() => setOpen(true)} className="btn-term w-full py-3 text-base">{t.summon} · {GUARDIAN_PRICE_SATS.toLocaleString()} {t.sats}</button>
+                      <button type="button" onClick={() => setOpen(true)} className="btn-term w-full py-3 text-base">{t.summon} · {GUARDIAN_PRICE_SATS.toLocaleString("en-US")} {t.sats}</button>
                     </>
                   )}
                   <p className="font-mono text-[10px] text-muted-foreground">
@@ -153,7 +153,7 @@ function MintPage() {
           {t.steps.map(([n, title, note]) => (
             <li key={n} className="border-b border-border p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
               <p className="font-mono text-xs text-bitcoin">{n} · {title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{typeof note === "function" ? note(GUARDIAN_PRICE_SATS.toLocaleString()) : note}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{typeof note === "function" ? note(GUARDIAN_PRICE_SATS.toLocaleString("en-US")) : note}</p>
             </li>
           ))}
         </ol>

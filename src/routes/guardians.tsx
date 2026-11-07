@@ -40,8 +40,8 @@ const SPECS: [string, string, string][] = [
   ["PARENTS", "TWO ON-CHAIN PARENTS", "Officially linked on Bitcoin to its own <height>.bitmap (the first one, checked against the live index read from raw block data) and to the master Guardian."],
   ["RENDERER", "ONE SHARED ENGINE", "Every Guardian borrows its drawing code from one master inscription (#127,507,146). The code is inscribed once, never copied."],
   ["DNA", "READ FROM THE BLOCK", "Hash, transaction count, size and era decide body, colours, stats and rarity. Same block, same creature."],
-  ["TRIBUTE", `${TRIBUTE_SATS.toLocaleString()} SATS · PROVEN`, "The engine decodes the reveal transaction itself and only wakes if the tribute output is really there."],
-  ["SHIELDED MINT", `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS + FEE`, "Optional private route: a zero-knowledge pass proves the Guardian is yours without showing your wallet history. Withdraw any time with the key kept in your browser."],
+  ["TRIBUTE", `${TRIBUTE_SATS.toLocaleString("en-US")} SATS · PROVEN`, "The engine decodes the reveal transaction itself and only wakes if the tribute output is really there."],
+  ["SHIELDED MINT", `${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS + FEE`, "Optional private route: a zero-knowledge pass proves the Guardian is yours without showing your wallet history. Withdraw any time with the key kept in your browser."],
   ["METADATA", "ZERO OFF-CHAIN", "No JSON, no trait files. Every trait is computed live from Bitcoin data."],
   ["STORAGE", "100% BITCOIN L1", "No IPFS, no CDN, no servers. If ordinals.com and Bitcoin exist, the Guardian exists."],
 ];
@@ -97,10 +97,10 @@ function GuardiansPromo() {
       <section className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-5">
         {([
           ["MAX SUPPLY", "1 / BLOCK", "ONE GUARDIAN PER BITCOIN BLOCK"],
-          ["ON-CHAIN CHILDREN", minted === undefined ? "…" : minted.toLocaleString(), "REAL INSCRIPTIONS · CHILD OF <HEIGHT>.BITMAP"],
-          ["OASIS SUMMONS", summons.data ? summons.data.length.toLocaleString() : "…", "AWAKE IN THE APP · NOT YET AN ORDINAL"],
-          ["CONFIRMED SALES", market.data ? sales.length.toLocaleString() : "…", "ON-CHAIN CHILDREN ONLY"],
-          ["VOLUME", market.data ? `${volume.toLocaleString()} SATS` : "…", "CONFIRMED ON BITCOIN"],
+          ["ON-CHAIN CHILDREN", minted === undefined ? "…" : minted.toLocaleString("en-US"), "REAL INSCRIPTIONS · CHILD OF <HEIGHT>.BITMAP"],
+          ["OASIS SUMMONS", summons.data ? summons.data.length.toLocaleString("en-US") : "…", "AWAKE IN THE APP · NOT YET AN ORDINAL"],
+          ["CONFIRMED SALES", market.data ? sales.length.toLocaleString("en-US") : "…", "ON-CHAIN CHILDREN ONLY"],
+          ["VOLUME", market.data ? `${volume.toLocaleString("en-US")} SATS` : "…", "CONFIRMED ON BITCOIN"],
         ] as const).map(([k, v, note]) => (
           <div key={k} className="panel rounded-md border border-border p-4">
             <p className="label text-muted-foreground">{k}</p>
@@ -206,12 +206,12 @@ function GuardiansPromo() {
         <div className="panel rounded-md border border-bitcoin/60 p-5">
           <p className="label text-bitcoin">ROUTE A · HOLDER SUMMON</p>
           <p className="display mt-2 text-xl">YOU HOLD THE BITMAP</p>
-          <p className="mt-2 text-sm text-muted-foreground">Inscribe a tiny child of your BITMAP that borrows the master's code. Pay the {TRIBUTE_SATS.toLocaleString()}-sat tribute and it wakes in your own wallet.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Inscribe a tiny child of your BITMAP that borrows the master's code. Pay the {TRIBUTE_SATS.toLocaleString("en-US")}-sat tribute and it wakes in your own wallet.</p>
         </div>
         <div className="panel rounded-md border border-signal/60 p-5">
           <p className="label text-signal">ROUTE B · SHIELDED MINT</p>
           <p className="display mt-2 text-xl">MINT INTO THE POOL</p>
-          <p className="mt-2 text-sm text-muted-foreground">Pay {GUARDIAN_PRICE_SATS.toLocaleString()} sats and the Guardian lands in BITMAPWIN's shielded pool. Only your browser's key can withdraw it. The pool is our own and not yet audited.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Pay {GUARDIAN_PRICE_SATS.toLocaleString("en-US")} sats and the Guardian lands in BITMAPWIN's shielded pool. Only your browser's key can withdraw it. The pool is our own and not yet audited.</p>
         </div>
       </section>
       <GuardianLiveFloor sales={sales} listedFloor={null} />
@@ -281,7 +281,7 @@ const TUTORIAL: { n: string; t: string; body: string; see: string }[] = [
     n: "04",
     t: "PAY THE INVOICE",
     body: "Send exactly the amount shown, in one transaction, to the address on screen. Scan the QR code or press COPY ADDRESS. The total is the summon price plus a small id sat; the network fee is paid by your wallet, not taken from the invoice.",
-    see: `> SEND EXACTLY ${GUARDIAN_PRICE_SATS.toLocaleString()}+ SATS · ONE TRANSACTION`,
+    see: `> SEND EXACTLY ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")}+ SATS · ONE TRANSACTION`,
   },
   {
     n: "05",
@@ -363,8 +363,8 @@ function SummonWalkthrough({ height, onSummon }: { height: number; onSummon: () 
         <div className="panel rounded-md border border-border p-4">
           <p className="label text-bitcoin">WHAT YOU PAY</p>
           <dl className="mt-2 space-y-1.5 font-mono text-[11px]">
-            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">SUMMON PRICE</dt><dd>{GUARDIAN_PRICE_SATS.toLocaleString()} SATS</dd></div>
-            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">TRIBUTE CHECKED ON CHAIN</dt><dd>{TRIBUTE_SATS.toLocaleString()} SATS</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">SUMMON PRICE</dt><dd>{GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">TRIBUTE CHECKED ON CHAIN</dt><dd>{TRIBUTE_SATS.toLocaleString("en-US")} SATS</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-muted-foreground">ID SATS</dt><dd>A FEW HUNDRED</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-muted-foreground">NETWORK FEE</dt><dd>PAID BY YOUR WALLET</dd></div>
           </dl>

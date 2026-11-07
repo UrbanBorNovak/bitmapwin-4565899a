@@ -71,7 +71,7 @@ function RelicCard({ find }: { find: NearMiss }) {
           <div className="rounded border border-border p-2">
             <p className="label text-muted-foreground">LAND BUILD</p>
             {build.isLoading ? <p>Reading chain…</p> : b
-              ? <a href={`${ORD}/inscription/${b.inscriptionId}`} target="_blank" rel="noreferrer" className="text-accent underline">{b.blockCount.toLocaleString()} blocks · view inscription</a>
+              ? <a href={`${ORD}/inscription/${b.inscriptionId}`} target="_blank" rel="noreferrer" className="text-accent underline">{b.blockCount.toLocaleString("en-US")} blocks · view inscription</a>
               : <p className="text-muted-foreground">No inscribed build on this BITMAP.</p>}
           </div>
           <div className="rounded border border-border p-2">

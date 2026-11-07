@@ -136,7 +136,7 @@ function GuardianMarket() {
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {[
           ["INSCRIBED · TRADABLE", market.isPending ? "…" : String(ids.length)],
-          ["OASIS AWAKENED", awakened.data ? awakened.data.length.toLocaleString() : "…"],
+          ["OASIS AWAKENED", awakened.data ? awakened.data.length.toLocaleString("en-US") : "…"],
           ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
           [
             "LAST SALE",

@@ -122,21 +122,21 @@ function PlayerRecord() {
 
         <dl className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
           {[
-            ["PK KILLS", player.pkKills.toLocaleString()],
-            ["PVP KILLS", player.pvpKills.toLocaleString()],
-            ["DEATHS", player.deaths.toLocaleString()],
+            ["PK KILLS", player.pkKills.toLocaleString("en-US")],
+            ["PVP KILLS", player.pvpKills.toLocaleString("en-US")],
+            ["DEATHS", player.deaths.toLocaleString("en-US")],
             ["K/D", kd(player)],
-            ["FAME", player.fame.toLocaleString()],
-            ["BIT EARNED", player.bitEarned.toLocaleString()],
-            ["DISTRICTS VISITED", player.districtsVisited.toLocaleString()],
-            ["BUILDS MAINTAINED", player.buildsMaintained.toLocaleString()],
-            ["PROGRESSION SCORE", progressionScore(player).toLocaleString()],
-            ["PVP SCORE", Math.round(pvpScore(player)).toLocaleString()],
-            ["TIMES CHAOTIC", player.chaoticCount.toLocaleString()],
+            ["FAME", player.fame.toLocaleString("en-US")],
+            ["BIT EARNED", player.bitEarned.toLocaleString("en-US")],
+            ["DISTRICTS VISITED", player.districtsVisited.toLocaleString("en-US")],
+            ["BUILDS MAINTAINED", player.buildsMaintained.toLocaleString("en-US")],
+            ["PROGRESSION SCORE", progressionScore(player).toLocaleString("en-US")],
+            ["PVP SCORE", Math.round(pvpScore(player)).toLocaleString("en-US")],
+            ["TIMES CHAOTIC", player.chaoticCount.toLocaleString("en-US")],
             ["LAST DEATH", sinceLabel(player.lastDeathAt)],
             ["SHARE PRICE", formatBit(shareVal)],
-            ["SHARES ISSUED", issued.toLocaleString()],
-            ["SHARE HOLDERS", holderCount.toLocaleString()],
+            ["SHARES ISSUED", issued.toLocaleString("en-US")],
+            ["SHARE HOLDERS", holderCount.toLocaleString("en-US")],
             ["DIVIDENDS PAID", formatBit(stock.data?.dividendsPaid ?? 0)],
           ].map(([label, value]) => (
             <div key={label} className="bg-background px-4 py-3">

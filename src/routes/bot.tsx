@@ -104,7 +104,7 @@ function BotPage() {
           chime();
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
             new Notification(`${fresh.length} BITMAP match${fresh.length > 1 ? "es" : ""}`, {
-              body: fresh.map((f) => `${f.bitmap_height}.bitmap · ${f.price_sats.toLocaleString()} sats`).join("\n"),
+              body: fresh.map((f) => `${f.bitmap_height}.bitmap · ${f.price_sats.toLocaleString("en-US")} sats`).join("\n"),
             });
           }
         }
@@ -274,7 +274,7 @@ function ListingList({ items, accent }: { items: BotListing[]; accent?: boolean 
       {items.map((l) => (
         <li key={l.id} className="flex items-center justify-between gap-3 px-3 py-2">
           <span className={`font-mono text-sm ${accent ? "text-bitcoin" : ""}`} data-no-translate>{l.bitmap_height}.bitmap</span>
-          <span className="font-mono text-xs text-signal" data-no-translate>{l.price_sats.toLocaleString()} sats</span>
+          <span className="font-mono text-xs text-signal" data-no-translate>{l.price_sats.toLocaleString("en-US")} sats</span>
           <Link to="/bitmap/$block" params={{ block: String(l.bitmap_height) }} className="label text-muted-foreground hover:text-bitcoin">
             VIEW →
           </Link>

@@ -91,7 +91,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
         {active ? (
           <MemberRibbon />
         ) : (
-          <span className="label">{MEMBERSHIP_SATS.toLocaleString()} SATS / MONTH</span>
+          <span className="label">{MEMBERSHIP_SATS.toLocaleString("en-US")} SATS / MONTH</span>
         )}
       </header>
 
@@ -106,7 +106,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
           </p>
         ) : (
           <p>
-            &gt; SHARE {MEMBERSHIP_SATS.toLocaleString()} SATS AND CARRY A MEMBERS BADGE ON YOUR
+            &gt; SHARE {MEMBERSHIP_SATS.toLocaleString("en-US")} SATS AND CARRY A MEMBERS BADGE ON YOUR
             PROFILE FOR {MEMBERSHIP_DAYS} DAYS.
           </p>
         )}
@@ -123,7 +123,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
               <p className="label mt-4">EXACT AMOUNT</p>
               <p className="mt-1 text-foreground">
                 {amount
-                  ? `${amount.toLocaleString()} SATS`
+                  ? `${amount.toLocaleString("en-US")} SATS`
                   : "GET YOUR EXACT AMOUNT BELOW — IT IDENTIFIES YOUR PAYMENT"}
               </p>
             </div>

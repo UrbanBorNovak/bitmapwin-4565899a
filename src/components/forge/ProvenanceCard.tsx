@@ -50,7 +50,7 @@ function draw(cv: HTMLCanvasElement, p: Props) {
   box(cx, py, cw, ph, C.cyan);
   t("COMBINED BUILD", cx + 14, py + 28, 13, C.cyan);
   t(`${p.height}.BITMAP`, cx + 14, py + 66, 26, C.text, "Space Grotesk, sans-serif", "bold");
-  t(`${p.blocks.toLocaleString()} VOXELS`, cx + 14, py + 98, 14, C.dim);
+  t(`${p.blocks.toLocaleString("en-US")} VOXELS`, cx + 14, py + 98, 14, C.dim);
   t(`${p.parents.length} PIECE${p.parents.length === 1 ? "" : "S"} REUSED`, cx + 14, py + 124, 14, C.dim);
 
   const ry = 400;
@@ -62,12 +62,12 @@ function draw(cv: HTMLCanvasElement, p: Props) {
   rows.forEach((r, i) => {
     const y = ry + 92 + i * 22;
     t(short(r.address), 58, y, 15, C.text);
-    t(`${r.sats.toLocaleString()} sats`, 640, y, 15, C.orange);
+    t(`${r.sats.toLocaleString("en-US")} sats`, 640, y, 15, C.orange);
   });
   const total = p.payouts.reduce((n, r) => n + r.sats, 0);
   box(830, ry, 330, 120, C.orange);
   t("TOTAL ROYALTIES", 850, ry + 34, 14, C.orange);
-  t(`${total.toLocaleString()} sats`, 850, ry + 84, 36, C.text, "Space Grotesk, sans-serif", "bold");
+  t(`${total.toLocaleString("en-US")} sats`, 850, ry + 84, 36, C.text, "Space Grotesk, sans-serif", "bold");
   t("BUILD ON OTHERS.", 830, ry + 160, 22, C.text, "Space Grotesk, sans-serif", "bold");
   t("GIVE BACK.", 830, ry + 188, 22, C.orange, "Space Grotesk, sans-serif", "bold");
   t("bitmapwin.app/forge", 830, ry + 222, 14, C.cyan);
@@ -93,7 +93,7 @@ export function ProvenanceCard(props: Props) {
   };
   const share = () => {
     download();
-    const text = `HOW ${props.height}.BITMAP WAS BUILT\n\nComposed from ${props.parents.length} on-chain piece${props.parents.length === 1 ? "" : "s"}${total ? ` and paying ${total.toLocaleString()} sats in royalties straight to the original creators on Bitcoin L1` : ""}.\n\nBuild on others. Give back. @bitmapwin`;
+    const text = `HOW ${props.height}.BITMAP WAS BUILT\n\nComposed from ${props.parents.length} on-chain piece${props.parents.length === 1 ? "" : "s"}${total ? ` and paying ${total.toLocaleString("en-US")} sats in royalties straight to the original creators on Bitcoin L1` : ""}.\n\nBuild on others. Give back. @bitmapwin`;
     window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://bitmapwin.app/forge")}`, "_blank", "noopener");
     toast.success("IMAGE SAVED — ATTACH IT TO YOUR POST");
   };

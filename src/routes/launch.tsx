@@ -199,7 +199,7 @@ function LaunchPage() {
 
       <section className="mt-6">
         <div className="flex flex-wrap justify-between gap-2 font-mono text-xs">
-          <span><b className="text-bitcoin">{count.toLocaleString()}</b> of {LAUNCH_CAPACITY.toLocaleString()} Bitmappers seated</span>
+          <span><b className="text-bitcoin">{count.toLocaleString("en-US")}</b> of {LAUNCH_CAPACITY.toLocaleString("en-US")} Bitmappers seated</span>
           <span className="text-muted-foreground">{tier ? `${tier.seats - count} to ${tier.name}` : "ALL TIERS UNLOCKED"}</span>
         </div>
         <div className="relative mt-2 h-2 rounded bg-muted">
@@ -211,7 +211,7 @@ function LaunchPage() {
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {LAUNCH_TIERS.map((t) => (
             <div key={t.seats} className={`glass-panel rounded border p-3 font-mono text-xs ${count >= t.seats ? "border-signal" : "border-border"}`}>
-              <div className={count >= t.seats ? "text-signal" : "text-bitcoin"}>{t.seats.toLocaleString()} · {t.name}</div>
+              <div className={count >= t.seats ? "text-signal" : "text-bitcoin"}>{t.seats.toLocaleString("en-US")} · {t.name}</div>
               <div className="mt-1 text-muted-foreground">{t.perk}{count >= t.seats ? " · UNLOCKED" : ""}</div>
             </div>
           ))}

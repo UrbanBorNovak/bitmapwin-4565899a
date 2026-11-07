@@ -19,7 +19,7 @@ export function BitmonPatternFilter({ pattern, onPattern, count, loading, error,
     <section className="min-w-0 rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Bitmon shape patterns">
       <header className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
         <span className="tracking-widest text-accent">BITMON PATTERNS</span>
-        <span className="text-muted-foreground">BLOCK SHAPE GROUPS · VERIFIED BLOCK RECORDS 0–{BLOCK_STATS_MAX_HEIGHT.toLocaleString()} · NOT GUARDIANS</span>
+        <span className="text-muted-foreground">BLOCK SHAPE GROUPS · VERIFIED BLOCK RECORDS 0–{BLOCK_STATS_MAX_HEIGHT.toLocaleString("en-US")} · NOT GUARDIANS</span>
         {pattern !== null && (
           <button type="button" onClick={() => onPattern(null)} className="ml-auto rounded border border-bitcoin px-2 py-1 text-bitcoin hover:bg-bitcoin/10">RESET PATTERN ✕</button>
         )}
@@ -37,7 +37,7 @@ export function BitmonPatternFilter({ pattern, onPattern, count, loading, error,
       </form>
       {pattern !== null && (
         <p className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>
-          ACTIVE: PATTERN #{pattern} · {loading ? "READING GROUP…" : tooCommon ? `${tooCommon.toLocaleString()} BLOCKS SHARE THIS SHAPE — TOO COMMON TO FILTER, NOTHING SHOWN` : error ? "GROUP UNAVAILABLE — NOTHING MATCHES" : `${count ?? 0} BLOCKS SHARE THIS SHAPE`} · BLOCKS WITHOUT A RECORD NEVER MATCH
+          ACTIVE: PATTERN #{pattern} · {loading ? "READING GROUP…" : tooCommon ? `${tooCommon.toLocaleString("en-US")} BLOCKS SHARE THIS SHAPE — TOO COMMON TO FILTER, NOTHING SHOWN` : error ? "GROUP UNAVAILABLE — NOTHING MATCHES" : `${count ?? 0} BLOCKS SHARE THIS SHAPE`} · BLOCKS WITHOUT A RECORD NEVER MATCH
         </p>
       )}
     </section>

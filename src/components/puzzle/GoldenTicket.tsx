@@ -21,7 +21,7 @@ function oddsText(p: number) {
   const units: [number, string][] = [[1e18, "QUINTILLION"], [1e15, "QUADRILLION"], [1e12, "TRILLION"],
     [1e9, "BILLION"], [1e6, "MILLION"], [1e3, "THOUSAND"]];
   const u = units.find(([m]) => oneIn >= m);
-  return u ? `1 IN ~${(oneIn / u[0]).toFixed(1)} ${u[1]}` : `1 IN ${Math.round(oneIn).toLocaleString()}`;
+  return u ? `1 IN ~${(oneIn / u[0]).toFixed(1)} ${u[1]}` : `1 IN ${Math.round(oneIn).toLocaleString("en-US")}`;
 }
 
 /** The disclosure both panels must always state, in plain words. */
@@ -126,12 +126,12 @@ export function GoldenTicket() {
         <p className="text-muted-foreground">1 FREE TICKET / DAY</p>
       </div>
       <OddsNote text="TIERS PAY NOTHING. A TIER DOES NOT IMPROVE YOUR ODDS. A PREFIX MATCH IS LUCK ON THE KEYS YOU ALREADY TRIED — IT DOES NOT MEAN THE FULL KEY IS GETTING CLOSER." />
-      <p className="mt-2 text-muted-foreground">Your ticket is cut from today's newest Bitcoin block. Scratch it, then run its {TICKET_KEYS.toLocaleString()} keys. The more of the prize address your best key matches, the higher your tier — that is all a tier measures.</p>
-      <p className="mt-1 text-[10px] text-muted-foreground">This ticket checks {TICKET_KEYS.toLocaleString()} keys out of the whole #71 range, so its chance of holding the key is {oddsText(ticketWinChance(TICKET_KEYS))}. That number never moves: no tier, streak or near miss makes it better.</p>
+      <p className="mt-2 text-muted-foreground">Your ticket is cut from today's newest Bitcoin block. Scratch it, then run its {TICKET_KEYS.toLocaleString("en-US")} keys. The more of the prize address your best key matches, the higher your tier — that is all a tier measures.</p>
+      <p className="mt-1 text-[10px] text-muted-foreground">This ticket checks {TICKET_KEYS.toLocaleString("en-US")} keys out of the whole #71 range, so its chance of holding the key is {oddsText(ticketWinChance(TICKET_KEYS))}. That number never moves: no tier, streak or near miss makes it better.</p>
       {err && <p className="mt-3 text-destructive">{err}</p>}
       {ticket && (
         <div className="relative mt-4 overflow-hidden rounded border border-bitcoin/50 bg-background p-4" style={{ minHeight: 120 }}>
-          <p className="text-muted-foreground">BLOCK <span className="text-foreground" data-no-translate>#{ticket.block.toLocaleString()}</span></p>
+          <p className="text-muted-foreground">BLOCK <span className="text-foreground" data-no-translate>#{ticket.block.toLocaleString("en-US")}</span></p>
           <p className="mt-1 break-all text-[10px] text-muted-foreground" data-no-translate>{ticket.hash}</p>
           <p className="display mt-2 break-all text-lg text-bitcoin" data-no-translate>0x{ticket.startHex}</p>
           {!scratched && (
@@ -158,7 +158,7 @@ export function GoldenTicket() {
               <p className="display text-lg">
                 <span className={best >= 5 ? "text-bitcoin" : "text-accent"}>{tier.id}</span>
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {best} OF {FULL_HASH_CHARS} CHARACTERS MATCHED · THAT COINCIDENCE IS 1 IN {tier.odds.toLocaleString()} PER KEY
+                  {best} OF {FULL_HASH_CHARS} CHARACTERS MATCHED · THAT COINCIDENCE IS 1 IN {tier.odds.toLocaleString("en-US")} PER KEY
                 </span>
               </p>
               <OddsNote text="This is the odds of that coincidence on a single key, not the odds of winning. Matching characters does not make the next key any more likely to win and does not narrow the search for the private key — every key is a fresh, independent try. Tiers pay nothing. Only the exact key wins the 7.10 BTC." />

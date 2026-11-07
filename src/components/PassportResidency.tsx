@@ -61,7 +61,7 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
                 </p>
               )}
               <p className="passport-code mt-2" data-no-translate>
-                {r.sat !== null ? `SAT ${r.sat.toLocaleString()}` : r.height !== null ? "SAT NOT INDEXED" : "CHOOSE A BITMAP YOU HOLD"}
+                {r.sat !== null ? `SAT ${r.sat.toLocaleString("en-US")}` : r.height !== null ? "SAT NOT INDEXED" : "CHOOSE A BITMAP YOU HOLD"}
                 {r.latestInscriptionId ? ` · LATEST ${r.latestInscriptionId.slice(0, 8)}…${r.latestInscriptionId.slice(-4)}` : ""}
               </p>
               <p className="passport-copy mt-3">

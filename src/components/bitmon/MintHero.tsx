@@ -51,8 +51,8 @@ export function MintHero() {
         </p>
         <div className="panel mt-3 max-w-2xl rounded-sm border border-border p-2 font-mono text-[11px]">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <div><p className="text-[9px] text-muted-foreground">LIVE CHAIN TIP</p><p className="text-base text-signal">{tip ? `#${tip.toLocaleString()}` : "…"}</p></div>
-            <div><p className="text-[9px] text-muted-foreground">{t.awakened}</p><p className="text-base text-bitcoin">{all.isLoading ? "…" : list.length.toLocaleString()}</p></div>
+            <div><p className="text-[9px] text-muted-foreground">LIVE CHAIN TIP</p><p className="text-base text-signal">{tip ? `#${tip.toLocaleString("en-US")}` : "…"}</p></div>
+            <div><p className="text-[9px] text-muted-foreground">{t.awakened}</p><p className="text-base text-bitcoin">{all.isLoading ? "…" : list.length.toLocaleString("en-US")}</p></div>
             <div><p className="text-[9px] text-muted-foreground">{t.inscribedOnChain}</p><p className="text-base text-signal">{inscribed ?? "…"}</p></div>
             <div><p className="text-[9px] text-muted-foreground">CLUBS ACTIVE</p><p className="text-base">{clubs.filter((c) => c.count > 0).length} / {clubs.length}</p></div>
           </div>
@@ -60,7 +60,7 @@ export function MintHero() {
             {clubs.map((c) => (
               <div key={c.id} className="border border-border bg-background/60 px-1.5 py-1">
                 <p className="text-[9px] text-muted-foreground">{c.short}</p>
-                <p className="text-xs"><span className="text-bitcoin">{c.count.toLocaleString()}</span><span className="text-muted-foreground"> / {c.supply.toLocaleString()}</span></p>
+                <p className="text-xs"><span className="text-bitcoin">{c.count.toLocaleString("en-US")}</span><span className="text-muted-foreground"> / {c.supply.toLocaleString("en-US")}</span></p>
                 <div className="mt-1 h-0.5 overflow-hidden bg-muted"><div className="h-full bg-bitcoin" style={{ width: `${c.count ? Math.max(2, (c.count / c.supply) * 100) : 0}%` }} /></div>
               </div>
             ))}

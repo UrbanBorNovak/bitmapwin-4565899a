@@ -77,7 +77,7 @@ function RegistryPage() {
                 {!c && <button onClick={() => run(m.inscription)} className="rounded border border-primary px-3 py-1 text-primary">VERIFY ON-CHAIN</button>}
                 {c === "pending" && <span className="text-muted-foreground">READING INSCRIPTION…</span>}
                 {c && c !== "pending" && (c.ok ? (
-                  <span className="text-signal">✓ {c.contentType} · {(c.bodyBytes / 1024).toFixed(0)} KB · {c.triangleCount.toLocaleString()} TRIS · {c.animationCount} ANIM</span>
+                  <span className="text-signal">✓ {c.contentType} · {(c.bodyBytes / 1024).toFixed(0)} KB · {c.triangleCount.toLocaleString("en-US")} TRIS · {c.animationCount} ANIM</span>
                 ) : (
                   <span className="text-destructive">✕ {c.error}</span>
                 ))}

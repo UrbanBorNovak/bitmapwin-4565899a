@@ -196,7 +196,7 @@ export function ChainStackInfographic() {
             <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-2 font-mono text-[10px]">
               <div className="border border-signal bg-signal/10 px-2 py-3 text-signal">TX</div>
               <div className="relative h-px bg-signal/40"><span className="infogfx-runner absolute -top-[3px] size-[7px] bg-signal" /></div>
-              <div className="border border-bitcoin bg-bitcoin/10 px-2 py-3 text-center text-bitcoin">{TRIBUTE_SATS.toLocaleString()} SATS</div>
+              <div className="border border-bitcoin bg-bitcoin/10 px-2 py-3 text-center text-bitcoin">{TRIBUTE_SATS.toLocaleString("en-US")} SATS</div>
               <div className="relative h-px bg-bitcoin/40"><span className="infogfx-runner absolute -top-[3px] size-[7px] bg-bitcoin" /></div>
               <div className="border border-bitcoin bg-bitcoin/10 px-2 py-3 text-bitcoin">AWAKE</div>
             </div>
@@ -226,7 +226,7 @@ export function ChainStackInfographic() {
             <div className="font-mono text-[10px] leading-relaxed text-muted-foreground">
               <p>BLOCK HEIGHT IS THE HILBERT DISTANCE. THE CURVE KEEPS CONSECUTIVE BLOCKS BESIDE EACH OTHER WHILE FILLING THE ATLAS.</p>
               <div className="mt-3 border-l border-signal pl-3 text-foreground">
-                <div>HEIGHT <span className="text-signal">{guardian?.height.toLocaleString() ?? "—"}</span></div>
+                <div>HEIGHT <span className="text-signal">{guardian?.height.toLocaleString("en-US") ?? "—"}</span></div>
                 <div>CELL X <span className="text-signal">{atlasPoint?.x ?? "—"}</span> · Y <span className="text-signal">{atlasPoint?.y ?? "—"}</span></div>
                 <div>TX INDEX → <span className="text-bitcoin">PARCEL INDEX</span></div>
               </div>

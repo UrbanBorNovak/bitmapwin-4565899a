@@ -223,9 +223,9 @@ function ParcelHud({ height, hover }: { height: number; hover: Hover }) {
   const { data, isError } = useQuery(blockSizeMapQuery(height));
   return (
     <div className="pointer-events-none absolute bottom-2 left-2 font-mono text-[10px]" data-no-translate>
-      {hover ? <p className="text-signal">TX #{hover.index.toLocaleString()} · SIZE CLASS {hover.size} / 8</p> : null}
+      {hover ? <p className="text-signal">TX #{hover.index.toLocaleString("en-US")} · SIZE CLASS {hover.size} / 8</p> : null}
       <p className="text-bitcoin">
-        {data?.classes?.length ? `${height}.BITMAP · ${data.classes.length.toLocaleString()} REAL TX PARCELS` : isError ? "PARCELS UNAVAILABLE" : "READING PARCELS…"}
+        {data?.classes?.length ? `${height}.BITMAP · ${data.classes.length.toLocaleString("en-US")} REAL TX PARCELS` : isError ? "PARCELS UNAVAILABLE" : "READING PARCELS…"}
       </p>
     </div>
   );
@@ -441,7 +441,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
             source: guardianMasterGeneratorHtml(),
             delegate: GUARDIAN_MASTER_DELEGATE_ID,
             tribute: { address: MINT_TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
-            note: `ALMOST ZERO BYTES: DRAWN BY THE MASTER GENERATOR, WHICH CHECKS ITS BITMAP PARENT AND A ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS SAME TRANSACTION`,
+            note: `ALMOST ZERO BYTES: DRAWN BY THE MASTER GENERATOR, WHICH CHECKS ITS BITMAP PARENT AND A ${TRIBUTE_SATS.toLocaleString("en-US")}-SAT TRIBUTE INSIDE THIS SAME TRANSACTION`,
           },
         ]
       : null;
@@ -491,7 +491,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                   <p className="font-mono text-[11px] text-bitcoin">✓ STEP 2 · INSCRIBED ON BITCOIN AS A CHILD OF {height}.BITMAP · PART OF THE COLLECTION</p>
                 ) : (
                   <>
-                    <p className="font-mono text-[11px] text-signal">{celebrate || revealedId ? "→ STEP 2 · INSCRIPTION SENT · WAITING FOR CONFIRMATION" : "→ STEP 2 · INSCRIBE"} — ON-CHAIN CHILD OF {height}.BITMAP · {TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE TO THE TREASURY INSIDE THE REVEAL</p>
+                    <p className="font-mono text-[11px] text-signal">{celebrate || revealedId ? "→ STEP 2 · INSCRIPTION SENT · WAITING FOR CONFIRMATION" : "→ STEP 2 · INSCRIBE"} — ON-CHAIN CHILD OF {height}.BITMAP · {TRIBUTE_SATS.toLocaleString("en-US")}-SAT TRIBUTE TO THE TREASURY INSIDE THE REVEAL</p>
                     {!revealedId ? (
                       <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                         THE SUMMON WOKE IT IN THE APP ONLY. TO JOIN THE COLLECTION AND BE LISTABLE, THE {height}.BITMAP HOLDER INSCRIBES A CHILD OF THAT BITMAP BELOW (TO MY WALLET) OR WITH THE HOLDER SUMMON ON THE MINT PAGE.
@@ -553,10 +553,10 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
               {qr ? <img src={qr} alt="Bitcoin payment QR code" className="size-44 bg-foreground p-1" /> : <div className="size-44 border border-border" />}
               <div className="space-y-2 font-mono text-[11px]">
                 <p className="text-muted-foreground">SEND EXACTLY</p>
-                <p className="text-xl text-bitcoin">{order.amountSats.toLocaleString()} SATS</p>
+                <p className="text-xl text-bitcoin">{order.amountSats.toLocaleString("en-US")} SATS</p>
                 <p className="break-all text-foreground">{order.payTo}</p>
                 <p className="text-muted-foreground">
-                  {GUARDIAN_PRICE_SATS.toLocaleString()} SUMMON + {(order.amountSats - GUARDIAN_PRICE_SATS).toLocaleString()} ID SATS · 100% TO THE BITMAPWIN TREASURY · NETWORK FEE PAID BY YOUR WALLET
+                  {GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SUMMON + {(order.amountSats - GUARDIAN_PRICE_SATS).toLocaleString("en-US")} ID SATS · 100% TO THE BITMAPWIN TREASURY · NETWORK FEE PAID BY YOUR WALLET
                 </p>
                 <button type="button" className="border border-border px-2 py-1 hover:border-signal" onClick={() => navigator.clipboard?.writeText(order.payTo)}>COPY ADDRESS</button>
                 <p className={order.status === "seen" ? "text-signal" : "text-muted-foreground"}>
@@ -584,7 +584,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
           ) : (
             <div className="space-y-2">
               <button type="button" disabled={busy || !d} onClick={start} className="border border-bitcoin bg-bitcoin px-4 py-2 font-mono text-xs text-background disabled:opacity-50">
-                {busy ? "CHECKING HOLDER…" : `AWAKEN FOR ${GUARDIAN_PRICE_SATS.toLocaleString()} SATS`}
+                {busy ? "CHECKING HOLDER…" : `AWAKEN FOR ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS`}
               </button>
               <p className="font-mono text-[10px] text-muted-foreground">ONLY THE VERIFIED HOLDER OF THIS BITMAP CAN AWAKEN ITS GUARDIAN. ONE GUARDIAN PER BLOCK, EVER.</p>
               {denied ? <p className="font-mono text-[11px] text-destructive">{denied}</p> : null}

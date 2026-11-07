@@ -33,7 +33,7 @@ export function buildRings(pages: RingPage[]): Ring[] {
   }
   for (const [era, s] of [...byEra].sort((a, b) => a[0] - b[0])) {
     const lo = era * ERA_SIZE;
-    rings.push({ slug: `era-${era}`, name: `Era ${era} Settlers`, blurb: `Built BITMAPs from block ${lo.toLocaleString()} to ${(lo + ERA_SIZE - 1).toLocaleString()}.`, members: sorted(s) });
+    rings.push({ slug: `era-${era}`, name: `Era ${era} Settlers`, blurb: `Built BITMAPs from block ${lo.toLocaleString("en-US")} to ${(lo + ERA_SIZE - 1).toLocaleString("en-US")}.`, members: sorted(s) });
   }
   return rings.sort((a, b) => b.members.length - a.members.length);
 }

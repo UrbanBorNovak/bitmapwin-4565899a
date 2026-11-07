@@ -149,7 +149,7 @@ export function ManagerAI({
                           params={{ block: String(s.height) }}
                           className="font-mono text-xs hover:text-primary"
                         >
-                          #{s.height.toLocaleString()}
+                          #{s.height.toLocaleString("en-US")}
                         </Link>
                       ) : null}
                     </div>

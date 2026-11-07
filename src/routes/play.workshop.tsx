@@ -97,7 +97,7 @@ function WorkshopPage() {
       <section className="border border-border bg-card p-4 md:p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="label">CRAFT FROM YOUR BITMAPS</h2>
-          {wallet && <p className="label">COST <span className="text-bitcoin">{CRAFT_COST_BIT} BIT</span> · BALANCE <span className={bits >= CRAFT_COST_BIT ? "text-signal" : "text-destructive"}>{bal.isPending ? "…" : bits.toLocaleString()} BIT</span></p>}
+          {wallet && <p className="label">COST <span className="text-bitcoin">{CRAFT_COST_BIT} BIT</span> · BALANCE <span className={bits >= CRAFT_COST_BIT ? "text-signal" : "text-destructive"}>{bal.isPending ? "…" : bits.toLocaleString("en-US")} BIT</span></p>}
         </div>
         {!wallet ? (
           <p className="mt-2 font-mono text-xs text-muted-foreground">Connect a wallet to craft cards from the BITMAPs you hold. <Link to="/wallet" className="text-bitcoin">CONNECT →</Link></p>

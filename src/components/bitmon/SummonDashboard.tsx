@@ -52,7 +52,7 @@ export function SummonDashboard() {
                   {o.height}.BITMAP
                 </Link>
                 <span className={o.awake ? "font-bold text-signal" : STATUS_TONE[o.status] ?? ""}>{label}</span>
-                <span className="text-muted-foreground">{o.amountSats.toLocaleString()} SATS</span>
+                <span className="text-muted-foreground">{o.amountSats.toLocaleString("en-US")} SATS</span>
                 {o.txid ? (
                   <a
                     href={`https://mempool.space/tx/${o.txid}`}

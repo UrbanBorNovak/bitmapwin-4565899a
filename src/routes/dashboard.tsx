@@ -251,7 +251,7 @@ function DashboardPage() {
                 </span>
               </Link>
               <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                {b.totalViews.toLocaleString()} VIEWS
+                {b.totalViews.toLocaleString("en-US")} VIEWS
               </span>
             </li>
           ))}
@@ -397,8 +397,8 @@ function DashboardPage() {
           </div>
           <div className="grid grid-cols-3 gap-2 md:grid-cols-1">
             <div className="profile-readout min-w-24 p-3 text-center"><p className="label">BUILDS</p><p className="mt-1 font-mono font-bold text-profile-warm">{myBuilds.length}</p></div>
-            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">VISITORS</p><p className="mt-1 font-mono font-bold text-profile-warm">{uniqueVisitors.toLocaleString()}</p></div>
-            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">FOLLOWERS</p><p className="mt-1 font-mono font-bold text-profile-warm">{followerCount.toLocaleString()}</p></div>
+            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">VISITORS</p><p className="mt-1 font-mono font-bold text-profile-warm">{uniqueVisitors.toLocaleString("en-US")}</p></div>
+            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">FOLLOWERS</p><p className="mt-1 font-mono font-bold text-profile-warm">{followerCount.toLocaleString("en-US")}</p></div>
           </div>
         </div>
         <div className="flex flex-col gap-3 border-t border-profile-warm/20 bg-background/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between md:px-8">
@@ -487,9 +487,9 @@ function DashboardPage() {
               <Stat
                 label="BUILDS"
                 value={builds.isLoading ? "…" : String(myBuilds.length)}
-                hint={`${totalViews.toLocaleString()} VIEWS · ${uniqueVisitors.toLocaleString()} UNIQUE`}
+                hint={`${totalViews.toLocaleString("en-US")} VIEWS · ${uniqueVisitors.toLocaleString("en-US")} UNIQUE`}
               />
-              <Stat label="TOTAL VIEWS" value={totalViews.toLocaleString()} hint="ACROSS ALL BUILDS" />
+              <Stat label="TOTAL VIEWS" value={totalViews.toLocaleString("en-US")} hint="ACROSS ALL BUILDS" />
               <Stat
                 label="FOLLOWERS"
                 value={String(followers.data?.get(address) ?? 0)}

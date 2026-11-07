@@ -186,14 +186,14 @@ function V8ComparePanel() {
         build only appears when the page can read its BITMAP parent on chain.
       </p>
       <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
-{`V7   ${size(v7).toLocaleString()} BYTES
-V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleString()})`}
+{`V7   ${size(v7).toLocaleString("en-US")} BYTES
+V8   ${size(v8).toLocaleString("en-US")} BYTES  (+${(size(v8) - size(v7)).toLocaleString("en-US")})`}
       </pre>
       <button type="button" className="mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={download}>DOWNLOAD V8 DRAFT .HTML</button>
       <button type="button" className="ml-2 mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={() => {
         const url = URL.createObjectURL(new Blob([guardianMasterGeneratorHtmlV8Three()], { type: "text/html" }));
         const a = document.createElement("a"); a.href = url; a.download = "guardian-master-v8-three.html"; a.click(); URL.revokeObjectURL(url);
-      }}>DOWNLOAD V8 · THREE.JS ON-CHAIN .HTML ({guardianV8ThreeByteSize().toLocaleString()} BYTES)</button>
+      }}>DOWNLOAD V8 · THREE.JS ON-CHAIN .HTML ({guardianV8ThreeByteSize().toLocaleString("en-US")} BYTES)</button>
       <button type="button" className="ml-2 mt-3 border border-border px-3 py-2 font-mono text-xs hover:border-signal" onClick={() => {
         void navigator.clipboard.writeText(guardianMasterGeneratorHtmlV8Three()).then(() => alert("V8 Three.js HTML copied"));
       }}>COPY V8 · THREE.JS HTML</button>
@@ -452,7 +452,7 @@ function MasterGeneratorPanel({ version }: { version: "v6" | "v7" }) {
       a.download = `guardian-master-${version}.html.br`;
       a.click();
       URL.revokeObjectURL(url);
-      setBrInfo(`${r.rawBytes.toLocaleString()} → ${r.packedBytes.toLocaleString()} BYTES (${Math.round((1 - r.packedBytes / r.rawBytes) * 100)}% SMALLER)`);
+      setBrInfo(`${r.rawBytes.toLocaleString("en-US")} → ${r.packedBytes.toLocaleString("en-US")} BYTES (${Math.round((1 - r.packedBytes / r.rawBytes) * 100)}% SMALLER)`);
     } catch (e) {
       setBrInfo(`FAILED · ${(e as Error).message}`);
     } finally {
@@ -467,11 +467,11 @@ function MasterGeneratorPanel({ version }: { version: "v6" | "v7" }) {
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Inscribe this page once. After that every Guardian can be minted as an almost empty inscription that points
-        here; explorers draw it with this code. The page reads its own bitmap parent and checks the {TRIBUTE_SATS.toLocaleString()}-sat
+        here; explorers draw it with this code. The page reads its own bitmap parent and checks the {TRIBUTE_SATS.toLocaleString("en-US")}-sat
         tribute in its own reveal transaction. Outside an ordinals explorer it shows the stone relic, which is expected.
       </p>
       <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
-{`SIZE           ${bytes.toLocaleString()} BYTES
+{`SIZE           ${bytes.toLocaleString("en-US")} BYTES
 CONTENT TYPE   ${DELEGATE_CONTENT_TYPE}
 ${v7 ? `TRIBUTE        ${TRIBUTE_SATS} SATS → ${V7_TRIBUTE_ADDRESS}
 BITMAP CHECK   LIVEOCI ${LIVE_OCI_MODULE_ID.slice(0, 12)}…i0 · EVERY HEIGHT TO THE TIP

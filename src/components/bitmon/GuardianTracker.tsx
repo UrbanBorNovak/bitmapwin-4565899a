@@ -35,7 +35,7 @@ export function GuardianTracker() {
     <section className="panel mt-6 rounded-md border border-border p-4" aria-label="Guardian tracker">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <p className="label text-signal">GUARDIAN TRACKER · LIVE CHAIN TELEMETRY</p>
-        <span className="font-mono text-[10px] text-muted-foreground">TIP {tip.data ? tip.data.toLocaleString() : "…"}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">TIP {tip.data ? tip.data.toLocaleString("en-US") : "…"}</span>
         <span className="label ml-auto text-muted-foreground">{roster.isFetching ? "SYNCING…" : "LIVE"}</span>
       </div>
       {mine.length === 0 ? (
@@ -77,7 +77,7 @@ export function GuardianTracker() {
                     <td className="pr-3">
                       {st == null ? <span className="text-muted-foreground">…</span> : st.confirmed && bh ? (
                         <a href={`https://mempool.space/tx/${g.txid}`} target="_blank" rel="noreferrer" className="text-signal underline">
-                          #{bh.toLocaleString()}{confs ? ` · ${confs.toLocaleString()} CONF` : ""}
+                          #{bh.toLocaleString("en-US")}{confs ? ` · ${confs.toLocaleString("en-US")} CONF` : ""}
                         </a>
                       ) : <span className="text-bitcoin">MEMPOOL</span>}
                     </td>
