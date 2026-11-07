@@ -5,7 +5,7 @@
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
-  matchesCriteria, satpointProblem, verifyLayoutForMaker,
+  BARTER_MAX_BUNDLE, matchesCriteria, satpointProblem, verifyLayoutForMaker,
   type AssetFacts, type BarterTicket, type SwapLayout,
 } from "@/lib/barter-protocol";
 import { addressToScriptPubKey } from "@/lib/psbt-builder";
@@ -69,26 +69,37 @@ async function carriesInscription(outpoint: string): Promise<boolean> {
 
 export type SwapBuild = {
   psbtBase64: string; feeSats: number; feeRate: number; changeSats: number;
-  takerAssetIndex: number; fundingIndices: number[];
+  takerAssetIndex: number; takerAssetIndices: number[]; fundingIndices: number[];
 };
 
 /** Assembles the swap for a taker after live checks on both assets. */
 export async function buildSwap(args: {
   ticket: BarterTicket;
   takerInscription: string; takerOutpoint: string;
+  /** extra items for an N-for-1 bundle */
+  moreItems?: { inscription: string; outpoint: string }[] | undefined;
   takerOrdinalsAddress: string; takerPaymentAddress: string;
   takerPublicKey?: string | undefined; takerPaymentPublicKey?: string | undefined;
 }): Promise<SwapBuild> {
   const t = args.ticket;
   if (t.sweetenerDir === "give" && t.sweetenerSats > 0) throw new Error("Offers where the maker adds sats are not supported yet");
-  const [maker, taker] = await Promise.all([liveAsset(t.offeringInscription, t.offeringOutpoint), liveAsset(args.takerInscription, args.takerOutpoint)]);
-  if ("error" in maker) throw new Error(`Offered item: ${maker.error}`);
-  if ("error" in taker) throw new Error(`Your item: ${taker.error}`);
+  const items = [{ inscription: args.takerInscription, outpoint: args.takerOutpoint }, ...(args.moreItems ?? [])];
+  if (items.length > BARTER_MAX_BUNDLE) throw new Error(`At most ${BARTER_MAX_BUNDLE} items per proposal`);
+  if (new Set(items.map((i) => i.outpoint)).size !== items.length) throw new Error("The same item was picked twice");
+  const [maker, ...live] = await Promise.all([liveAsset(t.offeringInscription, t.offeringOutpoint), ...items.map((i) => liveAsset(i.inscription, i.outpoint))]);
+  if ("error" in maker!) throw new Error(`Offered item: ${maker.error}`);
+  const takers: LiveAsset[] = [];
+  for (const x of live) {
+    if ("error" in x) throw new Error(`Your item: ${x.error}`);
+    if (x.address !== args.takerOrdinalsAddress) throw new Error("Your connected wallet does not hold that item");
+    if (!matchesCriteria(t.criteria, x)) throw new Error("One of your items does not meet the offer's rules");
+    if (x.outpoint === maker.outpoint) throw new Error("Same output on both sides");
+    takers.push(x);
+  }
   if (maker.address !== t.makerAddress) throw new Error("The maker no longer holds the offered item");
   if (maker.value !== t.offeringValue) throw new Error("Offered item postage changed since the offer");
-  if (taker.address !== args.takerOrdinalsAddress) throw new Error("Your connected wallet does not hold that item");
-  if (!matchesCriteria(t.criteria, taker)) throw new Error("Your item does not meet the offer's rules");
-  if (maker.outpoint === taker.outpoint) throw new Error("Same output on both sides");
+  const taker = takers[0]!;
+  const takerOps = new Set(takers.map((x) => x.outpoint));
 
   const utxos = await getJson<EsploraUtxo[]>(`${MEMPOOL}/address/${args.takerPaymentAddress}/utxo`);
   if (!utxos) throw new Error("Could not read your payment UTXOs");
@@ -96,7 +107,7 @@ export async function buildSwap(args: {
   const funding: FundingUtxo[] = [];
   for (const u of utxos.filter((u) => u.status?.confirmed !== false && u.value > 546).sort((a, b) => b.value - a.value).slice(0, 10)) {
     const op = `${u.txid}:${u.vout}`;
-    if (op === maker.outpoint || op === taker.outpoint) continue;
+    if (op === maker.outpoint || takerOps.has(op)) continue;
     if (await carriesInscription(op)) continue;
     funding.push({ txid: u.txid, vout: u.vout, valueSats: u.value, scriptPubKeyHex: payScript });
   }
@@ -104,10 +115,14 @@ export async function buildSwap(args: {
 
   const rate = await feeRate();
   const [mt, mv] = maker.outpoint.split(":");
-  const [tt, tv] = taker.outpoint.split(":");
+  const utxoOf = (x: LiveAsset) => {
+    const [tx, v] = x.outpoint.split(":");
+    return { txid: tx!, vout: Number(v), valueSats: x.value, scriptPubKeyHex: byteArrayToHex(addressToScriptPubKey(x.address)) };
+  };
   const built = buildSwapPsbt({
     maker: { txid: mt!, vout: Number(mv), valueSats: maker.value, scriptPubKeyHex: byteArrayToHex(addressToScriptPubKey(maker.address)) },
-    taker: { txid: tt!, vout: Number(tv), valueSats: taker.value, scriptPubKeyHex: byteArrayToHex(addressToScriptPubKey(taker.address)) },
+    taker: utxoOf(taker),
+    moreTakers: takers.slice(1).map(utxoOf),
     makerReceiveScriptHex: byteArrayToHex(addressToScriptPubKey(t.makerAddress)),
     takerReceiveScriptHex: byteArrayToHex(addressToScriptPubKey(args.takerOrdinalsAddress)),
     takerChangeScriptHex: payScript,
@@ -123,7 +138,7 @@ export async function buildSwap(args: {
 }
 
 export type SwapReview =
-  | { ok: true; layout: SwapLayout; taker: LiveAsset; feeSats: number; vsizeEstimate: number }
+  | { ok: true; layout: SwapLayout; taker: LiveAsset; takers: LiveAsset[]; feeSats: number; vsizeEstimate: number }
   | { ok: false; reason: string };
 
 /**
@@ -138,30 +153,44 @@ export async function reviewSwap(psbtBase64: string, t: BarterTicket): Promise<S
   if (d.outputs.some((o) => !o.address)) return { ok: false, reason: "an output has an unsupported script" };
   // Every signature must commit to all inputs and outputs (SIGHASH_DEFAULT or ALL).
   if (d.inputs.some((i) => i.sighashes.some((h) => h !== 0x00 && h !== 0x01))) return { ok: false, reason: "a signature does not cover the whole swap" };
-  const i1 = d.inputs[1];
-  if (!i1) return { ok: false, reason: "layout too short" };
-  const takerIns = await getJson<{ id?: string; inscriptions?: string[] }>(`${ORD}/output/${i1.outpoint}`);
-  const takerId = takerIns?.inscriptions?.[0];
-  if (!takerId) return { ok: false, reason: "matched item could not be read" };
-  const [maker, taker] = await Promise.all([liveAsset(t.offeringInscription, t.offeringOutpoint), liveAsset(takerId, i1.outpoint)]);
-  if ("error" in maker) return { ok: false, reason: `offered item: ${maker.error}` };
-  if ("error" in taker) return { ok: false, reason: `matched item: ${taker.error}` };
+  if (!d.inputs[1]) return { ok: false, reason: "layout too short" };
+  // Taker items are the leading inputs after the maker's that carry an inscription.
+  const found: { id: string; outpoint: string }[] = [];
+  for (let k = 1; k < d.inputs.length && found.length <= BARTER_MAX_BUNDLE; k++) {
+    const op = d.inputs[k]!.outpoint;
+    const o = await getJson<{ inscriptions?: string[] }>(`${ORD}/output/${op}`);
+    if (!o) return { ok: false, reason: "an input could not be read" };
+    const id = o.inscriptions?.[0];
+    if (!id) break;
+    found.push({ id, outpoint: op });
+  }
+  if (found.length === 0) return { ok: false, reason: "matched item could not be read" };
+  if (found.length > BARTER_MAX_BUNDLE) return { ok: false, reason: `more than ${BARTER_MAX_BUNDLE} items` };
+  const [maker, ...live] = await Promise.all([liveAsset(t.offeringInscription, t.offeringOutpoint), ...found.map((f) => liveAsset(f.id, f.outpoint))]);
+  if ("error" in maker!) return { ok: false, reason: `offered item: ${maker.error}` };
+  const takers: LiveAsset[] = [];
+  for (const x of live) {
+    if ("error" in x) return { ok: false, reason: `matched item: ${x.error}` };
+    if (!matchesCriteria(t.criteria, x)) return { ok: false, reason: "a matched item does not meet the rules" };
+    takers.push(x);
+  }
+  const taker = takers[0]!;
+  if (takers.some((x) => x.address !== taker.address)) return { ok: false, reason: "matched items sit in different wallets" };
   if (maker.address !== t.makerAddress) return { ok: false, reason: "maker no longer holds the offered item" };
-  if (!matchesCriteria(t.criteria, taker)) return { ok: false, reason: "matched item does not meet the rules" };
 
   const layout: SwapLayout = {
     inputs: d.inputs.map((i, n) => ({ outpoint: i.outpoint, value: i.witnessValueSats!, owner: n === 0 ? "maker" : "taker" })),
     outputs: d.outputs.map((o) => ({ address: o.address!, value: o.valueSats })),
     feeSats: d.inputs.reduce((s, i) => s + i.witnessValueSats!, 0) - d.totalOutSats,
   };
-  if (layout.inputs[0]?.value !== maker.value || layout.inputs[1]?.value !== taker.value) return { ok: false, reason: "input values differ from chain" };
+  if (layout.inputs[0]?.value !== maker.value || takers.some((x, k) => layout.inputs[k + 1]?.value !== x.value)) return { ok: false, reason: "input values differ from chain" };
   if (layout.outputs[0]?.address !== taker.address) return { ok: false, reason: "offered item is not sent to the matched item's holder" };
-  const bad = verifyLayoutForMaker(layout, t, taker);
+  const bad = verifyLayoutForMaker(layout, t, takers);
   if (bad) return { ok: false, reason: bad };
   // No output may pay the maker's input back to the taker beyond the agreed layout.
-  const extra = layout.outputs.slice(2).filter((o) => o.address !== t.makerAddress && o.address !== layout.outputs[0]!.address);
+  const extra = layout.outputs.slice(1 + takers.length).filter((o) => o.address !== t.makerAddress && o.address !== layout.outputs[0]!.address);
   if (extra.length > 1) return { ok: false, reason: "unexpected extra outputs" };
   const vsizeEstimate = 11 + layout.inputs.length * 58 + layout.outputs.length * 43;
   if (layout.feeSats / vsizeEstimate > SWAP_MAX_FEE_RATE) return { ok: false, reason: "fee is unreasonably high" };
-  return { ok: true, layout, taker, feeSats: layout.feeSats, vsizeEstimate };
+  return { ok: true, layout, taker, takers, feeSats: layout.feeSats, vsizeEstimate };
 }

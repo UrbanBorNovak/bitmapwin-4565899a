@@ -89,3 +89,34 @@ describe("maker signing keys", () => {
     expect(fixed).toBe(prepareMakerInput(build().psbtBase64, X));
   });
 });
+
+describe("BW-BARTER-1 many-for-one", () => {
+  const T4 = "d".repeat(64), T5 = "e".repeat(64);
+  const many = () => buildSwapPsbt({
+    maker: { txid: T1, vout: 0, valueSats: 546, scriptPubKeyHex: spk(MAKER) },
+    taker: { txid: T2, vout: 1, valueSats: 600, scriptPubKeyHex: spk(TAKER) },
+    moreTakers: [{ txid: T4, vout: 0, valueSats: 330, scriptPubKeyHex: spk(TAKER) }, { txid: T5, vout: 3, valueSats: 10_000, scriptPubKeyHex: spk(TAKER) }],
+    makerReceiveScriptHex: spk(MAKER), takerReceiveScriptHex: spk(TAKER), takerChangeScriptHex: spk(TAKER),
+    funding: [{ txid: T3, vout: 2, valueSats: 100_000, scriptPubKeyHex: spk(TAKER) }], feeRate: 5, sweetenerSats: 10_000,
+  });
+  const facts = (txid: string, vout: number, value: number) => ({ inscriptionId: `${txid}i0`, outpoint: `${txid}:${vout}`, value, offset: 0, type: "bitmap" as const, spent: false });
+  const all = [facts(T2, 1, 600), facts(T4, 0, 330), facts(T5, 3, 10_000)];
+  it("sends all three taker items to the maker at their exact postage", () => {
+    const b = many();
+    const l = layoutOf(b.psbtBase64);
+    expect(l.outputs.slice(0, 4)).toEqual([{ address: TAKER, value: 546 }, { address: MAKER, value: 600 }, { address: MAKER, value: 330 }, { address: MAKER, value: 10_000 }]);
+    expect(l.outputs[4]).toEqual({ address: MAKER, value: 10_000 });
+    expect(b.takerAssetIndices).toEqual([1, 2, 3]);
+    expect(b.fundingIndices).toEqual([4]);
+    expect(verifyLayoutForMaker(l, ticket, all)).toBeNull();
+  });
+  it("maker refuses when one bundled item is redirected", () => {
+    const l = layoutOf(many().psbtBase64);
+    l.outputs[2] = { address: TAKER, value: 330 };
+    expect(verifyLayoutForMaker(l, ticket, all)).toBe("maker does not receive matched asset intact");
+  });
+  it("refuses a bundle above 5 items", () => {
+    const six = Array.from({ length: 6 }, (_, i) => facts(String(i).repeat(64), 0, 546));
+    expect(verifyLayoutForMaker(layoutOf(many().psbtBase64), ticket, six)).toBe("bundle size not supported");
+  });
+});
