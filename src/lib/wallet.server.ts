@@ -206,6 +206,7 @@ async function indexedHeights(ids: string[]): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  console.log("[wallet-debug] env", { url: !!url, key: !!key, ids: ids.length });
   if (!url || !key || ids.length === 0) return out;
   const { createClient } = await import("@supabase/supabase-js");
   const client = createClient(url, key, {
@@ -213,10 +214,11 @@ async function indexedHeights(ids: string[]): Promise<Map<string, number>> {
   });
   for (let i = 0; i < ids.length; i += 300) {
     const chunk = ids.slice(i, i + 300);
-    const { data } = await client
+    const { data, error } = await client
       .from("bitmap_index")
       .select("block_height, inscription_id")
       .in("inscription_id", chunk);
+    console.log("[wallet-debug] indexedHeights", { url: !!url, key: !!key, n: chunk.length, rows: data?.length ?? null, error: error?.message ?? null });
     for (const row of (data ?? []) as Array<{ block_height: number; inscription_id: string }>) {
       out.set(row.inscription_id, Number(row.block_height));
     }
