@@ -59,6 +59,7 @@ export function QuickListForm({ height }: { height?: number }) {
         vout,
         utxoValueSats: parcel.valueSats,
         sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
         ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),

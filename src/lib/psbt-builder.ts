@@ -123,6 +123,8 @@ export type ListingPsbtInput = {
   utxoValueSats: number;
   /** seller address — receives the asking price */
   sellerAddress: string;
+  /** where the price is paid; defaults to sellerAddress (e.g. Xverse bc1q payment address) */
+  payoutAddress?: string;
   /** asking price in sats */
   priceSats: number;
   /** x-only internal key (32-byte hex) for taproot inputs, when known */
@@ -143,6 +145,7 @@ export function buildListingPsbt(input: ListingPsbtInput): string {
   }
   const script = addressToScriptPubKey(input.sellerAddress);
   const isTaproot = script.length === 34 && script[0] === 0x51;
+  const payScript = input.payoutAddress ? addressToScriptPubKey(input.payoutAddress) : script;
 
   // unsigned transaction: version 2, 1 input, 1 output, locktime 0
   const txidLe = hexToBytes(input.txid).reverse();
@@ -155,8 +158,8 @@ export function buildListingPsbt(input: ListingPsbtInput): string {
     ...u32le(0xfffffffd), // sequence: RBF-signalling, standard for offers
     ...varint(1),
     ...u64le(input.priceSats),
-    ...varint(script.length),
-    ...script,
+    ...varint(payScript.length),
+    ...payScript,
     ...u32le(0),
   ];
 

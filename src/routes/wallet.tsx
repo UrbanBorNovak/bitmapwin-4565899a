@@ -664,6 +664,7 @@ function ListParcelForm({
         vout,
         utxoValueSats: parcel.valueSats,
         sellerAddress: signingAddress,
+        payoutAddress: connected.paymentAddress || signingAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
         ...(connected.publicKey ? { publicKeyHex: connected.publicKey } : {}),

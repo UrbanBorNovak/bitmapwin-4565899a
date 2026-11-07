@@ -359,6 +359,7 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
         vout,
         utxoValueSats: bitmap.valueSats,
         sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
         ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),

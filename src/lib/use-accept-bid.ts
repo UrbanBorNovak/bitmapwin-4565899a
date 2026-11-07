@@ -81,6 +81,7 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
         vout,
         utxoValueSats: parcel.valueSats,
         sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
         priceSats: bid.priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
         ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),

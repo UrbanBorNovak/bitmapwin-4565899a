@@ -223,17 +223,14 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
   const sellerAddress =
     ordOutput.address ?? scriptToAddress(input.witnessScriptPubKeyHex ?? "") ?? null;
 
-  // Standard ord sale shape: the transaction pays the holder. Fall back to the
-  // total paid out when the seller's address can't be resolved.
-  const toSeller = sellerAddress
-    ? decoded.outputs
-        .filter((output) => output.address === sellerAddress)
-        .reduce((sum, output) => sum + output.valueSats, 0)
-    : 0;
-  // The signed output must pay the address that holds the inscription.
-  if (sellerAddress && decoded.outputs[0]?.address !== sellerAddress) {
-    throw new Error("THE SIGNED PRICE OUTPUT DOES NOT PAY THE WALLET HOLDING THIS BITMAP");
+  // The holder signs input 0 with SIGHASH_SINGLE|ANYONECANPAY, which commits to
+  // output 0 — so the holder's own signature authorises where the price goes
+  // (e.g. Xverse pays its bc1q payment address instead of the bc1p ordinals one).
+  const payout = decoded.outputs[0];
+  if (!payout?.address || payout.valueSats < 546) {
+    throw new Error("THE SIGNED PRICE OUTPUT IS MISSING OR TOO SMALL");
   }
+  const toSeller = payout.valueSats;
   const priceSats = toSeller > 0 ? toSeller : decoded.totalOutSats;
 
   return {
