@@ -672,6 +672,8 @@ export function buildPaymentPsbt(input: PaymentPsbtInput): PaymentPsbtResult {
 export type SwapPsbtInput = {
   maker: { txid: string; vout: number; valueSats: number; scriptPubKeyHex: string };
   taker: { txid: string; vout: number; valueSats: number; scriptPubKeyHex: string };
+  /** further taker items for an N-for-1 bundle (each goes to the maker at equal value) */
+  moreTakers?: { txid: string; vout: number; valueSats: number; scriptPubKeyHex: string }[];
   makerReceiveScriptHex: string;
   takerReceiveScriptHex: string;
   takerChangeScriptHex: string;
@@ -690,6 +692,8 @@ export type SwapPsbtResult = {
   changeSats: number;
   /** indices signed by the taker's ordinals key (the matched asset) */
   takerAssetIndex: number;
+  /** every taker item input (1..N) */
+  takerAssetIndices: number[];
   /** indices signed by the taker's payment key (fee funding) */
   fundingIndices: number[];
 };
@@ -709,9 +713,11 @@ const tapKeyOf = (hex: string | undefined): number[] | null => {
  * has the same value as its input, so FIFO sat flow carries each inscription intact.
  */
 export function buildSwapPsbt(input: SwapPsbtInput): SwapPsbtResult {
+  const takers = [input.taker, ...(input.moreTakers ?? [])];
+  const N = takers.length;
   const outs = [
     { valueSats: input.maker.valueSats, script: hexToByteArray(input.takerReceiveScriptHex) },
-    { valueSats: input.taker.valueSats, script: hexToByteArray(input.makerReceiveScriptHex) },
+    ...takers.map((t) => ({ valueSats: t.valueSats, script: hexToByteArray(input.makerReceiveScriptHex) })),
   ];
   if (input.sweetenerSats > 0) {
     if (input.sweetenerSats < DUST) throw new Error("Sweetener below dust");
@@ -724,7 +730,7 @@ export function buildSwapPsbt(input: SwapPsbtInput): SwapPsbtResult {
   for (const c of candidates) {
     used.push(c);
     funded += c.valueSats;
-    feeSats = Math.ceil(estimateVsize(2 + used.length, outs.length + 1) * Math.max(1, input.feeRate));
+    feeSats = Math.ceil(estimateVsize(1 + N + used.length, outs.length + 1) * Math.max(1, input.feeRate));
     if (funded >= feeSats + input.sweetenerSats + DUST) break;
   }
   if (used.length === 0 || funded < feeSats + input.sweetenerSats) {
@@ -735,15 +741,15 @@ export function buildSwapPsbt(input: SwapPsbtInput): SwapPsbtResult {
   if (changeSats > 0) outs.push({ valueSats: changeSats, script: hexToByteArray(input.takerChangeScriptHex) });
 
   const asIn = (u: { txid: string; vout: number }) => ({ txidLe: hexToByteArray(u.txid).reverse(), vout: u.vout, sequence: 0xfffffffd });
-  const tx: RawTx = { version: 2, locktime: 0, inputs: [asIn(input.maker), asIn(input.taker), ...used.map(asIn)], outputs: outs };
+  const tx: RawTx = { version: 2, locktime: 0, inputs: [asIn(input.maker), ...takers.map(asIn), ...used.map(asIn)], outputs: outs };
   const makerScript = hexToByteArray(input.maker.scriptPubKeyHex);
   const inputs: Kv[][] = [
     [{ key: [0x01], value: [...u64le(input.maker.valueSats), ...varint(makerScript.length), ...makerScript] }],
-    fundingInputMap({ ...input.taker }, tapKeyOf(input.takerTapKeyHex), input.takerPublicKeyHex),
+    ...takers.map((t) => fundingInputMap({ ...t }, tapKeyOf(input.takerTapKeyHex), input.takerPublicKeyHex)),
     ...used.map((u) => fundingInputMap(u, tapKeyOf(input.takerPaymentTapKeyHex ?? input.takerTapKeyHex), input.takerPublicKeyHex)),
   ];
   const psbtBase64 = serializePsbt({ global: [], inputs, outputs: tx.outputs.map(() => []), tx });
-  return { psbtBase64, feeSats, changeSats, takerAssetIndex: 1, fundingIndices: used.map((_, i) => i + 2) };
+  return { psbtBase64, feeSats, changeSats, takerAssetIndex: 1, takerAssetIndices: takers.map((_, i) => i + 1), fundingIndices: used.map((_, i) => i + 1 + N) };
 }
 
 /** Adds the maker's signing hints (taproot internal key / P2SH redeem script) to input 0 before the maker signs. */

@@ -148,17 +148,26 @@ export function buildSwapLayout(args: {
 }
 
 /** Maker-side check before co-signing: each party gets exactly the agreed asset and postage. */
-export function verifyLayoutForMaker(l: SwapLayout, ticket: BarterTicket, taker: AssetFacts): string | null {
-  const [i0, i1] = l.inputs;
-  const [o0, o1] = l.outputs;
-  if (!i0 || !i1 || !o0 || !o1) return "layout too short";
+/** Most items a taker may bundle for one offer. */
+export const BARTER_MAX_BUNDLE = 5;
+
+export function verifyLayoutForMaker(l: SwapLayout, ticket: BarterTicket, taker: AssetFacts | AssetFacts[]): string | null {
+  const takers = Array.isArray(taker) ? taker : [taker];
+  const N = takers.length;
+  if (N < 1 || N > BARTER_MAX_BUNDLE) return "bundle size not supported";
+  if (new Set(takers.map((t) => t.outpoint)).size !== N) return "same item listed twice";
+  const i0 = l.inputs[0], o0 = l.outputs[0];
+  if (!i0 || !o0 || l.inputs.length < 1 + N || l.outputs.length < 1 + N) return "layout too short";
   if (i0.outpoint !== ticket.offeringOutpoint || i0.owner !== "maker") return "input 0 is not the offered asset";
-  if (i1.outpoint !== taker.outpoint) return "input 1 is not the matched asset";
   if (o0.value !== i0.value) return "offered asset postage changed";
-  if (o1.address !== ticket.makerAddress || o1.value !== i1.value) return "maker does not receive matched asset intact";
-  if (l.inputs.slice(2).some((i) => i.owner !== "taker")) return "maker funding pulled in";
+  for (let k = 1; k <= N; k++) {
+    const i = l.inputs[k]!, o = l.outputs[k]!;
+    if (i.outpoint !== takers[k - 1]!.outpoint) return `input ${k} is not the matched asset`;
+    if (o.address !== ticket.makerAddress || o.value !== i.value) return "maker does not receive matched asset intact";
+  }
+  if (l.inputs.slice(1 + N).some((i) => i.owner !== "taker")) return "maker funding pulled in";
   if (ticket.sweetenerDir === "demand" && ticket.sweetenerSats > 0) {
-    const paid = l.outputs.slice(2).some((o) => o.address === ticket.makerAddress && o.value >= ticket.sweetenerSats);
+    const paid = l.outputs.slice(1 + N).some((o) => o.address === ticket.makerAddress && o.value >= ticket.sweetenerSats);
     if (!paid) return "sweetener missing";
   }
   if (l.feeSats <= 0) return "no miner fee";
