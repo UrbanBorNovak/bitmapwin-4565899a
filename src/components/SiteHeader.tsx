@@ -250,20 +250,22 @@ export function SiteHeader() {
 
   return (
     <header className="site-header sticky top-0 z-50 border-b border-border">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 md:flex md:justify-between md:gap-3 md:px-5">
-        <Link to="/" aria-label="BITMAP UNHINGED home" className="site-brand max-md:@container flex min-w-0 items-center gap-2 leading-none">
+      {/* Header and brand are containers: with the page-size zoom on <html>, viewport
+          breakpoints overstate the room, so text steps down by the space really left. */}
+      <div className="@container/hdr mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 md:px-5">
+        <Link to="/" aria-label="BITMAP UNHINGED home" className="site-brand @container flex min-w-0 items-center gap-2 leading-none">
           <MonolithCell className="size-7 shrink-0" />
-          <div className="hidden min-w-0 @[6.5rem]:block md:block">
+          <div className="hidden min-w-0 @[6.5rem]:block">
           <div className="display flex items-end gap-1 text-sm sm:text-base">
             <span className="text-bitcoin">BITMAP</span>
-            <span className="relative hidden sm:inline">
+            <span className="relative hidden @[11rem]:inline">
               <span className="label absolute bottom-full left-0 mb-0.5 hidden text-[0.4rem] leading-none text-bitcoin md:block">
                 BETA
               </span>
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] sm:block lg:hidden 2xl:block">BITCOIN-NATIVE WORLDS</div>
+          <div className="label mt-1 hidden whitespace-nowrap text-[0.5rem] @[13rem]:block">BITCOIN-NATIVE WORLDS</div>
           </div>
         </Link>
 
@@ -351,7 +353,7 @@ export function SiteHeader() {
 
 
         <div className="flex shrink-0 items-center gap-1">
-          <BtcTicker className="hidden sm:flex" />
+          <BtcTicker className="hidden @[42rem]/hdr:flex" />
           <LanguageSwitcher />
           <ThemeToggle />
           <button

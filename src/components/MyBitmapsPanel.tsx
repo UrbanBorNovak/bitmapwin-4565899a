@@ -67,7 +67,7 @@ export function MyBitmapsPanel() {
 
   if (!wallet) {
     return (
-      <section id="sell-bitmap" className="border border-border">
+      <section id="sell-bitmap" className="border border-border bg-card/80 backdrop-blur-md">
         <header className="border-b border-border p-5">
           <h2 className="display text-xl">MY BITMAPS</h2>
           <p className="label mt-2">CONNECT A WALLET TO LIST, REPRICE OR UNLIST YOUR OWN BITMAPS</p>
@@ -84,7 +84,7 @@ export function MyBitmapsPanel() {
   }
 
   return (
-    <section id="sell-bitmap" className="border border-border" data-tour="my-bitmaps">
+    <section id="sell-bitmap" className="border border-border bg-card/80 backdrop-blur-md" data-tour="my-bitmaps">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
         <div>
           <h2 className="display text-xl">MY BITMAPS</h2>
@@ -548,7 +548,8 @@ function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
       <PopoverContent className="w-[min(18rem,calc(100vw-1.5rem))] p-3" side="right" align="start" collisionPadding={12}
         onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
         {open && (
-          <div className="aspect-square w-full overflow-hidden border border-border">
+          // Capped so the facts and the dossier link stay on screen under page-size zoom.
+          <div className="mx-auto aspect-square w-full max-w-[min(100%,10rem)] overflow-hidden border border-border">
             <BlockMosaic height={height} txCount={stats?.txCount ?? null} className="h-full w-full" />
           </div>
         )}
