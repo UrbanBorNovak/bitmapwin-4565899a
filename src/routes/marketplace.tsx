@@ -9,7 +9,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BITMON_FILTER_KEY, loadBitmonFilters } from "@/lib/bitmon-filters";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { ParcelCard } from "@/components/ParcelCard";
+import { CompactParcelCard } from "@/components/market/CompactParcelCard";
+import { ActivityRail } from "@/components/market/ActivityRail";
 
 import {
   parcelOwnersQuery,
@@ -398,134 +399,58 @@ function Marketplace() {
 
   return (
     <div className="marketplace-shell mx-auto w-full min-w-0 max-w-[1600px] overflow-x-clip px-3 py-6 sm:px-5 md:py-10">
-      <header data-tour="market-header" className="border border-border bg-card/60 p-5 backdrop-blur-md sm:p-6">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="label text-bitcoin">TRADE · BITCOIN LAND</span>
-              <span className="flex items-center gap-1.5 font-mono text-[10px] text-signal">
-                <span className="relative flex size-2" aria-hidden>
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-signal opacity-60" />
-                  <span className="relative inline-flex size-2 rounded-full bg-signal" />
+      <header data-tour="market-header" className="border-b border-border pb-3">
+        <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+          <div className="flex items-center gap-3">
+            <span className="grid size-12 shrink-0 place-items-center border border-bitcoin/60 bg-bitcoin/10 font-mono text-lg font-bold text-bitcoin" aria-hidden>▦</span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="display text-2xl sm:text-3xl">BITMAP</h1>
+                <span className="flex items-center gap-1.5 font-mono text-[10px] text-signal">
+                  <span className="size-1.5 animate-pulse rounded-full bg-signal" aria-hidden /> LIVE SYNC
                 </span>
-                LIVE SYNC
-              </span>
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1.5 font-mono text-[10px]" data-no-translate>
+                <span className="border border-border px-2 py-0.5 text-muted-foreground">{(liveOci.data?.total ?? registryCount.data ?? 0).toLocaleString("en-US")} REGISTERED</span>
+                {liveOci.data?.tip ? <span className="border border-border px-2 py-0.5 text-muted-foreground">TIP #{liveOci.data.tip.toLocaleString("en-US")}</span> : null}
+                <Link to="/collections" className="border border-border px-2 py-0.5 text-muted-foreground hover:border-bitcoin hover:text-bitcoin">CLUBS</Link>
+                <Link to="/leases" className="border border-border px-2 py-0.5 text-muted-foreground hover:border-bitcoin hover:text-bitcoin">LEASES</Link>
+              </div>
             </div>
-            <h1 className="display mt-2 text-4xl sm:text-5xl">BITMAP MARKET</h1>
-            <p className="mt-2 max-w-xl font-mono text-xs leading-6 text-muted-foreground">BUY, BID, LIST AND TRACK BITMAPS THROUGH VERIFIED BITCOIN TRANSACTIONS.</p>
-            <p className="mt-2 max-w-xl font-mono text-[11px] text-signal">BETA TRADING DESK · TRY FLOOR SWEEP AND PRO TABLE · <Link to="/beta" className="text-bitcoin underline">WHAT'S NEW →</Link></p>
           </div>
+          <dl data-tour="market-stats" className="grid grid-cols-3 gap-x-5 gap-y-2 @container sm:grid-cols-6" data-no-translate>
+            <HeadStat k="FLOOR" v={listedFloor ? `₿ ${formatSats(listedFloor)}` : "—"} accent />
+            <HeadStat k="LISTED" v={listed.length.toLocaleString("en-US")} />
+            <HeadStat k="TRADED" v={(crawl.data ? crawl.data.tradedBitmaps : traded.length).toLocaleString("en-US")} />
+            <HeadStat k="LOW SALE" v={floor ? formatSats(floor) : "—"} accent />
+            <HeadStat k="VOLUME" v={volume ? formatSats(volume) : "—"} accent />
+            <HeadStat k="LAST" v={lastTrade ? formatSats(lastTrade.price_sats) : recent.isPending ? "…" : "—"} />
+          </dl>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <nav className="flex flex-wrap gap-1 font-mono text-[11px]" aria-label="Market sections">
+            <a href="#market-grid" className="border-b-2 border-bitcoin px-2 py-1 text-foreground">BITMAPS</a>
+            <a href="#market-mine" className="px-2 py-1 text-muted-foreground hover:text-foreground">MY LAND</a>
+            <a href="#market-offers" className="px-2 py-1 text-muted-foreground hover:text-foreground">OFFERS</a>
+            <a href="#market-live-panel" className="px-2 py-1 text-muted-foreground hover:text-foreground">SALES</a>
+            <a href="#market-analytics" className="px-2 py-1 text-muted-foreground hover:text-foreground">ANALYTICS</a>
+          </nav>
           <div className="flex flex-wrap items-center gap-2">
             <span className="flex" role="group" aria-label="Price unit">
               {(["btc", "sats", "usd"] as PriceUnit[]).map((u) => (
                 <button key={u} type="button" aria-pressed={unit === u} disabled={u === "usd" && !rate} onClick={() => priceUnit.set(u)}
                   title={u === "usd" ? (rate ? `LIVE RATE $${Math.round(rate).toLocaleString("en-US")} / BTC · DISPLAY ONLY` : "USD RATE UNAVAILABLE") : "DISPLAY ONLY · TRADES SETTLE IN SATS"}
-                  className={`h-11 border px-3 font-mono text-[11px] disabled:opacity-40 ${unit === u ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:text-signal"}`}>
+                  className={`h-8 border px-2 font-mono text-[10px] disabled:opacity-40 ${unit === u ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:text-signal"}`}>
                   {u.toUpperCase()}
                 </button>
               ))}
             </span>
             <BulkSellDrawer />
-            <Link
-              to="/bot"
-              search={{
-                maxSats: maxSats ?? undefined,
-                minHeight: /^\d+$/.test(qTrim) ? Number(qTrim) : clubDef?.min ?? undefined,
-                maxHeight: /^\d+$/.test(qTrim)
-                  ? Number(qTrim)
-                  : (() => {
-                      const m = Math.min(clubDef?.max ?? Infinity, galDef?.maxHeight ?? Infinity);
-                      return Number.isFinite(m) ? m : undefined;
-                    })(),
-              }}
-              className="btn-term-ghost min-h-11"
-            >
-              ◉ WATCH LISTINGS
-            </Link>
-            <Link to="/history" className="btn-term-ghost min-h-11">SALES HISTORY →</Link>
-            <Link to="/leases" className="btn-term-ghost min-h-11">LEASES →</Link>
+            <Link to="/bot" className="btn-term-ghost !py-1.5">◉ WATCH</Link>
           </div>
         </div>
-
-        <dl data-tour="market-stats" className="mt-5 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
-          <div className="bg-card p-3 md:p-4">
-            <dt className="label">REGISTERED<InfoTip text="Live index verified from raw Bitcoin block data." /></dt>
-            <dd className="mt-1 font-mono text-base font-bold text-signal md:text-lg" data-no-translate>
-              {liveOci.data
-                ? liveOci.data.total.toLocaleString("en-US")
-                : registryCount.data !== undefined
-                  ? registryCount.data.toLocaleString("en-US")
-                  : "…"}
-            </dd>
-            {liveOci.data?.tip ? (
-              <p className="mt-0.5 font-mono text-[10px] text-muted-foreground" data-no-translate>TIP #{liveOci.data.tip.toLocaleString("en-US")}</p>
-            ) : null}
-          </div>
-          <Stat k="TRADED ON CHAIN" v={crawl.data ? crawl.data.tradedBitmaps.toLocaleString("en-US") : traded.length.toLocaleString("en-US")} tone="signal" />
-          <Stat k="LISTED" v={listed.length === 0 ? "0" : `${listed.length} · ${formatSats(Math.min(...listed.map((p) => p.listedSats ?? 0)))}`} tone="bitcoin" />
-          <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} tone="bitcoin" />
-          <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} tone="bitcoin" />
-          <div className="bg-card p-3 md:p-4">
-            <dt className="label text-signal">LAST TRADED</dt>
-            {lastTrade ? (
-              <a href={`https://mempool.space/tx/${lastTrade.txid}`} target="_blank" rel="noreferrer" className="mt-1 block font-mono text-base font-bold text-foreground hover:text-signal md:text-lg" data-no-translate>
-                {formatSats(lastTrade.price_sats)}
-                <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
-                  {lastTrade.bitmap_height}.BITMAP
-                  {lastTrade.block_time ?? lastTrade.created_at ? ` · ${timeAgo(lastTrade.block_time ?? lastTrade.created_at)}` : ""}
-                </span>
-              </a>
-            ) : (
-              <dd className="mt-1 font-mono text-base text-muted-foreground">{recent.isPending ? "…" : "—"}</dd>
-            )}
-          </div>
-        </dl>
       </header>
 
-      <div className="mt-4">
-        <MarketStatsStrip />
-        <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
-      </div>
-
-      <nav aria-label="BITMAP collections" className="mt-4 flex flex-wrap items-center gap-2 border border-border bg-card/60 p-2 backdrop-blur">
-        <span className="label px-2 text-muted-foreground">BITMAP COLLECTIONS</span>
-        {([["/collections", "LAND & CLUBS"], ["/collections/guardians", "GUARDIANS"], ["/collections/emporium", "EMPORIUM"], ["/collections/free-ross", "FREE ROSS"], ["/collections/pixels", "PIXELS"], ["/collections/jigglypuff", "JIGGLYPUFF"]] as const).map(([to, l]) => (
-          <Link key={to} to={to} className="border border-border px-2 py-1 font-mono text-[11px] hover:border-bitcoin hover:text-bitcoin">{l}</Link>
-        ))}
-      </nav>
-      <div className="mt-4">
-        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
-      </div>
-      <div className="mt-4">
-        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
-      </div>
-
-      <div className="mt-4">
-        <TraitMatrix
-          activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
-          scoped={tab === "inhabited" || club !== "any" || trait !== "any" || gallery !== "any"}
-          onPick={(seg) => {
-            setPage(0); setClub("any"); setTrait("any"); setGallery("any");
-            if (!seg) { setBitmonRarity("ALL"); if (tab === "inhabited") setTab("all"); return; }
-            if (seg.id === "bitmons") setBitmonRarity("ALL");
-            if (seg.id === "bitmons") { setTab("inhabited"); return; }
-            if (seg.kind === "club") setClub(seg.id as ClubId); else if (seg.kind === "gallery") setGallery(seg.id); else setTrait(seg.id);
-          }}
-        />
-      </div>
-
-      <div className="mt-4">
-        <MarketTerminal scope={chartScope} />
-      </div>
-      <TradeSlip />
-
-      <div className="mt-4">
-        <LiveTradesFeed scope={chartScope} />
-      </div>
-
-      <div className="mt-4">
-        <MyBitmapsPanel />
-      </div>
 
       {/* Sticky control bar */}
       <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
@@ -586,7 +511,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-12">
-        <aside className="lg:col-span-3">
+        <aside className="lg:col-span-3 xl:col-span-2">
           <div data-tour="market-filters" className="border border-border bg-card/60 backdrop-blur-md lg:sticky lg:top-36">
             <details className="group" open>
               <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border p-4">
@@ -669,7 +594,8 @@ function Marketplace() {
           </div>
         </aside>
 
-        <section data-tour="market-grid" className="lg:col-span-9">
+        <section id="market-grid" data-tour="market-grid" className="scroll-mt-20 lg:col-span-9 xl:col-span-7">
+          <div id="floor-sweeper" className="scroll-mt-24" />
           <FloorSweeper listed={tab === "inhabited" ? listed : visible.filter((p) => p.listedSats !== null)} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
@@ -712,16 +638,9 @@ function Marketplace() {
               {view === "table" ? (
                 <ProTable parcels={pageWithOwners} inhabited={inhabitedSet} built={builtSet} bitmons={bitmonChecks} floorSats={listedFloor} />
               ) : (
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5">
                 {pageWithOwners.map((p) => (
-                  <ParcelCard
-                    key={p.inscriptionId}
-                    parcel={p}
-                    floorSats={listedFloor}
-                    {...(p.ownerAddress && traitHolders.data?.get(p.ownerAddress.toLowerCase())
-                      ? { traitHolder: traitHolders.data.get(p.ownerAddress.toLowerCase())! }
-                      : {})}
-                  />
+                  <CompactParcelCard key={p.inscriptionId} parcel={p} />
                 ))}
               </div>
               )}
@@ -729,7 +648,57 @@ function Marketplace() {
             </>
           )}
         </section>
+        <aside className="hidden xl:col-span-3 xl:block">
+          <div className="sticky top-36"><ActivityRail trades={recent.data ?? []} loading={recent.isPending} /></div>
+        </aside>
       </div>
+
+      <section id="market-analytics" className="mt-8 scroll-mt-20" aria-label="Market analytics">
+      <div className="mt-4">
+        <MarketStatsStrip />
+        <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
+      </div>
+
+      <nav aria-label="BITMAP collections" className="mt-4 flex flex-wrap items-center gap-2 border border-border bg-card/60 p-2 backdrop-blur">
+        <span className="label px-2 text-muted-foreground">BITMAP COLLECTIONS</span>
+        {([["/collections", "LAND & CLUBS"], ["/collections/guardians", "GUARDIANS"], ["/collections/emporium", "EMPORIUM"], ["/collections/free-ross", "FREE ROSS"], ["/collections/pixels", "PIXELS"], ["/collections/jigglypuff", "JIGGLYPUFF"]] as const).map(([to, l]) => (
+          <Link key={to} to={to} className="border border-border px-2 py-1 font-mono text-[11px] hover:border-bitcoin hover:text-bitcoin">{l}</Link>
+        ))}
+      </nav>
+      <div className="mt-4">
+        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
+      </div>
+      <div className="mt-4">
+        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
+      </div>
+
+      <div className="mt-4">
+        <TraitMatrix
+          activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
+          scoped={tab === "inhabited" || club !== "any" || trait !== "any" || gallery !== "any"}
+          onPick={(seg) => {
+            setPage(0); setClub("any"); setTrait("any"); setGallery("any");
+            if (!seg) { setBitmonRarity("ALL"); if (tab === "inhabited") setTab("all"); return; }
+            if (seg.id === "bitmons") setBitmonRarity("ALL");
+            if (seg.id === "bitmons") { setTab("inhabited"); return; }
+            if (seg.kind === "club") setClub(seg.id as ClubId); else if (seg.kind === "gallery") setGallery(seg.id); else setTrait(seg.id);
+          }}
+        />
+      </div>
+
+      <div className="mt-4">
+        <MarketTerminal scope={chartScope} />
+      </div>
+      <TradeSlip />
+
+      <div className="mt-4">
+        <LiveTradesFeed scope={chartScope} />
+      </div>
+
+      <div id="market-mine" className="mt-4 scroll-mt-20">
+        <MyBitmapsPanel />
+      </div>
+      </section>
 
       <section className="mt-8 border border-border bg-card/60 backdrop-blur-md" aria-labelledby="market-live-panel">
         <div className="flex items-center justify-between gap-4 border-b border-border p-4">
@@ -751,10 +720,28 @@ function Marketplace() {
         </div>
       </section>
 
-      <section className="mt-6 space-y-6 border border-border bg-card/60 p-4 backdrop-blur-md md:p-5" aria-label="Order book and trends">
+      <section className="mt-6 space-y-6 border border-border bg-card/60 p-4 backdrop-blur-md md:p-5" aria-label="Order book and trends" id="market-offers">
         <TrendExplorer parcels={parcels} />
         <BitmapOrderBook />
       </section>
+      <div className="sticky bottom-0 z-30 -mx-3 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5">
+        <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
+          {liveOci.data?.tip ? `TIP #${liveOci.data.tip.toLocaleString("en-US")} · ` : ""}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
+        </span>
+        <span className="flex gap-2">
+          <a href="#market-offers" className="btn-term-ghost !py-1.5">MAKE OFFER</a>
+          <a href="#floor-sweeper" className="btn-term !py-1.5">BUY FLOOR</a>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function HeadStat({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
+  return (
+    <div className="text-right">
+      <dt className="font-mono text-[9px] tracking-widest text-muted-foreground">{k}</dt>
+      <dd className={`whitespace-nowrap font-mono text-sm font-bold ${accent ? "text-bitcoin" : "text-foreground"}`}>{v}</dd>
     </div>
   );
 }
