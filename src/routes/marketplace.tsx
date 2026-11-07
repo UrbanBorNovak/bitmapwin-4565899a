@@ -127,6 +127,7 @@ function Marketplace() {
     refetchInterval: 15_000,
   });
   const [tab, setTab] = useState<Tab>("all");
+  const [section, setSection] = useState<"land" | "mine" | "offers" | "sales" | "analytics">("land");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
   const [trait, setTrait] = useState<string>("any");
@@ -418,7 +419,7 @@ function Marketplace() {
               </div>
             </div>
           </div>
-          <dl data-tour="market-stats" className="grid grid-cols-3 gap-x-5 gap-y-2 @container sm:grid-cols-6" data-no-translate>
+          <dl data-tour="market-stats" className="flex flex-wrap justify-start gap-x-6 gap-y-2 xl:justify-end" data-no-translate>
             <HeadStat k="FLOOR" v={listedFloor ? `₿ ${formatSats(listedFloor)}` : "—"} accent />
             <HeadStat k="LISTED" v={listed.length.toLocaleString("en-US")} />
             <HeadStat k="TRADED" v={(crawl.data ? crawl.data.tradedBitmaps : traded.length).toLocaleString("en-US")} />
@@ -428,12 +429,11 @@ function Marketplace() {
           </dl>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <nav className="flex flex-wrap gap-1 font-mono text-[11px]" aria-label="Market sections">
-            <a href="#market-grid" className="border-b-2 border-bitcoin px-2 py-1 text-foreground">BITMAPS</a>
-            <a href="#market-mine" className="px-2 py-1 text-muted-foreground hover:text-foreground">MY LAND</a>
-            <a href="#market-offers" className="px-2 py-1 text-muted-foreground hover:text-foreground">OFFERS</a>
-            <a href="#market-live-panel" className="px-2 py-1 text-muted-foreground hover:text-foreground">SALES</a>
-            <a href="#market-analytics" className="px-2 py-1 text-muted-foreground hover:text-foreground">ANALYTICS</a>
+          <nav className="flex flex-wrap gap-1 font-mono text-[11px]" aria-label="Market sections" role="tablist">
+            {([["land", "BITMAPS"], ["mine", "MY LAND"], ["offers", "OFFERS"], ["sales", "SALES"], ["analytics", "ANALYTICS"]] as const).map(([id, l]) => (
+              <button key={id} type="button" role="tab" aria-selected={section === id} onClick={() => setSection(id)}
+                className={`border-b-2 px-2 py-1 ${section === id ? "border-bitcoin text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{l}</button>
+            ))}
           </nav>
           <div className="flex flex-wrap items-center gap-2">
             <span className="flex" role="group" aria-label="Price unit">
@@ -452,6 +452,7 @@ function Marketplace() {
       </header>
 
 
+      {section === "land" && (<>
       {/* Sticky control bar */}
       <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
         <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
@@ -591,6 +592,35 @@ function Marketplace() {
                 <div className="label text-muted-foreground" data-no-translate>{holders} HOLDERS IN LOADED INDEX</div>
               </div>
             </details>
+            <details className="group border-t border-border">
+              <summary className="flex cursor-pointer list-none items-center justify-between p-4">
+                <span className="label text-foreground">GUARDIANS · PATTERNS · TRAIT MAP</span>
+                <span className="label text-muted-foreground group-open:rotate-180" aria-hidden>▾</span>
+              </summary>
+              <div className="max-h-[70vh] space-y-4 overflow-y-auto p-2">
+      <div className="[&>*]:!m-0">
+        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
+      </div>
+      <div className="[&>*]:!m-0">
+        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
+      </div>
+
+      <div className="[&>*]:!m-0">
+        <TraitMatrix
+          activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
+          scoped={tab === "inhabited" || club !== "any" || trait !== "any" || gallery !== "any"}
+          onPick={(seg) => {
+            setPage(0); setClub("any"); setTrait("any"); setGallery("any");
+            if (!seg) { setBitmonRarity("ALL"); if (tab === "inhabited") setTab("all"); return; }
+            if (seg.id === "bitmons") setBitmonRarity("ALL");
+            if (seg.id === "bitmons") { setTab("inhabited"); return; }
+            if (seg.kind === "club") setClub(seg.id as ClubId); else if (seg.kind === "gallery") setGallery(seg.id); else setTrait(seg.id);
+          }}
+        />
+      </div>
+
+              </div>
+            </details>
           </div>
         </aside>
 
@@ -652,8 +682,9 @@ function Marketplace() {
           <div className="sticky top-36"><ActivityRail trades={recent.data ?? []} loading={recent.isPending} /></div>
         </aside>
       </div>
+      </>)}
 
-      <section id="market-analytics" className="mt-8 scroll-mt-20" aria-label="Market analytics">
+      {section === "analytics" && (<section id="market-analytics" className="mt-4" aria-label="Market analytics">
       <div className="mt-4">
         <MarketStatsStrip />
         <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
@@ -666,41 +697,18 @@ function Marketplace() {
         ))}
       </nav>
       <div className="mt-4">
-        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
-      </div>
-      <div className="mt-4">
-        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
-      </div>
-
-      <div className="mt-4">
-        <TraitMatrix
-          activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
-          scoped={tab === "inhabited" || club !== "any" || trait !== "any" || gallery !== "any"}
-          onPick={(seg) => {
-            setPage(0); setClub("any"); setTrait("any"); setGallery("any");
-            if (!seg) { setBitmonRarity("ALL"); if (tab === "inhabited") setTab("all"); return; }
-            if (seg.id === "bitmons") setBitmonRarity("ALL");
-            if (seg.id === "bitmons") { setTab("inhabited"); return; }
-            if (seg.kind === "club") setClub(seg.id as ClubId); else if (seg.kind === "gallery") setGallery(seg.id); else setTrait(seg.id);
-          }}
-        />
-      </div>
-
-      <div className="mt-4">
         <MarketTerminal scope={chartScope} />
       </div>
-      <TradeSlip />
 
       <div className="mt-4">
         <LiveTradesFeed scope={chartScope} />
       </div>
 
-      <div id="market-mine" className="mt-4 scroll-mt-20">
-        <MyBitmapsPanel />
-      </div>
-      </section>
+      </section>)}
+      <TradeSlip />
+      {section === "mine" && <div id="market-mine" className="mt-4"><MyBitmapsPanel /></div>}
 
-      <section className="mt-8 border border-border bg-card/60 backdrop-blur-md" aria-labelledby="market-live-panel">
+      {section === "sales" && (<section className="mt-4 border border-border bg-card/60 backdrop-blur-md" aria-labelledby="market-live-panel">
         <div className="flex items-center justify-between gap-4 border-b border-border p-4">
           <div>
             <h2 id="market-live-panel" className="display text-xl">LIVE MARKET</h2>
@@ -718,19 +726,19 @@ function Marketplace() {
             <SalesLog limit={12} />
           </div>
         </div>
-      </section>
+      </section>)}
 
-      <section className="mt-6 space-y-6 border border-border bg-card/60 p-4 backdrop-blur-md md:p-5" aria-label="Order book and trends" id="market-offers">
+      {section === "offers" && (<section className="mt-4 space-y-6 border border-border bg-card/60 p-4 backdrop-blur-md md:p-5" aria-label="Order book and trends" id="market-offers">
         <TrendExplorer parcels={parcels} />
         <BitmapOrderBook />
-      </section>
+      </section>)}
       <div className="sticky bottom-0 z-30 -mx-3 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5">
         <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
           {liveOci.data?.tip ? `TIP #${liveOci.data.tip.toLocaleString("en-US")} · ` : ""}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
         </span>
         <span className="flex gap-2">
-          <a href="#market-offers" className="btn-term-ghost !py-1.5">MAKE OFFER</a>
-          <a href="#floor-sweeper" className="btn-term !py-1.5">BUY FLOOR</a>
+          <button type="button" onClick={() => setSection("offers")} className="btn-term-ghost !py-1.5">MAKE OFFER</button>
+          <button type="button" onClick={() => { setSection("land"); setTimeout(() => document.getElementById("floor-sweeper")?.scrollIntoView({ behavior: "smooth" }), 50); }} className="btn-term !py-1.5">BUY FLOOR</button>
         </span>
       </div>
     </div>
