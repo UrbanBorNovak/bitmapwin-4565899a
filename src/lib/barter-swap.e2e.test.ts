@@ -78,7 +78,7 @@ function reset(n: number) {
   chain.set(`${txid(1)}:0`, { value: 546, address: MAKER, inscriptions: [`${txid(1)}i0`], spent: false });
   for (let k = 0; k < n; k++) {
     const id = `${txid(10 + k)}i0`;
-    chain.set(`${txid(10 + k)}:${k}`, { value: [600, 330, 10_000, 546, 1_000][k]!, address: TAKER, inscriptions: [id], spent: false });
+    chain.set(`${txid(10 + k)}:${k}`, { value: [600, 546, 10_000, 777, 1_000][k]!, address: TAKER, inscriptions: [id], spent: false });
     heights.set(id, 80_000 + k);
   }
   paymentUtxos.set(PAY, [{ txid: txid(50), vout: 1, value: 200_000 }]);
