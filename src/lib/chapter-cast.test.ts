@@ -35,7 +35,8 @@ describe("chapter cast lookups (mocked)", () => {
     const ep = chapterEpisode(f, "A", "B", { guardian: null, hasBuild: false, guardianUnknown: true });
     expect(ep.scenes.every((s) => s.cast.every((a) => !!a.avatar))).toBe(true);
     const text = ep.scenes.flatMap((s) => s.lines.map((l) => l.text)).join(" ");
-    expect(text).not.toContain("No Guardian wakes here");
-    expect(text).toContain("out of reach");
+    // The chapter script never states Guardian status, so a failed lookup must not leak an absence claim.
+    expect(text).not.toMatch(/No Guardian|Nobody's guarding/);
+    expect(ep.scenes.every((s) => s.cast.every((a) => !a.name.includes(" · ")))).toBe(true);
   });
 });
