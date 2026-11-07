@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as bitcoin from "bitcoinjs-lib";
+import { bech32m } from "@scure/base";
 import { cellMessage, extractEquivocationKey, leaseAddress, leaseLeaves, newCellKey, pushNum, signCell, verifyCell } from "./lease-tapscript";
 
 const fill = (b: number) => new Uint8Array(32).fill(b);
@@ -8,10 +9,10 @@ const cell = newCellKey(fill(5), fill(6));
 const terms = { landlord: L, tenant: T, equivocation: cell.pub, slashCsv: 144, refundCsv: 288 };
 
 describe("BW-LEASE-L1 tree", () => {
-  it("refund needs 288 blocks, slash opens at 144", () => {
+  it("refund needs 288 (OP_NOP3 = CSV) blocks, slash opens at 144", () => {
     const { refund, slash } = leaseLeaves(terms);
-    expect(bitcoin.script.toASM(Buffer.from(refund))).toBe(`2001 OP_CHECKSEQUENCEVERIFY OP_DROP ${T} OP_CHECKSIG`);
-    expect(bitcoin.script.toASM(Buffer.from(slash))).toBe(`9000 OP_CHECKSEQUENCEVERIFY OP_DROP ${cell.pub} OP_CHECKSIG`);
+    expect(bitcoin.script.toASM(Buffer.from(refund))).toBe(`2001 OP_NOP3 OP_DROP ${T} OP_CHECKSIG`);
+    expect(bitcoin.script.toASM(Buffer.from(slash))).toBe(`9000 OP_NOP3 OP_DROP ${cell.pub} OP_CHECKSIG`);
   });
   it("refuses a slash window that opens after the refund", () => {
     expect(() => leaseLeaves({ ...terms, slashCsv: 288 })).toThrow();
@@ -23,7 +24,10 @@ describe("BW-LEASE-L1 tree", () => {
   it("produces a valid deterministic bc1p address", () => {
     const a = leaseAddress(terms);
     expect(a.address).toBe(leaseAddress(terms).address);
-    expect(bitcoin.address.toOutputScript(a.address).toString("hex")).toBe("5120" + a.outputKey);
+    const dec = bech32m.decode(a.address as `${string}1${string}`);
+    expect(dec.words[0]).toBe(1);
+    expect(Buffer.from(bech32m.fromWords(dec.words.slice(1))).toString("hex")).toBe(a.outputKey);
+    expect(a.address.startsWith("bc1p")).toBe(true);
   });
 });
 
