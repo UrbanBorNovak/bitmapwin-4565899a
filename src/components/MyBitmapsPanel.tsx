@@ -540,20 +540,42 @@ function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
     : shape.kind === "unique" ? "UNIQUE SHAPE — NOT A BITMON"
     : shape.kind === "bitmon" ? `#${shape.pattern}${shape.siblings ? ` · ${shape.siblings + 1} BLOCKS` : ""}`
     : "NONE ON RECORD";
+  // Touch/pen taps open a centred sheet: anchored popovers are placed off-screen
+  // under the page-size zoom on <html>. Mouse hover keeps the anchored preview.
+  const [sheet, setSheet] = useState(false);
+  const lastPointer = useRef("mouse");
   const hover = (on: boolean) => (e: React.PointerEvent) => { if (e.pointerType === "mouse") setOpen(on); };
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
+      <PopoverTrigger asChild onPointerEnter={hover(true)} onPointerLeave={hover(false)}
+        onPointerDown={(e) => { lastPointer.current = e.pointerType; }}
+        onClick={(e) => { if (lastPointer.current !== "mouse") { e.preventDefault(); setOpen(false); setSheet(true); } }}>
         {children}
       </PopoverTrigger>
       <PopoverContent className="w-[min(18rem,calc(100vw-1.5rem))] p-3" side="right" align="start" collisionPadding={12}
         onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
-        {open && (
-          // Capped so the facts and the dossier link stay on screen under page-size zoom.
-          <div className="mx-auto aspect-square w-full max-w-[min(100%,10rem)] overflow-hidden border border-border">
+        {open && <PreviewBody height={height} stats={stats} traits={traits} bitmon={bitmon} patternLine={patternLine} />}
+      </PopoverContent>
+    </Popover>
+    <Dialog open={sheet} onOpenChange={setSheet}>
+      <DialogContent className="max-h-[85vh] w-[min(22rem,calc(100%-1.5rem))] overflow-y-auto p-4">
+        <DialogTitle className="sr-only">{height}.BITMAP preview</DialogTitle>
+        {sheet && <PreviewBody height={height} stats={stats} traits={traits} bitmon={bitmon} patternLine={patternLine} />}
+      </DialogContent>
+    </Dialog>
+    </>
+  );
+}
+
+function PreviewBody({ height, stats, traits, bitmon, patternLine }: {
+  height: number; stats: BlockStats | null; traits: ReturnType<typeof traitsOf>; bitmon: BitmonCheck | null; patternLine: string;
+}) {
+  return (
+    <>
+          <div className="mx-auto aspect-square w-full max-w-[min(100%,12rem)] overflow-hidden border border-border">
             <BlockMosaic height={height} txCount={stats?.txCount ?? null} className="h-full w-full" />
           </div>
-        )}
         <p className="mt-2 font-mono text-sm font-bold text-foreground">{height}.BITMAP</p>
         <dl className="mt-1 space-y-0.5 font-mono text-[10px]">
           {stats?.txCount != null && (
