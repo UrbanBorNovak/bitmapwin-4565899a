@@ -1,4 +1,5 @@
 import { checkMintParents } from "@/lib/mint-parents-guard";
+import { offlinePreview } from "@/lib/offline-preview";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
