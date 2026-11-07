@@ -34,7 +34,11 @@ async function attempt(name: string, hex: string, expect: "accept" | "reject") {
 }
 
 let miner = "";
-const mine = (n: number) => rpc<string[]>("generatetoaddress", [n, miner, 100_000_000]);
+/** generatetoaddress may stop early when its tries run out; keep going until n blocks exist. */
+async function mine(n: number) {
+  const target = (await rpc<number>("getblockcount")) + n;
+  while ((await rpc<number>("getblockcount")) < target) await rpc("generatetoaddress", [target - (await rpc<number>("getblockcount")), miner, 1_000_000_000]);
+}
 const tip = () => rpc<number>("getblockcount");
 const sec = () => bytesToHex(randomBytes(32));
 
