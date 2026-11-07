@@ -14,6 +14,35 @@ const ticketOf = (t: BarterTicket) => ({
 });
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+type Line = { what: string; sats: number; to: string };
+const short = (s: string) => (s.length > 22 ? `${s.slice(0, 10)}…${s.slice(-8)}` : s);
+
+/** Pre-signing summary: every item and sat amount, with the address it ends up at. */
+function SwapSummary({ send, receive, fee }: { send: Line[]; receive: Line[]; fee: { sats: number; rate?: number; payer: string; change?: Line } }) {
+  const rows = (title: string, ls: Line[]) => (
+    <div>
+      <p className="font-mono text-[10px] tracking-widest text-muted-foreground">{title}</p>
+      {ls.length === 0 ? <p className="text-muted-foreground">Nothing</p> : ls.map((l, i) => (
+        <div key={i} className="flex flex-wrap justify-between gap-x-2 border-b border-border/50 py-0.5">
+          <span className="text-foreground" title={l.what}>{short(l.what)}</span>
+          <span className="font-mono">{l.sats.toLocaleString()} sats → <span className="text-accent" title={l.to}>{short(l.to)}</span></span>
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <div className="space-y-2 border border-border bg-background/40 p-2" data-no-translate-numbers>
+      {rows("YOU SEND", send)}
+      {rows("YOU RECEIVE", receive)}
+      <div>
+        <p className="font-mono text-[10px] tracking-widest text-muted-foreground">MINER FEE</p>
+        <p><span className="font-mono">{fee.sats.toLocaleString()} sats</span>{fee.rate ? ` (~${fee.rate} sat/vB)` : ""}, paid by {fee.payer}.</p>
+        {fee.change && fee.change.sats > 0 && <p>Change <span className="font-mono">{fee.change.sats.toLocaleString()} sats</span> → <span className="text-accent" title={fee.change.to}>{short(fee.change.to)}</span></p>}
+      </div>
+    </div>
+  );
+}
+
 type Phase = "idle" | "building" | "review" | "signing" | "done" | "error";
 
 /** Taker side: build the swap from live chain facts, sign own inputs, send it to the maker. */
@@ -74,14 +103,19 @@ export function ProposeSwap({ ticket, assets, wallet }: {
       {phase === "idle" && <button className="w-full border border-primary px-2 py-1 text-primary" onClick={build}>PROPOSE SWAP WITH {label}</button>}
       {phase === "review" && built && (
         <div className="space-y-1">
-          <p>You give <span className="text-foreground">{label}</span> and get the offered item.</p>
-          {sweet > 0 && <p>You also pay the maker <span className="text-foreground">{sweet.toLocaleString()} sats</span>.</p>}
-          <p>Miner fee: <span className="text-foreground">{built.feeSats.toLocaleString()} sats</span> (~{built.feeRate} sat/vB), paid by you.</p>
+          <SwapSummary
+            send={[
+              ...assets.map((a, i) => ({ what: a.label || a.inscriptionId, sats: built.items?.[i]?.value ?? 0, to: ticket.makerAddress })),
+              ...(sweet > 0 ? [{ what: "Extra sats", sats: sweet, to: ticket.makerAddress }] : []),
+            ]}
+            receive={[{ what: ticket.offeringInscription, sats: ticket.offeringValue, to: wallet.ordinalsAddress }]}
+            fee={{ sats: built.feeSats, rate: built.feeRate, payer: "you", change: { what: "change", sats: built.changeSats, to: wallet.paymentAddress } }}
+          />
           <label className="flex items-start gap-2">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-            <span>I understand this signature lets the maker complete the swap exactly as shown, at any time until my item or fee sats move.</span>
+            <span>I checked every item, amount and address above. This signature lets the maker complete the swap exactly as shown, at any time until my item or fee sats move.</span>
           </label>
-          <button disabled={!agree} className="w-full border border-primary px-2 py-1 text-primary disabled:opacity-40" onClick={signAndSend}>SIGN & SEND TO MAKER</button>
+          <button disabled={!agree} className="w-full border border-primary px-2 py-1 text-primary disabled:opacity-40" onClick={signAndSend}>CONFIRM · OPEN WALLET TO SIGN</button>
           <button className="w-full border border-border px-2 py-1" onClick={() => { setBuilt(null); setAgree(false); setPhase("idle"); }}>CANCEL · NOTHING SIGNED</button>
         </div>
       )}
@@ -150,21 +184,30 @@ function ProposalRow({ p, t, wallet }: { p: SwapProposal; t: FeedTicket; wallet:
       {r && !r.ok && <p className="text-destructive">Refused: {r.reason}</p>}
       {r && r.ok && (
         <div className="mt-1 space-y-1">
-          {(r.takerAssets ?? [r.takerAsset]).map((x) => (
-            <p key={x.id} className="text-accent">✓ You would receive {x.height !== null ? `${x.height}.bitmap` : `${x.id.slice(0, 12)}…`} ({x.value.toLocaleString()} sats postage)</p>
-          ))}
-          {t.sweetenerDir === "demand" && t.sweetenerSats > 0 && <p className="text-accent">✓ Plus {t.sweetenerSats.toLocaleString()} sats</p>}
-          <p className="text-muted-foreground">Miner fee {r.feeSats.toLocaleString()} sats, paid by the taker.</p>
+          {(() => {
+            const items = r.takerAssets ?? [r.takerAsset];
+            const out = r.outputs ?? [];
+            return (
+              <SwapSummary
+                send={[{ what: t.offeringInscription, sats: t.offeringValue, to: out[0]?.address ?? "taker" }]}
+                receive={[
+                  ...items.map((x, i) => ({ what: x.height !== null ? `${x.height}.bitmap` : x.id, sats: out[i + 1]?.value ?? x.value, to: out[i + 1]?.address ?? t.makerAddress })),
+                  ...(t.sweetenerDir === "demand" && t.sweetenerSats > 0 ? [{ what: "Extra sats", sats: t.sweetenerSats, to: t.makerAddress }] : []),
+                ]}
+                fee={{ sats: r.feeSats, payer: "the taker (you pay 0)" }}
+              />
+            );
+          })()}
           {!r.takerSigned && <p className="text-destructive">The taker has not signed every input.</p>}
           {r.takerSigned && !keys.ok && <p className="text-destructive">Signing unavailable: {keys.reason}</p>}
           {r.takerSigned && keys.ok && state.phase !== "done" && (
             <>
               <label className="flex items-start gap-2">
                 <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-                <span>I want to give my offered item for this one. Broadcasting cannot be undone.</span>
+                <span>I checked every item, amount and address above. Broadcasting cannot be undone.</span>
               </label>
               <button disabled={!agree || state.phase === "signing"} className="w-full border border-primary px-2 py-1 text-primary disabled:opacity-40" onClick={accept}>
-                {state.phase === "signing" ? "WORKING…" : "SIGN & BROADCAST SWAP"}
+                {state.phase === "signing" ? "WORKING…" : "CONFIRM · OPEN WALLET TO SIGN"}
               </button>
             </>
           )}
