@@ -109,7 +109,8 @@ export function BulkListBar({
         const [txid, voutRaw] = p.b.outpoint.split(":");
         const psbt = buildListingPsbt({
           txid: txid!, vout: Number(voutRaw), utxoValueSats: p.b.valueSats,
-          sellerAddress: wallet.ordinalsAddress, priceSats: p.price!,
+          sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress, priceSats: p.price!,
           ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
           ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
         });

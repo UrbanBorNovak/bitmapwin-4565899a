@@ -46,6 +46,7 @@ export function NostrListPanel() {
         vout: Number(vout),
         utxoValueSats: ins.value,
         sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
         priceSats,
         ...(xOnlyPubKeyHex(wallet.publicKey) ? { tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey)! } : {}),
         ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),

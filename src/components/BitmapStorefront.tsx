@@ -70,6 +70,7 @@ export function BitmapStorefront({ height }: { height: number }) {
         vout,
         utxoValueSats: item.utxo.valueSats,
         sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
         ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),

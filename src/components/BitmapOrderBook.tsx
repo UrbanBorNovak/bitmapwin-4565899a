@@ -382,6 +382,7 @@ function BulkListPanel({ height }: { height?: number }) {
             vout,
             utxoValueSats: target.valueSats,
             sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
             priceSats,
             ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
             ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),

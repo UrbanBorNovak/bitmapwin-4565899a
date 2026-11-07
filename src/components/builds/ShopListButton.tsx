@@ -46,6 +46,7 @@ export function ShopListButton({
         vout,
         utxoValueSats: holding.valueSats,
         sellerAddress: wallet.ordinalsAddress,
+        payoutAddress: wallet.paymentAddress || wallet.ordinalsAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
         ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
