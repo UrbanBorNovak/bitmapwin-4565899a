@@ -109,6 +109,7 @@ export const buildBarterSwapFn = createServerFn({ method: "POST" })
     ticket: ticketSchema,
     takerInscription: z.string().regex(INS),
     takerOutpoint: z.string().regex(/^[0-9a-f]{64}:\d+$/),
+    moreItems: z.array(z.object({ inscription: z.string().regex(INS), outpoint: z.string().regex(/^[0-9a-f]{64}:\d+$/) })).max(4).optional(),
     takerOrdinalsAddress: z.string().min(20).max(100),
     takerPaymentAddress: z.string().min(20).max(100),
     takerPublicKey: z.string().regex(/^[0-9a-f]{64,66}$/i).optional(),
@@ -133,7 +134,8 @@ export const reviewBarterSwapFn = createServerFn({ method: "POST" })
     const { decodePsbt } = await import("@/lib/psbt");
     const d = decodePsbt(data.psbtBase64);
     const takerSigned = d.inputs.slice(1).every((i) => i.signed);
-    return { ok: true as const, feeSats: r.feeSats, takerSigned, takerAsset: { id: r.taker.inscriptionId, height: r.taker.height ?? null, value: r.taker.value }, outputs: r.layout.outputs };
+    const takerAssets = r.takers.map((x) => ({ id: x.inscriptionId, height: x.height ?? null, value: x.value }));
+    return { ok: true as const, feeSats: r.feeSats, takerSigned, takerAsset: { id: r.taker.inscriptionId, height: r.taker.height ?? null, value: r.taker.value }, takerAssets, outputs: r.layout.outputs };
   });
 
 /** Public: re-checks a fully signed swap, finalizes and broadcasts it. Bitcoin itself rejects anything unsigned. */
