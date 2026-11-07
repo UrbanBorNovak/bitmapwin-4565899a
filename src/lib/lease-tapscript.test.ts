@@ -6,16 +6,19 @@ import { cellMessage, extractEquivocationKey, leaseAddress, leaseLeaves, newCell
 const fill = (b: number) => new Uint8Array(32).fill(b);
 const L = newCellKey(fill(1), fill(2)).pub, T = newCellKey(fill(3), fill(4)).pub;
 const cell = newCellKey(fill(5), fill(6));
-const terms = { landlord: L, tenant: T, equivocation: cell.pub, slashCsv: 144, refundCsv: 288 };
+const terms = { landlord: L, tenant: T, equivocation: cell.pub, refundCsv: 288 };
 
 describe("BW-LEASE-L1 tree", () => {
-  it("refund needs 288 (OP_NOP3 = CSV) blocks, slash opens at 144", () => {
-    const { refund, slash } = leaseLeaves(terms);
-    expect(bitcoin.script.toASM(Buffer.from(refund))).toBe(`2001 OP_NOP3 OP_DROP ${T} OP_CHECKSIG`);
-    expect(bitcoin.script.toASM(Buffer.from(slash))).toBe(`9000 OP_NOP3 OP_DROP ${cell.pub} OP_CHECKSIG`);
+  it("refund needs 288 blocks (OP_NOP3 = CSV) and the tenant key", () => {
+    const { refund } = leaseLeaves(terms);
+    expect(bitcoin.script.toASM(refund)).toBe(`2001 OP_NOP3 OP_DROP ${T} OP_CHECKSIG`);
   });
-  it("refuses a slash window that opens after the refund", () => {
-    expect(() => leaseLeaves({ ...terms, slashCsv: 288 })).toThrow();
+  it("slash needs the equivocation key AND the landlord, so the tenant can never slash alone", () => {
+    const { slash } = leaseLeaves(terms);
+    expect(bitcoin.script.toASM(slash)).toBe(`${cell.pub} OP_CHECKSIGVERIFY ${L} OP_CHECKSIG`);
+  });
+  it("refuses terms where two roles share a key", () => {
+    expect(() => leaseLeaves({ ...terms, equivocation: T })).toThrow();
   });
   it("encodes CSV 16 as OP_16 and 128 with a sign byte", () => {
     expect([...pushNum(16)]).toEqual([0x60]);

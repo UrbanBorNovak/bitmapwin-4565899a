@@ -119,8 +119,8 @@ export function buildLeaseSpend(i: LeaseSpendInput) {
   tx.version = 2;
   const seq = i.leaf === "refund" ? i.terms.refundCsv : 0xfffffffd;
   tx.addInput(Buffer.from(hexToBytes(i.prevTxid).reverse()), i.prevVout, seq);
-  tx.addOutput(Buffer.from(hexToBytes(i.toScript)), BigInt(out) as never);
-  const sighash = tx.hashForWitnessV1(0, [Buffer.from(hexToBytes(a.scriptPubKey))], [BigInt(i.prevValue) as never], bitcoin.Transaction.SIGHASH_DEFAULT, Buffer.from(hexToBytes(a.leafHashes[i.leaf])));
+  tx.addOutput(Buffer.from(hexToBytes(i.toScript)), BigInt(out));
+  const sighash = tx.hashForWitnessV1(0, [Buffer.from(hexToBytes(a.scriptPubKey))], [BigInt(i.prevValue)], bitcoin.Transaction.SIGHASH_DEFAULT, Buffer.from(hexToBytes(a.leafHashes[i.leaf])));
   return { tx, sighash: bytesToHex(sighash), lease: a };
 }
 
