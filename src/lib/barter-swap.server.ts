@@ -158,8 +158,9 @@ export async function reviewSwap(psbtBase64: string, t: BarterTicket): Promise<S
   const found: { id: string; outpoint: string }[] = [];
   for (let k = 1; k < d.inputs.length && found.length <= BARTER_MAX_BUNDLE; k++) {
     const op = d.inputs[k]!.outpoint;
-    const o = await getJson<{ inscriptions?: string[] }>(`${ORD}/output/${op}`);
+    const o = await fetchOutput(op);
     if (!o) return { ok: false, reason: "an input could not be read" };
+    if (o.spent) return { ok: false, reason: "an input is already spent" };
     const id = o.inscriptions?.[0];
     if (!id) break;
     found.push({ id, outpoint: op });

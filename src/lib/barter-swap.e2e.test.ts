@@ -73,6 +73,12 @@ const signWith = (priv: Uint8Array) => async (_p: WalletProviderId, psbt: string
 };
 const makerWallet = { provider: "unisat", ordinalsAddress: MAKER, paymentAddress: MAKER, publicKey: hex.encode(xOnly(makerPriv)) } as ConnectedWallet;
 
+/** Spends an outpoint the way a wallet transfer would: the inscription moves to a new output. */
+function spend(op: string) {
+  const o = chain.get(op)!;
+  o.spent = true;
+  chain.set(`${txid(99)}:${chain.size}`, { ...o, spent: false, address: PAY });
+}
 function reset(n: number) {
   chain.clear(); heights.clear(); paymentUtxos.clear();
   chain.set(`${txid(1)}:0`, { value: 546, address: MAKER, inscriptions: [`${txid(1)}i0`], spent: false });
@@ -101,9 +107,8 @@ async function takerSigns(b: Awaited<ReturnType<typeof propose>>) {
 }
 
 /** Ordinal theory FIFO: which output (and offset) the first sat of each input lands on. */
-function firstSatDestinations(tx: btc.Transaction) {
-  const ins: number[] = [], outs: number[] = [];
-  for (let i = 0; i < tx.inputsLength; i++) ins.push(Number(tx.getInput(i).witnessUtxo!.amount));
+function firstSatDestinations(tx: btc.Transaction, ins: number[]) {
+  const outs: number[] = [];
   for (let o = 0; o < tx.outputsLength; o++) outs.push(Number(tx.getOutput(o).amount));
   let start = 0;
   return ins.map((v) => {
@@ -162,7 +167,7 @@ describe.each([1, 5])("BW-BARTER-1 %i-for-1, both wallets sign offline", (n) => 
     const tx = verifyAll(raw, prev);
 
     // Inscription destinations by FIFO: maker item → taker, each taker item → maker, all at offset 0.
-    const dest = firstSatDestinations(tx);
+    const dest = firstSatDestinations(tx, prev.map((p) => Number(p.amount)));
     const addrOf = (o: number) => btc.Address().encode(btc.OutScript.decode(tx.getOutput(o).script!));
     expect(dest[0]).toEqual({ output: 0, offset: 0 });
     expect(addrOf(0)).toBe(TAKER);
@@ -182,14 +187,14 @@ describe.each([1, 5])("BW-BARTER-1 %i-for-1, both wallets sign offline", (n) => 
 
   it("taker moving one bundled item cancels: review and broadcast checks refuse", async () => {
     const signed = await takerSigns(await propose(n));
-    chain.get(items(n)[n - 1]!.outpoint)!.spent = true;
+    spend(items(n)[n - 1]!.outpoint);
     const r = await reviewSwap(signed, ticket);
-    expect(r).toEqual({ ok: false, reason: "matched item: output is spent" });
+    expect(r).toEqual({ ok: false, reason: "an input is already spent" });
   });
 
   it("maker moving the offered item cancels", async () => {
     const signed = await takerSigns(await propose(n));
-    chain.get(`${txid(1)}:0`)!.spent = true;
+    spend(`${txid(1)}:0`);
     expect(await reviewSwap(signed, ticket)).toMatchObject({ ok: false, reason: expect.stringMatching(/^offered item/) });
   });
 
@@ -201,21 +206,24 @@ describe.each([1, 5])("BW-BARTER-1 %i-for-1, both wallets sign offline", (n) => 
 
   it("an edited output after the taker signed breaks the taker's signature", async () => {
     const signed = await takerSigns(await propose(n));
-    const tx = btc.Transaction.fromPSBT(base64.decode(signed), { allowUnknownOutputs: true });
-    const o = tx.getOutput(n + 1);
-    const outs = Array.from({ length: tx.outputsLength }, (_, i) => tx.getOutput(i));
-    // Rebuild with the sweetener raised by 1 sat but keep the taker's old signatures.
-    const forged = new btc.Transaction({ allowUnknownOutputs: true });
-    for (let i = 0; i < tx.inputsLength; i++) forged.addInput(tx.getInput(i));
-    outs.forEach((x, i) => forged.addOutput({ script: x.script!, amount: i === n + 1 ? o.amount! + 1n : x.amount! }));
+    const sigs = btc.Transaction.fromPSBT(base64.decode(signed), { allowUnknownOutputs: true });
+    // Same inputs, sweetener raised by 1 sat; graft the taker's old signatures onto it.
+    const forgedTicket = { ...ticket, sweetenerSats: ticket.sweetenerSats + 1 };
+    const unsigned = await buildSwap({
+      ticket: forgedTicket, takerInscription: items(n)[0]!.inscription, takerOutpoint: items(n)[0]!.outpoint, moreItems: items(n).slice(1),
+      takerOrdinalsAddress: TAKER, takerPaymentAddress: PAY, takerPublicKey: hex.encode(xOnly(takerPriv)),
+    });
+    const forged = btc.Transaction.fromPSBT(base64.decode(unsigned.psbtBase64), { allowUnknownOutputs: true });
+    for (let i = 1; i <= n; i++) forged.updateInput(i, { tapKeySig: sigs.getInput(i).tapKeySig! }, true);
     const both = await signMakerSwap(makerWallet, base64.encode(forged.toPSBT()), signWith(makerPriv));
-    const raw = extractRawTxHex(finalizeSignedPsbt(both))!;
-    const t2 = btc.Transaction.fromRaw(hex.decode(raw), { allowUnknownOutputs: true });
-    const sig = t2.getInput(1).finalScriptWitness![0]!;
+    const t2 = btc.Transaction.fromPSBT(base64.decode(both), { allowUnknownOutputs: true });
     const scripts = [makerTr.script, ...Array.from({ length: n }, () => takerTr.script), payWpkh.script];
     const amts = [546n, ...items(n).map((i) => BigInt(chain.get(i.outpoint)!.value)), 200_000n];
     const hash = (t2 as any).preimageWitnessV1(1, scripts, 0, amts);
-    expect(schnorr.verify(sig.slice(0, 64), hash, takerTr.script.slice(2))).toBe(false);
+    expect(schnorr.verify(t2.getInput(1).tapKeySig!, hash, takerTr.script.slice(2))).toBe(false);
+    // The maker's own fresh signature on the forged layout is valid, so only the taker's breaks.
+    const h0 = (t2 as any).preimageWitnessV1(0, scripts, 0, amts);
+    expect(schnorr.verify(t2.getInput(0).tapKeySig!, h0, makerTr.script.slice(2))).toBe(true);
   });
 });
 
