@@ -173,11 +173,11 @@ function ProfilePage() {
             </div>
             <div className="profile-readout bg-background p-4 text-center">
               <p className="label">SHARES ISSUED</p>
-              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{issued.toLocaleString()}</p>
+              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{issued.toLocaleString("en-US")}</p>
             </div>
             <div className="profile-readout bg-background p-4 text-center">
               <p className="label">SHARE HOLDERS</p>
-              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{holderCount.toLocaleString()}</p>
+              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{holderCount.toLocaleString("en-US")}</p>
             </div>
             <div className="profile-readout bg-background p-4 text-center">
               <p className="label">DIVIDENDS PAID</p>

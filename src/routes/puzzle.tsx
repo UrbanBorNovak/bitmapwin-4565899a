@@ -120,8 +120,8 @@ function PuzzlePage() {
 
         <StepCard n={2} title="Watch it count">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Keys tried" value={scanned.toLocaleString()} />
-            <Stat label="Keys per second" value={Math.round(rate).toLocaleString()} />
+            <Stat label="Keys tried" value={scanned.toLocaleString("en-US")} />
+            <Stat label="Keys per second" value={Math.round(rate).toLocaleString("en-US")} />
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{on ? "Hunting… you can use the rest of the site while this runs." : "Press Start to begin."}</p>
           <HashStrip nears={lot.nears} bestNear={lot.bestNear} scanned={scanned} on={on} />
@@ -187,7 +187,7 @@ function PuzzlePage() {
               <p className="label text-primary">2 · CONFIRM PRIVATE SUBMISSION</p>
               <ul className="mt-2 space-y-1 text-muted-foreground">
                 <li>YOU RECEIVE <span className="text-foreground" data-no-translate>{(Number(signed.player) / 1e8).toFixed(8)} BTC</span> → <span data-no-translate>{wallet?.paymentAddress}</span></li>
-                <li>TREASURY <span className="text-foreground" data-no-translate>{(Number(signed.treasury) / 1e8).toFixed(8)} BTC</span> · FEE <span data-no-translate>{Number(signed.fee).toLocaleString()} sats ({signed.feeRate} sat/vB)</span></li>
+                <li>TREASURY <span className="text-foreground" data-no-translate>{(Number(signed.treasury) / 1e8).toFixed(8)} BTC</span> · FEE <span data-no-translate>{Number(signed.fee).toLocaleString("en-US")} sats ({signed.feeRate} sat/vB)</span></li>
                 <li>SENT ONLY TO MARA SLIPSTREAM. Nothing is sent until you confirm.</li>
               </ul>
               <label className="mt-2 flex items-center gap-2"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I understand MARA sees this transaction and I may wait many hours.</label>

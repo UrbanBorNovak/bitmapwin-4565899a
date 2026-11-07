@@ -36,7 +36,7 @@ export function CollectionParentBadge({ highlight }: { highlight?: string }) {
     : "Checking which verified builds are children of this parent…";
   return (
     <div className="rounded-md border border-border bg-card p-3 font-mono text-[11px]">
-      <p className="text-primary">COLLECTION PARENT · #{MASTER_PARENT_NUMBER.toLocaleString()}</p>
+      <p className="text-primary">COLLECTION PARENT · #{MASTER_PARENT_NUMBER.toLocaleString("en-US")}</p>
       <a href={`https://ordinals.com/inscription/${MASTER_PARENT_ID}`} target="_blank" rel="noreferrer" className="break-all text-muted-foreground hover:text-accent">{MASTER_PARENT_ID}</a>
       <p className="mt-1 text-accent">{q.isLoading ? "CHECKING BITCOIN…" : n == null ? "COULD NOT CHECK BITCOIN RIGHT NOW" : `✓ ${n} CHILDREN PROVEN ON-CHAIN`}</p>
       <ul className="mt-2 space-y-1">
@@ -46,7 +46,7 @@ export function CollectionParentBadge({ highlight }: { highlight?: string }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-muted-foreground">#{MASTER_DELEGATE_NUMBER.toLocaleString()} is the Guardian viewer (delegate), not a parent. Marketplace grouping is not verified — each marketplace decides for itself.</p>
+      <p className="mt-2 text-muted-foreground">#{MASTER_DELEGATE_NUMBER.toLocaleString("en-US")} is the Guardian viewer (delegate), not a parent. Marketplace grouping is not verified — each marketplace decides for itself.</p>
     </div>
   );
 }

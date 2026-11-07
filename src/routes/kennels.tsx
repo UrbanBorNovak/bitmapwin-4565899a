@@ -51,7 +51,7 @@ function Foundry() {
         <label className="text-[11px] text-muted-foreground">BITMAP
           <input value={input} onChange={(e) => { setInput(e.target.value.replace(/\D/g, "")); setPick(0); }} className="mt-1 block w-40 rounded border border-border bg-background px-3 py-2 text-sm text-foreground" />
         </label>
-        <p className="text-xs text-muted-foreground">{sizes.isLoading ? "READING THE BLOCK…" : rects.length ? `${rects.length.toLocaleString()} PARCELS · ONE OUTPOST EACH` : "NO PARCEL LAYOUT FOR THIS BLOCK"}</p>
+        <p className="text-xs text-muted-foreground">{sizes.isLoading ? "READING THE BLOCK…" : rects.length ? `${rects.length.toLocaleString("en-US")} PARCELS · ONE OUTPOST EACH` : "NO PARCEL LAYOUT FOR THIS BLOCK"}</p>
       </section>
 
       {rects.length > 0 && height !== null && (

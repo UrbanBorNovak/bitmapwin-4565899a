@@ -145,7 +145,7 @@ function ClanHall() {
           </h1>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">{clan.motto || "NO WORDS ON THE BANNER"}</p>
           <p className="label mt-2">
-            TIER {tier.level} · {tier.name.toUpperCase()} · SCORE {clanScore(clan).toLocaleString()} · FOUNDED{" "}
+            TIER {tier.level} · {tier.name.toUpperCase()} · SCORE {clanScore(clan).toLocaleString("en-US")} · FOUNDED{" "}
             {new Date(clan.createdAt).toISOString().slice(0, 10)}
           </p>
         </div>
@@ -154,9 +154,9 @@ function ClanHall() {
       <dl className="mt-3 grid grid-cols-2 gap-px bg-border md:grid-cols-4">
         {[
           ["MEMBERS", `${members.length} / ${MAX_MEMBERS}`],
-          ["ROSTER FAME", fameTotal.toLocaleString()],
-          ["CLAN PKS", pkTotal.toLocaleString()],
-          ["CLAN POINTS", clan.xp.toLocaleString()],
+          ["ROSTER FAME", fameTotal.toLocaleString("en-US")],
+          ["CLAN PKS", pkTotal.toLocaleString("en-US")],
+          ["CLAN POINTS", clan.xp.toLocaleString("en-US")],
           [
             "HOME BITMAP",
             clan.homeBitmap === null ? "—" : `${clan.homeBitmap}.BITMAP`,
@@ -174,7 +174,7 @@ function ClanHall() {
           <h2 className="label">CLAN PROGRESSION</h2>
           <p className="font-mono text-[11px] text-muted-foreground">
             {progress.next
-              ? `${progress.needed.toLocaleString()} POINTS TO ${progress.next.toUpperCase()}`
+              ? `${progress.needed.toLocaleString("en-US")} POINTS TO ${progress.next.toUpperCase()}`
               : "HIGHEST TIER REACHED"}
           </p>
         </div>
@@ -196,7 +196,7 @@ function ClanHall() {
                   {index + 1} · {t.name.toUpperCase()}
                 </p>
                 <p className="mt-1 font-mono text-[11px] tabular-nums text-muted-foreground">
-                  {t.xp.toLocaleString()} PTS
+                  {t.xp.toLocaleString("en-US")} PTS
                 </p>
               </li>
             );
@@ -290,7 +290,7 @@ function ClanHall() {
               </Td>
               <Td mobileHide>{player.title.toUpperCase()}</Td>
               <Td right>{player.level}</Td>
-              <Td right mobileHide>{player.fame.toLocaleString()}</Td>
+              <Td right mobileHide>{player.fame.toLocaleString("en-US")}</Td>
               <Td right mobileHide>{player.pkKills}</Td>
               <Td mobileHide>
                 <StatusPill status={player.status} />

@@ -141,14 +141,14 @@ export function CraftUnboxing({ card, onClose, onCraftAnother }: { card: LivingC
     <div className="unbox-scrim fixed inset-0 z-[80] grid place-items-center overflow-y-auto p-4" role="dialog" aria-modal="true" aria-label={`Crafted ${card.bitmap}.BITMAP`}>
       <div className={`unbox-stage relative w-full max-w-[560px] border border-border bg-card p-4 md:p-6 ${phase === "reveal" ? "unbox-recoil" : ""}`}>
         <p className="label text-signal">{revealed ? "CARD FORGED" : "READING THE BLOCK"}</p>
-        <h2 className="display mt-1 text-2xl md:text-3xl">{card.bitmap.toLocaleString()}.BITMAP</h2>
+        <h2 className="display mt-1 text-2xl md:text-3xl">{card.bitmap.toLocaleString("en-US")}.BITMAP</h2>
 
         {/* Hash reel */}
         <div className="mt-3 overflow-hidden border border-border bg-background px-3 py-2 font-mono text-xs">
           {revealed ? (
             <span className={accentText}>{tier.label} · {tier.note}</span>
           ) : (
-            <span className="text-muted-foreground">{frames[frame % frames.length]} · SCANNING BLOCK {card.blockHeight.toLocaleString()}…</span>
+            <span className="text-muted-foreground">{frames[frame % frames.length]} · SCANNING BLOCK {card.blockHeight.toLocaleString("en-US")}…</span>
           )}
         </div>
 

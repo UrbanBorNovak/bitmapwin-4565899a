@@ -142,7 +142,7 @@ export function TerritoryCanvas({
       {hideTitle ? null : (
         <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           <span>TERRITORY // TX PARCELS</span>
-          <span>{packed.parcels.length.toLocaleString()} PARCELS</span>
+          <span>{packed.parcels.length.toLocaleString("en-US")} PARCELS</span>
         </div>
       )}
       <canvas

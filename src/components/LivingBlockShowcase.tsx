@@ -46,7 +46,7 @@ export function LivingBlockShowcase() {
           {BLOCKS.map((b, i) => (
             <button key={b.height} role="tab" aria-selected={i === pick} onClick={() => setPick(i)}
               className={i === pick ? "btn-term" : "btn-term-ghost"}>
-              #{b.height.toLocaleString()}
+              #{b.height.toLocaleString("en-US")}
             </button>
           ))}
         </div>
@@ -65,8 +65,8 @@ export function LivingBlockShowcase() {
 
         <div className="grid divide-y divide-border">
           <Layer n="01" title="THE BLOCK" tone="text-signal">
-            <Row k="Height" v={h.toLocaleString()} />
-            <Row k="Transactions" v={f ? f.txCount.toLocaleString() : "…"} />
+            <Row k="Height" v={h.toLocaleString("en-US")} />
+            <Row k="Transactions" v={f ? f.txCount.toLocaleString("en-US") : "…"} />
             <Row k="Mined" v={f ? new Date(f.timestamp * 1000).toISOString().slice(0, 10) : "…"} />
             <Row k="Hash" v={f ? `${f.hash.slice(0, 10)}…${f.hash.slice(-6)}` : "…"} />
             <p className="mt-1.5 text-sm leading-normal text-muted-foreground md:leading-relaxed">{blk.note}</p>

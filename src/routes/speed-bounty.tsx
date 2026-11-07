@@ -90,9 +90,9 @@ function SpeedBounty() {
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
             <Stat k="TARGET PUBKEY" v={run.pubHex.slice(0, 22) + "…"} />
             <Stat k="RANGE" v={`2^${run.bits - 1} … 2^${run.bits}`} />
-            <Stat k="HOPS" v={`${tick.steps.toLocaleString()} / ~${Math.round(expected).toLocaleString()} expected`} />
-            <Stat k="SPEED" v={`${Math.round(rate).toLocaleString()} hops/s`} />
-            <Stat k="MARKED SPOTS" v={tick.dps.toLocaleString()} />
+            <Stat k="HOPS" v={`${tick.steps.toLocaleString("en-US")} / ~${Math.round(expected).toLocaleString("en-US")} expected`} />
+            <Stat k="SPEED" v={`${Math.round(rate).toLocaleString("en-US")} hops/s`} />
+            <Stat k="MARKED SPOTS" v={tick.dps.toLocaleString("en-US")} />
             <Stat k="TIME" v={`${(tick.ms / 1000).toFixed(1)}s`} />
           </div>
         )}

@@ -55,7 +55,7 @@ export function LiveBlockCircuit({ height, guardian }: { height: number; guardia
         </div>
         <div className={cell}>
           <div className="label text-bitcoin">L3 · {height}.BITMAP</div>
-          <div className="display mt-2 text-lg">{d ? d.txCount.toLocaleString() : "—"}</div>
+          <div className="display mt-2 text-lg">{d ? d.txCount.toLocaleString("en-US") : "—"}</div>
           <div className="mt-1 font-mono text-[10px] text-muted-foreground">TX PARCELS · ONE PER TRANSACTION</div>
         </div>
         <div className={cell}>

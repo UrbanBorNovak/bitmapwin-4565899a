@@ -141,7 +141,7 @@ export const approvals = {
     const now = Date.now();
     return picks.filter((p) => !have.has(p.offerId)).map((p, i) => ({
       id: `broker:${p.offerId}`, citizenId: "broker", kind: "trade" as const, status: "pending" as const, createdAt: now + i,
-      summary: `Buy ${p.item} for ${p.priceSats.toLocaleString()} sats`, href: `/bitmap/${p.height}`,
+      summary: `Buy ${p.item} for ${p.priceSats.toLocaleString("en-US")} sats`, href: `/bitmap/${p.height}`,
       offerId: p.offerId, item: p.item, priceSats: p.priceSats, reason: p.reason,
     }));
   },
@@ -175,7 +175,7 @@ export function brokerPicks(listings: ListingLite[], max = 3): BrokerPick[] {
   return sorted.slice(0, max).map((l, i) => {
     const pct = median > 0 ? Math.round((1 - l.priceSats / median) * 100) : 0;
     const why = [i === 0 ? "Lowest price among open listings" : `#${i + 1} cheapest open listing`];
-    if (pct > 0) why.push(`${pct}% below the median ask of ${median.toLocaleString()} sats`);
+    if (pct > 0) why.push(`${pct}% below the median ask of ${median.toLocaleString("en-US")} sats`);
     if (l.bitmapHeight < 100_000) why.push("early block (under 100,000)");
     return { offerId: l.id, height: l.bitmapHeight, item: `${l.bitmapHeight}.bitmap`, priceSats: l.priceSats, reason: why.join(" · ") };
   });
@@ -185,6 +185,6 @@ export function brokerPicks(listings: ListingLite[], max = 3): BrokerPick[] {
 export function recheckListing(p: Pick<Proposal, "priceSats">, current: { status: string; priceSats: number } | null): string | null {
   if (!current) return "Listing no longer exists";
   if (current.status !== "open") return `Listing is ${current.status === "spent" ? "sold" : current.status}`;
-  if (current.priceSats !== p.priceSats) return `Price changed to ${current.priceSats.toLocaleString()} sats`;
+  if (current.priceSats !== p.priceSats) return `Price changed to ${current.priceSats.toLocaleString("en-US")} sats`;
   return null;
 }

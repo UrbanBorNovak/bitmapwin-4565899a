@@ -36,7 +36,7 @@ function PixelsMarket() {
     <main className="mx-auto max-w-7xl px-4 py-8">
       <Link to="/biternam" className="font-mono text-xs text-muted-foreground hover:text-foreground">← BITERNAM HUB</Link>
       <h1 className="mt-2 font-display text-3xl">BITMAP Pixels Avatar Market</h1>
-      <p className="mt-1 font-mono text-xs text-muted-foreground">{PIXELS.length.toLocaleString()} inscriptions · {ARTISTS.length} series · view & buy on ordinals markets</p>
+      <p className="mt-1 font-mono text-xs text-muted-foreground">{PIXELS.length.toLocaleString("en-US")} inscriptions · {ARTISTS.length} series · view & buy on ordinals markets</p>
 
       <section className="mt-6">
         <h2 className="font-mono text-xs uppercase text-bitcoin">★ Starred cast</h2>
@@ -60,7 +60,7 @@ function PixelsMarket() {
           {ARTISTS.map((a) => <option key={a.artist} value={a.artist}>{a.artist} ({a.count})</option>)}
         </select>
         <button onClick={() => { setStarred((s) => !s); reset(); }} className={`rounded border px-3 py-1.5 font-mono text-xs ${starred ? "border-bitcoin text-bitcoin" : "border-border"}`}>★ Starred only</button>
-        <span className="font-mono text-xs text-muted-foreground">{list.length.toLocaleString()} results</span>
+        <span className="font-mono text-xs text-muted-foreground">{list.length.toLocaleString("en-US")} results</span>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">

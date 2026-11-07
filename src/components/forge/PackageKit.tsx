@@ -91,7 +91,7 @@ export function PackageKit({ blocks, wallet, onPublished }: { blocks: TplBlock[]
   return (
     <div className="rounded border border-primary/50 bg-card/40 p-2 text-[11px]">
       <div className="flex items-center justify-between"><span className="text-primary">PACKAGE AS KIT</span><span className="font-mono text-[10px] text-muted-foreground">{blocks.length} BRICKS</span></div>
-      <p className="mt-1 text-[10px] text-muted-foreground">Turn your build into a boxed set with numbered bags. Publishing costs {KIT_PUBLISH_SATS.toLocaleString()} sats, paid to the site.</p>
+      <p className="mt-1 text-[10px] text-muted-foreground">Turn your build into a boxed set with numbered bags. Publishing costs {KIT_PUBLISH_SATS.toLocaleString("en-US")} sats, paid to the site.</p>
       <div className="mt-2 grid gap-1.5">
         <input value={name} onChange={(e) => setName(e.target.value.slice(0, 40))} placeholder="Kit name" className="rounded border border-border bg-background px-2 py-1.5 text-xs" />
         <input value={tagline} onChange={(e) => setTagline(e.target.value.slice(0, 90))} placeholder="Tagline on the box" className="rounded border border-border bg-background px-2 py-1.5 text-xs" />
@@ -129,9 +129,9 @@ export function PackageKit({ blocks, wallet, onPublished }: { blocks: TplBlock[]
           </div>
           <KitBox key={`${steps.length}-${blocks.length}-${behaviors.length}`} kit={draft} setNo={0} onOpened={() => {}} />
         </>
-      ) : <div className="mt-2 text-[10px] text-muted-foreground">Kits need {KIT_MIN_BLOCKS}–{KIT_MAX_BLOCKS.toLocaleString()} bricks on the canvas.</div>}
+      ) : <div className="mt-2 text-[10px] text-muted-foreground">Kits need {KIT_MIN_BLOCKS}–{KIT_MAX_BLOCKS.toLocaleString("en-US")} bricks on the canvas.</div>}
       <button type="button" disabled={!ready} onClick={go} className="mt-2 w-full rounded bg-primary px-2 py-2 font-mono text-xs font-bold text-primary-foreground disabled:opacity-40">
-        {busy ? "WORKING…" : txid ? "RETRY PUBLISH (ALREADY PAID)" : !wallet ? "CONNECT WALLET TO PUBLISH" : `PAY ${KIT_PUBLISH_SATS.toLocaleString()} SATS & PUBLISH`}
+        {busy ? "WORKING…" : txid ? "RETRY PUBLISH (ALREADY PAID)" : !wallet ? "CONNECT WALLET TO PUBLISH" : `PAY ${KIT_PUBLISH_SATS.toLocaleString("en-US")} SATS & PUBLISH`}
       </button>
       {msg && <div className="mt-1 font-mono text-[10px] text-accent">{msg}</div>}
     </div>

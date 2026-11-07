@@ -74,8 +74,8 @@ export function AtlasPlaceLabels({
                   className="mt-0.5 flex items-center gap-1 whitespace-nowrap font-mono font-bold uppercase text-signal"
                 >
                   <Users style={{ width: 11, height: 11 }} />
-                  {stats[district.index]!.owners.toLocaleString()} OWNERS ·{" "}
-                  {stats[district.index]!.indexed.toLocaleString()} BITMAPS
+                  {stats[district.index]!.owners.toLocaleString("en-US")} OWNERS ·{" "}
+                  {stats[district.index]!.indexed.toLocaleString("en-US")} BITMAPS
                 </span>
               ) : null}
 

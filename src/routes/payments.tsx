@@ -128,7 +128,7 @@ function PaymentsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className={TONE[r.stage]}>● {r.stage}</span>
               <span className="text-muted-foreground">
-                {r.sats.toLocaleString()} SATS{r.time ? ` · ${new Date(r.time * 1000).toLocaleString()}` : ""}
+                {r.sats.toLocaleString("en-US")} SATS{r.time ? ` · ${new Date(r.time * 1000).toLocaleString()}` : ""}
               </span>
             </div>
             <p className="mt-1 break-all text-muted-foreground">{r.address}</p>

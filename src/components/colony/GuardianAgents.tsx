@@ -39,7 +39,7 @@ export function GuardianAgents() {
     <section className="glass-panel rounded-[18px] border border-border p-4">
       <div className="font-mono text-[11px] tracking-widest text-signal">GUARDIAN AGENTS · LOCAL BRAIN</div>
       <p className="mt-1 text-sm text-muted-foreground">
-        Every Guardian you hold is one helper. Each runs a tiny fly-style brain with {SYNAPSES.toLocaleString()} synapses wired from its block, right in your browser — no AI credits used. In the Oasis they move around their own BITMAP by what they chose. Guarding ones defend their BITMAP harder in raids, scouting ones spot this hour's raid shards, and when one forages, you can collect a little BIT once a day. They never trade or spend on their own.
+        Every Guardian you hold is one helper. Each runs a tiny fly-style brain with {SYNAPSES.toLocaleString("en-US")} synapses wired from its block, right in your browser — no AI credits used. In the Oasis they move around their own BITMAP by what they chose. Guarding ones defend their BITMAP harder in raids, scouting ones spot this hour's raid shards, and when one forages, you can collect a little BIT once a day. They never trade or spend on their own.
       </p>
       {!userId && <p className="mt-3 text-xs text-muted-foreground">Sign in to wake your Guardians.</p>}
       {userId && mine.isSuccess && (

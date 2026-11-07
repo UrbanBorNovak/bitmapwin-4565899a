@@ -45,7 +45,7 @@ export function SponsorBooking({ wallet }: { wallet: ConnectedWallet | null }) {
         {(Object.keys(SPONSOR_SLOTS) as SponsorSlot[]).map((k) => (
           <button key={k} onClick={() => setSlot(k)} className={`rounded border p-2 text-left ${slot === k ? "border-bitcoin text-bitcoin" : "border-border"}`}>
             <div>{SPONSOR_SLOTS[k].label}</div>
-            <div className="text-muted-foreground">{SPONSOR_SLOTS[k].sats.toLocaleString()} sats</div>
+            <div className="text-muted-foreground">{SPONSOR_SLOTS[k].sats.toLocaleString("en-US")} sats</div>
           </button>
         ))}
       </div>
@@ -66,7 +66,7 @@ export function SponsorBooking({ wallet }: { wallet: ConnectedWallet | null }) {
             setTxid(id);
             await confirm(id);
           })}>
-          {busy ?? `PAY ${SPONSOR_SLOTS[slot].sats.toLocaleString()} SATS & BOOK`}
+          {busy ?? `PAY ${SPONSOR_SLOTS[slot].sats.toLocaleString("en-US")} SATS & BOOK`}
         </button>
       )}
       {msg && <p className="mt-2 text-signal">{msg}</p>}

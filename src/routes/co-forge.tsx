@@ -292,7 +292,7 @@ function CoForge() {
         </section>
 
         <section className="rounded border border-border bg-card/60 p-3">
-          <p className="mb-2 text-signal">LIVE 3D · {world.size.toLocaleString()} BLOCKS</p>
+          <p className="mb-2 text-signal">LIVE 3D · {world.size.toLocaleString("en-US")} BLOCKS</p>
           <canvas ref={iso} width={640} height={640} className="aspect-square w-full rounded" />
         </section>
       </div>
@@ -300,8 +300,8 @@ function CoForge() {
       <section className="mt-4 flex flex-wrap items-center gap-4 rounded border border-border bg-card/60 p-3">
         <span>PIECES BY REFERENCE: <b className="text-primary">{exp.parts.length}</b>{exp.dropped ? <span className="text-destructive"> (+{exp.dropped} over limit)</span> : null}</span>
         <span>OWN BLOCKS: <b className="text-primary">{exp.own.length}</b></span>
-        <span>TOTAL SHOWN: <b>{world.size.toLocaleString()}</b></span>
-        <span>FILE: <b className="text-signal">{bytes.toLocaleString()} BYTES</b></span>
+        <span>TOTAL SHOWN: <b>{world.size.toLocaleString("en-US")}</b></span>
+        <span>FILE: <b className="text-signal">{bytes.toLocaleString("en-US")} BYTES</b></span>
         <button className="ml-auto rounded bg-primary px-3 py-1.5 text-primary-foreground disabled:opacity-50" disabled={!exp.parts.length && !exp.own.length} onClick={download}>DOWNLOAD ASSEMBLY .HTML</button>
       </section>
       <p className="mt-2 text-muted-foreground">Inscribe the downloaded file with your own wallet, or bring it into Land Forge to reinscribe on your BITMAP. Room moves are public on Nostr; anyone with the code can join.</p>

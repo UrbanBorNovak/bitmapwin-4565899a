@@ -38,7 +38,7 @@ export function BitmapLotteryWidget() {
           <p className="text-[10px] text-muted-foreground">JACKPOT · BITCOIN PUZZLE #71</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Cell label="SPEED" value={`${fmtRate(s.rate)} KEYS/S`} live={s.on} />
-            <Cell label="TICKETS" value={s.scanned.toLocaleString()} />
+            <Cell label="TICKETS" value={s.scanned.toLocaleString("en-US")} />
           </div>
           {s.slice && <p className="mt-2 truncate text-[10px] text-muted-foreground">SLICE <span className="text-accent" data-no-translate>0x{s.slice}</span></p>}
           <div className="mt-3 flex gap-1">

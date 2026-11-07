@@ -31,7 +31,7 @@ export function PoolPanel() {
         </div>
       </div>
       <p className="mt-2 text-muted-foreground">
-        The site splits #71 into {SLICE_COUNT.toLocaleString()} slices of {Number(SLICE_SIZE).toLocaleString()} keys and hands each visitor an unused one, so no two browsers repeat work.
+        The site splits #71 into {SLICE_COUNT.toLocaleString("en-US")} slices of {Number(SLICE_SIZE).toLocaleString("en-US")} keys and hands each visitor an unused one, so no two browsers repeat work.
         Every slice hides 3 secret trap keys at random spots. A slice only counts when the scanner returns all three. That is strong evidence of scanning, but not a guarantee that every key in the slice was checked.
       </p>
       <details className="mt-2 text-[11px] text-muted-foreground">
@@ -47,9 +47,9 @@ export function PoolPanel() {
       </details>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
-        <Box label="SLICES DONE" value={s ? s.slices.toLocaleString() : "…"} />
-        <Box label="KEYS CHECKED BY POOL" value={s ? keys.toLocaleString() : "…"} />
-        <Box label="PROSPECTORS" value={s ? s.workers.toLocaleString() : "…"} />
+        <Box label="SLICES DONE" value={s ? s.slices.toLocaleString("en-US") : "…"} />
+        <Box label="KEYS CHECKED BY POOL" value={s ? keys.toLocaleString("en-US") : "…"} />
+        <Box label="PROSPECTORS" value={s ? s.workers.toLocaleString("en-US") : "…"} />
       </div>
 
       {s?.heat && <RangeHeatmap done={s.heat.done} open={s.heat.open} active={s.active ?? 0} />}
@@ -99,7 +99,7 @@ function RangeHeatmap({ done, open, active }: { done: Record<string, number>; op
   return (
     <div className="mt-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="label text-muted-foreground">#71 RANGE MAP · {HEAT_CELLS.toLocaleString()} CHUNKS · LIVE</p>
+        <p className="label text-muted-foreground">#71 RANGE MAP · {HEAT_CELLS.toLocaleString("en-US")} CHUNKS · LIVE</p>
         <p className="text-[11px] text-muted-foreground">
           <span className="mr-1 inline-block h-2 w-2 bg-bitcoin" /> SCANNED
           <span className="ml-3 mr-1 inline-block h-2 w-2 bg-signal" /> BEING SCANNED NOW ({active})
@@ -111,7 +111,7 @@ function RangeHeatmap({ done, open, active }: { done: Record<string, number>; op
             style={done[i] && !open[i] ? { opacity: Math.min(1, 0.4 + done[i] / 4) } : undefined} />
         ))}
       </div>
-      <p className="mt-1 text-[11px] text-muted-foreground">Each chunk is {HEAT_CELL_SLICES.toLocaleString()} slices. A lit chunk has at least one finished or leased slice — the range is huge, so it fills slowly.</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">Each chunk is {HEAT_CELL_SLICES.toLocaleString("en-US")} slices. A lit chunk has at least one finished or leased slice — the range is huge, so it fills slowly.</p>
     </div>
   );
 }

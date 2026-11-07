@@ -93,7 +93,7 @@ export function SpiderHunter({ targets, running }: { targets: HuntTarget[]; runn
         ctx.fillStyle = n.hot ? ORANGE : TEXT;
         ctx.fillText(n.label, n.x, y0 + S + 12);
         ctx.fillStyle = CYAN;
-        ctx.fillText(`${n.price.toLocaleString()} sats`, n.x, y0 + S + 24);
+        ctx.fillText(`${n.price.toLocaleString("en-US")} sats`, n.x, y0 + S + 24);
       });
 
       // brain: walk → scan → next

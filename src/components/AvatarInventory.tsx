@@ -48,7 +48,7 @@ export function AvatarInventory({
       map.set(model.inscriptionId, {
         inscriptionId: model.inscriptionId,
         source: "PLACED ON YOUR BITMAP",
-        detail: `${model.bitmapHeight}.BITMAP · ${model.triangleCount.toLocaleString()} TRIS`,
+        detail: `${model.bitmapHeight}.BITMAP · ${model.triangleCount.toLocaleString("en-US")} TRIS`,
       });
     }
     for (const utxo of wallet.data?.utxos ?? []) {

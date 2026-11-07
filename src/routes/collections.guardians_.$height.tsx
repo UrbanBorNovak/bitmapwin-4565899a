@@ -281,9 +281,9 @@ function GuardianDetails() {
           {facts.data ? (
             <dl className="grid grid-cols-2 divide-border md:grid-cols-6 md:divide-x">
               {([
-                ["HEIGHT", facts.data.height.toLocaleString()],
+                ["HEIGHT", facts.data.height.toLocaleString("en-US")],
                 ["MINED", timeAgoFromUnix(facts.data.timestamp)],
-                ["TRANSACTIONS", facts.data.txCount.toLocaleString()],
+                ["TRANSACTIONS", facts.data.txCount.toLocaleString("en-US")],
                 ["DIFFICULTY", `${(facts.data.difficulty / 1e12).toFixed(2)}T · ${armorClass(facts.data.difficulty)}`],
                 ["WEIGHT", `${formatBytes(facts.data.weight)} · ${massClass(facts.data.weight)}`],
                 ["SIZE", formatBytes(facts.data.size)],

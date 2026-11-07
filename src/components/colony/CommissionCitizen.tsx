@@ -71,12 +71,12 @@ function BotCard({ bot, onRemove, onUpdate }: { bot: BotCitizen; onRemove: () =>
             {err ? <span className="text-muted-foreground">BALANCE UNAVAILABLE</span>
               : !bal ? <span className="text-muted-foreground">CHECKING…</span>
               : <span className={status === "FUNDED" ? "text-primary" : "text-signal"}>
-                  {status?.replace("_", " ")} · {bal.confirmed.toLocaleString()} sats{bal.pending ? ` (+${bal.pending.toLocaleString()} pending)` : ""}
+                  {status?.replace("_", " ")} · {bal.confirmed.toLocaleString("en-US")} sats{bal.pending ? ` (+${bal.pending.toLocaleString("en-US")} pending)` : ""}
                 </span>}
           </div>
         </div>
       </div>
-      <div className="font-mono text-[10px] text-muted-foreground">Send at least {MIN_DEPOSIT_SATS.toLocaleString()} {bot.network === "signet" ? "signet (test) " : ""}sats · max fee per build {bot.maxFeeSats.toLocaleString()} sats</div>
+      <div className="font-mono text-[10px] text-muted-foreground">Send at least {MIN_DEPOSIT_SATS.toLocaleString("en-US")} {bot.network === "signet" ? "signet (test) " : ""}sats · max fee per build {bot.maxFeeSats.toLocaleString("en-US")} sats</div>
       {running && (
         <div role="status" className="rounded border border-primary bg-primary/10 p-2 font-mono text-[11px] text-primary">
           KEEP THIS TAB OPEN — the bot signs on this device. Closing now can leave sats waiting on a half-finished build.
@@ -86,12 +86,12 @@ function BotCard({ bot, onRemove, onUpdate }: { bot: BotCitizen; onRemove: () =>
       {bot.lastBuild && (
         <a className="block font-mono text-[11px] text-signal hover:text-primary" target="_blank" rel="noreferrer"
           href={`https://mempool.space/signet/tx/${bot.lastBuild.revealTxid}`}>
-          LAST BUILD · {bot.lastBuild.blocks} voxels · {bot.lastBuild.fees.toLocaleString()} sats fees ↗
+          LAST BUILD · {bot.lastBuild.blocks} voxels · {bot.lastBuild.fees.toLocaleString("en-US")} sats fees ↗
         </a>
       )}
       {bot.network === "signet" ? (
         <button className="btn-term w-full text-xs" disabled={running || status !== "FUNDED"} onClick={build}>
-          {running ? "[ BUILDING… ]" : status === "FUNDED" ? "[ BUILD NOW ON SIGNET ]" : `[ FUND ${MIN_DEPOSIT_SATS.toLocaleString()} SIGNET SATS TO BUILD ]`}
+          {running ? "[ BUILDING… ]" : status === "FUNDED" ? "[ BUILD NOW ON SIGNET ]" : `[ FUND ${MIN_DEPOSIT_SATS.toLocaleString("en-US")} SIGNET SATS TO BUILD ]`}
         </button>
       ) : <p className="font-mono text-[10px] text-muted-foreground">MAINNET BOT · auto-build runs on signet only for now. Back up the key to move its sats.</p>}
       <div className="flex gap-2">
@@ -153,7 +153,7 @@ export function CommissionCitizen() {
             <textarea rows={3} maxLength={PROMPT_MAX} className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Cyberpunk radio tower, basalt core with cyan relay needles" />
           </label>
           <label className="block space-y-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted-foreground">MAX FEE PER BUILD · {maxFee.toLocaleString()} SATS</span>
+            <span className="font-mono text-[10px] tracking-widest text-muted-foreground">MAX FEE PER BUILD · {maxFee.toLocaleString("en-US")} SATS</span>
             <input type="range" min={1000} max={10000} step={500} value={maxFee} onChange={(e) => setMaxFee(Number(e.target.value))} className="w-full" />
           </label>
           <button className="btn-term w-full" onClick={submit}>[ GENERATE DEPOSIT ADDRESS ]</button>

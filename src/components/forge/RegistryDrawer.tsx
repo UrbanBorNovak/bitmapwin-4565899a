@@ -72,7 +72,7 @@ export function RegistryDrawer({ height, canPlace }: { height: number | null; ca
             </div>
             <p>
               {check.isFetching ? <span className="text-muted-foreground">READING INSCRIPTION…</span>
-                : check.data?.ok ? <span className="text-signal">✓ VERIFIED · {(check.data.bodyBytes / 1024).toFixed(0)} KB · {check.data.triangleCount.toLocaleString()} TRIS</span>
+                : check.data?.ok ? <span className="text-signal">✓ VERIFIED · {(check.data.bodyBytes / 1024).toFixed(0)} KB · {check.data.triangleCount.toLocaleString("en-US")} TRIS</span>
                 : check.data ? <span className="text-destructive">✕ {check.data.error}</span> : null}
             </p>
             <div className="grid grid-cols-3 gap-2">

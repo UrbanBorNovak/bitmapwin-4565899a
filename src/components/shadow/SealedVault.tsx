@@ -293,7 +293,7 @@ export function SealedVault() {
               <div className="text-[11px] text-muted-foreground">YOUR COINS · {address.slice(0, 10)}…</div>
               <select value={coinPick} onChange={(e) => setCoinPick(e.target.value)} className="mt-1 w-full rounded border border-border bg-background px-2 py-1.5 text-[12px]" aria-label="Seal coin">
                 <option value="">{coins === null ? "READING COINS…" : coins.length ? "PICK A PLAIN COIN" : "NO COINS FOUND"}</option>
-                {coins?.map((c) => <option key={sealKey(c)} value={sealKey(c)}>{c.value.toLocaleString()} sats · {short(c.txid)}:{c.vout}{c.confirmed ? "" : " · unconfirmed"}{groups[sealKey(c)] ? ` · holds ${groups[sealKey(c)]!.length}` : ""}</option>)}
+                {coins?.map((c) => <option key={sealKey(c)} value={sealKey(c)}>{c.value.toLocaleString("en-US")} sats · {short(c.txid)}:{c.vout}{c.confirmed ? "" : " · unconfirmed"}{groups[sealKey(c)] ? ` · holds ${groups[sealKey(c)]!.length}` : ""}</option>)}
               </select>
               <select value={mintType} onChange={(e) => setMintType(e.target.value)} className="mt-2 w-full rounded border border-border bg-background px-2 py-1.5 text-[12px]" aria-label="What to seal">
                 <option value="memo">PLAIN NOTE</option>
@@ -359,7 +359,7 @@ export function SealedVault() {
       {Object.entries(groups).map(([k, bundle]) => (
         <div key={k} className="mt-4 rounded border border-border p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-            <span className="text-muted-foreground">SEAL COIN {short(k.split(":")[0]!)}:{k.split(":")[1]} · {bundle.length} NOTE{bundle.length > 1 ? "S" : ""}{coinOf(k) ? ` · ${coinOf(k)!.value.toLocaleString()} sats` : ""}</span>
+            <span className="text-muted-foreground">SEAL COIN {short(k.split(":")[0]!)}:{k.split(":")[1]} · {bundle.length} NOTE{bundle.length > 1 ? "S" : ""}{coinOf(k) ? ` · ${coinOf(k)!.value.toLocaleString("en-US")} sats` : ""}</span>
             {wallet ? <button onClick={() => setReview(review === k ? null : k)} className="text-primary">[ GIVE FROM THIS COIN ]</button> : null}
           </div>
           {bundle.map((h) => {
@@ -378,7 +378,7 @@ export function SealedVault() {
                 <div key={n} className="mt-1">{to ? "→ GIVE" : "● KEEP"} · {h.c.note.label} · {to ? `to ${short(to.split(".")[1] ?? to)}` : "stays with you on the new coin (output 0)"}</div>
               ); })}
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span>FEE RATE</span><input type="number" min={1} value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} className="w-16 rounded border border-border bg-background px-1" aria-label="Fee rate" /><span>sat/vB · fee {sealFee(feeRate).toLocaleString()} sats</span>
+                <span>FEE RATE</span><input type="number" min={1} value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} className="w-16 rounded border border-border bg-background px-1" aria-label="Fee rate" /><span>sat/vB · fee {sealFee(feeRate).toLocaleString("en-US")} sats</span>
               </div>
               <label className="mt-2 flex items-center gap-2 font-sans"><input type="checkbox" checked={frozen} onChange={(e) => setFrozen(e.target.checked)} />I understand this coin must never be spent anywhere else (freeze it in my wallet).</label>
               <label className="mt-1 flex items-center gap-2 font-sans"><input type="checkbox" checked={backedUp} onChange={(e) => setBackedUp(e.target.checked)} />I downloaded a backup of my notes.</label>

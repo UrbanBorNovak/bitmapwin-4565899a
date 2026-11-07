@@ -64,7 +64,7 @@ function RelicTxPreview({ height, tip, metadataBytes }: { height: number; tip: n
         <table className="w-full text-[10px]"><tbody>
           {res.outputs.map((o, i) => <tr key={i} className="border-t border-border"><td>{i}. {o.role}</td><td className="text-muted-foreground">{o.address.slice(0, 8)}…{o.address.slice(-4)}</td><td className="text-right">{o.sats}</td><td className="text-right text-muted-foreground">DUST {o.dust}</td></tr>)}
         </tbody></table>
-        <p className="text-muted-foreground">TRIBUTE {res.tribute} SATS · MINER FEE ≈ {res.minerFee.toLocaleString()} SATS ({res.vbytes} VB × {res.feeRate})</p>
+        <p className="text-muted-foreground">TRIBUTE {res.tribute} SATS · MINER FEE ≈ {res.minerFee.toLocaleString("en-US")} SATS ({res.vbytes} VB × {res.feeRate})</p>
         <button disabled className="w-full rounded border border-border px-2 py-1 text-muted-foreground opacity-40">SIGN & BROADCAST — {res.signingNote}</button>
       </div>}
     </div>
@@ -105,14 +105,14 @@ function Relics() {
       <div className="mt-8 grid gap-6 md:grid-cols-[1fr_320px]">
         <div className="overflow-hidden rounded-md border border-border bg-card">
           {meta ? <iframe title="Relic preview" srcDoc={html} sandbox="allow-scripts" className="aspect-square w-full border-0" />
-            : <div className="grid aspect-square place-items-center font-mono text-sm text-muted-foreground">{beyond ? `UNMINED · BEYOND CHAIN TIP ${tip.toLocaleString()}` : tip ? "ENTER A MINED BLOCK HEIGHT" : "READING THE CHAIN TIP…"}</div>}
+            : <div className="grid aspect-square place-items-center font-mono text-sm text-muted-foreground">{beyond ? `UNMINED · BEYOND CHAIN TIP ${tip.toLocaleString("en-US")}` : tip ? "ENTER A MINED BLOCK HEIGHT" : "READING THE CHAIN TIP…"}</div>}
         </div>
         <div className="space-y-4 font-mono text-xs">
           <label className="block">BITMAP HEIGHT
             <input value={hText} onChange={(e) => setHText(e.target.value.replace(/\D/g, ""))} inputMode="numeric"
               className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-sm text-foreground" />
           </label>
-          <p className={beyond ? "text-destructive" : "text-muted-foreground"}>{beyond ? "THAT BLOCK IS NOT MINED YET — PICK ONE AT OR BELOW THE TIP" : `CHAIN TIP: ${tip ? tip.toLocaleString() : "…"}`}</p>
+          <p className={beyond ? "text-destructive" : "text-muted-foreground"}>{beyond ? "THAT BLOCK IS NOT MINED YET — PICK ONE AT OR BELOW THE TIP" : `CHAIN TIP: ${tip ? tip.toLocaleString("en-US") : "…"}`}</p>
           <div className="flex flex-wrap gap-1">
             {([["CURRENT TIP", tip], ["GENESIS", 0], ["PIZZA", 57043], ["HALVING 4", 840000]] as const).map(([l, h]) => (
               <button key={l} disabled={!tip} onClick={() => setHText(String(h))} className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-primary disabled:opacity-40">{l}</button>

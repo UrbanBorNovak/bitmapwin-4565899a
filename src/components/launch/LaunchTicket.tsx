@@ -29,7 +29,7 @@ export function LaunchTicket({ seat }: { seat: LaunchSeat }) {
   return (
     <div className="mt-2 font-mono text-[10px]">
       {!open ? (
-        <button onClick={() => setOpen(true)} className="text-bitcoin hover:underline">Inscribe my seat ticket ({TICKET_SATS.toLocaleString()} sats + network fee) →</button>
+        <button onClick={() => setOpen(true)} className="text-bitcoin hover:underline">Inscribe my seat ticket ({TICKET_SATS.toLocaleString("en-US")} sats + network fee) →</button>
       ) : (
         <div className="mt-2 space-y-2">
           <img src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`} alt={`Seat #${seat.seat} ticket`} className="w-full rounded border border-border" />

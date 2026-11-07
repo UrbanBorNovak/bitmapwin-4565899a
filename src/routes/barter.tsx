@@ -219,7 +219,7 @@ function BarterPage() {
               </a></div>
               <p className="mt-2 text-muted-foreground">WANTS</p>
               <p className="text-sm text-foreground">{describeCriteria(t.criteria)}</p>
-              {t.sweetenerSats > 0 && <p className="mt-1">{t.sweetenerDir === "demand" ? "+ asks" : "+ adds"} {t.sweetenerSats.toLocaleString()} sats</p>}
+              {t.sweetenerSats > 0 && <p className="mt-1">{t.sweetenerDir === "demand" ? "+ asks" : "+ adds"} {t.sweetenerSats.toLocaleString("en-US")} sats</p>}
               {(() => { const p = proofLabel(t); return <p className={`mt-2 ${p.ok ? "text-accent" : "text-destructive"}`}>{p.text}</p>; })()}
               {t.note && <p className="mt-2 italic text-muted-foreground">“{t.note}”</p>}
               <div className="mt-3 flex items-center justify-between">
@@ -273,7 +273,7 @@ function MatchDrawer({ ticket, mine, wallet, verdict, onClose }: { ticket: FeedT
           <li key={a.inscriptionId} className={`border p-2 ${a.block ? "border-destructive/50" : "border-border"}`}>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2"><Thumb id={a.inscriptionId} /><span className={a.block ? "text-muted-foreground line-through" : "text-accent"}>{assetLabel(a)}</span></span>
-              <span className="text-muted-foreground">{a.value.toLocaleString()} sats postage</span>
+              <span className="text-muted-foreground">{a.value.toLocaleString("en-US")} sats postage</span>
             </div>
             <p className={`mt-1 ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ Position checked: first sat of its own output"}</p>
             {!a.block && canSwap && (
@@ -343,7 +343,7 @@ function PostWizard({ mine, makerAddress, provider, onClose, onPosted }: {
                   className={`w-full border p-2 text-left disabled:cursor-not-allowed disabled:opacity-60 ${pickId === a.inscriptionId ? "border-primary text-primary" : "border-border"}`}
                   onClick={() => setPickId(a.inscriptionId)}
                 >
-                  <span className="flex items-center gap-2"><Thumb id={a.inscriptionId} size="size-8" /><span>{assetLabel(a)} <span className="text-muted-foreground">· {a.value.toLocaleString()} sats</span></span></span>
+                  <span className="flex items-center gap-2"><Thumb id={a.inscriptionId} size="size-8" /><span>{assetLabel(a)} <span className="text-muted-foreground">· {a.value.toLocaleString("en-US")} sats</span></span></span>
                   <span className={`block text-[11px] ${a.block ? "text-destructive" : "text-accent"}`}>{a.block ? `Blocked: ${a.block}` : "✓ first sat of its own output"}</span>
                 </button>
               </li>

@@ -47,7 +47,7 @@ export function UnfinishedInscriptions() {
       {found.map(({ job, value }) => (
         <div key={job.commitAddress} className="space-y-2 border border-border p-2">
           <p className="font-mono text-[10px] text-muted-foreground break-all">
-            {value.toLocaleString()} SATS WAITING · {job.commitAddress}
+            {value.toLocaleString("en-US")} SATS WAITING · {job.commitAddress}
           </p>
           {open === job.commitAddress ? (
             <ShadowInscriber

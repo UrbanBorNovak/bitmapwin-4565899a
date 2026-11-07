@@ -131,7 +131,7 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
             {[...list.slice(0, 20), ...list.slice(0, 20)].map((g, i) => (
               <span key={i} data-no-translate>
                 <span style={{ color: RARITY_VAR[g.rarity] }}>◆ {g.rarity}</span>{" "}
-                {g.height}.BITMAP · {g.species} · LV{g.level} · <span className="text-bitcoin">{GUARDIAN_PRICE_SATS.toLocaleString()} SATS</span> ·{" "}
+                {g.height}.BITMAP · {g.species} · LV{g.level} · <span className="text-bitcoin">{GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS</span> ·{" "}
                 <a href={`https://mempool.space/tx/${g.txid}`} target="_blank" rel="noreferrer" className="text-signal hover:underline">TX {g.txid.slice(0, 6)}</a> · <span className="text-muted-foreground">{ago(g.createdAt)} AGO</span>
               </span>
             ))}
@@ -164,9 +164,9 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
         {/* Floor */}
         <div className="panel rounded-md border border-border p-5">
           <p className="label text-signal">{listedFloor ? "ASKING FLOOR" : "MINT FLOOR · PRIMARY"} / LAST PRICE</p>
-          <p className="display mt-2 text-4xl tabular-nums">{(listedFloor ?? GUARDIAN_PRICE_SATS).toLocaleString()} SATS</p>
+          <p className="display mt-2 text-4xl tabular-nums">{(listedFloor ?? GUARDIAN_PRICE_SATS).toLocaleString("en-US")} SATS</p>
           <p className="mt-1 font-mono text-sm">
-            LAST {lastSale ? `${lastSale.toLocaleString()} SATS · RESALE` : list.length ? `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS · SUMMON` : "—"}{" "}
+            LAST {lastSale ? `${lastSale.toLocaleString("en-US")} SATS · RESALE` : list.length ? `${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} SATS · SUMMON` : "—"}{" "}
             {delta !== null && <span className={delta >= 0 ? "text-signal" : "text-destructive"}>{delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)}%</span>}
           </p>
           <div className="mt-3 h-24">
@@ -183,7 +183,7 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
                 <AreaChart data={primary}>
                   <Area type="stepAfter" dataKey="vol" stroke="var(--signal)" fill="var(--signal)" fillOpacity={0.15} strokeWidth={2} />
                   <YAxis hide domain={[0, "auto"]} />
-                  <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)" }} formatter={(v: number) => [`${v.toLocaleString()} SATS`, "SUMMON VOLUME"]} />
+                  <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)" }} formatter={(v: number) => [`${v.toLocaleString("en-US")} SATS`, "SUMMON VOLUME"]} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -191,7 +191,7 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
             )}
           </div>
           <p className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>
-            SUMMON VOL {primaryVolume.toLocaleString()} SATS · RESALE VOL {secondaryVolume.toLocaleString()} SATS · {sales.length} RESALES
+            SUMMON VOL {primaryVolume.toLocaleString("en-US")} SATS · RESALE VOL {secondaryVolume.toLocaleString("en-US")} SATS · {sales.length} RESALES
           </p>
         </div>
 
@@ -225,7 +225,7 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
 
       {/* Cumulative supply */}
       <div className="panel rounded-md border border-border p-5">
-        <p className="label">GUARDIANS AWAKENED OVER TIME · {list.length.toLocaleString()} TOTAL</p>
+        <p className="label">GUARDIANS AWAKENED OVER TIME · {list.length.toLocaleString("en-US")} TOTAL</p>
         <div className="mt-3 h-48">
           {stats.cumulative.length > 0 ? (
             <ResponsiveContainer>

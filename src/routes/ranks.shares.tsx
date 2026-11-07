@@ -123,7 +123,7 @@ function ShareMarket() {
     >
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label={`YOUR ${COIN}`} value={formatBit(balance)} accent />
-        <Stat label="YOUR SHARES" value={myShares.toLocaleString()} />
+        <Stat label="YOUR SHARES" value={myShares.toLocaleString("en-US")} />
         <Stat label="SELL-BACK VALUE" value={formatBit(myValue)} />
         <Stat label="BOOKS OPEN" value={String(rows.length)} />
       </div>
@@ -173,14 +173,14 @@ function ShareMarket() {
                   ×{demandMultiplier(row.issued).toFixed(2)}
                 </Td>
                 <Td right mobileHide>
-                  {row.issued.toLocaleString()}
+                  {row.issued.toLocaleString("en-US")}
                 </Td>
                 <Td right mobileHide>
                   {formatBit(row.raised)}
                 </Td>
                 <Td right>
                   {row.mine > 0 ? (
-                    <span className="text-bitcoin">{row.mine.toLocaleString()}</span>
+                    <span className="text-bitcoin">{row.mine.toLocaleString("en-US")}</span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}

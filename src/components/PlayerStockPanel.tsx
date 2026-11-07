@@ -170,7 +170,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
       issuePlayerSharesFn({ data: { playerId: player.id, address: payAddress, sharesOffered } }),
     onSuccess: (result) => {
       toast(isOpen ? "MORE SHARES ON OFFER" : "SHARE BOOK OPEN", {
-        description: `${result.sharesOffered.toLocaleString()} SHARES OFFERED · FEE ${formatBit(result.feeCoins)}`,
+        description: `${result.sharesOffered.toLocaleString("en-US")} SHARES OFFERED · FEE ${formatBit(result.feeCoins)}`,
       });
       void queryClient.invalidateQueries({ queryKey: ["player-stock"] });
       void queryClient.invalidateQueries({ queryKey: ["player-stock-all"] });
@@ -200,7 +200,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="label text-muted-foreground">ISSUE SHARES</p>
           <p className="font-mono text-[11px] text-muted-foreground">
-            ON OFFER {offered.toLocaleString()} · LEFT {remaining.toLocaleString()}
+            ON OFFER {offered.toLocaleString("en-US")} · LEFT {remaining.toLocaleString("en-US")}
           </p>
         </div>
         {isMyCharacter ? (
@@ -236,7 +236,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
                 onClick={() => issue.mutate(offer)}
                 className="btn-term disabled:opacity-40"
               >
-                [ {isOpen ? "OFFER" : "OPEN BOOK WITH"} {offer.toLocaleString()} → FEE {formatBit(issueFee)} ]
+                [ {isOpen ? "OFFER" : "OPEN BOOK WITH"} {offer.toLocaleString("en-US")} → FEE {formatBit(issueFee)} ]
               </button>
             </div>
             <p className="mt-3 max-w-[80ch] font-mono text-[11px] leading-relaxed text-muted-foreground">
@@ -257,7 +257,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
         <Stat label="SHARE PRICE" value={formatBit(price)} accent />
         <Stat label="EARNED BASE VALUE" value={formatBit(base)} />
         <Stat label="DEMAND" value={`×${demandMultiplier(issued).toFixed(2)}`} />
-        <Stat label="SHARES ISSUED" value={issued.toLocaleString()} />
+        <Stat label="SHARES ISSUED" value={issued.toLocaleString("en-US")} />
         <Stat label="HOLDERS" value={String((holders.data ?? []).length)} />
         <Stat label={`${COIN} RAISED`} value={formatBit(stock.data?.bitRaised ?? 0)} />
         <Stat label="DIVIDENDS PAID" value={formatBit(stock.data?.dividendsPaid ?? dividendTotal)} />
@@ -265,7 +265,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
           label="YOUR STAKE"
           value={
             mine
-              ? `${mine.shares.toLocaleString()} · ${issued > 0 ? ((mine.shares / issued) * 100).toFixed(1) : "0.0"}%`
+              ? `${mine.shares.toLocaleString("en-US")} · ${issued > 0 ? ((mine.shares / issued) * 100).toFixed(1) : "0.0"}%`
               : "NONE"
           }
           accent={Boolean(mine)}
@@ -342,7 +342,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
                     <span className="break-all">{shortenAddress(h.holderAddress)}</span>
                   </span>
                   <span className="shrink-0 font-mono text-[11px] text-bitcoin">
-                    {h.shares.toLocaleString()} ·{" "}
+                    {h.shares.toLocaleString("en-US")} ·{" "}
                     {issued > 0 ? ((h.shares / issued) * 100).toFixed(1) : "0.0"}%
                   </span>
                 </li>

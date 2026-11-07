@@ -99,7 +99,7 @@ export function OnchainBitmonPanel({ height }: { height: number }) {
             <dt className="text-muted-foreground">PATTERN</dt><dd className="break-all text-primary">{data.pattern}</dd>
             <dt className="text-muted-foreground">TX TIERS</dt><dd>{data.tiers.length} tx</dd>
             <dt className="text-muted-foreground">FIRST SEEN</dt><dd>{data.firstSeen !== null ? `${data.firstSeen}.BITMAP` : "—"}</dd>
-            <dt className="text-muted-foreground">EDITION</dt><dd>{data.rank !== null ? `#${data.rank.toLocaleString()} / ${data.total?.toLocaleString()}` : "—"}</dd>
+            <dt className="text-muted-foreground">EDITION</dt><dd>{data.rank !== null ? `#${data.rank.toLocaleString("en-US")} / ${data.total?.toLocaleString("en-US")}` : "—"}</dd>
             <dt className="text-muted-foreground">GRID</dt><dd>{data.width}×{data.height}</dd>
             <dt className="text-muted-foreground">HOVERED</dt><dd className="text-accent">{hover !== null ? `parcel ${hover} · size ${data.slots[hover]?.size}` : "—"}</dd>
           </dl>

@@ -6,13 +6,13 @@ import type { MintLang } from "@/lib/mint-lang";
 type Wallet = "unisat" | "xverse";
 
 const SHARED = [
-  ["SUMMON", `Pay ${GUARDIAN_PRICE_SATS.toLocaleString()} sats (plus a few unique sats that identify you) to the treasury. After one confirmation your Guardian wakes up in the Oasis.`],
+  ["SUMMON", `Pay ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} sats (plus a few unique sats that identify you) to the treasury. After one confirmation your Guardian wakes up in the Oasis.`],
   ["COMMIT", "A small payment (about 2,000 sats) to a one-time address. That address is built from the inscription itself — it already names your BITMAP as parent. Your BITMAP is NOT moved here, and that is correct."],
   ["REVEAL", "The last popup. Input 0 is your BITMAP, Output 0 sends it straight back to you. A new 546-sat Guardian Ordinal lands in your wallet as a true child of your BITMAP."],
 ] as const;
 
 const SHARED_ZH = [
-  ["召唤", `向金库支付 ${GUARDIAN_PRICE_SATS.toLocaleString()} 聪（另加用于识别你的少量独特聪）。一次确认后，守护者会在绿洲中觉醒。`],
+  ["召唤", `向金库支付 ${GUARDIAN_PRICE_SATS.toLocaleString("en-US")} 聪（另加用于识别你的少量独特聪）。一次确认后，守护者会在绿洲中觉醒。`],
   ["提交", "向一次性地址支付约 2,000 聪的小额款项。该地址由铭文本身生成，已经将你的 BITMAP 指定为父铭文。此时不会移动 BITMAP，这是正常的。"],
   ["揭示", "最后一个弹窗。输入 0 是你的 BITMAP，输出 0 会将它原路返回。一个新的 546 聪守护者 Ordinal 将进入你的钱包，成为 BITMAP 的真实子铭文。"],
 ] as const;

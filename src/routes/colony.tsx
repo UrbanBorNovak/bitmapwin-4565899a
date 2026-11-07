@@ -101,7 +101,7 @@ function ProposalExports({ r }: { r: BuildRow }) {
   const btn = "rounded border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground hover:text-foreground";
   return (
     <div className="flex flex-wrap gap-1 pt-1">
-      <button type="button" className={btn} onClick={() => run((m) => `.BWVX saved · ${m.downloadBwvx(m.tuplesToBlocks(r.blocks), name).bytes.toLocaleString()} B`)}>EXPORT .BWVX</button>
+      <button type="button" className={btn} onClick={() => run((m) => `.BWVX saved · ${m.downloadBwvx(m.tuplesToBlocks(r.blocks), name).bytes.toLocaleString("en-US")} B`)}>EXPORT .BWVX</button>
       <button type="button" className={btn} onClick={() => run(async (m) => { const x = await m.downloadBuildGlb(m.tuplesToBlocks(r.blocks), name); return `.GLB saved · ${x.boxes} boxes · 1 mesh`; })}>EXPORT .GLB</button>
       <button type="button" className={btn} onClick={() => run(async (m) => {
         const code = `${m.BWVX_LOADER_JS}\n// ${name}\nexport const PAYLOAD = "${m.bwvxPayload(m.tuplesToBlocks(r.blocks))}";\n// scene.add(loadBWVX(PAYLOAD));\n`;
@@ -144,7 +144,7 @@ function BuildProposals() {
               <BuildTopView blocks={r.blocks ?? []} />
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="font-mono text-sm text-foreground">{r.bitmap_height}.bitmap{r.parcel_index !== null ? ` · parcel #${r.parcel_index}` : ""}</div>
-                <div className="font-mono text-[11px] text-signal">{r.block_count.toLocaleString()} VOXELS · {new Date(r.created_at).toLocaleDateString()}</div>
+                <div className="font-mono text-[11px] text-signal">{r.block_count.toLocaleString("en-US")} VOXELS · {new Date(r.created_at).toLocaleDateString()}</div>
                 {r.note && <div className="text-xs text-muted-foreground">Why: {r.note}</div>}
                 {r.status === "pending" ? (
                   <div className="flex gap-1 pt-1">
@@ -267,7 +267,7 @@ function ColonyPage() {
                 <span className="font-mono text-[11px] uppercase text-signal">{p.kind}</span>
                 {p.item ? (
                   <div className="min-w-0 flex-1">
-                    <div className="text-foreground"><span className="font-mono">{p.item}</span> · <span className="font-mono text-primary">{p.priceSats?.toLocaleString()} sats</span> <span className="text-xs text-muted-foreground">+ 2% fee</span></div>
+                    <div className="text-foreground"><span className="font-mono">{p.item}</span> · <span className="font-mono text-primary">{p.priceSats?.toLocaleString("en-US")} sats</span> <span className="text-xs text-muted-foreground">+ 2% fee</span></div>
                     <div className="text-xs text-muted-foreground">Why: {p.reason}</div>
                   </div>
                 ) : <span className="flex-1 text-foreground">{p.summary}</span>}

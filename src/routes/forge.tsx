@@ -459,7 +459,7 @@ function ForgePage() {
     setWorld(next);
     setPendingLoad(null);
     loadedFor.current = chainBuild.inscriptionId;
-    toast.success(`LOADED ${decoded.length.toLocaleString()} VOXELS FROM ${height}.BITMAP — REMIX AWAY`);
+    toast.success(`LOADED ${decoded.length.toLocaleString("en-US")} VOXELS FROM ${height}.BITMAP — REMIX AWAY`);
   };
   useEffect(() => {
     if (!chainBuild || loadedFor.current === chainBuild.inscriptionId) return;
@@ -484,7 +484,7 @@ function ForgePage() {
       setWorld(next);
       setPendingLoad(null);
       loadedFor.current = chainBuild?.inscriptionId ?? "__proposal__";
-      toast.success(`LOADED AGENT PROPOSAL · ${next.size.toLocaleString()} VOXELS — REVIEW, EDIT, THEN INSCRIBE YOURSELF`);
+      toast.success(`LOADED AGENT PROPOSAL · ${next.size.toLocaleString("en-US")} VOXELS — REVIEW, EDIT, THEN INSCRIBE YOURSELF`);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.proposal]);
@@ -544,7 +544,7 @@ function ForgePage() {
     void import("@/lib/voxel-import").then((m) => m.importVoxelFile(file, SPAN)).then((r) => {
       setPicked({ id: `file:${file.name}:${Date.now()}`, name: file.name.replace(/\.(bwvx|vox)$/i, ""), sphere: "bricks", blocks: r.blocks, author: null, bitCost: 0 });
       setTool("stamp"); setTurns(0);
-      toast.success(`Imported ${r.blocks.length.toLocaleString()} blocks — click the land to place`, { description: r.note });
+      toast.success(`Imported ${r.blocks.length.toLocaleString("en-US")} blocks — click the land to place`, { description: r.note });
     }).catch((err) => toast.error("Import failed", { description: String(err?.message ?? err) }));
   };
 
@@ -808,7 +808,7 @@ function ForgePage() {
               )}
               {chainBuild && pendingLoad === chainBuild.inscriptionId && (
                 <div className="rounded border border-accent px-2 py-1 text-[10px]">
-                  <p className="text-accent">▣ ON-CHAIN BUILD FOUND · {chainBuild.blockCount.toLocaleString()} VOXELS</p>
+                  <p className="text-accent">▣ ON-CHAIN BUILD FOUND · {chainBuild.blockCount.toLocaleString("en-US")} VOXELS</p>
                   <div className="mt-1 flex gap-1">
                     <button type="button" onClick={() => loadChainBuild(true)} className="rounded border border-primary bg-primary/10 px-2 py-0.5 text-foreground">LOAD ONTO CANVAS</button>
                     <button type="button" onClick={() => setPendingLoad(null)} className="rounded border border-border px-2 py-0.5 text-muted-foreground">DISMISS</button>
@@ -851,7 +851,7 @@ function ForgePage() {
           {leftTab === "land" && rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
-              <p className="mt-1 text-muted-foreground">The floor shows this block's {rects.length.toLocaleString()} real transaction parcels. Use PARCEL and click a tile to build only on it.</p>
+              <p className="mt-1 text-muted-foreground">The floor shows this block's {rects.length.toLocaleString("en-US")} real transaction parcels. Use PARCEL and click a tile to build only on it.</p>
               <div className="mt-2 flex items-center gap-1">
                 <button type="button" onClick={() => setFocus(null)} className={`rounded border px-2 py-0.5 text-[10px] ${focus === null ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>WHOLE BITMAP</button>
                 <input type="number" min={0} max={rects.length - 1} value={focus ?? ""} placeholder="#" onChange={(e) => { const v = Number(e.target.value); setFocus(e.target.value === "" ? null : Math.max(0, Math.min(rects.length - 1, v))); }} className="w-20 rounded border border-border bg-background px-2 py-0.5 text-foreground" />
@@ -1084,7 +1084,7 @@ function ForgePage() {
             <OrbitControls key={proj} enablePan={full} makeDefault maxPolarAngle={view.id === "top" ? Math.PI / 2 : Math.PI / 2.1} />
           </SafeCanvas>
           <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
-            {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
+            {height !== null ? `${height.toLocaleString("en-US")}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
           </div>
           <div data-testid="forge-view-bar" className="absolute left-3 top-11 z-10 flex flex-wrap items-center gap-1 rounded border border-border bg-background/80 p-1 text-[10px] backdrop-blur">
             {(["persp", "ortho"] as const).map((p) => (
@@ -1173,8 +1173,8 @@ function ForgePage() {
               <p className="text-muted-foreground">Only free pieces so far. Community pieces you place show up here with their sat share.</p>
             ) : (
               <ul className="space-y-1">
-                {payouts.map((p) => <li key={p.address} className="flex justify-between text-foreground"><span>{short(p.address)}</span><span className="text-accent">{p.sats.toLocaleString()} sats</span></li>)}
-                <li className="flex justify-between border-t border-border pt-1 text-muted-foreground"><span>PAID ON INSCRIBE</span><span>{payoutSats.toLocaleString()} sats</span></li>
+                {payouts.map((p) => <li key={p.address} className="flex justify-between text-foreground"><span>{short(p.address)}</span><span className="text-accent">{p.sats.toLocaleString("en-US")} sats</span></li>)}
+                <li className="flex justify-between border-t border-border pt-1 text-muted-foreground"><span>PAID ON INSCRIBE</span><span>{payoutSats.toLocaleString("en-US")} sats</span></li>
               </ul>
             )}
           </div>
@@ -1195,12 +1195,12 @@ function ForgePage() {
                 return (
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded border border-border p-2 font-mono text-[11px]">
                     <span>
-                      <span className="text-muted-foreground">BLOCK DATA </span>{raw.toLocaleString()} B → <span className="text-primary">{packed.toLocaleString()} B {best.format}</span>
-                      {raw > packed ? <span className="text-muted-foreground"> · saves ~{(sats(raw) - sats(packed)).toLocaleString()} sats at 5 sat/vB</span> : null}
+                      <span className="text-muted-foreground">BLOCK DATA </span>{raw.toLocaleString("en-US")} B → <span className="text-primary">{packed.toLocaleString("en-US")} B {best.format}</span>
+                      {raw > packed ? <span className="text-muted-foreground"> · saves ~{(sats(raw) - sats(packed)).toLocaleString("en-US")} sats at 5 sat/vB</span> : null}
                     </span>
                     <button type="button" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void navigator.clipboard.writeText(FORGE_UNPACK_JS).then(() => toast.success("Unpacker copied — thank you for building!"))}>COPY UNPACKER JS</button>
                     <button type="button" data-testid="forge-glb" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBuildGlb(parcelBlocks, `bitmap-${height}`)).then((r) => toast.success(`.GLB saved · ${r.boxes} boxes · ${(r.bytes / 1024).toFixed(1)} KB`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .GLB</button>
-                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString()} B`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .BWVX</button><InfoTip text="BWVX is the Bitcoin voxel format: lightweight 3D blocks small enough to store directly on Bitcoin." />
+                    <button type="button" data-testid="forge-bwvx" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void import("@/lib/bwvx-export").then((m) => m.downloadBwvx(parcelBlocks, `bitmap-${height}`, SPAN)).then((r) => toast.success(`.BWVX saved · ${r.bytes.toLocaleString("en-US")} B`)).catch((e) => toast.error(String(e?.message ?? e)))}>DOWNLOAD .BWVX</button><InfoTip text="BWVX is the Bitcoin voxel format: lightweight 3D blocks small enough to store directly on Bitcoin." />
                   </div>
                 );
               })()}
@@ -1221,14 +1221,14 @@ function ForgePage() {
                 digest={digest}
                 artifactLabel={parcelTarget !== undefined ? `ETCH YOUR BUILD ONTO PARCEL #${parcelTarget}'S OWN SAT` : focusRect ? `ETCH PARCEL #${focusRect.index} BUILD ONTO THE BITMAP'S OWN SAT` : "ETCH YOUR BUILD ONTO THE BITMAP'S OWN SAT"}
                 actionLabel="INSCRIBE ON BITCOIN"
-                description={parcelTarget !== undefined ? `Your wallet must hold parcel #${parcelTarget} of ${height}.bitmap. The build is stamped onto your parcel's own sat and shows on its tile on the BITMAP and in the Oasis.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}` : `Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
+                description={parcelTarget !== undefined ? `Your wallet must hold parcel #${parcelTarget} of ${height}.bitmap. The build is stamped onto your parcel's own sat and shows on its tile on the BITMAP and in the Oasis.${payoutSats ? ` ${payoutSats.toLocaleString("en-US")} sats go to the makers listed above in that same transaction.` : ""}` : `Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString("en-US")} sats go to the makers listed above in that same transaction.` : ""}`}
                 allowUpload={false}
                 claimParentsForHeight={height}
                 reinscribeOnBitmap
                 {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
                 artifactVariants={[
                   ...(asmHtml ? [{ key: "asm", label: xl ? "XL RECURSIVE BUILD · 128³" : livePlacements.length ? "RECURSIVE BUILD" : "BUILD + GUARDIAN", contentType: "text/html;charset=utf-8", source: asmHtml, note: `${livePlacements.length} inscribed piece${livePlacements.length === 1 ? "" : "s"} pulled live from Bitcoin${perch ? " · your Guardian perched on top" : ""} · ${(asmBytes / 1024).toFixed(1)} KB.`, ...(payouts.length ? { tributes: payouts } : {}) }] : []),
-                  ...(xl ? [] : FORGE_MASTER_DELEGATE_ID ? (() => { const best = encodeBuildBest(parcelBlocks); const meta = forgeDelegateMetadata(height, best.data, lineage, focusRect ?? undefined, best.format); return [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer (${best.format}) — about ${delegateSavings(html, meta).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: meta, ...(payouts.length ? { tributes: payouts } : {}) }]; })() : []),
+                  ...(xl ? [] : FORGE_MASTER_DELEGATE_ID ? (() => { const best = encodeBuildBest(parcelBlocks); const meta = forgeDelegateMetadata(height, best.data, lineage, focusRect ?? undefined, best.format); return [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer (${best.format}) — about ${delegateSavings(html, meta).saved.toLocaleString("en-US")} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: meta, ...(payouts.length ? { tributes: payouts } : {}) }]; })() : []),
                   ...(xl ? [] : [{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) }]),
                 ]}
               />

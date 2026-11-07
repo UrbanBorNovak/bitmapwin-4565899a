@@ -18,7 +18,7 @@ import { guardianArtifactSvg, guardianShieldDigest, type GuardianDna } from "@/l
 
 const STEPS = [
   ["A", "PARENT", "Your BITMAP is spent into the reveal and returned to your own address in the same transaction."],
-  ["B", "TRIBUTE", `${TRIBUTE_SATS.toLocaleString()} sats go to the BITMAPWIN treasury in output 1 of the reveal.`],
+  ["B", "TRIBUTE", `${TRIBUTE_SATS.toLocaleString("en-US")} sats go to the BITMAPWIN treasury in output 1 of the reveal.`],
   ["C", "AWAKENS", "The master generator reads its parent and tribute on chain and draws the full-colour Guardian."],
 ] as const;
 
@@ -43,7 +43,7 @@ export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
       source: guardianMasterGeneratorHtml(),
       delegate: engine,
       tribute: { address: MINT_TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
-      note: `EMPTY BODY + DELEGATE TAG. THE MASTER GENERATOR CHECKS THE ${dna.height}.BITMAP PARENT AND THE ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS TRANSACTION.`,
+      note: `EMPTY BODY + DELEGATE TAG. THE MASTER GENERATOR CHECKS THE ${dna.height}.BITMAP PARENT AND THE ${TRIBUTE_SATS.toLocaleString("en-US")}-SAT TRIBUTE INSIDE THIS TRANSACTION.`,
     },
   ];
 

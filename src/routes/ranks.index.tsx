@@ -106,7 +106,7 @@ function Row({ player, index, pinned }: { player: RankPlayer; index: number; pin
       </Td>
       <Td mobileHide>{player.title.toUpperCase()}</Td>
       <Td right>{player.level}</Td>
-      <Td right>{player.fame.toLocaleString()}</Td>
+      <Td right>{player.fame.toLocaleString("en-US")}</Td>
       <Td mobileHide>
         <StatusPill status={player.status} />
       </Td>

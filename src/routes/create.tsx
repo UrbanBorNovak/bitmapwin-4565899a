@@ -407,7 +407,7 @@ function CreatePage() {
                         <li key={model.inscriptionId} data-no-translate>
                           <span className="text-bitcoin">▣ </span>
                           {model.inscriptionId.slice(0, 10)}…{model.inscriptionId.slice(-6)} · {model.height}.BITMAP ·{" "}
-                          {model.triangleCount.toLocaleString()} TRIS
+                          {model.triangleCount.toLocaleString("en-US")} TRIS
                           {model.animationCount > 0 ? " · ANIMATED" : ""}
                         </li>
                       ))}
