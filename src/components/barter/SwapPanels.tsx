@@ -54,7 +54,7 @@ export function ProposeSwap({ ticket, assets, wallet }: {
   const [phase, setPhase] = useState<Phase>("idle");
   const [msg, setMsg] = useState("");
   const [agree, setAgree] = useState(false);
-  const [built, setBuilt] = useState<{ psbtBase64: string; feeSats: number; feeRate: number; changeSats: number; takerAssetIndex: number; takerAssetIndices: number[]; fundingIndices: number[] } | null>(null);
+  const [built, setBuilt] = useState<{ psbtBase64: string; feeSats: number; feeRate: number; changeSats: number; takerAssetIndex: number; takerAssetIndices: number[]; fundingIndices: number[]; items?: { id: string; value: number }[] } | null>(null);
   const [relays, setRelays] = useState<string[]>([]);
 
   const build = async () => {
