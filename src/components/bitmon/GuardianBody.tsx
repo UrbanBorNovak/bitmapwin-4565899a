@@ -457,7 +457,7 @@ const SpeciesBody = memo(function SpeciesBody({
           color={tones.shadow}
           metalness={0.5}
         />
-        {[-1, 1].map((s) => eye([s * 0.105 * u, 1.2 * u, 0.41 * u], [0.075 * u, 0.045 * u, 0.025 * u]))}
+        {[-1, 1].map((s) => <group key={s}>{eye([s * 0.105 * u, 1.2 * u, 0.41 * u], [0.075 * u, 0.045 * u, 0.025 * u])}</group>)}
         {rune([0, 1.03 * u, 0.405 * u], [0.055 * u, 0.13 * u, 0.025 * u])}
         <mesh position={[0, 1.2 * u, 0]} rotation={[Math.PI / 2, 0, 0]} raycast={noRaycast}>
           <torusGeometry args={[0.55 * u, 0.025 * u, 4, 12]} />

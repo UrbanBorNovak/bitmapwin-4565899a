@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { useEffect, useMemo, useState } from "react";
+import { offlinePreview } from "@/lib/offline-preview";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
@@ -204,7 +205,7 @@ V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleStrin
         {[["V7 · ACTIVE", v7], ["V8 · DRAFT", v8]].map(([label, html]) => (
           <div key={label}>
             <div className="label text-signal">{label}</div>
-            <iframe title={label} srcDoc={html} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
+            <iframe title={label} srcDoc={offlinePreview(html ?? "")} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
           </div>
         ))}
       </div>
@@ -501,7 +502,7 @@ TOOL           ord wallet inscribe --compress --file guardian-master-${version}.
 WARNING        never inscribe the .br file without content-encoding: br — it renders as garbage`}
         </pre>
       )}
-      <iframe title="Master generator preview" srcDoc={html} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
+      <iframe title="Master generator preview" srcDoc={offlinePreview(html)} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
       <div className="mt-6 border border-border p-4 font-mono text-xs">
         <div className="text-signal">LIVEOCI V1.1 AUDIT</div>
         <p className="mt-2 text-muted-foreground">

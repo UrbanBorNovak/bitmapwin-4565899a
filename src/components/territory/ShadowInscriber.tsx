@@ -1,4 +1,5 @@
 import { checkMintParents } from "@/lib/mint-parents-guard";
+import { offlinePreview } from "@/lib/offline-preview";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -390,7 +391,7 @@ export function ShadowInscriber(props: {
       {liveArtifact ? (
         <iframe
           title="Live artifact preview"
-          srcDoc={artifactSource}
+          srcDoc={offlinePreview(artifactSource)}
           sandbox="allow-scripts"
           className="aspect-square w-full max-w-[280px] border border-border/40 bg-background"
         />
