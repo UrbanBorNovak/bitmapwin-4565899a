@@ -419,7 +419,7 @@ function Marketplace() {
               </div>
             </div>
           </div>
-          <dl data-tour="market-stats" className="grid grid-cols-3 gap-x-5 gap-y-2 @container sm:grid-cols-6" data-no-translate>
+          <dl data-tour="market-stats" className="flex flex-wrap justify-start gap-x-6 gap-y-2 xl:justify-end" data-no-translate>
             <HeadStat k="FLOOR" v={listedFloor ? `₿ ${formatSats(listedFloor)}` : "—"} accent />
             <HeadStat k="LISTED" v={listed.length.toLocaleString("en-US")} />
             <HeadStat k="TRADED" v={(crawl.data ? crawl.data.tradedBitmaps : traded.length).toLocaleString("en-US")} />
