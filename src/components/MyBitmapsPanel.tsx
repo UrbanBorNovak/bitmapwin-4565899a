@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { walletQuery } from "@/lib/wallet";
@@ -19,6 +19,7 @@ import { BulkListBar } from "@/components/market/BulkListBar";
 import { ListPriceHint } from "@/components/market/ListPriceHint";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fetchBlockStatsMany, fetchPatternSiblings, type BlockStats } from "@/lib/block-stats";
 import { Link } from "@tanstack/react-router";
 
@@ -598,7 +599,6 @@ function PreviewBody({ height, stats, traits, bitmon, patternLine }: {
         <Link to="/bitmap/$block" params={{ block: String(height) }} className="btn-term-ghost mt-3 block !px-2 !py-1 text-center">
           [ OPEN DOSSIER ]
         </Link>
-      </PopoverContent>
-    </Popover>
+    </>
   );
 }
