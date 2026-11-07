@@ -399,7 +399,7 @@ function Marketplace() {
   const clearAll = () => { setBitmonPattern(null); setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
-    <div className="marketplace-shell mx-auto w-full min-w-0 max-w-[1600px] overflow-x-clip px-3 py-6 sm:px-5 md:py-10">
+    <div className="marketplace-shell @container/mkt mx-auto w-full min-w-0 max-w-[1600px] overflow-x-clip px-3 py-6 sm:px-5 md:py-10">
       <header data-tour="market-header" className="border-b border-border pb-3">
         <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
           <div className="flex items-center gap-3">
@@ -511,8 +511,8 @@ function Marketplace() {
         )}
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-12">
-        <aside className="min-w-0 lg:col-span-3 xl:col-span-2">
+      <div className="mt-4 grid gap-4 @3xl/mkt:grid-cols-[15rem_minmax(0,1fr)] @6xl/mkt:grid-cols-[16rem_minmax(0,1fr)_19rem] @[100rem]/mkt:grid-cols-[18rem_minmax(0,1fr)_21rem]">
+        <aside className="min-w-0">
           <div data-tour="market-filters" className="border border-border bg-card/60 backdrop-blur-md lg:sticky lg:top-36">
             <details className="group" open>
               <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border p-4">
@@ -624,7 +624,7 @@ function Marketplace() {
           </div>
         </aside>
 
-        <section id="market-grid" data-tour="market-grid" className="min-w-0 scroll-mt-20 lg:col-span-9 xl:col-span-7">
+        <section id="market-grid" data-tour="market-grid" className="min-w-0 scroll-mt-20">
           <div id="floor-sweeper" className="scroll-mt-24" />
           <FloorSweeper listed={tab === "inhabited" ? listed : visible.filter((p) => p.listedSats !== null)} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
@@ -678,7 +678,7 @@ function Marketplace() {
             </>
           )}
         </section>
-        <aside className="hidden xl:col-span-3 xl:block">
+        <aside className="hidden min-w-0 @6xl/mkt:block">
           <div className="sticky top-36"><ActivityRail trades={recent.data ?? []} loading={recent.isPending} /></div>
         </aside>
       </div>
@@ -732,7 +732,7 @@ function Marketplace() {
         <TrendExplorer parcels={parcels} />
         <BitmapOrderBook />
       </section>)}
-      <div className="z-30 -mx-3 mb-32 mt-6 flex items-center justify-between gap-3 border-y border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5 sm:mb-20 lg:sticky lg:bottom-0 lg:mb-0 lg:border-b-0">
+      <div className="z-30 -mx-3 mb-32 mt-6 flex items-center justify-between gap-3 border-y border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5 sm:mb-20 sm:pr-56 lg:sticky lg:bottom-0 lg:mb-0 lg:border-b-0">
         <span className="min-w-0 font-mono text-[10px] text-muted-foreground" data-no-translate>
           {liveOci.data?.tip ? <span className="hidden sm:inline">{`TIP #${liveOci.data.tip.toLocaleString("en-US")} · `}</span> : null}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
         </span>

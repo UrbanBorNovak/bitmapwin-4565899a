@@ -25,11 +25,11 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
   }, [inhabited.data, checks, offers.data]);
 
   return (
-    <section className="rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Guardians">
+    <section className="@container min-w-0 rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Guardians">
       <header className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
         <span className="tracking-widest text-accent">INSCRIBED GUARDIANS</span>
         <span className="text-muted-foreground">BITMAPS WITH AN INSCRIBED GUARDIAN CHILD · VERIFIED ON CHAIN</span>
-        <div className="ml-auto flex gap-1">
+        <div className="flex flex-wrap gap-1 @lg:ml-auto">
           <button onClick={onOpen} className="rounded border border-primary px-2 py-1 text-primary">BROWSE GUARDIANS</button>
           {onReset && (rarity !== "ALL" || species !== "ALL") && (
             <button type="button" onClick={onReset} className="rounded border border-bitcoin px-2 py-1 text-bitcoin hover:bg-bitcoin/10">RESET GUARDIAN FILTERS ✕</button>
@@ -38,11 +38,11 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
           <Link to="/mint" className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-accent">AWAKEN →</Link>
         </div>
       </header>
-      <dl className="mt-3 grid grid-cols-2 gap-2 font-mono text-[11px] sm:grid-cols-4">
+      <dl className="mt-3 grid grid-cols-3 gap-2 font-mono text-[11px] @lg:grid-cols-4">
         <div><dt className="text-muted-foreground">INHABITED</dt><dd className="text-base text-foreground">{inhabited.isPending ? "…" : stats.total}</dd></div>
         <div><dt className="text-muted-foreground">LISTED</dt><dd className="text-base text-foreground">{stats.listed}</dd></div>
         <div><dt className="text-muted-foreground">FLOOR</dt><dd className="text-base text-primary">{stats.floor !== null ? formatSats(stats.floor) : "—"}</dd></div>
-        <div><dt className="text-muted-foreground">RARITY</dt><dd className="flex flex-wrap gap-1 pt-1">
+        <div className="col-span-3 @lg:col-span-1"><dt className="text-muted-foreground">RARITY</dt><dd className="flex flex-wrap gap-1 pt-1">
           {(["ALL", ...BITMON_RARITIES] as const).map((r) => (
             <button key={r} onClick={() => { onRarity(r); onOpen(); }} aria-pressed={rarity === r}
               className={`rounded border px-1.5 py-0.5 ${rarity === r ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>
