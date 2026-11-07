@@ -32,10 +32,11 @@ function query(table: string) {
   const rows = () => (tables[table] ??= []);
   const filters: Array<(r: any) => boolean> = [];
   let patch: any = null;
+  let sort: ((a: any, b: any) => number) | null = null;
   const run = () => {
     const m = rows().filter((r) => filters.every((f) => f(r)));
     if (patch) m.forEach((r) => Object.assign(r, patch));
-    return m;
+    return sort ? [...m].sort(sort) : m;
   };
   const b: any = {
     select: () => b,
@@ -48,7 +49,7 @@ function query(table: string) {
     },
     eq: (k: string, v: unknown) => (filters.push((r) => r[k] === v), b),
     ilike: (k: string, v: string) => (filters.push((r) => String(r[k]).toLowerCase() === v.toLowerCase()), b),
-    order: () => b,
+    order: (k: string, o?: { ascending?: boolean }) => ((sort = (x, y) => (String(x[k]) < String(y[k]) ? -1 : 1) * (o?.ascending === false ? -1 : 1)), b),
     limit: () => b,
     maybeSingle: async () => ({ data: run()[0] ?? null, error: null }),
     single: async () => ({ data: run()[0], error: null }),
