@@ -14,7 +14,7 @@ import { outScriptForAddress, type ParentSpend } from "@/lib/ord-parents";
 
 export const INSCRIBE_POSTAGE = 546;
 export const INSCRIBE_MAX_BYTES = 60_000;
-const ESPLORA = ["https://blockstream.info/api", "https://mempool.space/api", "https://mempool.emzy.de/api"];
+const ESPLORA = ["https://mempool.space/api", "https://mempool.emzy.de/api", "https://blockstream.info/api"];
 const customScripts = [OutOrdinalReveal];
 
 export type InscribeJob = {
