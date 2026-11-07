@@ -204,7 +204,7 @@ V8   ${size(v8).toLocaleString()} BYTES  (+${(size(v8) - size(v7)).toLocaleStrin
         {[["V7 · ACTIVE", v7], ["V8 · DRAFT", v8]].map(([label, html]) => (
           <div key={label}>
             <div className="label text-signal">{label}</div>
-            <iframe title={label} srcDoc={html} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
+            <iframe title={label} srcDoc={offlinePreview(html)} sandbox="allow-scripts" className="mt-2 h-80 w-full border border-border bg-background" />
           </div>
         ))}
       </div>
@@ -232,6 +232,10 @@ function mockBuildB64(): string {
   let s = ""; for (const n of out) s += String.fromCharCode(n);
   return btoa(s);
 }
+
+/** Preview-only prelude: a srcdoc frame has no ord server, so chain lookups answer 404 locally instead of hitting this site. Never inscribed. */
+const OFFLINE_PREVIEW = `<script>(function(){var of=window.fetch.bind(window);window.fetch=function(u){var s=String(u);if(/^\\/(r|content|blockheight)\\b/.test(s))return Promise.resolve(new Response("",{status:404}));return of(u)}})()</script>`;
+const offlinePreview = (html: string) => OFFLINE_PREVIEW + html;
 
 /** Test-only fetch stub injected ahead of the V8 page: fakes this Guardian's children. */
 function beaconMock(mode: "live" | "none"): string {
@@ -501,7 +505,7 @@ TOOL           ord wallet inscribe --compress --file guardian-master-${version}.
 WARNING        never inscribe the .br file without content-encoding: br — it renders as garbage`}
         </pre>
       )}
-      <iframe title="Master generator preview" srcDoc={html} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
+      <iframe title="Master generator preview" srcDoc={offlinePreview(html)} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
       <div className="mt-6 border border-border p-4 font-mono text-xs">
         <div className="text-signal">LIVEOCI V1.1 AUDIT</div>
         <p className="mt-2 text-muted-foreground">
