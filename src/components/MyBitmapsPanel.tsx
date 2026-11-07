@@ -109,6 +109,13 @@ export function MyBitmapsPanel() {
         <p className="p-5 font-mono text-[11px] text-muted-foreground">
           &gt; READING YOUR WALLET FROM CHAIN<span className="blink">_</span>
         </p>
+      ) : snapshot.isError ? (
+        <div className="space-y-3 p-5" role="alert">
+          <p className="font-mono text-[11px] text-destructive">
+            &gt; COULD NOT READ {shortenAddress(wallet.ordinalsAddress)} FROM CHAIN — YOUR BITMAPS ARE NOT SHOWN, NOT MISSING
+          </p>
+          <button className="btn-term-ghost !px-3 !py-1.5" onClick={() => void snapshot.refetch()}>[ TRY AGAIN ]</button>
+        </div>
       ) : held.length === 0 ? (
         <p className="p-5 font-mono text-[11px] text-muted-foreground">
           &gt; NO BITMAP INSCRIPTION FOUND IN {shortenAddress(wallet.ordinalsAddress)}
