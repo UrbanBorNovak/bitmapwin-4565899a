@@ -103,13 +103,18 @@ export function listAllJobs(): InscribeJob[] {
 export const markRevealed = (job: InscribeJob, revealTxid: string) =>
   localStorage.setItem(ARCHIVE_PREFIX + job.commitAddress, JSON.stringify({ ...job, revealTxid }));
 
+// Hosts that rate-limited us (429, or a CORS-blocked 429 page) rest for a minute.
+const hostCooldown = new Map<string, number>();
 async function esplora(path: string, init?: RequestInit): Promise<Response | null> {
   for (const host of ESPLORA) {
+    if ((hostCooldown.get(host) ?? 0) > Date.now()) continue;
     try {
       const r = await fetch(`${host}${path}`, { ...init, signal: AbortSignal.timeout(10_000) });
       if (r.ok) return r;
+      if (r.status === 429) hostCooldown.set(host, Date.now() + 60_000);
     } catch {
-      /* next mirror */
+      // A rate-limit page has no CORS header, so it surfaces as a network error.
+      hostCooldown.set(host, Date.now() + 60_000);
     }
   }
   return null;
