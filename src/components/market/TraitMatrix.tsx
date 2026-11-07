@@ -65,7 +65,7 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
       <div className="max-h-80 overflow-auto">
         <table className="w-full font-mono text-[11px]">
           <thead className="sticky top-0 bg-card text-muted-foreground">
-            <tr className="text-left"><th className="px-2 @md:px-3 py-1">TRAIT</th><th className="hidden @md:table-cell px-1.5 @md:px-2">GROUP</th><th className="px-1.5 @md:px-2 text-right">FLOOR</th><th className="hidden @md:table-cell px-1.5 @md:px-2 text-right">BEST BID</th><th className="px-1.5 @md:px-2 text-right">LISTED</th><th className="hidden @md:table-cell px-1.5 @md:px-2 text-right">DENSITY</th><th className="hidden @md:table-cell px-2 @md:px-3 text-right">24H VOL</th></tr>
+            <tr className="text-left"><th className="px-2 @md:px-3 py-1">TRAIT</th><th className="hidden @md:table-cell px-1.5 @md:px-2">GROUP</th><th className="px-1.5 @md:px-2 text-right">FLOOR</th><th className="hidden @md:table-cell px-1.5 @md:px-2 text-right">BEST BID</th><th className="hidden px-1.5 @xs:table-cell @md:px-2 text-right">LISTED</th><th className="hidden @md:table-cell px-1.5 @md:px-2 text-right">DENSITY</th><th className="hidden @md:table-cell px-2 @md:px-3 text-right">24H VOL</th></tr>
           </thead>
           <tbody>
             {loading ? (
@@ -80,7 +80,7 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
                   <td className="hidden @md:table-cell px-1.5 @md:px-2 text-muted-foreground">{r.seg.group}</td>
                   <td className="px-1.5 @md:px-2 text-right text-primary">{r.floor !== null ? formatSats(r.floor) : "—"}</td>
                   <td className="hidden @md:table-cell px-1.5 @md:px-2 text-right">{r.bestBid !== null ? formatSats(r.bestBid) : "—"}</td>
-                  <td className="px-1.5 @md:px-2 text-right">{r.listed}</td>
+                  <td className="hidden px-1.5 @xs:table-cell @md:px-2 text-right">{r.listed}</td>
                   <td className="hidden @md:table-cell px-1.5 @md:px-2 text-right">
                     <span className="inline-block h-1.5 w-12 rounded bg-muted align-middle"><span className="block h-full rounded bg-accent" style={{ width: `${Math.round(r.share * 100)}%` }} /></span> {(r.share * 100).toFixed(0)}%
                   </td>

@@ -534,16 +534,16 @@ function Marketplace() {
                     <span className="label text-bitcoin">OFFICIAL TRAITS</span>
                     <Link to="/traits" className="label hover:text-bitcoin">INDEX →</Link>
                   </div>
-                  <div className="grid max-h-[28rem] gap-3 overflow-y-auto pr-1">
+                  <div className="grid max-h-[28rem] grid-cols-[minmax(0,1fr)] gap-3 overflow-y-auto overflow-x-hidden pr-1">
                     <TraitRow active={trait === "any"} label="ALL" count={serverMode ? null : parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
                     {TRAIT_GROUPS.map((group) => {
                       const items = traitList.filter((item) => item.group === group.id);
                       if (items.length === 0) return null;
                       return (
-                        <div key={group.id}>
+                        <div key={group.id} className="min-w-0">
                           <p className="label text-foreground">{group.label}</p>
                           <p className="mb-1 font-mono text-[10px] leading-relaxed text-muted-foreground">{group.description}</p>
-                          <div className="grid gap-1">
+                          <div className="grid grid-cols-[minmax(0,1fr)] gap-1">
                             {items.map((item) => {
                               const count = serverMode ? null : traitCounts.get(item.id as TraitId) ?? 0;
                               const fl = traitFloors.get(item.id);
@@ -837,8 +837,8 @@ function TraitRow({ active, label, count, title, disabled, onClick }: { active: 
   return (
     <button type="button" aria-pressed={active} title={title} disabled={disabled} onClick={onClick}
       className={`flex items-center justify-between gap-2 border px-2.5 py-1.5 text-left font-mono text-[10px] transition-colors disabled:opacity-40 ${active ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-transparent text-muted-foreground hover:border-signal hover:text-signal"}`}>
-      <span className="truncate">{label}</span>
-      {count !== null && <span className="opacity-70" data-no-translate>{count}</span>}
+      <span className="min-w-0 break-words">{label}</span>
+      {count !== null && <span className="shrink-0 opacity-70" data-no-translate>{count}</span>}
     </button>
   );
 }

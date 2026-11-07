@@ -38,11 +38,11 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
           <Link to="/mint" className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-accent">AWAKEN →</Link>
         </div>
       </header>
-      <dl className="mt-3 grid grid-cols-3 gap-2 font-mono text-[11px] @lg:grid-cols-4">
+      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 font-mono text-[11px] @xs:grid-cols-3 @lg:grid-cols-4">
         <div><dt className="text-muted-foreground">INHABITED</dt><dd className="text-base text-foreground">{inhabited.isPending ? "…" : stats.total}</dd></div>
         <div><dt className="text-muted-foreground">LISTED</dt><dd className="text-base text-foreground">{stats.listed}</dd></div>
         <div><dt className="text-muted-foreground">FLOOR</dt><dd className="text-base text-primary">{stats.floor !== null ? formatSats(stats.floor) : "—"}</dd></div>
-        <div className="col-span-3 @lg:col-span-1"><dt className="text-muted-foreground">RARITY</dt><dd className="flex flex-wrap gap-1 pt-1">
+        <div className="col-span-2 @xs:col-span-3 @lg:col-span-1"><dt className="text-muted-foreground">RARITY</dt><dd className="flex flex-wrap gap-1 pt-1">
           {(["ALL", ...BITMON_RARITIES] as const).map((r) => (
             <button key={r} onClick={() => { onRarity(r); onOpen(); }} aria-pressed={rarity === r}
               className={`rounded border px-1.5 py-0.5 ${rarity === r ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>
