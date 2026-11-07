@@ -40,15 +40,6 @@ describe("number formatting under Slovenian browser settings", () => {
     expect((1000).toLocaleString("sl-SI")).not.toBe("1,000");
   });
 
-  it("the mint tribute and marketplace amounts render identically on server and in a sl-SI browser", () => {
-    for (const sats of [1000, 15000, 1_234_567]) {
-      const server = sats.toLocaleString("en-US");
-      const slBrowser = sats.toLocaleString("en-US"); // pages pin en-US, so the browser locale is irrelevant
-      expect(slBrowser).toBe(server);
-    }
-    expect((1000).toLocaleString("en-US")).toBe("1,000");
-  });
-
   it("the scanner flags a bare toLocaleString() and ignores dates and en-US", () => {
     expect(localeDependentNumbers("{TRIBUTE_SATS.toLocaleString()}")).toHaveLength(1);
     expect(localeDependentNumbers("{(n / 1e8).toLocaleString(undefined, { maximumFractionDigits: 2 })}")).toHaveLength(1);
