@@ -22,7 +22,8 @@ export const inhabitedBitmapsFn = createServerFn({ method: "GET" }).handler(asyn
   if (cache && Date.now() - cache.at < 5 * 60_000) return cache.value;
   const ids: string[] = [];
   for (let page = 0; page < 20; page++) {
-    const body = (await get(`/r/children/${GUARDIAN_V6_MASTER_ID}/${page}`)) as { ids?: string[]; more?: boolean };
+    const body = (await get(`/r/children/${GUARDIAN_V6_MASTER_ID}/${page}`).catch(() => null)) as { ids?: string[]; more?: boolean } | null;
+    if (!body) { if (cache) return cache.value; break; }
     ids.push(...(body.ids ?? []).filter((id) => /^[0-9a-f]{64}i\d+$/.test(id)));
     if (!body.more) break;
   }
