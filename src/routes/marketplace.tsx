@@ -699,13 +699,13 @@ function Marketplace() {
       <div className="mt-4">
         <MarketTerminal scope={chartScope} />
       </div>
-      <TradeSlip />
 
       <div className="mt-4">
         <LiveTradesFeed scope={chartScope} />
       </div>
 
       </section>)}
+      <TradeSlip />
       {section === "mine" && <div id="market-mine" className="mt-4"><MyBitmapsPanel /></div>}
 
       {section === "sales" && (<section className="mt-4 border border-border bg-card/60 backdrop-blur-md" aria-labelledby="market-live-panel">
