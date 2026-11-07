@@ -16,7 +16,7 @@ export function BitmonPatternFilter({ pattern, onPattern, count, loading, error,
   const found = stats.data?.pattern ?? null;
 
   return (
-    <section className="rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Bitmon shape patterns">
+    <section className="min-w-0 rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Bitmon shape patterns">
       <header className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
         <span className="tracking-widest text-accent">BITMON PATTERNS</span>
         <span className="text-muted-foreground">BLOCK SHAPE GROUPS · VERIFIED BLOCK RECORDS 0–{BLOCK_STATS_MAX_HEIGHT.toLocaleString()} · NOT GUARDIANS</span>
@@ -25,7 +25,7 @@ export function BitmonPatternFilter({ pattern, onPattern, count, loading, error,
         )}
       </header>
       <form className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]" onSubmit={(e) => { e.preventDefault(); if (found !== null) onPattern(found); }}>
-        <label className="flex items-center gap-2">
+        <label className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground">SAME BITMON AS BLOCK</span>
           <input value={input} onChange={(e) => setInput(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="e.g. 5000" aria-label="Block height for Bitmon pattern"
             className="h-8 w-28 border border-input bg-card px-2 text-foreground outline-none focus:border-signal" />

@@ -399,7 +399,7 @@ function Marketplace() {
   const clearAll = () => { setBitmonPattern(null); setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
-    <div className="marketplace-shell mx-auto w-full min-w-0 max-w-[1600px] overflow-x-clip px-3 py-6 sm:px-5 md:py-10">
+    <div className="marketplace-shell @container/mkt mx-auto w-full min-w-0 max-w-[1600px] overflow-x-clip px-3 py-6 sm:px-5 md:py-10">
       <header data-tour="market-header" className="border-b border-border pb-3">
         <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
           <div className="flex items-center gap-3">
@@ -454,7 +454,7 @@ function Marketplace() {
 
       {section === "land" && (<>
       {/* Sticky control bar */}
-      <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
+      <div className="z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md lg:sticky lg:top-16">
         <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex flex-wrap gap-1" role="tablist" aria-label="Market status">
             {([
@@ -511,8 +511,8 @@ function Marketplace() {
         )}
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-12">
-        <aside className="lg:col-span-3 xl:col-span-2">
+      <div className="mt-4 grid gap-4 @2xl/mkt:grid-cols-[14rem_minmax(0,1fr)] @4xl/mkt:grid-cols-[15rem_minmax(0,1fr)] @6xl/mkt:grid-cols-[16rem_minmax(0,1fr)_19rem] @[100rem]/mkt:grid-cols-[18rem_minmax(0,1fr)_21rem]">
+        <aside className="min-w-0">
           <div data-tour="market-filters" className="border border-border bg-card/60 backdrop-blur-md lg:sticky lg:top-36">
             <details className="group" open>
               <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border p-4">
@@ -534,16 +534,16 @@ function Marketplace() {
                     <span className="label text-bitcoin">OFFICIAL TRAITS</span>
                     <Link to="/traits" className="label hover:text-bitcoin">INDEX →</Link>
                   </div>
-                  <div className="grid max-h-[28rem] gap-3 overflow-y-auto pr-1">
+                  <div className="grid max-h-[28rem] grid-cols-[minmax(0,1fr)] gap-3 overflow-y-auto overflow-x-hidden pr-1">
                     <TraitRow active={trait === "any"} label="ALL" count={serverMode ? null : parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
                     {TRAIT_GROUPS.map((group) => {
                       const items = traitList.filter((item) => item.group === group.id);
                       if (items.length === 0) return null;
                       return (
-                        <div key={group.id}>
+                        <div key={group.id} className="min-w-0">
                           <p className="label text-foreground">{group.label}</p>
                           <p className="mb-1 font-mono text-[10px] leading-relaxed text-muted-foreground">{group.description}</p>
-                          <div className="grid gap-1">
+                          <div className="grid grid-cols-[minmax(0,1fr)] gap-1">
                             {items.map((item) => {
                               const count = serverMode ? null : traitCounts.get(item.id as TraitId) ?? 0;
                               const fl = traitFloors.get(item.id);
@@ -597,15 +597,15 @@ function Marketplace() {
                 <span className="label text-foreground">GUARDIANS · PATTERNS · TRAIT MAP</span>
                 <span className="label text-muted-foreground group-open:rotate-180" aria-hidden>▾</span>
               </summary>
-              <div className="max-h-[70vh] space-y-4 overflow-y-auto p-2">
-      <div className="[&>*]:!m-0">
+              <div className="max-h-[70vh] min-w-0 space-y-4 overflow-y-auto overflow-x-hidden p-2">
+      <div className="min-w-0 [&>*]:!m-0">
         <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
-      <div className="[&>*]:!m-0">
+      <div className="min-w-0 [&>*]:!m-0">
         <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
       </div>
 
-      <div className="[&>*]:!m-0">
+      <div className="min-w-0 [&>*]:!m-0">
         <TraitMatrix
           activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
           scoped={tab === "inhabited" || club !== "any" || trait !== "any" || gallery !== "any"}
@@ -624,7 +624,7 @@ function Marketplace() {
           </div>
         </aside>
 
-        <section id="market-grid" data-tour="market-grid" className="scroll-mt-20 lg:col-span-9 xl:col-span-7">
+        <section id="market-grid" data-tour="market-grid" className="@container min-w-0 scroll-mt-20">
           <div id="floor-sweeper" className="scroll-mt-24" />
           <FloorSweeper listed={tab === "inhabited" ? listed : visible.filter((p) => p.listedSats !== null)} />
           {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
@@ -668,7 +668,7 @@ function Marketplace() {
               {view === "table" ? (
                 <ProTable parcels={pageWithOwners} inhabited={inhabitedSet} built={builtSet} bitmons={bitmonChecks} floorSats={listedFloor} />
               ) : (
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5">
+              <div className="mt-3 grid grid-cols-2 gap-2 @md:grid-cols-3 @2xl:grid-cols-4 @5xl:grid-cols-5">
                 {pageWithOwners.map((p) => (
                   <CompactParcelCard key={p.inscriptionId} parcel={p} />
                 ))}
@@ -678,7 +678,7 @@ function Marketplace() {
             </>
           )}
         </section>
-        <aside className="hidden xl:col-span-3 xl:block">
+        <aside className="hidden min-w-0 @6xl/mkt:block">
           <div className="sticky top-36"><ActivityRail trades={recent.data ?? []} loading={recent.isPending} /></div>
         </aside>
       </div>
@@ -732,11 +732,11 @@ function Marketplace() {
         <TrendExplorer parcels={parcels} />
         <BitmapOrderBook />
       </section>)}
-      <div className="sticky bottom-0 z-30 -mx-3 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5">
-        <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
-          {liveOci.data?.tip ? `TIP #${liveOci.data.tip.toLocaleString("en-US")} · ` : ""}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
+      <div className="z-30 -mx-3 mb-32 mt-6 flex items-center justify-between gap-3 border-y border-border bg-background/95 px-3 py-2 backdrop-blur-md sm:-mx-5 sm:px-5 sm:mb-20 lg:sticky lg:pr-56 lg:bottom-0 lg:mb-0 lg:border-b-0">
+        <span className="min-w-0 font-mono text-[10px] text-muted-foreground" data-no-translate>
+          {liveOci.data?.tip ? <span className="hidden sm:inline">{`TIP #${liveOci.data.tip.toLocaleString("en-US")} · `}</span> : null}FLOOR {listedFloor ? formatSats(listedFloor) : "—"} · {listed.length} LISTED
         </span>
-        <span className="flex gap-2">
+        <span className="flex shrink-0 gap-2">
           <button type="button" onClick={() => setSection("offers")} className="btn-term-ghost !py-1.5">MAKE OFFER</button>
           <button type="button" onClick={() => { setSection("land"); setTimeout(() => document.getElementById("floor-sweeper")?.scrollIntoView({ behavior: "smooth" }), 50); }} className="btn-term !py-1.5">BUY FLOOR</button>
         </span>
@@ -837,8 +837,8 @@ function TraitRow({ active, label, count, title, disabled, onClick }: { active: 
   return (
     <button type="button" aria-pressed={active} title={title} disabled={disabled} onClick={onClick}
       className={`flex items-center justify-between gap-2 border px-2.5 py-1.5 text-left font-mono text-[10px] transition-colors disabled:opacity-40 ${active ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-transparent text-muted-foreground hover:border-signal hover:text-signal"}`}>
-      <span className="truncate">{label}</span>
-      {count !== null && <span className="opacity-70" data-no-translate>{count}</span>}
+      <span className="min-w-0 break-words">{label}</span>
+      {count !== null && <span className="shrink-0 opacity-70" data-no-translate>{count}</span>}
     </button>
   );
 }

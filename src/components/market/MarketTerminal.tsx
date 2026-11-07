@@ -175,14 +175,14 @@ function TapeRow({ t, up, hydrated, side, mem, rec }: { t: TradeRow; up: boolean
 function LevelRow({ side, level, count, cum, pct, tick, open, onToggle, fresh, single }: { side: "ask" | "bid"; level: number; count: number; cum: number; pct: number; tick: number; open: boolean; onToggle: () => void; fresh: boolean; single: { bitmapHeight: number | null; id?: string; inscriptionId?: string | null; priceSats?: number } | null }) {
   const tone = side === "ask" ? "text-bitcoin" : "text-signal";
   return (
-    <li className={`relative grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-3 py-1 font-mono text-[11px] ${fresh ? "book-flash-new" : ""}`} data-no-translate>
+    <li className={`relative grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 px-3 py-1 sm:gap-3 font-mono text-[11px] ${fresh ? "book-flash-new" : ""}`} data-no-translate>
       <span className={`absolute inset-y-0 right-0 ${side === "ask" ? "bg-bitcoin/10" : "bg-signal/10"}`} style={{ width: `${pct}%` }} aria-hidden />
       {single?.bitmapHeight != null
-        ? <Link to="/bitmap/$block" params={{ block: String(single.bitmapHeight) }} className="relative hover:text-signal">{single.bitmapHeight}.BITMAP</Link>
-        : <span className="relative text-muted-foreground">{count} ORDER{count === 1 ? "" : "S"}</span>}
+        ? <Link to="/bitmap/$block" params={{ block: String(single.bitmapHeight) }} className="relative truncate hover:text-signal">{single.bitmapHeight}.BITMAP</Link>
+        : <span className="relative truncate text-muted-foreground">{count} ORDER{count === 1 ? "" : "S"}</span>}
       <span className={`relative text-right ${tone}`}>{tick && side === "ask" ? "≤ " : tick ? "≥ " : ""}{formatSats(level)}</span>
-      <span className="relative w-20 text-right text-muted-foreground">{formatSats(cum)}</span>
-      <span className="relative flex w-44 shrink-0 gap-1">
+      <span className="relative w-16 text-right text-muted-foreground sm:w-20">{formatSats(cum)}</span>
+      <span className="relative flex w-28 shrink-0 sm:w-44 gap-1">
         {single && side === "ask" && single.id && single.inscriptionId
           ? <><CartToggle item={{ offerId: single.id, height: single.bitmapHeight!, priceSats: single.priceSats!, inscriptionId: single.inscriptionId }} /><BuyButton offerId={single.id} priceSats={single.priceSats!} inscriptionId={single.inscriptionId} height={single.bitmapHeight!} className="btn-term w-full whitespace-nowrap !px-1 !py-0.5 text-[10px]" /></>
           : single && side === "bid"
@@ -195,17 +195,17 @@ function LevelRow({ side, level, count, cum, pct, tick, open, onToggle, fresh, s
 
 function OrderRow({ height, price, tone, fresh, action }: { height: number; price: number; tone: string; fresh: boolean; action: React.ReactNode }) {
   return (
-    <li className={`grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 bg-muted/20 py-0.5 pl-6 pr-3 font-mono text-[10px] ${fresh ? "book-flash-new" : ""}`} data-no-translate>
-      <Link to="/bitmap/$block" params={{ block: String(height) }} className="hover:text-signal">↳ {height}.BITMAP</Link>
+    <li className={`grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 sm:gap-3 bg-muted/20 py-0.5 pl-6 pr-3 font-mono text-[10px] ${fresh ? "book-flash-new" : ""}`} data-no-translate>
+      <Link to="/bitmap/$block" params={{ block: String(height) }} className="truncate hover:text-signal">↳ {height}.BITMAP</Link>
       <span className={`text-right ${tone}`}>{formatSats(price)}</span>
-      <span className="w-20" />
-      <span className="flex w-44 shrink-0 gap-1">{action}</span>
+      <span className="w-16 sm:w-20" />
+      <span className="flex w-28 shrink-0 sm:w-44 gap-1">{action}</span>
     </li>
   );
 }
 
 function BookHead({ tick }: { tick: number }) {
-  return <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 border-b border-border px-3 py-2"><span className="label">{tick ? "LEVEL" : "BITMAP"}</span><span className="label text-right">PRICE</span><span className="label w-20 text-right">TOTAL</span><span className="w-44" /></div>;
+  return <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-2 sm:gap-3 border-b border-border px-3 py-2"><span className="label">{tick ? "LEVEL" : "BITMAP"}</span><span className="label text-right">PRICE</span><span className="label w-16 text-right sm:w-20">TOTAL</span><span className="w-28 sm:w-44" /></div>;
 }
 
 /** Flash newly posted orders cyan; keep removed ones briefly as amber ghosts. */
