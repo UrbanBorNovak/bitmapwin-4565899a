@@ -37,9 +37,13 @@ let miner = "";
 /** generatetoaddress may stop early when its tries run out; keep going until n blocks exist. */
 async function mine(n: number) {
   const target = (await rpc<number>("getblockcount")) + n;
-  while ((await rpc<number>("getblockcount")) < target) await rpc("generatetoaddress", [target - (await rpc<number>("getblockcount")), miner, 1_000_000_000]);
+  // small batches: signet proof-of-work is ~1.5 s/block on CPU and long RPCs time out
+  for (let h = await rpc<number>("getblockcount"); h < target; h = await rpc<number>("getblockcount"))
+    await rpc("generatetoaddress", [Math.min(5, target - h), miner, 50_000_000]);
 }
 const tip = () => rpc<number>("getblockcount");
+/** Refund lock for the run. Production terms use 288; a shorter lock exercises the same BIP-68/112 rules. */
+const CSV = Number(process.env.LEASE_CSV ?? 20);
 const sec = () => bytesToHex(randomBytes(32));
 
 async function main() {
@@ -51,7 +55,7 @@ async function main() {
 
   const landlordSk = sec(), tenantSk = sec();
   const cell = newCellKey(randomBytes(32), randomBytes(32));
-  const terms: LeaseTerms = { landlord: xOnly(landlordSk), tenant: xOnly(tenantSk), equivocation: cell.pub, refundCsv: 288 };
+  const terms: LeaseTerms = { landlord: xOnly(landlordSk), tenant: xOnly(tenantSk), equivocation: cell.pub, refundCsv: CSV };
   const lease = leaseAddress(terms, "tb");
   console.log("lease address", lease.address);
 
@@ -81,14 +85,14 @@ async function main() {
 
   // 2. TIMELOCKED REFUND
   const r = await fund();
-  { const b = spend("refund", r); await attempt("refund: 1 confirmation (needs 288)", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
-  await mine(r.height + 286 - (await tip()));
-  { const b = spend("refund", r); await attempt("refund: 287th block would be too early", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
-  { const b = spend("refund", r, 287); await attempt("refund: nSequence lowered to 287 to dodge the lock", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
+  { const b = spend("refund", r); await attempt(`refund: 1 confirmation (needs ${CSV})`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
+  await mine(r.height + CSV - 2 - (await tip()));
+  { const b = spend("refund", r); await attempt(`refund: next block is only confirmation ${CSV - 1}`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
+  { const b = spend("refund", r, CSV - 1); await attempt(`refund: nSequence lowered to ${CSV - 1} to dodge the script lock`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
   { const b = spend("refund", r, 0xfffffffd); await attempt("refund: relative lock disabled in nSequence", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "reject"); }
   { const b = spend("refund", r); await attempt("refund: landlord signs instead of tenant", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, landlordSk) }), "reject"); }
   await mine(1);
-  { const b = spend("refund", r); await attempt("refund: tenant at 288 confirmations", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "accept"); }
+  { const b = spend("refund", r); await attempt(`refund: tenant once ${CSV} confirmations are reached`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "accept"); }
 
   // 3. PENALTY (slash)
   const s = await fund();
@@ -105,8 +109,8 @@ async function main() {
 
   // 4. RACE: refund matured and already spent → late slash is a double spend
   const late = await fund();
-  await mine(287);
-  { const b = spend("refund", late); await attempt("race: tenant refunds at 288", finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "accept"); }
+  await mine(CSV - 1);
+  { const b = spend("refund", late); await attempt(`race: tenant refunds at ${CSV}`, finalizeLeaseSpend(b, "refund", { tenant: signLeaf(b.sighash, tenantSk) }), "accept"); }
   { const b = spend("slash", late); await attempt("race: landlord slashes after the refund confirmed", finalizeLeaseSpend(b, "slash", { equivocation: signLeaf(b.sighash, leaked), landlord: signLeaf(b.sighash, landlordSk) }), "reject"); }
 
   const failed = results.filter((x) => !x.ok);
