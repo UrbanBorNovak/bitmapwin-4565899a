@@ -1,5 +1,6 @@
-import { Component, createElement, useSyncExternalStore, type ReactNode } from "react";
-import { Canvas, type CanvasProps } from "@react-three/fiber";
+import { Component, createElement, useState, useSyncExternalStore, type ReactNode } from "react";
+import { applyProps, Canvas, type CanvasProps } from "@react-three/fiber";
+import { WebGLRenderer } from "three";
 
 /**
  * <Canvas> that ignores dev-time source tags.
@@ -76,8 +77,9 @@ class WebGLGuard extends Component<GuardProps, { error: unknown; failed: boolean
 
 export function SafeCanvas(props: CanvasProps) {
   const supported = useSyncExternalStore(noopSubscribe, probeWebGL, serverSnapshot);
+  const [startFailed, setStartFailed] = useState(false);
   const fallback = <NoWebGLPanel className={props.className} style={props.style}>{props.fallback}</NoWebGLPanel>;
-  if (!supported) return fallback;
+  if (!supported || startFailed) return fallback;
 
   const safe: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(props as Record<string, unknown>)) {
@@ -89,6 +91,25 @@ export function SafeCanvas(props: CanvasProps) {
   // grow by the zoom factor every resize until the GPU gives up. Layout
   // (offset) sizes are unzoomed and stable.
   safe["resize"] = { offsetSize: true, ...(props.resize ?? {}) };
+  // R3F creates the renderer inside an async configure step, so a failed
+  // context is a rejected promise no error boundary sees. Creating it here lets
+  // that failure swap in the static panel. The renderer only reads its options
+  // once, so applying object props at creation matches R3F's own handling.
+  const userGl = props.gl;
+  safe["gl"] = async (defaults: ConstructorParameters<typeof WebGLRenderer>[0] & Record<string, unknown>) => {
+    try {
+      if (typeof userGl === "function") return await userGl(defaults as never);
+      if (userGl && typeof (userGl as { render?: unknown }).render === "function") return userGl;
+      const renderer = new WebGLRenderer({ ...defaults, ...(userGl as object | undefined) });
+      if (userGl) applyProps(renderer as never, userGl as never);
+      return renderer;
+    } catch (error) {
+      if (!isWebGLStartupError(error)) throw error;
+      setStartFailed(true);
+      // Never settle: the canvas unmounts in favour of the static panel.
+      return new Promise<never>(() => {});
+    }
+  };
   const userCreated = props.onCreated;
   safe["onCreated"] = (state: Parameters<NonNullable<CanvasProps["onCreated"]>>[0]) => {
     const el = state.gl.domElement;
