@@ -35,7 +35,7 @@ const list = (s: string, n: number, len: number) =>
 
 export function buildPage(i: PageInput): AddonResult {
   const problems: string[] = [];
-  const o: Record<string, unknown> = {};
+  const o: { title?: string; status?: string; bio?: string; likes?: string[]; dislikes?: string[]; top8?: string[]; theme?: { accent: string }; socials?: { x: string }; pfp?: string } = {};
   if (i.title.trim()) o.title = i.title.trim().slice(0, 48);
   if (i.status.trim()) o.status = i.status.trim().slice(0, 64);
   if (i.bio.trim()) o.bio = i.bio.trim().slice(0, 280);
@@ -57,7 +57,7 @@ export function buildPage(i: PageInput): AddonResult {
 
 export function buildSkin(i: { name: string; frame: string; mask: string; accent: string; scan: number }): AddonResult {
   const problems: string[] = [];
-  const o: Record<string, unknown> = {};
+  const o: { name?: string; frame?: string; mask?: string; accent?: string; scan?: number } = {};
   if (i.name.trim()) o.name = i.name.trim().slice(0, 32);
   for (const k of ["frame", "mask"] as const) {
     const v = i[k].trim();
