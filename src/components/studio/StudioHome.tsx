@@ -69,6 +69,7 @@ export function StudioHome() {
         tools={[
           { title: "EXTENDERS", icon: <Code2 className="h-4 w-4" />, note: "Describe it in plain words, test it on a tile, publish and deploy.", link: <Link to="/studio" search={{ tool: "extenders" }} className={cta}>OPEN</Link> },
           { title: "DESCRIBE A PLACE", icon: <Package className="h-4 w-4" />, note: "Turn a sentence into a working place on your land.", link: <Link to="/create" className={cta}>OPEN</Link> },
+          { title: "ADD-ON INSCRIBER", icon: <Package className="h-4 w-4" />, note: "Inscribe Guardian modules, profile pages, skins and tribute beacons as proven children.", link: <Link to="/addons" className={cta}>OPEN</Link> },
           { title: "SDK", icon: <Code2 className="h-4 w-4" />, note: "Reference and playground for the world code.", link: <Link to="/sdk" className={cta}>READ</Link> },
           { title: "CLIPS", icon: <Clapperboard className="h-4 w-4" />, note: "Turn any BITMAP into a 3D video (tool by @bitlodo).", link: <Link to="/clips" className={cta}>OPEN</Link> },
         ]}
