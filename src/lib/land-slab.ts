@@ -47,7 +47,7 @@ export function centeringScore(width: number, used: number): number {
 export function workScore(hash: string | null): number {
   if (!hash || !/^[0-9a-f]{64}$/i.test(hash)) return 1;
   const zeros = hash.match(/^0*/)![0].length;
-  return half(5 + (zeros - 8) * 0.5);
+  return half(6 + (zeros - 8) * 0.4);
 }
 
 /** Fewer transactions = fewer parcels = scarcer land. */
@@ -70,7 +70,7 @@ export function gradeName(grade: number): string {
   return "POOR";
 }
 
-/** Composite: mean of sub-grades, capped one point above the weakest (PSA-style). */
+/** Composite: mean of sub-grades, capped two points above the weakest (PSA-style). */
 export function gradeSlab(input: SlabInput): SlabGrade {
   const subs: SubGrade[] = [
     { key: "vintage", label: "VINTAGE", score: vintageScore(input.height), why: `block ${input.height.toLocaleString("en-US")}` },
@@ -80,7 +80,7 @@ export function gradeSlab(input: SlabInput): SlabGrade {
   ];
   const mean = subs.reduce((a, s) => a + s.score, 0) / subs.length;
   const floor = Math.min(...subs.map((s) => s.score));
-  const grade = Math.floor(Math.min(mean, floor + 1));
+  const grade = Math.floor(Math.min(mean, floor + 2));
   const g = Math.max(1, Math.min(10, grade));
   return { grade: g, name: gradeName(g), subs, cert: certNumber(input.height, input.hash) };
 }
