@@ -190,6 +190,8 @@ export async function prepareJob(input: {
   contentEncoding?: string;
   /** sat/vB chosen by the holder; falls back to the live mempool rate */
   feeRate?: number;
+  /** inscription output value; defaults to 546, 330 is the Taproot dust floor */
+  postage?: number;
 }): Promise<InscribeJob> {
   if (input.body.length > INSCRIBE_MAX_BYTES) throw new Error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
   const parents = input.parents ?? [];
@@ -220,7 +222,7 @@ export async function prepareJob(input: {
     receiveAddress: input.receiveAddress,
     feeRate,
     revealFee,
-    commitAmount: INSCRIBE_POSTAGE + revealFee + (tribute?.sats ?? 0) + extraSats,
+    commitAmount: Math.max(330, input.postage ?? INSCRIBE_POSTAGE) + revealFee + (tribute?.sats ?? 0) + extraSats,
     ...(parents.length ? { parents } : {}),
     ...(delegate ? { delegate } : {}),
     ...(tribute ? { tribute } : {}),

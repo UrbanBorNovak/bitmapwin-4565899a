@@ -52,6 +52,8 @@ export type ArtifactVariant = {
   metadata?: Record<string, unknown>;
   /** Brotli-pack the source and inscribe it with tag 9 `content-encoding: br`. */
   brotli?: boolean;
+  /** Inscription output value in sats (330 = Taproot dust floor). */
+  postage?: number;
 };
 
 export function ShadowInscriber(props: {
@@ -311,6 +313,7 @@ export function ShadowInscriber(props: {
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
         ...(chosenFee !== undefined ? { feeRate: chosenFee } : {}),
+        ...(!file && variant?.postage ? { postage: variant.postage } : {}),
         ...(contentEncoding ? { contentEncoding } : {}),
       });
 
