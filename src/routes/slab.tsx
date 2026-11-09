@@ -157,7 +157,7 @@ function SlabPage() {
                 {pickedIns && <button type="button" onClick={() => setPicked(null)} className="mt-2 font-mono text-xs text-muted-foreground underline">BACK TO LIST</button>}
               </>
             )}
-            <p className="mt-2 text-xs text-muted-foreground">Parcel = position of the reveal transaction in the block. Read live from ordinals.com; it shows what was inscribed, not who holds it now.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Parcel = position of the reveal transaction in the block. Read live from ordinals.com (mempool.space tags as backup); it shows what was inscribed, not who holds it now.</p>
           </section>
           <section className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-widest text-foreground">How the grade works</h2>
