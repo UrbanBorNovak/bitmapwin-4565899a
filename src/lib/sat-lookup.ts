@@ -46,14 +46,17 @@ export const satQuery = (height: number) =>
   });
 
 /** Single-BITMAP sat with on-chain LiveOCI fallback when the index has no row yet. */
+/** LiveOCI first, then the site index; null when neither knows the sat. */
+export async function loadSatProof(height: number) {
+  const oci = await getOciSatFn({ data: { height } }).catch(() => null);
+  if (oci) return { sat: oci.sat, at: oci.at, page: oci.page, source: "LIVEOCI" as const };
+  const sat = await loadSat(height);
+  return sat === null ? null : { sat, at: null, page: null, source: "INDEX" as const };
+}
+
 export const satProofQuery = (height: number) =>
   queryOptions({
     queryKey: ["bitmap", "sat-proof", height],
-    queryFn: async () => {
-      const oci = await getOciSatFn({ data: { height } }).catch(() => null);
-      if (oci) return { sat: oci.sat, at: oci.at, page: oci.page, source: "LIVEOCI" as const };
-      const sat = await loadSat(height);
-      return sat === null ? null : { sat, at: null, page: null, source: "INDEX" as const };
-    },
+    queryFn: () => loadSatProof(height),
     staleTime: Infinity,
   });
