@@ -22,7 +22,7 @@ const MORE: { title: string; items: { to: string; label: string }[] }[] = [
   ] },
   { title: "CREATE", items: [
     { to: "/studio", label: "Studio" }, { to: "/builds", label: "Community builds" }, { to: "/builders", label: "Builders" },
-    { to: "/extenders", label: "Extenders" }, { to: "/registry", label: "3D model registry" }, { to: "/tools", label: "All tools" },
+    { to: "/extenders", label: "Extenders" }, { to: "/registry", label: "3D model registry" }, { to: "/avatars", label: "Avatar studio" }, { to: "/tools", label: "All tools" },
   ] },
   { title: "GUARDIANS", items: [
     { to: "/mint", label: "Mint Guardian" }, { to: "/breed", label: "Breeding lab" }, { to: "/command", label: "Command centre" },
