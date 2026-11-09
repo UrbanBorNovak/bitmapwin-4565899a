@@ -74,7 +74,7 @@ export function gradeName(grade: number): string {
 export function gradeSlab(input: SlabInput): SlabGrade {
   const subs: SubGrade[] = [
     { key: "vintage", label: "VINTAGE", score: vintageScore(input.height), why: `block ${input.height.toLocaleString("en-US")}` },
-    { key: "centering", label: "CENTERING", score: centeringScore(input.layoutWidth, input.layoutHeight), why: `${input.layoutHeight}/${input.layoutWidth} rows filled` },
+    { key: "centering", label: "CENTERING", score: centeringScore(input.layoutWidth, input.layoutHeight), why: `${Math.min(input.layoutHeight, input.layoutWidth)}/${input.layoutWidth} rows filled` },
     { key: "work", label: "WORK", score: workScore(input.hash), why: input.hash ? `${input.hash.match(/^0*/)![0].length} leading zeros` : "hash unavailable" },
     { key: "scarcity", label: "SCARCITY", score: scarcityScore(input.txCount), why: `${input.txCount.toLocaleString("en-US")} parcels` },
   ];
