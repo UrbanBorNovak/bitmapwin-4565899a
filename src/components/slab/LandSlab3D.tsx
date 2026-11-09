@@ -127,7 +127,7 @@ function Slab({ height, layout, grade, flipped, hash }: Props) {
       {/* back plate behind the land */}
       <mesh position={[0, wellY, -0.1]}>
         <planeGeometry args={[W - 0.3, H - LABEL_H - 0.45]} />
-        <meshStandardMaterial color="#0b0f14" roughness={0.9} />
+        <meshStandardMaterial color="#0b0f14" roughness={0.9} side={THREE.DoubleSide} />
       </mesh>
       {/* labels */}
       <mesh position={[0, labelY, D / 2 - 0.05]}>
