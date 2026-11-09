@@ -33,9 +33,9 @@ export function pickWindowsInstaller(release: unknown): DesktopInstaller | null 
       a.browser_download_url.startsWith("https://github.com/") &&
       (a.state === undefined || a.state === "uploaded"),
   );
-  if (exes.length === 0) return null;
   // Prefer the NSIS setup installer when the release carries more than one .exe.
   const asset = exes.find((a) => /setup/i.test(String(a.name))) ?? exes[0];
+  if (!asset) return null;
   return {
     version: typeof r.tag_name === "string" ? r.tag_name : "",
     fileName: String(asset.name),
