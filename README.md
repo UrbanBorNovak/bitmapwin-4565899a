@@ -6,13 +6,15 @@
 
 **Every Bitcoin block is land. Every transaction is a BITMAP parcel. Every build is proven on-chain.**
 
+*The internet, but with land and people.*
+
 [![Bitcoin L1](https://img.shields.io/badge/Bitcoin-L1-F7931A?logo=bitcoin&logoColor=white)](https://mempool.space)
 [![Ordinals](https://img.shields.io/badge/Ordinals-Inscribed-111111)](https://ordinals.com)
 [![TanStack Start](https://img.shields.io/badge/TanStack_Start-v1-00E5FF)](https://tanstack.com/start)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-WebGL-000000?logo=threedotjs&logoColor=white)](https://threejs.org)
 
-[**Website**](https://bitmapwin.app) · [**Enter the Oasis**](https://bitmapwin.app/oasis) · [**Launch Grandstand**](https://bitmapwin.app/launch) · [**Land Forge**](https://bitmapwin.app/forge) · [**X / Twitter**](https://x.com/bitmapwin)
+[**Website**](https://bitmapwin.app) · [**Enter the Oasis**](https://bitmapwin.app/oasis) · [**Launch Grandstand**](https://bitmapwin.app/launch) · [**Land Forge**](https://bitmapwin.app/forge) · [**About**](https://bitmapwin.app/about) · [**Windows App**](https://bitmapwin.app/download) · [**X / Twitter**](https://x.com/bitmapwin)
 
 </div>
 
@@ -23,7 +25,10 @@
 - [What is BITMAPWIN?](#-what-is-bitmapwin)
 - [The Five Pillars](#-the-five-pillars)
 - [On-Chain Milestones](#-on-chain-milestones)
+- [Marketplace & Barter](#-marketplace--barter)
+- [Bitcoin-Locked Leases](#-bitcoin-locked-leases-bw-lease-l1)
 - [Launch Grandstand](#-launch-grandstand)
+- [Windows Desktop App](#-windows-desktop-app)
 - [Protocols & Standards](#-protocols--standards)
 - [Technology Stack](#-technology-stack)
 - [Getting Started](#-getting-started)
@@ -71,6 +76,20 @@ Nothing is invented. Terrain, ownership, pedigree and builds are derived from **
 
 ## ⛓️ On-Chain Milestones
 
+### Guardian Master V8 (live)
+
+The Guardian renderer every Guardian points to. Inscribed once; new features arrive as child modules.
+
+| Field | Value |
+|---|---|
+| Inscription | **#127,831,725** · [`a3a5a15e…b4i0`](https://ordinals.com/inscription/a3a5a15e80460a794e452dc65ddce9bb289fc7dd1bd69ac47a7bd7b1fceca9b4i0) |
+| Confirmed | Block **974,766** |
+| Engine | Three.js r163 loaded from its on-chain inscription, Canvas 2D fallback when WebGL is unavailable |
+| Features | Real sibling Guardians on the horizon, SWARM telemetry, parcel terraces from `/r/block`, block-reactive sky and astrology, December holiday scenes, WebXR (teleport, smooth walk, seated, snap turn) |
+| Add-ons | `BW-MOD-1` modules, `BW-FUND-1` community unlocks, `BW-SKIN-1` HUD skins, `BW-PAGE-1` profile cards |
+
+V7 stays accepted for older Guardians.
+
 ### Land Forge Master Renderer (Tag 11 Delegate)
 
 The self-rendering voxel viewer is inscribed on Bitcoin. Lean builds point to it and only carry their voxel data.
@@ -84,6 +103,26 @@ The self-rendering voxel viewer is inscribed on Bitcoin. Lean builds point to it
 | Runtime | Zero external requests, mouse and touch orbit controls |
 
 Builds made with earlier renderers keep loading and stay recognised.
+
+---
+
+## 🏪 Marketplace & Barter
+
+[`/marketplace`](https://bitmapwin.app/marketplace) is a pro-trader terminal with five tabs: Land, Mine, Offers, Sales and Analytics.
+
+- **Non-custodial listings** — sellers sign a PSBT; a 90-second server checkout hold stops snipes
+- **Many-for-one barter** — offer up to 5 ordinals for 1, with a full pre-signing summary of every asset, postage, fee and address for both sides
+- **Confirmed sales only** — the activity rail shows trades proven on-chain
+- **Trading API** — bots trade under the same signed-proof rules as people
+
+---
+
+## 🔒 Bitcoin-Locked Leases (BW-LEASE-L1)
+
+A Taproot lease bond with three paths: mutual close (both sign), tenant refund after a timelock, and a penalty path that only opens if the tenant signs two contradicting statements. Rent is prepaid and released on a block schedule; each confirmed period transaction is the receipt.
+
+- Tested on a private signet: **14/14** bond cases and **16/16** rent cases behaved as expected
+- **Status:** signet preview, not on mainnet. Script cannot punish missed pay-as-you-go rent, so that is not offered.
 
 ---
 
@@ -103,6 +142,16 @@ Seat claims are a message signature only: **no transaction, no fee**.
 
 ---
 
+## 🖥️ Windows Desktop App
+
+A small Tauri v2 window that opens the live bitmapwin.app — no native permissions, always up to date.
+
+- Built by `.github/workflows/desktop-release.yml` on `desktop-v*` tags (or manual run) as a draft GitHub release
+- [`/download`](https://bitmapwin.app/download) enables its button only when a published release has an `.exe`
+- The installer is not code-signed yet, so Windows SmartScreen shows a warning
+
+---
+
 ## 📜 Protocols & Standards
 
 Full specs live in [`docs/`](./docs/README.md). Read [VISION](./docs/VISION.md) and [CONTRIBUTING](./CONTRIBUTING.md) as well.
@@ -113,6 +162,10 @@ Full specs live in [`docs/`](./docs/README.md). Read [VISION](./docs/VISION.md) 
 | **BWVX_ASM** | Recursive assemblies that reference inscribed pieces by inscription id |
 | **BW-STAND-1** | Sovereign Grandstand: an inscribed JSON config whose inscription id is the stand's identity |
 | **Parcel Floor Metric** | One owner per cell from Mondrian coverage; builds clip to their own rect |
+| **BW-MOD-1 / BW-FUND-1** | Recursive add-on modules for the Guardian Master, optionally unlocked by community sats |
+| **BW-SKIN-1** | Image HUD overlay / mask inscribed as a Guardian child |
+| **BW-PAGE-1** | JSON profile card child (bio, top eight, avatar) for a Guardian |
+| **BW-LEASE-L1** | Taproot lease bond with refund timelock, equivocation penalty and prepaid rent |
 | **BIP-322** | Wallet-signed proof for seats, lounges, backrooms and trading API writes |
 | **SHORD / Shadow Utility** | Poseidon commitments and one-time nullifiers for private relics and passes |
 
@@ -130,6 +183,7 @@ Full specs live in [`docs/`](./docs/README.md). Read [VISION](./docs/VISION.md) 
 | Cryptography | `@noble/*`, `poseidon-lite`, `snarkjs` (Groth16) |
 | Data | Ordinals.com, mempool.space, and a hosted Postgres backend with row-level security |
 | Runtime | Edge workers (Cloudflare Workers compatible) |
+| Desktop | Tauri v2 (Windows NSIS installer) |
 
 ---
 
@@ -139,8 +193,8 @@ Full specs live in [`docs/`](./docs/README.md). Read [VISION](./docs/VISION.md) 
 
 ```bash
 # Clone
-git clone https://github.com/<your-username>/bitmapwin.git
-cd bitmapwin
+git clone https://github.com/UrbanBorNovak/bitmapwin-4565899a.git
+cd bitmapwin-4565899a
 
 # Install
 bun install        # or: npm install
@@ -165,6 +219,8 @@ src/
 │   ├── launch.tsx           Launch Grandstand
 │   ├── forge.tsx            Land Forge studio
 │   ├── marketplace.tsx      BITMAP marketplace
+│   ├── about.tsx            About page
+│   ├── download.tsx         Windows app download
 │   ├── biternam_.*.tsx      2.5D Biternam rooms
 │   └── api/public/          Public API (trading, agent schema, inscriptions)
 ├── components/
@@ -177,7 +233,11 @@ src/
 │   ├── forge-parcels.ts     Parcel Floor Metric
 │   ├── creature-morph.ts    Guardian DNA → voxel design
 │   ├── sovereign-stand.ts   BW-STAND-1
+│   ├── guardian-delegate-v8-three.ts  Guardian Master V8
+│   ├── lease-tapscript.ts   BW-LEASE-L1 bond tree
 │   └── shord/               Private notes and proofs
+src-tauri/                   Windows desktop shell
+.github/workflows/           Desktop release CI
 public/                      Static assets and WASM circuits
 supabase/migrations/         Database schema
 ```
@@ -196,7 +256,7 @@ supabase/migrations/         Database schema
 
 ## 🔐 Security
 
-This repository contains application source only. No wallet keys, seed phrases or passwords are stored here. Circuit files in `public/wasm/` are public proving and verification parameters.
+This repository contains application source only. No wallet keys, seed phrases or passwords are stored here. The only key in `.env` is the public browser key that every visitor already receives; server secrets live in the hosting environment. Circuit files in `public/wasm/` are public proving and verification parameters.
 
 Found a vulnerability? Please contact the team privately via [X](https://x.com/bitmapwin) rather than opening a public issue.
 

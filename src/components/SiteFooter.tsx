@@ -88,6 +88,10 @@ export function SiteFooter() {
           <span>BOT STARTER KIT ON{" "}
             <a href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a></span>
           <span aria-hidden>·</span>
+          <Link to="/about" className="text-signal hover:text-foreground">ABOUT</Link>
+          <span aria-hidden>·</span>
+          <Link to="/download" className="text-signal hover:text-foreground">WINDOWS APP</Link>
+          <span aria-hidden>·</span>
           <Link to="/store-kit" className="text-signal hover:text-foreground">STORE KIT</Link>
           <span aria-hidden>·</span>
           <Link to="/tiny-studio" className="text-signal hover:text-foreground">TINY STUDIO</Link>
