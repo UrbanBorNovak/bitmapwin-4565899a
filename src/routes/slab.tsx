@@ -7,6 +7,8 @@ import { gradeSlab } from "@/lib/land-slab";
 import { fetchBlock } from "@/lib/slab-block";
 import { GradeQueue } from "@/components/slab/GradeQueue";
 import { slabInscriptionsFn } from "@/lib/slab-inscriptions.functions";
+import { satProofQuery } from "@/lib/sat-lookup";
+import { mathTraits, satReading } from "@/lib/slab-rarity";
 
 const LandSlab3D = lazy(() => import("@/components/slab/LandSlab3D").then((m) => ({ default: m.LandSlab3D })));
 
@@ -117,6 +119,7 @@ function SlabPage() {
               </ul>
             </section>
           )}
+          <RarityPanel height={height} hash={hash} />
           <section className="rounded-xl border border-border bg-card p-4">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-widest">Inscribed in this land</h2>
             {ins.isPending && hash ? (
@@ -167,6 +170,41 @@ function SlabPage() {
         </aside>
       </div>
     </main>
+  );
+}
+
+function RarityPanel({ height, hash }: { height: number; hash: string | null }) {
+  const proof = useQuery(satProofQuery(height));
+  const sat = proof.data?.sat ?? null;
+  const reading = sat != null ? satReading(sat) : null;
+  const math = mathTraits(height, hash, sat);
+  return (
+    <section className="rounded-xl border border-border bg-card p-4">
+      <h2 className="mb-2 font-mono text-xs uppercase tracking-widest">Satoshi &amp; rarities</h2>
+      {proof.isPending ? (
+        <p className="font-mono text-xs text-muted-foreground">READING LIVEOCI…</p>
+      ) : !reading ? (
+        <p className="font-mono text-xs text-muted-foreground">SAT NOT FOUND FOR THIS BITMAP YET</p>
+      ) : (
+        <div className="space-y-1 font-mono text-xs">
+          <div className="flex justify-between"><span>SAT</span><span className="text-accent">{reading.sat.toLocaleString("en-US")}</span></div>
+          <div className="flex justify-between"><span>SAT RARITY</span><span className={reading.rarity === "COMMON" ? "text-muted-foreground" : "text-primary"}>{reading.rarity}</span></div>
+          <div className="flex justify-between"><span>MINED IN BLOCK</span><span>{reading.minedIn.toLocaleString("en-US")}</span></div>
+          {reading.specials.length > 0 ? (
+            <ul className="flex flex-wrap gap-1 pt-1">
+              {reading.specials.map((s) => <li key={s.id} title={s.note} className="rounded border border-primary px-1.5 py-0.5 text-primary">{s.label}</li>)}
+            </ul>
+          ) : <p className="text-muted-foreground">NO NAMED SAT TRAITS</p>}
+          <p className="text-muted-foreground">SOURCE · {proof.data?.source === "LIVEOCI" ? `LIVEOCI PAGE ${proof.data.page}` : "SITE INDEX"}</p>
+        </div>
+      )}
+      <h3 className="mb-1 mt-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">Mathematical</h3>
+      {math.length ? (
+        <ul className="flex flex-wrap gap-1 font-mono text-xs">
+          {math.map((t) => <li key={t.id} title={t.note} className="rounded border border-accent px-1.5 py-0.5 text-accent">{t.label}</li>)}
+        </ul>
+      ) : <p className="font-mono text-xs text-muted-foreground">NO MATHEMATICAL TRAITS</p>}
+    </section>
   );
 }
 
