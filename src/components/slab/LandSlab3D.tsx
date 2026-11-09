@@ -1,17 +1,43 @@
-import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { events as r3fEvents, useFrame, type RootState, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { BlockLayout } from "@/lib/bitmap-layout";
 import type { SlabGrade } from "@/lib/land-slab";
+import type { ParcelInscription } from "@/lib/slab-inscriptions.functions";
+
+const noRay = () => null;
+const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
+  ...r3fEvents(store),
+  compute(e: { clientX: number; clientY: number }, state: RootState) {
+    const r = state.gl.domElement.getBoundingClientRect();
+    state.pointer.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    state.raycaster.setFromCamera(state.pointer, state.camera);
+  },
+});
+
+/** Parcel colour by what was inscribed there (cyan family = live data, per the site palette). */
+export function inscriptionTint(type: string): string {
+  if (type.startsWith("image/")) return "#2fe6ff";
+  if (type.includes("html")) return "#ff4fd8";
+  if (type.includes("json")) return "#a3ff5a";
+  if (type.startsWith("text/")) return "#f4f1e8";
+  if (type.startsWith("model/")) return "#b18cff";
+  if (type.startsWith("audio/") || type.startsWith("video/")) return "#ffd23f";
+  return "#7fd8e8";
+}
+const ART_CAP = 24;
 
 // Slab proportions follow a PSA holder: 3.3 × 5.4 with a label band on top.
 const W = 3.3, H = 5.4, D = 0.32;
 const LABEL_H = 1.15;
 const PSA_RED = "#c8102e";
 
-type Props = { height: number; layout: BlockLayout; grade: SlabGrade; flipped: boolean; hash: string | null };
+type Props = {
+  height: number; layout: BlockLayout; grade: SlabGrade; flipped: boolean; hash: string | null;
+  inscriptions?: ParcelInscription[]; selected?: number | null; onPick?: (tx: number | null) => void;
+};
 
 function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: string | null) {
   const c = document.createElement("canvas");
@@ -61,43 +87,98 @@ function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: str
   return t;
 }
 
-function Land({ layout }: { layout: BlockLayout }) {
-  const ref = useRef<THREE.InstancedMesh>(null);
+function useGeom(layout: BlockLayout) {
   const side = Math.max(layout.width, layout.height);
   const span = 2.5;
   const unit = span / side;
+  const offY = (side - layout.height) / 2;
+  return (i: number) => {
+    const p = layout.parcels[i]!;
+    const s = p.size * unit * 0.88;
+    const h = 0.04 + p.size * unit * 0.6;
+    return { x: (p.position.x + p.size / 2) * unit - span / 2, y: span / 2 - (p.position.y + offY + p.size / 2) * unit, s, h };
+  };
+}
+
+function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map<number, ParcelInscription>; selected: number | null; onPick?: (tx: number | null) => void }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const geom = useGeom(layout);
   const count = layout.parcels.length;
   useEffect(() => {
     const m = ref.current; if (!m) return;
     const o = new THREE.Object3D();
     const col = new THREE.Color();
-    const offY = (side - layout.height) / 2;
     layout.parcels.forEach((p, i) => {
-      const s = p.size * unit * 0.88;
-      const h = 0.04 + p.size * unit * 0.6;
-      o.position.set(
-        (p.position.x + p.size / 2) * unit - span / 2,
-        span / 2 - (p.position.y + offY + p.size / 2) * unit,
-        h / 2,
-      );
-      o.scale.set(s, s, h);
+      const g = geom(i);
+      const lift = ins.has(i) ? 1.8 : 1;
+      const h = g.h * lift * (selected === i ? 1.6 : 1);
+      o.position.set(g.x, g.y, h / 2);
+      o.scale.set(g.s, g.s, h);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
-      col.setHSL(0.075, 0.95, 0.42 + Math.min(0.25, p.size * 0.04));
+      const it = ins.get(i);
+      if (it) col.set(inscriptionTint(it.type));
+      else col.setHSL(0.075, 0.55, 0.16 + Math.min(0.12, p.size * 0.02));
+      if (selected === i) col.offsetHSL(0, 0, 0.15);
       m.setColorAt(i, col);
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [layout, side, unit]);
+  }, [layout, geom, ins, selected]);
   return (
-    <instancedMesh ref={ref} args={[undefined, undefined, Math.max(1, count)]}>
+    <instancedMesh
+      ref={ref}
+      args={[undefined, undefined, Math.max(1, count)]}
+      onClick={(e: ThreeEvent<MouseEvent>) => { e.stopPropagation(); if (e.instanceId != null) onPick?.(ins.has(e.instanceId) ? e.instanceId : null); }}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => { if (e.instanceId != null && ins.has(e.instanceId)) document.body.style.cursor = "pointer"; }}
+      onPointerOut={() => { document.body.style.cursor = ""; }}
+    >
       <boxGeometry />
-      <meshStandardMaterial roughness={0.45} metalness={0.15} />
+      <meshStandardMaterial roughness={0.45} metalness={0.15} emissiveIntensity={0} />
     </instancedMesh>
   );
 }
 
-function Slab({ height, layout, grade, flipped, hash }: Props) {
+/** Real image inscriptions laid on top of their parcels, loaded from ordinals.com/content. */
+function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscription[] }) {
+  const geom = useGeom(layout);
+  const [tex, setTex] = useState<Map<string, THREE.Texture>>(new Map());
+  useEffect(() => {
+    let alive = true;
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+    const made: THREE.Texture[] = [];
+    items.forEach((it) => {
+      loader.load(`https://ordinals.com/content/${it.id}`, (t) => {
+        if (!alive) { t.dispose(); return; }
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.magFilter = THREE.NearestFilter;
+        made.push(t);
+        setTex((m) => new Map(m).set(it.id, t));
+      }, undefined, () => {});
+    });
+    return () => { alive = false; made.forEach((t) => t.dispose()); };
+  }, [items]);
+  return (
+    <>
+      {items.map((it) => {
+        const t = tex.get(it.id);
+        if (!t || it.tx >= layout.parcels.length) return null;
+        const g = geom(it.tx);
+        return (
+          <mesh key={it.id} position={[g.x, g.y, g.h * 1.8 + 0.002]} raycast={noRay}>
+            <planeGeometry args={[g.s * 0.96, g.s * 0.96]} />
+            <meshBasicMaterial map={t} toneMapped={false} />
+          </mesh>
+        );
+      })}
+    </>
+  );
+}
+
+function Slab({ height, layout, grade, flipped, hash, inscriptions, selected = null, onPick }: Props) {
+  const ins = useMemo(() => new Map((inscriptions ?? []).map((x) => [x.tx, x])), [inscriptions]);
+  const art = useMemo(() => (inscriptions ?? []).filter((x) => x.type.startsWith("image/") && !x.type.includes("svg")).slice(0, ART_CAP), [inscriptions]);
   const group = useRef<THREE.Group>(null);
   const land = useRef<THREE.Group>(null);
   const front = useMemo(() => labelTexture(height, grade, false, hash), [height, grade, hash]);
@@ -122,24 +203,25 @@ function Slab({ height, layout, grade, flipped, hash }: Props) {
     <group ref={group}>
       {/* living land inside the well */}
       <group ref={land} position={[0, wellY, -0.06]}>
-        <Land layout={layout} />
+        <Land layout={layout} ins={ins} selected={selected} onPick={onPick} />
+        <ArtTiles layout={layout} items={art} />
       </group>
       {/* back plate behind the land */}
-      <mesh position={[0, wellY, -0.1]}>
+      <mesh position={[0, wellY, -0.1]} onClick={() => onPick?.(null)}>
         <planeGeometry args={[W - 0.3, H - LABEL_H - 0.45]} />
         <meshStandardMaterial color="#0b0f14" roughness={0.9} side={THREE.DoubleSide} />
       </mesh>
       {/* labels */}
-      <mesh position={[0, labelY, D / 2 - 0.05]}>
+      <mesh position={[0, labelY, D / 2 - 0.05]} raycast={noRay}>
         <planeGeometry args={[W - 0.3, LABEL_H - 0.05]} />
         <meshStandardMaterial map={front} roughness={0.5} />
       </mesh>
-      <mesh position={[0, labelY, -D / 2 + 0.05]} rotation={[0, Math.PI, 0]}>
+      <mesh position={[0, labelY, -D / 2 + 0.05]} raycast={noRay} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[W - 0.3, LABEL_H - 0.05]} />
         <meshStandardMaterial map={back} roughness={0.5} />
       </mesh>
       {/* acrylic holder */}
-      <RoundedBox args={[W, H, D]} radius={0.12} smoothness={4}>
+      <RoundedBox args={[W, H, D]} radius={0.12} smoothness={4} raycast={noRay}>
         <meshPhysicalMaterial
           transmission={0.96}
           roughness={0.04}
@@ -159,7 +241,7 @@ function Slab({ height, layout, grade, flipped, hash }: Props) {
 export function LandSlab3D(props: Props) {
   return (
     <div className="h-full w-full" data-scene-ready>
-      <SafeCanvas camera={{ position: [0, 0, 8.2], fov: 38 }} dpr={[1, 2]}>
+      <SafeCanvas events={zoomSafeEvents} camera={{ position: [0, 0, 8.2], fov: 38 }} dpr={[1, 2]}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[3, 4, 6]} intensity={1.6} />
         <pointLight position={[-3, -2, 3]} intensity={18} color="#ff9a3c" />
