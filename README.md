@@ -26,6 +26,7 @@
 - [The Five Pillars](#-the-five-pillars)
 - [On-Chain Milestones](#-on-chain-milestones)
 - [Marketplace & Barter](#-marketplace--barter)
+- [Feature Status](#-feature-status)
 - [Bitcoin-Locked Leases](#-bitcoin-locked-leases-bw-lease-l1)
 - [Launch Grandstand](#-launch-grandstand)
 - [Windows Desktop App](#-windows-desktop-app)
@@ -37,6 +38,18 @@
 - [Security](#-security)
 
 ---
+
+## 🚦 Feature Status
+
+| Feature | Status |
+|---|---|
+| Oasis, BITMAP marketplace, listings, Land Forge, Guardian Master V8 | **Live** |
+| Many-for-one barter | **Live**, tested offline with throwaway keys; real-wallet signing on every wallet not yet checked |
+| `BW-MOD-1` / `BW-FUND-1` / `BW-SKIN-1` / `BW-PAGE-1` add-ons | **Experimental** — supported by the V8 Master, few or no community children inscribed yet |
+| V8 WebXR (VR) | **Experimental** — checked with emulation only, not on headset hardware |
+| BW-CUBE-1 Block Cube module | **Not yet available** — draft payload, not inscribed |
+| Bitcoin-locked leases (BW-LEASE-L1) | **Not yet available** — private signet tests only, no mainnet, not on the lease page |
+| Windows desktop app | **Not yet available** — no installer released; first build untested; unsigned |
 
 ## 🌍 What is BITMAPWIN?
 
@@ -86,7 +99,8 @@ The Guardian renderer every Guardian points to. Inscribed once; new features arr
 | Confirmed | Block **974,766** |
 | Engine | Three.js r163 loaded from its on-chain inscription, Canvas 2D fallback when WebGL is unavailable |
 | Features | Real sibling Guardians on the horizon, SWARM telemetry, parcel terraces from `/r/block`, block-reactive sky and astrology, December holiday scenes, WebXR (teleport, smooth walk, seated, snap turn) |
-| Add-ons | `BW-MOD-1` modules, `BW-FUND-1` community unlocks, `BW-SKIN-1` HUD skins, `BW-PAGE-1` profile cards |
+| Add-ons (experimental) | `BW-MOD-1` modules, `BW-FUND-1` community unlocks, `BW-SKIN-1` HUD skins, `BW-PAGE-1` profile cards |
+| VR (experimental) | Tested with WebXR emulation only, not on a real headset |
 
 V7 stays accepted for older Guardians.
 
@@ -144,6 +158,8 @@ Seat claims are a message signature only: **no transaction, no fee**.
 
 ## 🖥️ Windows Desktop App
 
+> **Status: not yet available.** No installer has been built or published, and the build workflow has not run yet.
+
 A small Tauri v2 window that opens the live bitmapwin.app — no native permissions, always up to date.
 
 - Built by `.github/workflows/desktop-release.yml` on `desktop-v*` tags (or manual run) as a draft GitHub release
@@ -165,7 +181,7 @@ Full specs live in [`docs/`](./docs/README.md). Read [VISION](./docs/VISION.md) 
 | **BW-MOD-1 / BW-FUND-1** | Recursive add-on modules for the Guardian Master, optionally unlocked by community sats |
 | **BW-SKIN-1** | Image HUD overlay / mask inscribed as a Guardian child |
 | **BW-PAGE-1** | JSON profile card child (bio, top eight, avatar) for a Guardian |
-| **BW-LEASE-L1** | Taproot lease bond with refund timelock, equivocation penalty and prepaid rent |
+| **BW-LEASE-L1** *(signet only)* | Taproot lease bond with refund timelock, equivocation penalty and prepaid rent |
 | **BIP-322** | Wallet-signed proof for seats, lounges, backrooms and trading API writes |
 | **SHORD / Shadow Utility** | Poseidon commitments and one-time nullifiers for private relics and passes |
 

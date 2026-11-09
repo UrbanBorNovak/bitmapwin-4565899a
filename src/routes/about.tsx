@@ -23,7 +23,7 @@ export const Route = createFileRoute("/about")({
 
 const PILLARS = [
   { to: "/oasis", name: "WORLD", text: "The Oasis: a shared 3D map of Bitcoin blocks you can walk with other people." },
-  { to: "/marketplace", name: "LAND", text: "Every block is a BITMAP. Buy, list, barter and lease with wallet-signed trades." },
+  { to: "/marketplace", name: "LAND", text: "Every block is a BITMAP. Buy, list and barter with wallet-signed trades." },
   { to: "/forge", name: "CREATION", text: "Land Forge: build in voxels and inscribe the build onto your BITMAP's own sat." },
   { to: "/guardians", name: "GUARDIANS", text: "One creature per block, designed from block data and rendered by an inscribed Master." },
   { to: "/passport", name: "IDENTITY", text: "Sign in with your wallet. Badges come from live chain checks, never from claims." },
@@ -33,7 +33,12 @@ const ENFORCED = [
   "Who owns a BITMAP (live satpoint and wallet data)",
   "What a build or Guardian looks like (its inscription bytes)",
   "Trades: every listing, barter and buy is a signed Bitcoin transaction",
-  "Lease bonds and prepaid rent on Bitcoin-locked leases (signet preview)",
+];
+
+const STATUS = [
+  { label: "EXPERIMENTAL", text: "Guardian add-ons (modules, community unlocks, HUD skins, profile cards) and VR mode — VR tested in emulation only." },
+  { label: "NOT YET AVAILABLE", text: "Bitcoin-locked leases — tested on a private test network only, not on mainnet." },
+  { label: "NOT YET AVAILABLE", text: "Windows app — no installer has been released yet." },
 ];
 
 const APP = [
@@ -81,6 +86,17 @@ function AboutPage() {
         </div>
       </section>
 
+      <section className="mt-12 rounded-lg border border-border bg-card p-5">
+        <h2 className="label text-signal">STATUS</h2>
+        <ul className="mt-3 space-y-2 text-sm text-foreground/85">
+          {STATUS.map((s) => (
+            <li key={s.text}>
+              <span className="font-mono text-xs tracking-widest text-bitcoin">{s.label}</span> · {s.text}
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="mt-12">
         <h2 className="label text-bitcoin">OUR RULES</h2>
         <ul className="mt-3 space-y-2 text-sm text-foreground/85">
@@ -100,7 +116,7 @@ function AboutPage() {
         <div className="mt-4 flex flex-wrap gap-4 font-mono text-xs">
           <a href="https://github.com/UrbanBorNovak/bitmapwin-4565899a" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a>
           <a href="https://x.com/bitmapwin" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">X / TWITTER</a>
-          <Link to="/download" className="text-signal hover:text-foreground">WINDOWS APP</Link>
+          <Link to="/download" className="text-signal hover:text-foreground">WINDOWS APP (NOT YET RELEASED)</Link>
           <Link to="/docs" className="text-signal hover:text-foreground">DOCS</Link>
         </div>
       </section>
