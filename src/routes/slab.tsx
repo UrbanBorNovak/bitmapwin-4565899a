@@ -4,6 +4,8 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { z } from "zod";
 import { layoutFromSizeClasses } from "@/lib/bitmap-layout";
 import { gradeSlab } from "@/lib/land-slab";
+import { fetchBlock } from "@/lib/slab-block";
+import { GradeQueue } from "@/components/slab/GradeQueue";
 
 const LandSlab3D = lazy(() => import("@/components/slab/LandSlab3D").then((m) => ({ default: m.LandSlab3D })));
 
@@ -21,18 +23,6 @@ export const Route = createFileRoute("/slab")({
     ],
   }),
 });
-
-async function fetchBlock(height: number) {
-  const r = await fetch(`/api/public/blocks/${height}`);
-  if (r.status === 204) return null;
-  if (!r.ok) throw new Error(`block ${r.status}`);
-  const bytes = new Uint8Array(await r.arrayBuffer());
-  return {
-    classes: Array.from(bytes),
-    hash: r.headers.get("x-block-hash"),
-    txCount: Number(r.headers.get("x-tx-count") ?? bytes.length) || bytes.length,
-  };
-}
 
 function SlabPage() {
   const { b } = Route.useSearch();
@@ -97,6 +87,7 @@ function SlabPage() {
         </div>
 
         <aside className="space-y-4">
+          <ClientOnly fallback={null}><GradeQueue /></ClientOnly>
           {data && (
             <section className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-baseline justify-between">
