@@ -110,7 +110,7 @@ function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map
     const col = new THREE.Color();
     layout.parcels.forEach((p, i) => {
       const g = geom(i);
-      const lift = ins.has(i) ? 1.8 : 1;
+      const lift = ins.has(i) ? 3 : 1;
       const h = g.h * lift * (selected === i ? 1.6 : 1);
       o.position.set(g.x, g.y, h / 2);
       o.scale.set(g.s, g.s, h);
@@ -118,6 +118,7 @@ function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map
       m.setMatrixAt(i, o.matrix);
       const it = ins.get(i);
       if (it) col.set(inscriptionTint(it.type));
+      else if (ins.size) col.setHSL(0.07, 0.3, 0.035 + Math.min(0.03, p.size * 0.006));
       else col.setHSL(0.075, 0.55, 0.16 + Math.min(0.12, p.size * 0.02));
       if (selected === i) col.offsetHSL(0, 0, 0.15);
       m.setColorAt(i, col);
@@ -168,7 +169,7 @@ function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscrip
         if (!t || it.tx >= layout.parcels.length) return null;
         const g = geom(it.tx);
         return (
-          <mesh key={it.txid} position={[g.x, g.y, g.h * 1.8 + 0.002]} raycast={noRay}>
+          <mesh key={it.txid} position={[g.x, g.y, g.h * 3 + 0.002]} raycast={noRay}>
             <planeGeometry args={[g.s * 0.96, g.s * 0.96]} />
             <meshBasicMaterial map={t} toneMapped={false} />
           </mesh>
