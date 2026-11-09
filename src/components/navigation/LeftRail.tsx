@@ -34,7 +34,7 @@ const MORE: { title: string; items: { to: string; label: string }[] }[] = [
     { to: "/watch", label: "Toon cinema" }, { to: "/church", label: "Church of BITMAP" },
   ] },
   { title: "LEARN & BUILD", items: [
-    { to: "/about", label: "About" }, { to: "/download", label: "Windows app" }, { to: "/land-101", label: "Land 101" }, { to: "/guardians-guide", label: "Guardians guide" }, { to: "/play-guide", label: "Player guide" },
+    { to: "/slab", label: "Land Slabs" }, { to: "/about", label: "About" }, { to: "/download", label: "Windows app" }, { to: "/land-101", label: "Land 101" }, { to: "/guardians-guide", label: "Guardians guide" }, { to: "/play-guide", label: "Player guide" },
     { to: "/docs", label: "Docs & SDK" }, { to: "/dev-tools", label: "Developer tools" },
   ] },
 ];
