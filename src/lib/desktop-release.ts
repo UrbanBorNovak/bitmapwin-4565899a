@@ -3,7 +3,7 @@
 // GitHub release; it only counts as available once that release is published
 // and carries a Windows .exe asset.
 
-export const DESKTOP_REPO = "UrbanBorNovak/BitmapWin";
+export const DESKTOP_REPO = "UrbanBorNovak/bitmapwin-4565899a";
 export const DESKTOP_RELEASES_URL = `https://github.com/${DESKTOP_REPO}/releases/latest`;
 // GitHub's "latest" endpoint skips drafts and pre-releases.
 export const DESKTOP_LATEST_API = `https://api.github.com/repos/${DESKTOP_REPO}/releases/latest`;
