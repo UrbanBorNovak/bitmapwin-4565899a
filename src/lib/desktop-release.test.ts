@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickWindowsInstaller } from "./desktop-release";
+import { pickFromReleases, pickWindowsInstaller } from "./desktop-release";
 
 const exe = {
   name: "BitmapWIN_0.1.0_x64-setup.exe",
@@ -28,5 +28,26 @@ describe("pickWindowsInstaller", () => {
 
   it("ignores an .exe that has not finished uploading", () => {
     expect(pickWindowsInstaller({ draft: false, assets: [{ ...exe, state: "new" }] })).toBeNull();
+  });
+
+  it("unlocks for a published pre-release", () => {
+    expect(pickWindowsInstaller({ draft: false, prerelease: true, assets: [exe] })?.url).toBe(exe.browser_download_url);
+  });
+});
+
+describe("pickFromReleases", () => {
+  it("stays disabled when there are no releases", () => {
+    expect(pickFromReleases([])).toBeNull();
+    expect(pickFromReleases({ message: "Not Found" })).toBeNull();
+  });
+  it("skips a newer draft and picks the published installer", () => {
+    const got = pickFromReleases([
+      { tag_name: "desktop-v0.2.0", draft: true, assets: [exe] },
+      { tag_name: "desktop-v0.1.0", draft: false, prerelease: true, assets: [exe] },
+    ]);
+    expect(got?.version).toBe("desktop-v0.1.0");
+  });
+  it("stays disabled when only drafts exist", () => {
+    expect(pickFromReleases([{ draft: true, assets: [exe] }])).toBeNull();
   });
 });

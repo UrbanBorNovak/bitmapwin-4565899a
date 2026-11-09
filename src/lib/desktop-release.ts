@@ -5,8 +5,9 @@
 
 export const DESKTOP_REPO = "UrbanBorNovak/bitmapwin-4565899a";
 export const DESKTOP_RELEASES_URL = `https://github.com/${DESKTOP_REPO}/releases/latest`;
-// GitHub's "latest" endpoint skips drafts and pre-releases.
-export const DESKTOP_LATEST_API = `https://api.github.com/repos/${DESKTOP_REPO}/releases/latest`;
+// Full list: GitHub's "latest" endpoint skips pre-releases, which Tauri builds publish as.
+// Drafts are never visible to anonymous visitors here, and are also refused below.
+export const DESKTOP_RELEASES_API = `https://api.github.com/repos/${DESKTOP_REPO}/releases?per_page=10`;
 
 export type DesktopInstaller = {
   version: string;
@@ -23,7 +24,7 @@ type GhRelease = { tag_name?: unknown; html_url?: unknown; draft?: unknown; prer
 export function pickWindowsInstaller(release: unknown): DesktopInstaller | null {
   if (!release || typeof release !== "object") return null;
   const r = release as GhRelease;
-  if (r.draft === true || r.prerelease === true) return null;
+  if (r.draft !== false) return null; // only explicitly published releases
   if (!Array.isArray(r.assets)) return null;
   const exes = (r.assets as GhAsset[]).filter(
     (a) =>
@@ -45,10 +46,20 @@ export function pickWindowsInstaller(release: unknown): DesktopInstaller | null 
   };
 }
 
-/** Fetch the latest published release; resolves null when no installer is out yet. */
+/** Newest published release (pre-releases included) that carries a finished Windows .exe. */
+export function pickFromReleases(list: unknown): DesktopInstaller | null {
+  if (!Array.isArray(list)) return null;
+  for (const r of list) {
+    const hit = pickWindowsInstaller(r);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Fetch published releases; resolves null when no public installer is out yet. */
 export async function fetchWindowsInstaller(): Promise<DesktopInstaller | null> {
-  const res = await fetch(DESKTOP_LATEST_API, { headers: { Accept: "application/vnd.github+json" } });
-  if (res.status === 404) return null; // no published release yet
+  const res = await fetch(DESKTOP_RELEASES_API, { headers: { Accept: "application/vnd.github+json" } });
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub ${res.status}`);
-  return pickWindowsInstaller(await res.json());
+  return pickFromReleases(await res.json());
 }
