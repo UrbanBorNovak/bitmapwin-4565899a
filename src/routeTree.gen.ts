@@ -157,6 +157,7 @@ import { Route as RanksClansRouteImport } from './routes/ranks.clans'
 import { Route as RanksPvpRouteImport } from './routes/ranks.pvp'
 import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
 import { Route as RanksWalkersRouteImport } from './routes/ranks.walkers'
+import { Route as SlabsAddressRouteImport } from './routes/slabs.$address'
 import { Route as StandIndexRouteImport } from './routes/stand.index'
 import { Route as StandIdRouteImport } from './routes/stand.$id'
 import { Route as TraitsIndexRouteImport } from './routes/traits.index'
@@ -934,6 +935,11 @@ const RanksWalkersRoute = RanksWalkersRouteImport.update({
   path: '/walkers',
   getParentRoute: () => RanksRoute,
 } as any)
+const SlabsAddressRoute = SlabsAddressRouteImport.update({
+  id: '/slabs/$address',
+  path: '/slabs/$address',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StandIndexRoute = StandIndexRouteImport.update({
   id: '/stand/',
   path: '/stand/',
@@ -1262,6 +1268,7 @@ export interface FileRoutesByFullPath {
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
+  '/slabs/$address': typeof SlabsAddressRoute
   '/stand/$id': typeof StandIdRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/traits/ranks': typeof TraitsRanksRoute
@@ -1443,6 +1450,7 @@ export interface FileRoutesByTo {
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
+  '/slabs/$address': typeof SlabsAddressRoute
   '/stand/$id': typeof StandIdRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/traits/ranks': typeof TraitsRanksRoute
@@ -1629,6 +1637,7 @@ export interface FileRoutesById {
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
+  '/slabs/$address': typeof SlabsAddressRoute
   '/stand/$id': typeof StandIdRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/traits/ranks': typeof TraitsRanksRoute
@@ -1816,6 +1825,7 @@ export interface FileRouteTypes {
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/ranks/walkers'
+    | '/slabs/$address'
     | '/stand/$id'
     | '/traits/$trait'
     | '/traits/ranks'
@@ -1997,6 +2007,7 @@ export interface FileRouteTypes {
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/ranks/walkers'
+    | '/slabs/$address'
     | '/stand/$id'
     | '/traits/$trait'
     | '/traits/ranks'
@@ -2182,6 +2193,7 @@ export interface FileRouteTypes {
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/ranks/walkers'
+    | '/slabs/$address'
     | '/stand/$id'
     | '/traits/$trait'
     | '/traits/ranks'
@@ -2347,6 +2359,7 @@ export interface RootRouteChildren {
   MapBlockRoute: typeof MapBlockRoute
   PetIdRoute: typeof PetIdRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  SlabsAddressRoute: typeof SlabsAddressRoute
   StandIdRoute: typeof StandIdRoute
   TraitsTraitRoute: typeof TraitsTraitRoute
   TraitsRanksRoute: typeof TraitsRanksRoute
@@ -3398,6 +3411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RanksWalkersRouteImport
       parentRoute: typeof RanksRoute
     }
+    '/slabs/$address': {
+      id: '/slabs/$address'
+      path: '/slabs/$address'
+      fullPath: '/slabs/$address'
+      preLoaderRoute: typeof SlabsAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stand/': {
       id: '/stand/'
       path: '/stand'
@@ -3925,6 +3945,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapBlockRoute: MapBlockRoute,
   PetIdRoute: PetIdRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  SlabsAddressRoute: SlabsAddressRoute,
   StandIdRoute: StandIdRoute,
   TraitsTraitRoute: TraitsTraitRoute,
   TraitsRanksRoute: TraitsRanksRoute,
