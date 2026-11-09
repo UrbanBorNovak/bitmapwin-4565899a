@@ -18,5 +18,5 @@ export async function fetchSlabGrade(height: number): Promise<{ grade: SlabGrade
   const b = await fetchBlock(height);
   if (!b || b.classes.length === 0) return null;
   const layout = layoutFromSizeClasses(b.classes);
-  return { grade: gradeSlab({ height, txCount: b.txCount, hash: b.hash, layoutWidth: layout.width, layoutHeight: layout.height }), hash: b.hash, txCount: b.txCount };
+  return { grade: gradeSlab({ height, txCount: b.txCount, hash: b.hash, layoutWidth: layout.width, layoutHeight: layout.height, parcelSizes: layout.parcels.map((p) => p.size) }), hash: b.hash, txCount: b.txCount };
 }
