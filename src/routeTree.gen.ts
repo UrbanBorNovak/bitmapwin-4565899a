@@ -81,6 +81,7 @@ import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as ShadowNotesRouteImport } from './routes/shadow-notes'
 import { Route as ShordRouteImport } from './routes/shord'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SlabRouteImport } from './routes/slab'
 import { Route as SpeedBountyRouteImport } from './routes/speed-bounty'
 import { Route as StoreKitRouteImport } from './routes/store-kit'
 import { Route as StreamRouteImport } from './routes/stream'
@@ -550,6 +551,11 @@ const ShordRoute = ShordRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlabRoute = SlabRouteImport.update({
+  id: '/slab',
+  path: '/slab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SpeedBountyRoute = SpeedBountyRouteImport.update({
@@ -1185,6 +1191,7 @@ export interface FileRoutesByFullPath {
   '/shadow-notes': typeof ShadowNotesRoute
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/slab': typeof SlabRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1365,6 +1372,7 @@ export interface FileRoutesByTo {
   '/shadow-notes': typeof ShadowNotesRoute
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/slab': typeof SlabRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1550,6 +1558,7 @@ export interface FileRoutesById {
   '/shadow-notes': typeof ShadowNotesRoute
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/slab': typeof SlabRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1736,6 +1745,7 @@ export interface FileRouteTypes {
     | '/shadow-notes'
     | '/shord'
     | '/sitemap.xml'
+    | '/slab'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -1916,6 +1926,7 @@ export interface FileRouteTypes {
     | '/shadow-notes'
     | '/shord'
     | '/sitemap.xml'
+    | '/slab'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -2100,6 +2111,7 @@ export interface FileRouteTypes {
     | '/shadow-notes'
     | '/shord'
     | '/sitemap.xml'
+    | '/slab'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -2285,6 +2297,7 @@ export interface RootRouteChildren {
   ShadowNotesRoute: typeof ShadowNotesRoute
   ShordRoute: typeof ShordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SlabRoute: typeof SlabRoute
   SpeedBountyRoute: typeof SpeedBountyRoute
   StoreKitRoute: typeof StoreKitRoute
   StreamRoute: typeof StreamRoute
@@ -2851,6 +2864,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/slab': {
+      id: '/slab'
+      path: '/slab'
+      fullPath: '/slab'
+      preLoaderRoute: typeof SlabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/speed-bounty': {
@@ -3854,6 +3874,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShadowNotesRoute: ShadowNotesRoute,
   ShordRoute: ShordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SlabRoute: SlabRoute,
   SpeedBountyRoute: SpeedBountyRoute,
   StoreKitRoute: StoreKitRoute,
   StreamRoute: StreamRoute,
