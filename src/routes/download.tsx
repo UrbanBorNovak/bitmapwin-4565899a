@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-// Set once the GitHub repo is connected and the first desktop release is published.
-const RELEASES_URL = "https://github.com/bitmapwin/bitmapwin/releases/latest";
+import { useQuery } from "@tanstack/react-query";
+import { DESKTOP_RELEASES_URL, fetchWindowsInstaller } from "@/lib/desktop-release";
 
 export const Route = createFileRoute("/download")({
   component: DownloadPage,
@@ -24,6 +23,23 @@ export const Route = createFileRoute("/download")({
 });
 
 function DownloadPage() {
+  // Checked in the visitor's browser: GitHub limits anonymous lookups per IP,
+  // which a shared server would exhaust.
+  const installer = useQuery({
+    queryKey: ["desktop-installer"],
+    queryFn: fetchWindowsInstaller,
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
+  const ready = installer.data ?? null;
+  const status = installer.isPending
+    ? "CHECKING FOR INSTALLER…"
+    : installer.isError
+      ? "COULD NOT REACH GITHUB · TRY AGAIN LATER"
+      : ready
+        ? `${ready.version || "LATEST"} · ${(ready.sizeBytes / 1_048_576).toFixed(1)} MB`
+        : "NOT RELEASED YET";
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <p className="font-mono text-xs tracking-widest text-muted-foreground">DESKTOP · PREVIEW</p>
@@ -34,14 +50,36 @@ function DownloadPage() {
       </p>
 
       <div className="mt-8 rounded-lg border border-border bg-card p-6">
-        <a
-          href={RELEASES_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center rounded-md bg-primary px-5 py-3 font-mono text-sm font-bold text-primary-foreground hover:opacity-90"
-        >
-          DOWNLOAD FOR WINDOWS (.EXE)
-        </a>
+        {ready ? (
+          <a
+            href={ready.url}
+            rel="noreferrer"
+            className="inline-flex items-center rounded-md bg-primary px-5 py-3 font-mono text-sm font-bold text-primary-foreground hover:opacity-90"
+          >
+            DOWNLOAD FOR WINDOWS (.EXE)
+          </a>
+        ) : (
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            className="inline-flex cursor-not-allowed items-center rounded-md bg-muted px-5 py-3 font-mono text-sm font-bold text-muted-foreground"
+          >
+            DOWNLOAD FOR WINDOWS (.EXE)
+          </button>
+        )}
+        <p className="mt-3 font-mono text-xs text-muted-foreground" aria-live="polite">
+          {status}
+          {" · "}
+          <a
+            href={ready?.releaseUrl ?? DESKTOP_RELEASES_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-signal underline"
+          >
+            RELEASE NOTES
+          </a>
+        </p>
         <ul className="mt-5 space-y-1 font-mono text-xs text-muted-foreground">
           <li>Windows 10 or 11 · 64-bit</li>
           <li>Installs for your user only, no admin prompt</li>
