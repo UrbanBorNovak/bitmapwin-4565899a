@@ -119,6 +119,11 @@ function CharacterPage() {
               />
             </label>
 
+            <Link to="/avatars" search={{ id: draft.avatarSkin ?? undefined }} className="block border border-bitcoin/50 p-3 hover:bg-bitcoin/10">
+              <span className="label text-bitcoin">AVATAR STUDIO →</span>
+              <span className="mt-1 block font-mono text-[10px] text-muted-foreground">SEE EVERY BITMAP PIXELS FACE AS AN ANIMATED 3D RIG, WEAR IT, OR MAKE IT YOUR PROFILE PICTURE</span>
+            </Link>
+
             <ClientOnly
               fallback={
                 <div className="h-[26rem] border border-border font-mono text-[10px] text-muted-foreground">
