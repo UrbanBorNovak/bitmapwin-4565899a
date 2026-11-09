@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AddonsRouteImport } from './routes/addons'
 import { Route as ApiRouteImport } from './routes/api'
 import { Route as ArchaeologyRouteImport } from './routes/archaeology'
@@ -193,6 +194,11 @@ import { Route as ApiPublicPuzzle71RigDotshRouteImport } from './routes/api/publ
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AddonsRoute = AddonsRouteImport.update({
@@ -1102,6 +1108,7 @@ const ApiPublicPuzzle71RigDotshRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/addons': typeof AddonsRoute
   '/api': typeof ApiRouteWithChildren
   '/archaeology': typeof ArchaeologyRoute
@@ -1284,6 +1291,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/addons': typeof AddonsRoute
   '/api': typeof ApiRouteWithChildren
   '/archaeology': typeof ArchaeologyRoute
@@ -1463,6 +1471,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/addons': typeof AddonsRoute
   '/api': typeof ApiRouteWithChildren
   '/archaeology': typeof ArchaeologyRoute
@@ -1647,6 +1656,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/addons'
     | '/api'
     | '/archaeology'
@@ -1829,6 +1839,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/addons'
     | '/api'
     | '/archaeology'
@@ -2007,6 +2018,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/addons'
     | '/api'
     | '/archaeology'
@@ -2190,6 +2202,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   AddonsRoute: typeof AddonsRoute
   ApiRoute: typeof ApiRouteWithChildren
   ArchaeologyRoute: typeof ArchaeologyRoute
@@ -2328,6 +2341,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/addons': {
@@ -3743,6 +3763,7 @@ const RanksRouteWithChildren = RanksRoute._addFileChildren(RanksRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   AddonsRoute: AddonsRoute,
   ApiRoute: ApiRouteWithChildren,
   ArchaeologyRoute: ArchaeologyRoute,
