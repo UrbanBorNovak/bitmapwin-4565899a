@@ -43,11 +43,22 @@ export function certFacts(height: number, txCount: number, hash: string | null, 
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-/** Self-contained certificate card; no network access needed to render. */
+/**
+ * Upgradeable visuals: a slab looks up the newest reinscription on the BitmapWIN
+ * collection inscription's own sat whose body starts with this header and runs
+ * it as `(F, root, card)`. Only the collection holder can reinscribe that sat,
+ * so every slab ever inscribed upgrades together. `?mod=off` or any failure
+ * keeps the built-in card; the facts in the meta tag never change.
+ */
+export const SLAB_MODULE_HEADER = "BW-SLAB-MOD-1";
+export const SLAB_MODULE_ANCHOR = "9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0";
+
+/** Self-contained certificate card; renders offline, upgrades through on-chain modules. */
 export function slabCertHtml(f: SlabCertFacts): string {
   const json = esc(JSON.stringify(f));
   const subs = Object.entries(f.subs).map(([k, v]) => `<li>${esc(k.toUpperCase())}<b>${v}</b></li>`).join("");
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="bw-slab" content="${json}"><title>${f.h}.bitmap ${esc(f.name)} ${f.grade}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#070b11;font:14px monospace;color:#111}.s{width:300px;border:10px solid #c8102e;background:#f7f5f0;padding:16px}h1{font:bold 22px sans-serif;margin:0}.g{font:bold 40px sans-serif;color:#c8102e}ul{list-style:none;padding:0}li{display:flex;justify-content:space-between}small{color:#555}</style></head><body><div class="s"><h1>${f.h}.BITMAP</h1><div class="g">${esc(f.name)} ${f.grade}</div><ul>${subs}</ul><div>CERT ${esc(f.cert)}</div><small>${SLAB_PROTOCOL} · BitmapWIN rubric from block facts, not an on-chain property.</small></div></body></html>`;
+  const loader = `(async()=>{try{if(/[?&]mod=off/.test(location.search))return;const F=JSON.parse(document.querySelector('meta[name=bw-slab]').content);const i=await(await fetch('/r/inscription/${SLAB_MODULE_ANCHOR}')).json();const s=i.sat;if(s==null)return;for(let k=1;k<=6;k++){const r=await fetch('/r/sat/'+s+'/at/-'+k);if(!r.ok)break;const id=(await r.json()).id;if(!id)break;const t=await(await fetch('/content/'+id)).text();if(t.startsWith('${SLAB_MODULE_HEADER}\\n')){new Function('F','root','card',t.slice(${SLAB_MODULE_HEADER.length + 1}))(F,document.body,document.querySelector('.s'));return}}}catch(e){}})()`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="bw-slab" content="${json}"><title>${f.h}.bitmap ${esc(f.name)} ${f.grade}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#070b11;font:14px monospace;color:#111}.s{width:300px;border:10px solid #c8102e;background:#f7f5f0;padding:16px}h1{font:bold 22px sans-serif;margin:0}.g{font:bold 40px sans-serif;color:#c8102e}ul{list-style:none;padding:0}li{display:flex;justify-content:space-between}small{color:#555}</style></head><body><div class="s"><h1>${f.h}.BITMAP</h1><div class="g">${esc(f.name)} ${f.grade}</div><ul>${subs}</ul><div>CERT ${esc(f.cert)}</div><small>${SLAB_PROTOCOL} · BitmapWIN rubric from block facts, not an on-chain property.</small></div><script>${loader}</script></body></html>`;
 }
 
 /** Reads the facts back out of an inscribed certificate. Null when it isn't one. */

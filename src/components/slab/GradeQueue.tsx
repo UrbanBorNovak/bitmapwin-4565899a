@@ -57,7 +57,7 @@ export function GradeQueue() {
         <Link to="/slabs/$address" params={{ address }} className="font-mono text-xs text-accent underline">MY ALBUM</Link>
       </div>
       <p className="text-xs text-muted-foreground">
-        Each grade is inscribed as a child of its BITMAP on a {SLAB_POSTAGE}-sat output. Fee {SLAB_GRADING_FEE_SATS.toLocaleString("en-US")} sats per BITMAP plus miner fee, paid in BTC. One wallet approval per BITMAP.
+        Each grade is reinscribed onto the BITMAP's own sat, which returns to you in the same transaction. Future visual upgrades reach every slab automatically. Fee {SLAB_GRADING_FEE_SATS.toLocaleString("en-US")} sats per BITMAP plus miner fee, paid in BTC. One wallet approval per BITMAP.
       </p>
       {held.isPending ? (
         <p className="font-mono text-xs text-muted-foreground">READING YOUR WALLET…</p>
@@ -108,7 +108,8 @@ export function GradeQueue() {
               index={0}
               digest={`bw-slab-1-${active}`}
               claimParentsForHeight={active}
-              artifactLabel="GRADING CERTIFICATE"
+              reinscribeOnBitmap
+              artifactLabel="GRADE STAMPED ONTO THE BITMAP'S OWN SAT"
               actionLabel="INSCRIBE CERTIFICATE"
               artifactVariants={[
                 {
