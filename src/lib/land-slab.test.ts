@@ -15,7 +15,7 @@ describe("land slab grading", () => {
     expect(rarityScore(1000, null, 0).score).toBeGreaterThanOrEqual(7);
   });
   it("a rare sat raises the NM grade", () => {
-    const base = { height: 800_000, txCount: 3_000, hash: null, layoutWidth: 10, layoutHeight: 10, parcelSizes: Array(60).fill(1) };
+    const base = { height: 800_000, txCount: 3_000, hash: "00000000000000000002" + "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b" + "12ab", layoutWidth: 10, layoutHeight: 10, parcelSizes: Array(60).fill(1) };
     const plain = gradeSlab({ ...base, sat: 1281682543628173 });
     const rare = gradeSlab({ ...base, sat: 0 });
     expect(rare.grade).toBeGreaterThan(plain.grade);
