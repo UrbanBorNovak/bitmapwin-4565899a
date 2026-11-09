@@ -53,7 +53,7 @@ export function slabCertHtml(f: SlabCertFacts): string {
 /** Reads the facts back out of an inscribed certificate. Null when it isn't one. */
 export function parseSlabCert(html: string): SlabCertFacts | null {
   const m = html.match(/<meta name="bw-slab" content="([^"]*)">/);
-  if (!m) return null;
+  if (!m?.[1]) return null;
   try {
     const raw = m[1].replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
     const f = JSON.parse(raw) as SlabCertFacts;
