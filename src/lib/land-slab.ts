@@ -75,7 +75,7 @@ export function workScore(hash: string | null): number {
   if (!hash || !/^[0-9a-f]{64}$/i.test(hash)) return 1;
   const h = hash.toLowerCase();
   const run = longestRun(h);
-  let s = run <= 2 ? 4 : run === 3 ? 6 : run === 4 ? 8 : 9.5;
+  let s = run <= 2 ? 5 : run === 3 ? 6.5 : run === 4 ? 8 : 9.5;
   const tail = h.slice(-4);
   if (/^[0-9]{4}$/.test(tail) || /^[a-f]{4}$/.test(tail)) s += 1;
   if (tail[0] === tail[3] && tail[1] === tail[2]) s += 1;
@@ -96,7 +96,7 @@ export function gradeName(grade: number): string {
   return "POOR";
 }
 
-/** Composite: rounded mean of sub-grades, capped three points above the weakest. */
+/** Composite: rounded mean of sub-grades, capped four points above the weakest. */
 export function gradeSlab(input: SlabInput): SlabGrade {
   const zeros = input.hash ? input.hash.match(/^0*/)![0].length : 0;
   const subs: SubGrade[] = [
@@ -110,7 +110,7 @@ export function gradeSlab(input: SlabInput): SlabGrade {
   ];
   const mean = subs.reduce((a, s) => a + s.score, 0) / subs.length;
   const floor = Math.min(...subs.map((s) => s.score));
-  const grade = Math.round(Math.min(mean, floor + 3));
+  const grade = Math.round(Math.min(mean, floor + 4));
   const g = Math.max(1, Math.min(10, grade));
   return { grade: g, name: gradeName(g), subs, cert: certNumber(input.height, input.hash) };
 }

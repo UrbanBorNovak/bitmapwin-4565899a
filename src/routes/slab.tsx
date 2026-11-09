@@ -159,7 +159,7 @@ function SlabPage() {
           <section className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-widest text-foreground">How the grade works</h2>
             <p>Vintage from block height, centering from how much of the square the parcels fill, hash from how rare the block hash's digit pattern is, scarcity from the transaction count.</p>
-            <p className="mt-2">The overall grade is the rounded average, capped three points above the weakest score. It is a BitmapWIN rubric, not ownership or an on-chain property.</p>
+            <p className="mt-2">The overall grade is the rounded average, capped four points above the weakest score. It is a BitmapWIN rubric, not ownership or an on-chain property.</p>
           </section>
         </aside>
       </div>
