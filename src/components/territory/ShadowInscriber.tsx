@@ -313,7 +313,7 @@ export function ShadowInscriber(props: {
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
         ...(chosenFee !== undefined ? { feeRate: chosenFee } : {}),
-        ...(!file && variant?.postage ? { postage: variant.postage } : {}),
+        ...(!file && variant?.postage !== undefined ? { postage: variant.postage } : {}),
         ...(contentEncoding ? { contentEncoding } : {}),
       });
 
