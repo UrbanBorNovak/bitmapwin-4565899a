@@ -1,13 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { centeringScore, certNumber, gradeSlab, longestRun, scarcityScore, vintageScore, workScore } from "./land-slab";
+import { rarityScore, centeringScore, certNumber, gradeSlab, longestRun, scarcityScore, vintageScore, workScore } from "./land-slab";
 
 const GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
 
 describe("land slab grading", () => {
-  it("genesis single-tx block grades MINT 9", () => {
-    const g = gradeSlab({ height: 0, txCount: 1, hash: GENESIS, layoutWidth: 1, layoutHeight: 1, parcelSizes: [1] });
-    expect(g.subs.map((s) => s.score)).toEqual([10, 10, 5, 10]);
+  it("genesis on an uncommon sat grades MINT 9", () => {
+    const g = gradeSlab({ height: 0, txCount: 1, hash: GENESIS, layoutWidth: 1, layoutHeight: 1, parcelSizes: [1], sat: 0 });
+    expect(g.subs.map((s) => s.key)).toEqual(["vintage", "centering", "work", "scarcity", "rarity"]);
     expect(g.grade).toBe(9);
+  });
+  it("rarity: common sat no traits = 5, uncommon +2, vintage/nakamoto +2 each, math +1", () => {
+    expect(rarityScore(715093, null, 1281682543628173).score).toBe(5);
+    expect(rarityScore(7919, null, null).score).toBe(6); // prime
+    expect(rarityScore(1000, null, 0).score).toBeGreaterThanOrEqual(7);
+  });
+  it("a rare sat raises the NM grade", () => {
+    const base = { height: 800_000, txCount: 3_000, hash: "00000000000000000002" + "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b" + "12ab", layoutWidth: 10, layoutHeight: 10, parcelSizes: Array(60).fill(1) };
+    const plain = gradeSlab({ ...base, sat: 1281682543628173 });
+    const rare = gradeSlab({ ...base, sat: 0 });
+    expect(rare.grade).toBeGreaterThan(plain.grade);
   });
   it("composite never exceeds weakest sub-grade + 4", () => {
     const g = gradeSlab({ height: 900_000, txCount: 5_000, hash: null, layoutWidth: 10, layoutHeight: 10 });
@@ -19,7 +30,7 @@ describe("land slab grading", () => {
     const a = gradeSlab({ height: 800_000, txCount: 3_000, hash: plain, layoutWidth: 10, layoutHeight: 10, parcelSizes: Array(40).fill(1) });
     const b = gradeSlab({ height: 800_000, txCount: 3_000, hash: rare, layoutWidth: 10, layoutHeight: 10, parcelSizes: Array(100).fill(1) });
     expect(a.grade).toBe(5);
-    expect(b.grade).toBe(8);
+    expect(b.grade).toBe(7);
   });
   it("sub-grade bands", () => {
     expect(vintageScore(0)).toBe(10);

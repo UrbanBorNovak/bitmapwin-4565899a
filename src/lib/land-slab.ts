@@ -9,6 +9,7 @@
  * and hash (how rare the block hash's digit pattern is) vary block by block,
  * so grades spread from POOR to GEM MT instead of landing on one number.
  */
+import { mathTraits, satReading } from "@/lib/slab-rarity";
 
 export type SlabInput = {
   height: number;
@@ -20,9 +21,11 @@ export type SlabInput = {
   layoutHeight: number;
   /** parcel sides in block order; when given, centering uses the real filled area */
   parcelSizes?: number[];
+  /** the sat the BITMAP is inscribed on (LiveOCI); unknown = no sat bonus */
+  sat?: number | null;
 };
 
-export type SubGrade = { key: "vintage" | "centering" | "work" | "scarcity"; label: string; score: number; why: string };
+export type SubGrade = { key: "vintage" | "centering" | "work" | "scarcity" | "rarity"; label: string; score: number; why: string };
 
 export type SlabGrade = {
   grade: number;
@@ -87,6 +90,20 @@ export function scarcityScore(txCount: number): number {
   return half(10 - 1.15 * Math.log10(Math.max(1, txCount)));
 }
 
+const TIER_BONUS: Record<string, number> = { COMMON: 0, UNCOMMON: 2, RARE: 4, EPIC: 5, LEGENDARY: 5, MYTHIC: 5 };
+
+/**
+ * Rarity: base 5, plus the sat's ordinal tier (uncommon +2, rare +4, epic+ → 10),
+ * +2 per named sat (Nakamoto, Pizza, Block 9…) and +1 per verified math trait.
+ */
+export function rarityScore(height: number, hash: string | null, sat?: number | null): { score: number; why: string } {
+  const math = mathTraits(height, hash, sat ?? null);
+  const r = sat != null ? satReading(sat) : null;
+  const s = 5 + (r ? TIER_BONUS[r.rarity] ?? 0 : 0) + (r ? r.specials.length * 2 : 0) + math.length;
+  const parts = [r ? `${r.rarity.toLowerCase()} sat` : "sat unknown", ...(r?.specials.map((x) => x.label.toLowerCase()) ?? []), `${math.length} math trait${math.length === 1 ? "" : "s"}`];
+  return { score: half(s), why: parts.join(" · ") };
+}
+
 export const GRADE_NAMES: [number, string][] = [
   [10, "GEM MT"], [9, "MINT"], [8, "NM-MT"], [7, "NM"], [6, "EX-MT"], [5, "EX"], [4, "VG-EX"], [3, "VG"], [2, "GOOD"], [1, "POOR"],
 ];
@@ -107,6 +124,7 @@ export function gradeSlab(input: SlabInput): SlabGrade {
     },
     { key: "work", label: "HASH", score: workScore(input.hash), why: input.hash ? `longest repeat ${longestRun(input.hash.toLowerCase())} · ${zeros} zeros` : "hash unavailable" },
     { key: "scarcity", label: "SCARCITY", score: scarcityScore(input.txCount), why: `${input.txCount.toLocaleString("en-US")} parcels` },
+    { key: "rarity", label: "RARITY", ...rarityScore(input.height, input.hash, input.sat) },
   ];
   const mean = subs.reduce((a, s) => a + s.score, 0) / subs.length;
   const floor = Math.min(...subs.map((s) => s.score));

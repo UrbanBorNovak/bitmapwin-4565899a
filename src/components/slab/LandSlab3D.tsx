@@ -6,6 +6,8 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import type { BlockLayout } from "@/lib/bitmap-layout";
 import type { SlabGrade } from "@/lib/land-slab";
 import type { ParcelInscription } from "@/lib/slab-inscriptions.functions";
+import { mathTraits, satReading } from "@/lib/slab-rarity";
+import { drawSlabIcon, slabIcons } from "@/lib/slab-icons";
 
 const noRay = () => null;
 const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
@@ -35,11 +37,13 @@ const LABEL_H = 1.15;
 const PSA_RED = "#c8102e";
 
 type Props = {
-  height: number; layout: BlockLayout; grade: SlabGrade; flipped: boolean; hash: string | null;
+  height: number; layout: BlockLayout; grade: SlabGrade; flipped: boolean; hash: string | null; sat?: number | null;
   inscriptions?: ParcelInscription[]; selected?: number | null; onPick?: (tx: number | null) => void;
 };
 
-function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: string | null) {
+function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: string | null, sat: number | null) {
+  const reading = sat != null ? satReading(sat) : null;
+  const icons = slabIcons(reading, mathTraits(height, hash, sat));
   const c = document.createElement("canvas");
   c.width = 1024; c.height = 360;
   const g = c.getContext("2d")!;
@@ -61,10 +65,12 @@ function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: str
         const w = 2 + ((v >> b) & 3) * 2;
         if ((v >> b) & 1) g.fillRect(x, 262, w, 60);
         x += w + 2;
-        if (x > 600) break;
+        if (x > 290) break;
       }
-      if (x > 600) break;
+      if (x > 290) break;
     }
+    icons.slice(0, 6).forEach((ic, i) => drawSlabIcon(g, ic, 312 + i * 76, 256, 70));
+    g.fillStyle = "#111";
     g.textAlign = "right";
     g.font = "bold 40px 'Space Grotesk', sans-serif";
     g.fillText(grade.name, 976, 120);
@@ -75,11 +81,24 @@ function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: str
     g.font = "bold 38px 'Space Grotesk', sans-serif";
     g.fillText("PROVENANCE · RE-DERIVE IT YOURSELF", 48, 84);
     g.font = "24px 'Space Mono', monospace";
-    g.fillText(`HEIGHT ${height.toLocaleString("en-US")}`, 48, 136);
-    g.fillText(`HASH ${(hash ?? "unavailable").slice(0, 32)}`, 48, 176);
-    g.fillText(`     ${(hash ?? "").slice(32)}`, 48, 210);
-    g.fillText("GRADE = BITMAPWIN RUBRIC FROM BLOCK FACTS,", 48, 264);
-    g.fillText("NOT AN ON-CHAIN PROPERTY OR OWNERSHIP CLAIM", 48, 300);
+    g.font = "22px 'Space Mono', monospace";
+    g.fillText(`HEIGHT ${height.toLocaleString("en-US")}`, 48, 124);
+    g.fillText(`HASH ${(hash ?? "unavailable").slice(0, 32)}`, 48, 154);
+    g.fillText(`     ${(hash ?? "").slice(32)}`, 48, 182);
+    g.fillText(reading ? `SAT ${reading.sat.toLocaleString("en-US")} · ${reading.rarity} · MINED ${reading.minedIn.toLocaleString("en-US")}` : "SAT NOT RESOLVED", 48, 214);
+    let ix = 48, iy = 232;
+    g.font = "16px 'Space Mono', monospace";
+    for (const ic of icons.slice(0, 8)) {
+      const w = 48 + g.measureText(ic.label).width + 18;
+      if (ix + w > 990) { ix = 48; iy += 40; if (iy > 272) break; }
+      drawSlabIcon(g, ic, ix, iy, 38);
+      g.fillStyle = "#111";
+      g.fillText(ic.label, ix + 46, iy + 25);
+      ix += w;
+    }
+    if (!icons.length) g.fillText("NO SAT OR MATHEMATICAL RARITIES", 48, 254);
+    g.font = "18px 'Space Mono', monospace";
+    g.fillText("GRADE = BITMAPWIN RUBRIC FROM BLOCK + SAT FACTS, NOT AN OWNERSHIP CLAIM", 48, 330);
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -179,13 +198,13 @@ function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscrip
   );
 }
 
-function Slab({ height, layout, grade, flipped, hash, inscriptions, selected = null, onPick }: Props) {
+function Slab({ height, layout, grade, flipped, hash, sat = null, inscriptions, selected = null, onPick }: Props) {
   const ins = useMemo(() => new Map((inscriptions ?? []).map((x) => [x.tx, x])), [inscriptions]);
   const art = useMemo(() => (inscriptions ?? []).filter((x) => x.id && x.type.startsWith("image/") && !x.type.includes("svg")).slice(0, ART_CAP), [inscriptions]);
   const group = useRef<THREE.Group>(null);
   const land = useRef<THREE.Group>(null);
-  const front = useMemo(() => labelTexture(height, grade, false, hash), [height, grade, hash]);
-  const back = useMemo(() => labelTexture(height, grade, true, hash), [height, grade, hash]);
+  const front = useMemo(() => labelTexture(height, grade, false, hash, sat), [height, grade, hash, sat]);
+  const back = useMemo(() => labelTexture(height, grade, true, hash, sat), [height, grade, hash, sat]);
   useEffect(() => () => { front.dispose(); back.dispose(); }, [front, back]);
 
   useFrame((state, dt) => {

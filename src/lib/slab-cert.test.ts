@@ -5,9 +5,10 @@ import { SLAB_POSTAGE, certFacts, parseSlabCert, slabBaseCost, slabCertHtml, SLA
 const hash = "00000000000000000002a7c4c1e48d76c5a37902165a270156b7a8d72728a054";
 
 describe("BW-SLAB-1 certificate", () => {
-  it("uses the 330-sat Taproot dust limit as postage", () => {
-    expect(SLAB_POSTAGE).toBe(330);
-    expect(slabBaseCost()).toBe(330 + SLAB_GRADING_FEE_SATS);
+  it("grading is free: no site fee and no extra postage", () => {
+    expect(SLAB_POSTAGE).toBe(0);
+    expect(SLAB_GRADING_FEE_SATS).toBe(0);
+    expect(slabBaseCost()).toBe(0);
   });
 
   it("round-trips its facts through the inscribed HTML", () => {

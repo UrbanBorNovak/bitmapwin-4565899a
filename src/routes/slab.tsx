@@ -47,12 +47,14 @@ function SlabPage() {
   const insItems = ins.data && "items" in ins.data ? ins.data.items : [];
   const pickedIns = picked == null ? null : insItems.find((x) => x.tx === picked) ?? null;
 
+  const satProof = useQuery(satProofQuery(height));
+  const sat = satProof.data?.sat ?? null;
   const data = useMemo(() => {
     if (!block.data || block.data.classes.length === 0) return null;
     const layout = layoutFromSizeClasses(block.data.classes);
-    const grade = gradeSlab({ height, txCount: block.data.txCount, hash: block.data.hash, layoutWidth: layout.width, layoutHeight: layout.height, parcelSizes: layout.parcels.map((p) => p.size) });
+    const grade = gradeSlab({ height, txCount: block.data.txCount, hash: block.data.hash, layoutWidth: layout.width, layoutHeight: layout.height, parcelSizes: layout.parcels.map((p) => p.size), sat });
     return { layout, grade, hash: block.data.hash };
-  }, [block.data, height]);
+  }, [block.data, height, sat]);
 
   const go = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +97,7 @@ function SlabPage() {
           ) : (
             <ClientOnly fallback={<Status text="PREPARING SLAB…" />}>
               <Suspense fallback={<Status text="PREPARING SLAB…" />}>
-                <LandSlab3D height={height} layout={data.layout} grade={data.grade} flipped={flipped} hash={data.hash} inscriptions={insItems} selected={picked} onPick={setPicked} />
+                <LandSlab3D height={height} layout={data.layout} grade={data.grade} flipped={flipped} hash={data.hash} sat={sat} inscriptions={insItems} selected={picked} onPick={setPicked} />
               </Suspense>
             </ClientOnly>
           )}

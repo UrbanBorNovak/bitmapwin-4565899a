@@ -10,10 +10,10 @@
 import type { SlabGrade } from "@/lib/land-slab";
 import { DONATION_ADDRESS } from "@/lib/donations";
 
-/** Taproot (P2TR) dust limit: the smallest output Bitcoin Core relays for bc1p. */
-export const SLAB_POSTAGE = 330;
-/** Grading fee per BITMAP, paid inside the reveal to the treasury. Placeholder until set. */
-export const SLAB_GRADING_FEE_SATS = 2_100;
+/** Grades reinscribe onto the BITMAP's own sat, so no new postage output is created. */
+export const SLAB_POSTAGE = 0;
+/** Grading is free: no site fee, only the Bitcoin miner fee. */
+export const SLAB_GRADING_FEE_SATS = 0;
 export const SLAB_TREASURY = DONATION_ADDRESS;
 export const SLAB_PROTOCOL = "BW-SLAB-1";
 
