@@ -100,7 +100,7 @@ function useGeom(layout: BlockLayout) {
   };
 }
 
-function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map<number, ParcelInscription>; selected: number | null; onPick?: (tx: number | null) => void }) {
+function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map<number, ParcelInscription>; selected: number | null; onPick?: ((tx: number | null) => void) | undefined }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const geom = useGeom(layout);
   const count = layout.parcels.length;
