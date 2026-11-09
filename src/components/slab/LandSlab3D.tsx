@@ -69,7 +69,7 @@ function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: str
       }
       if (x > 290) break;
     }
-    icons.slice(0, 7).forEach((ic, i) => drawSlabIcon(g, ic, 316 + i * 62, 264, 54));
+    icons.slice(0, 6).forEach((ic, i) => drawSlabIcon(g, ic, 312 + i * 76, 256, 70));
     g.fillStyle = "#111";
     g.textAlign = "right";
     g.font = "bold 40px 'Space Grotesk', sans-serif";
@@ -89,11 +89,11 @@ function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: str
     let ix = 48, iy = 232;
     g.font = "16px 'Space Mono', monospace";
     for (const ic of icons.slice(0, 8)) {
-      const w = 40 + g.measureText(ic.label).width + 18;
+      const w = 48 + g.measureText(ic.label).width + 18;
       if (ix + w > 990) { ix = 48; iy += 40; if (iy > 272) break; }
-      drawSlabIcon(g, ic, ix, iy, 32);
+      drawSlabIcon(g, ic, ix, iy, 38);
       g.fillStyle = "#111";
-      g.fillText(ic.label, ix + 38, iy + 22);
+      g.fillText(ic.label, ix + 46, iy + 25);
       ix += w;
     }
     if (!icons.length) g.fillText("NO SAT OR MATHEMATICAL RARITIES", 48, 254);
