@@ -149,12 +149,14 @@ function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscrip
     loader.setCrossOrigin("anonymous");
     const made: THREE.Texture[] = [];
     items.forEach((it) => {
-      loader.load(`https://ordinals.com/content/${it.id}`, (t) => {
+      if (!it.id) return;
+      const id = it.id;
+      loader.load(`https://ordinals.com/content/${id}`, (t) => {
         if (!alive) { t.dispose(); return; }
         t.colorSpace = THREE.SRGBColorSpace;
         t.magFilter = THREE.NearestFilter;
         made.push(t);
-        setTex((m) => new Map(m).set(it.id, t));
+        setTex((m) => new Map(m).set(id, t));
       }, undefined, () => {});
     });
     return () => { alive = false; made.forEach((t) => t.dispose()); };
@@ -162,11 +164,11 @@ function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscrip
   return (
     <>
       {items.map((it) => {
-        const t = tex.get(it.id);
+        const t = it.id ? tex.get(it.id) : undefined;
         if (!t || it.tx >= layout.parcels.length) return null;
         const g = geom(it.tx);
         return (
-          <mesh key={it.id} position={[g.x, g.y, g.h * 1.8 + 0.002]} raycast={noRay}>
+          <mesh key={it.txid} position={[g.x, g.y, g.h * 1.8 + 0.002]} raycast={noRay}>
             <planeGeometry args={[g.s * 0.96, g.s * 0.96]} />
             <meshBasicMaterial map={t} toneMapped={false} />
           </mesh>
@@ -178,7 +180,7 @@ function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscrip
 
 function Slab({ height, layout, grade, flipped, hash, inscriptions, selected = null, onPick }: Props) {
   const ins = useMemo(() => new Map((inscriptions ?? []).map((x) => [x.tx, x])), [inscriptions]);
-  const art = useMemo(() => (inscriptions ?? []).filter((x) => x.type.startsWith("image/") && !x.type.includes("svg")).slice(0, ART_CAP), [inscriptions]);
+  const art = useMemo(() => (inscriptions ?? []).filter((x) => x.id && x.type.startsWith("image/") && !x.type.includes("svg")).slice(0, ART_CAP), [inscriptions]);
   const group = useRef<THREE.Group>(null);
   const land = useRef<THREE.Group>(null);
   const front = useMemo(() => labelTexture(height, grade, false, hash), [height, grade, hash]);

@@ -131,21 +131,24 @@ function SlabPage() {
                   {insItems.length.toLocaleString("en-US")} lit parcels
                   {ins.data && "more" in ins.data && ins.data.more ? ` · first ${insItems.length.toLocaleString("en-US")} of ${ins.data.total.toLocaleString("en-US")}+ shown` : ""} · tap a lit parcel
                 </p>
+                {ins.data && "source" in ins.data && ins.data.source === "tag" && (
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">ORDINALS.COM UNREACHABLE · PARCELS MARKED FROM MEMPOOL.SPACE ENVELOPE TAGS (MAY INCLUDE RUNE COMMITS)</p>
+                )}
                 {pickedIns ? (
                   <div className="mt-3 space-y-2">
-                    <InsPreview id={pickedIns.id} type={pickedIns.type} />
+                    {pickedIns.id && <InsPreview id={pickedIns.id} type={pickedIns.type} />}
                     <div className="font-mono text-xs">
                       <div>PARCEL {pickedIns.tx.toLocaleString("en-US")}.{height}</div>
-                      <div className="text-muted-foreground">{pickedIns.number != null ? `#${pickedIns.number.toLocaleString("en-US")} · ` : ""}{pickedIns.type}</div>
-                      <a className="text-accent underline" href={`https://ordinals.com/inscription/${pickedIns.id}`} target="_blank" rel="noreferrer">VIEW ON ORDINALS.COM</a>
+                      <div className="text-muted-foreground">{pickedIns.number != null ? `#${pickedIns.number.toLocaleString("en-US")} · ` : ""}{pickedIns.type === "envelope" ? "inscription envelope seen" : pickedIns.type}</div>
+                      <a className="text-accent underline" href={pickedIns.id ? `https://ordinals.com/inscription/${pickedIns.id}` : `https://ordinals.com/tx/${pickedIns.txid}`} target="_blank" rel="noreferrer">VIEW ON ORDINALS.COM</a>
                     </div>
                   </div>
                 ) : (
                   <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto font-mono text-xs">
                     {insItems.slice(0, 40).map((x) => (
-                      <li key={x.id}>
+                      <li key={x.txid + (x.id ?? "")}>
                         <button type="button" onClick={() => setPicked(x.tx)} className="flex w-full justify-between hover:text-primary">
-                          <span>PARCEL {x.tx}</span><span className="text-muted-foreground">{x.type}</span>
+                          <span>PARCEL {x.tx}</span><span className="text-muted-foreground">{x.type === "envelope" ? "envelope" : x.type}</span>
                         </button>
                       </li>
                     ))}
