@@ -7,7 +7,7 @@ import { resolveWallet } from "@/components/BuyButton";
 import { useWalletSession } from "@/lib/wallet-session";
 import { slabAlbumFn } from "@/lib/slab-album.functions";
 import { fetchSlabGrade } from "@/lib/slab-block";
-import { SLAB_GRADING_FEE_SATS, SLAB_POSTAGE, SLAB_TREASURY, certFacts, slabCertHtml } from "@/lib/slab-cert";
+import { SLAB_POSTAGE, certFacts, slabCertHtml } from "@/lib/slab-cert";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 
 const MAX_PREGRADE = 30;
@@ -57,7 +57,7 @@ export function GradeQueue() {
         <Link to="/slabs/$address" params={{ address }} className="font-mono text-xs text-accent underline">MY ALBUM</Link>
       </div>
       <p className="text-xs text-muted-foreground">
-        Each grade is reinscribed onto the BITMAP's own sat, which returns to you in the same transaction. Future visual upgrades reach every slab automatically. Fee {SLAB_GRADING_FEE_SATS.toLocaleString("en-US")} sats per BITMAP plus miner fee, paid in BTC. One wallet approval per BITMAP.
+        Each grade is reinscribed onto the BITMAP's own sat, which returns to you in the same transaction. Future visual upgrades reach every slab automatically. Grading is free: no site fee and no extra postage, you only pay the Bitcoin miner fee. One wallet approval per BITMAP.
       </p>
       {held.isPending ? (
         <p className="font-mono text-xs text-muted-foreground">READING YOUR WALLET…</p>
@@ -91,7 +91,7 @@ export function GradeQueue() {
           onClick={() => setQueue(picked)}
           className="w-full rounded-md bg-primary px-4 py-2 font-mono text-sm text-primary-foreground disabled:opacity-40"
         >
-          GRADE {picked.length || ""} · {(picked.length * (SLAB_GRADING_FEE_SATS + SLAB_POSTAGE)).toLocaleString("en-US")} SATS + MINER FEES
+          GRADE {picked.length || ""} · FREE · MINER FEE ONLY
         </button>
       ) : active === undefined ? (
         <p className="font-mono text-xs text-accent">ALL {queue.length} CERTIFICATES BROADCAST · THEY APPEAR IN YOUR ALBUM AFTER CONFIRMATION</p>
@@ -117,7 +117,6 @@ export function GradeQueue() {
                   label: "CERTIFICATE",
                   contentType: "text/html;charset=utf-8",
                   source: slabCertHtml(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade)),
-                  tribute: { address: SLAB_TREASURY, sats: SLAB_GRADING_FEE_SATS },
                   postage: SLAB_POSTAGE,
                 },
               ]}

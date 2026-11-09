@@ -222,7 +222,11 @@ export async function prepareJob(input: {
     receiveAddress: input.receiveAddress,
     feeRate,
     revealFee,
-    commitAmount: Math.max(330, input.postage ?? INSCRIBE_POSTAGE) + revealFee + (tribute?.sats ?? 0) + extraSats,
+    // postage 0 is only honoured for reinscriptions (pointer onto an existing sat):
+    // the new inscription rides the parent's sat, so no fresh output is needed.
+    commitAmount: (input.postage === 0 && pointer !== undefined
+      ? Math.max(330, revealFee + (tribute?.sats ?? 0) + extraSats)
+      : Math.max(330, input.postage ?? INSCRIBE_POSTAGE) + revealFee + (tribute?.sats ?? 0) + extraSats),
     ...(parents.length ? { parents } : {}),
     ...(delegate ? { delegate } : {}),
     ...(tribute ? { tribute } : {}),
@@ -291,7 +295,9 @@ export async function revealJob(
   for (const parent of parents) tx.addOutputAddress(parent.address, BigInt(parent.value), btc.NETWORK);
   const extra = job.tributes ?? [];
   const tributeSats = (job.tribute?.sats ?? 0) + extra.reduce((n, t) => n + t.sats, 0);
-  tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee - tributeSats), btc.NETWORK);
+  const leftover = utxo.value - job.revealFee - tributeSats;
+  // Reinscriptions with no postage: change under the dust floor goes to the miner fee.
+  if (job.pointer === undefined || leftover >= 330) tx.addOutputAddress(job.receiveAddress, BigInt(leftover), btc.NETWORK);
   // The tribute sits after the inscription output, so it can never carry the inscribed sat.
   if (job.tribute) tx.addOutputAddress(job.tribute.address, BigInt(job.tribute.sats), btc.NETWORK);
   for (const t of extra) tx.addOutputAddress(t.address, BigInt(t.sats), btc.NETWORK);
