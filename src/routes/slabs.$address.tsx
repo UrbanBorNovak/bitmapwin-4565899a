@@ -93,7 +93,7 @@ function AlbumPage() {
                 <div className="font-mono text-[11px] text-muted-foreground">{s.cert}</div>
               </Link>
               <div className={`mt-2 font-mono text-[11px] ${s.parentProven ? "text-accent" : "text-muted-foreground"}`}>
-                {s.parentProven ? "CHILD OF THIS BITMAP · PROVEN" : "PARENT NOT PROVEN"}
+                {s.parentProven ? "ON THIS BITMAP'S SAT · PROVEN" : "BITMAP NOT VERIFIED"}
               </div>
               <a href={`https://ordinals.com/inscription/${s.id}`} target="_blank" rel="noreferrer" className="font-mono text-[11px] underline">ORDINALS.COM</a>
             </li>
