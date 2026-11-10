@@ -12,6 +12,7 @@ import {
   psbtOutputs,
   type FundingUtxo,
 } from "@/lib/psbt-buyer";
+import { paysSignedSeller, signedSellerPayout } from "@/lib/seller-payout";
 
 
 /**
@@ -338,11 +339,11 @@ export async function submitPurchase(input: {
   if (satDestination(finalized, SELLER_INDEX) !== 1) {
     throw new Error("Refusing to broadcast: the BITMAP would not reach the buyer's output");
   }
-  const expectedSeller = offer.seller_address
-    ? byteArrayToHex(addressToScriptPubKey(offer.seller_address))
-    : null;
+  // The seller's signature commits to output 0 of their stored PSBT, which may
+  // pay a separate payment address (Xverse bc1q) rather than the holder address.
+  const signedPayout = signedSellerPayout(offer.psbt_base64);
   const price = Number(offer.price_sats ?? 0);
-  if (expectedSeller && (outs[SELLER_INDEX]?.scriptHex !== expectedSeller || Number(outs[SELLER_INDEX]?.valueSats) < price)) {
+  if (!paysSignedSeller(signedPayout, outs[SELLER_INDEX], price)) {
     throw new Error("Refusing to broadcast: the seller payout output was altered");
   }
   const expectedBuyer = byteArrayToHex(addressToScriptPubKey(input.buyerAddress));
