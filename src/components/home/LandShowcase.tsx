@@ -47,6 +47,7 @@ export function LandShowcase() {
     : null;
   const volume = recentSales.reduce((total, trade) => total + trade.price_sats, 0);
 
+  return (
     <div>
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="@container">
