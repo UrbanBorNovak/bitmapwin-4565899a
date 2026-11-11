@@ -18,6 +18,7 @@ import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
+import { OmnibarTerminal } from "@/components/home/OmnibarTerminal";
 import { EarlyBitmapsRail, HubBento } from "@/components/home/EarlyBitmapsRail";
 
 
@@ -97,6 +98,7 @@ function Index() {
 
   return (
     <div className="pb-10">
+      <OmnibarTerminal />
       <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
         <div className="@container">
         <div className="grid overflow-hidden border border-border-strong @5xl:min-h-[560px] @5xl:grid-cols-12">
@@ -132,9 +134,9 @@ function Index() {
             <div className="relative grid flex-1 items-start gap-6 p-5 py-7 @xl:p-8 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] @3xl:p-10">
               <div className="min-w-0">
                 <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
-                <h1 className="display mt-3 text-[2.25rem] leading-[0.95] @lg:text-5xl @5xl:text-6xl">
+                <h2 className="display mt-3 text-[2.25rem] leading-[0.95] @lg:text-5xl @5xl:text-6xl">
                   THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND</span><br /><span className="text-signal">AND PEOPLE.</span>
-                </h1>
+                </h2>
                 <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
                   Every Bitcoin block is a BITMAP — land you can walk, build on and trade, with ownership checked on Bitcoin.
                 </p>
