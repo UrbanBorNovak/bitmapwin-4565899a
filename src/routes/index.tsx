@@ -1,37 +1,16 @@
-import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
-const HeroVoxelDiorama3D = lazy(() => import("@/components/home/HeroVoxelDiorama3D"));
-import { GeoTransfers } from "@/components/GeoTransfers";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { freshFeaturedQuery, shuffled } from "@/lib/fresh-featured";
-import type { RegistryParcel } from "@/lib/registry";
-import { ParcelCard } from "@/components/ParcelCard";
-import { HowItWorks } from "@/components/HowItWorks";
-import { BlockMosaic } from "@/components/BlockMosaic";
-import { BitmapConstellations } from "@/components/BitmapConstellations";
-import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
-import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
-import { formatSats } from "@/lib/trades";
-import { startGuidedTour } from "@/components/GuidedTour";
-import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
-import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
-import { ActiveBuilders } from "@/components/ActiveBuilders";
-import { SiteFundTracker } from "@/components/SiteFundTracker";
+import { createFileRoute } from "@tanstack/react-router";
 import { OmnibarTerminal } from "@/components/home/OmnibarTerminal";
-import { EarlyBitmapsRail, HubBento } from "@/components/home/EarlyBitmapsRail";
-
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BitmapWin — The Internet, But With Land" },
+      { title: "BitmapWin — The Operating System for Blockspace" },
       {
         name: "description",
         content:
           "Explore Bitcoin-native worlds built on blockspace. Look up any BITMAP, follow live on-chain trades, and step into community-built 3D districts.",
       },
-      { property: "og:title", content: "BitmapWin — The Internet, But With Land" },
+      { property: "og:title", content: "BitmapWin — The Operating System for Blockspace" },
       {
         property: "og:description",
         content:
@@ -45,235 +24,13 @@ export const Route = createFileRoute("/")({
       { name: "twitter:image", content: "https://bitmapwin.app/social-card.jpg" },
     ],
   }),
-
-  loader: async ({ context }) => {
-    // Await every stat so the server-rendered numbers are dehydrated into the
-    // client cache — otherwise the client refetches newer values mid-hydration
-    // and React throws a hydration mismatch on the live counts.
-    await Promise.all([
-      context.queryClient.ensureQueryData(registryParcelsQuery(120)),
-      context.queryClient.ensureQueryData(recentTradesQuery(20)),
-      context.queryClient.ensureQueryData(registryCountQuery()),
-      context.queryClient.ensureQueryData(tradedBitmapCountQuery()),
-      context.queryClient.ensureQueryData(paidSalesCountQuery()),
-    ]);
-  },
   component: Index,
-  errorComponent: ({ error }) => (
-    <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
-      <h1 className="display text-3xl">REGISTRY UNAVAILABLE</h1>
-      <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {(error as Error).message}</p>
-    </div>
-  ),
-  notFoundComponent: () => null,
 });
 
 function Index() {
-  const { data: parcels } = useSuspenseQuery(registryParcelsQuery(120));
-  const { data: trades } = useSuspenseQuery(recentTradesQuery(20));
-  const { data: indexedCount } = useSuspenseQuery(registryCountQuery());
-  const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
-  const { data: salesCount } = useSuspenseQuery(paidSalesCountQuery());
-
-  const fresh = useQuery(freshFeaturedQuery());
-  const [shuffleSeed, setShuffleSeed] = useState<RegistryParcel[] | null>(null);
-  useEffect(() => {
-    // Shuffle after hydration so every visit shows a different set.
-    setShuffleSeed(shuffled(parcels));
-  }, [parcels]);
-  const freshItems = fresh.data ?? [];
-  const freshKind = new Map(freshItems.map((f) => [f.parcel.bitmapHeight, f.kind] as const));
-  const pool = shuffleSeed ?? parcels;
-  const featured = [
-    ...freshItems.map((f) => f.parcel),
-    ...pool.filter((p) => !freshKind.has(p.bitmapHeight)),
-  ].slice(0, 8);
-  const recentSales = trades.filter((trade) => trade.price_sats > 0);
-  const listed = parcels.filter((parcel) => parcel.listedSats !== null);
-  const lead = featured[0] ?? null;
-  const floor = listed.length
-    ? Math.min(...listed.map((parcel) => parcel.listedSats ?? Number.MAX_SAFE_INTEGER))
-    : null;
-  const volume = recentSales.reduce((total, trade) => total + trade.price_sats, 0);
-
   return (
     <div className="pb-10">
       <OmnibarTerminal />
-      <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
-        <div className="@container">
-        <div className="grid overflow-hidden border border-border-strong @5xl:min-h-[560px] @5xl:grid-cols-12">
-          <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-4 @5xl:order-1 @5xl:col-span-3 @5xl:border-r @5xl:border-t-0 @5xl:p-5">
-            <div>
-              <div className="label flex items-center gap-2 text-bitcoin">
-                <span className="size-2 bg-bitcoin" aria-hidden="true" />
-                MARKET STATUS // LIVE
-              </div>
-              <dl data-tour="home-market" className="mt-4 grid grid-cols-2 border border-border @5xl:grid-cols-1">
-                <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
-                <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
-                <MarketStat k="CONFIRMED SALES" v={salesCount.toLocaleString("en-US")} />
-                <MarketStat k="BITMAPS TRADED" v={tradedCount.toLocaleString("en-US")} />
-                <MarketStat k="RECENT VOLUME" v={volume ? formatSats(volume) : "—"} />
-              </dl>
-            </div>
-            <div className="mt-5 border-t border-border pt-4">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Every Bitcoin block is a unique BITMAP: digital land you can collect, build on, or lease.
-              </p>
-              <Link to="/marketplace" className="mt-5 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
-                SEE WHAT IS FOR SALE →
-              </Link>
-              <SiteFundTracker />
-            </div>
-          </aside>
-
-          <div className="@container relative order-1 flex flex-col bg-card @5xl:order-2 @5xl:col-span-9">
-            <div className="pointer-events-none absolute inset-0 dot-bg" />
-            <GeoTransfers className="opacity-40" heights={recentSales.map((s) => s.bitmap_height)} />
-            <BitmapConstellations className="opacity-25" />
-            <div className="relative grid flex-1 items-start gap-6 p-5 py-7 @xl:p-8 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] @3xl:p-10">
-              <div className="min-w-0">
-                <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
-                <h2 className="display mt-3 text-[2.25rem] leading-[0.95] @lg:text-5xl @5xl:text-6xl">
-                  THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND</span><br /><span className="text-signal">AND PEOPLE.</span>
-                </h2>
-                <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  Every Bitcoin block is a BITMAP — land you can walk, build on and trade, with ownership checked on Bitcoin.
-                </p>
-                <div className="@container mt-6">
-                <div data-tour="home-flow" className="grid gap-2 @xl:grid-cols-3">
-                  <HeroDoor n="01" who="VISITOR" title="WALK THE OASIS" body="Step into the shared world. No wallet needed." to="/oasis" primary />
-                  <HeroDoor n="02" who="CREATOR" title="BUILD & CUSTOMIZE" body="Voxel builds and profile pages on your BITMAP." to="/forge" />
-                  <HeroDoor n="03" who="EXPLORER" title="EXPLORE LAND" body="Look up any BITMAP, see asks and real sales." to="/marketplace" />
-                </div>
-                </div>
-              </div>
-
-              <div className="@container relative min-w-0">
-                <div className="relative aspect-[4/3] w-full overflow-hidden @xl:aspect-[16/9] border border-border/60 bg-background/40 backdrop-blur-sm">
-                  <div aria-hidden className="pointer-events-none absolute inset-0">
-                    <ClientOnly><Suspense fallback={null}><HeroVoxelDiorama3D /></Suspense></ClientOnly>
-                  </div>
-                  <span className="label absolute left-3 top-3 flex items-center gap-2 bg-background/70 px-2 py-1 text-signal">
-                    <span className="size-1.5 animate-pulse bg-signal" aria-hidden="true" /> LIVE VOXEL DISTRICT
-                  </span>
-                  <Link to="/builds" className="label absolute bottom-3 right-3 bg-background/70 px-2 py-1 hover:text-bitcoin">INSCRIBED BUILDS →</Link>
-                </div>
-                <div className="mt-3 grid gap-3 @md:grid-cols-2">
-                {lead && (
-                  <Link
-                    to="/bitmap/$block"
-                    params={{ block: String(lead.bitmapHeight) }}
-                    className="group grid w-full grid-cols-[96px_minmax(0,1fr)] items-center gap-3 border border-border bg-background p-3 hover:border-foreground"
-                  >
-                    <BlockMosaic height={lead.bitmapHeight} animate className="aspect-square" />
-                    <div className="min-w-0">
-                      <div className="label text-bitcoin">FEATURED BITMAP</div>
-                      <div className="display mt-1 truncate text-sm">{lead.bitmapHeight}.BITMAP</div>
-                      <div className="mt-2 font-mono text-[10px] text-muted-foreground">
-                        {lead.listedSats ? `ASK ${formatSats(lead.listedSats)}` : lead.lastSaleSats ? `LAST ${formatSats(lead.lastSaleSats)}` : "VIEW ON-CHAIN RECORD"}
-                      </div>
-                      <GuardianMintStatus height={lead.bitmapHeight} className="mt-2" />
-                    </div>
-                  </Link>
-                )}
-                <LatestGuardianCard compact />
-                </div>
-              </div>
-            </div>
-
-            <div className="relative flex flex-col gap-2 border-t border-border bg-background px-4 py-2 @xl:flex-row @xl:items-center @xl:justify-between">
-              <div className="flex gap-7 overflow-x-auto py-1">
-                {recentSales.slice(0, 3).map((sale) => (
-                  <Link key={sale.txid} to="/bitmap/$block" params={{ block: String(sale.bitmap_height) }} className="shrink-0 font-mono text-[10px] hover:text-bitcoin">
-                    <span className="text-muted-foreground">{sale.bitmap_height}.BITMAP</span>{" "}
-                    <span className="text-bitcoin">SOLD {formatSats(sale.price_sats)}</span>
-                  </Link>
-                ))}
-              </div>
-              <span className="label flex shrink-0 items-center gap-2">
-                <span className="size-2 animate-pulse bg-bitcoin" aria-hidden="true" /> ON-CHAIN DATA
-              </span>
-            </div>
-          </div>
-        </div>
-        </div>
-      </section>
-
-      <HowItWorks />
-
-      <EarlyBitmapsRail />
-      <HubBento />
-
-      <ActiveBuilders />
-
-      <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5 md:pt-10">
-        <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="font-display text-2xl font-bold lowercase tracking-tight md:text-3xl">bitmaps worth a closer look</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Open one to see its holder, price history and Guardian.</p>
-          </div>
-          <Link to="/marketplace" className="label hover:text-foreground">
-            VIEW THE FULL MARKET →
-          </Link>
-        </div>
-
-        {featured.length === 0 ? (
-          <p className="mt-8 font-mono text-sm text-muted-foreground">
-            &gt; NO CLAIMS INDEXED YET — RUN A CHAIN SYNC FROM THE MARKETPLACE
-            <span className="blink">_</span>
-          </p>
-        ) : (
-          <div data-tour="home-featured" className="mt-4 flex snap-x snap-mandatory gap-px overflow-x-auto bg-border pb-0 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3 xl:grid-cols-4">
-            {featured.map((p) => (
-              <div key={p.inscriptionId} className="relative w-[84vw] max-w-[330px] shrink-0 snap-center sm:w-auto sm:max-w-none">
-                {freshKind.has(p.bitmapHeight) ? (
-                  <div className="label pointer-events-none absolute left-2 top-2 z-10 border border-bitcoin bg-background/90 px-2 py-0.5 text-bitcoin">
-                    {freshKind.get(p.bitmapHeight) === "guardian" ? "NEW · GUARDIAN INSCRIBED" : "NEW · VOXEL BUILD INSCRIBED"}
-                  </div>
-                ) : null}
-                <ParcelCard parcel={p} />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-
-      <section className="mx-auto max-w-[1600px] px-3 pt-6 pb-10 md:px-5 md:pt-10 md:pb-16">
-        <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
-          <div>
-            <div className="label text-bitcoin">FIRST TIME HERE?</div>
-            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              Take the 60-second tour of this page, or read the 2-minute primer on what a BITMAP is.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => startGuidedTour()} className="btn-term">[ START THE TOUR ]</button>
-            <Link to="/land-101" className="btn-term-ghost">[ READ THE 2-MINUTE PRIMER ]</Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
-
-function HeroDoor({ n, who, title, body, to, primary }: { n: string; who: string; title: string; body: string; to: "/oasis" | "/forge" | "/marketplace"; primary?: boolean }) {
-  return (
-    <Link to={to} className={`group flex flex-col border p-3 transition-colors ${primary ? "border-bitcoin bg-bitcoin/10 hover:bg-bitcoin/20" : "border-border/60 bg-background/50 hover:border-signal"}`}>
-      <span className="label text-muted-foreground">{n} · {who}</span>
-      <span className={`mt-1 font-mono text-xs font-bold ${primary ? "text-bitcoin" : "text-foreground group-hover:text-signal"}`}>{title} →</span>
-      <span className="mt-1 text-[11px] leading-snug text-muted-foreground">{body}</span>
-    </Link>
-  );
-}
-
-function MarketStat({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="border-b border-border p-3 last:border-b-0">
-      <dt className="label">{k}</dt>
-      <dd className="mt-1 font-mono text-base tabular-nums text-foreground">{v}</dd>
-    </div>
-  );
-}
-

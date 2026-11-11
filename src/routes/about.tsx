@@ -1,7 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { LandShowcase } from "@/components/home/LandShowcase";
+import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
+import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(registryParcelsQuery(120)),
+      context.queryClient.ensureQueryData(recentTradesQuery(20)),
+      context.queryClient.ensureQueryData(registryCountQuery()),
+      context.queryClient.ensureQueryData(tradedBitmapCountQuery()),
+      context.queryClient.ensureQueryData(paidSalesCountQuery()),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: "About BitmapWIN · The internet, but with land and people" },
@@ -49,6 +61,7 @@ const APP = [
 
 function AboutPage() {
   return (
+    <>
     <main className="mx-auto max-w-4xl px-6 py-16">
       <p className="font-mono text-xs tracking-widest text-signal">ABOUT</p>
       <h1 className="mt-2 font-display text-4xl font-bold text-foreground md:text-5xl">
@@ -121,5 +134,7 @@ function AboutPage() {
         </div>
       </section>
     </main>
+    <LandShowcase />
+    </>
   );
 }
