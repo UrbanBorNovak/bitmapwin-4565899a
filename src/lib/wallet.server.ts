@@ -249,13 +249,13 @@ async function fetchWalletViaAddressPage(address: string): Promise<WalletSnapsho
   const ids = idsInHtml(head ?? html);
 
   const heights = await indexedHeights(ids);
-  const unindexed = ids.filter((id) => !heights.has(id)).slice(0, 80);
+  const unindexed = ids.filter((id) => !heights.has(id)).slice(0, 600);
   await mapWithConcurrency(unindexed, 6, async (id) => {
     const h = await bitmapHeightOf(id);
     if (h !== null) heights.set(id, h);
   });
 
-  const others = ids.filter((id) => !heights.has(id)).slice(0, 40);
+  const others = ids.filter((id) => !heights.has(id)).slice(0, 200);
   const toLocate = [...ids.filter((id) => heights.has(id)), ...others];
   const byOutpoint = new Map<string, WalletUtxo>();
   await mapWithConcurrency(toLocate, 6, async (id) => {
