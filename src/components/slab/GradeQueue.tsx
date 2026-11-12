@@ -9,8 +9,9 @@ import { slabAlbumFn } from "@/lib/slab-album.functions";
 import { fetchSlabGrade } from "@/lib/slab-block";
 import { SLAB_POSTAGE, certFacts, slabCertHtml } from "@/lib/slab-cert";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
+import { SLAB_MASTER_DELEGATE_ID, slabDelegateMetadata, slabMasterHtml } from "@/lib/slab-master-delegate";
 
-const MAX_PREGRADE = 30;
+const PAGE_SIZE = 25;
 
 /** Pick held BITMAPs, see their pre-grades, then inscribe one certificate child each. */
 export function GradeQueue() {
@@ -24,7 +25,16 @@ export function GradeQueue() {
     staleTime: 60_000,
   });
   const graded = new Set((held.data?.slabs ?? []).filter((s) => s.parentProven).map((s) => s.h));
-  const bitmaps = (held.data?.bitmaps ?? []).slice(0, MAX_PREGRADE);
+  const all = held.data?.bitmaps ?? [];
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const filtered = search.trim() ? all.filter((b) => String(b.h).includes(search.trim())) : all;
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageIdx = Math.min(page, pages - 1);
+  const visible = filtered.slice(pageIdx * PAGE_SIZE, pageIdx * PAGE_SIZE + PAGE_SIZE);
+  const [queueStart, setQueueStart] = useState<number[]>([]);
+  // pre-grades load for the visible page plus every queued BITMAP
+  const bitmaps = [...visible, ...all.filter((b) => queueStart.includes(b.h) && !visible.some((v) => v.h === b.h))];
   const pre = useQueries({
     queries: bitmaps.map((b) => ({ queryKey: ["slab-pre", b.h], queryFn: () => fetchSlabGrade(b.h), staleTime: Infinity })),
   });
@@ -64,8 +74,34 @@ export function GradeQueue() {
       ) : bitmaps.length === 0 ? (
         <p className="font-mono text-xs text-muted-foreground">NO BITMAPS FOUND IN THIS WALLET</p>
       ) : (
-        <ul className="max-h-72 space-y-1 overflow-auto">
-          {bitmaps.map((b, i) => {
+        <>
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value.replace(/\D/g, "")); setPage(0); }}
+            placeholder="SEARCH BLOCK"
+            inputMode="numeric"
+            className="w-32 rounded border border-border bg-background px-2 py-1"
+          />
+          <span className="text-muted-foreground">{filtered.length.toLocaleString("en-US")} BITMAPS · {picked.length} PICKED</span>
+          <button
+            disabled={queue.length > 0}
+            onClick={() => setPicked((p) => [...new Set([...p, ...visible.filter((b) => !graded.has(b.h)).map((b) => b.h)])])}
+            className="rounded border border-border px-2 py-1 hover:text-primary disabled:opacity-40"
+          >
+            PICK PAGE
+          </button>
+          {picked.length > 0 && queue.length === 0 && (
+            <button onClick={() => setPicked([])} className="rounded border border-border px-2 py-1 hover:text-primary">CLEAR</button>
+          )}
+          <span className="ml-auto flex items-center gap-1">
+            <button disabled={pageIdx === 0} onClick={() => setPage(pageIdx - 1)} className="rounded border border-border px-2 py-1 disabled:opacity-40">‹</button>
+            {pageIdx + 1} / {pages}
+            <button disabled={pageIdx >= pages - 1} onClick={() => setPage(pageIdx + 1)} className="rounded border border-border px-2 py-1 disabled:opacity-40">›</button>
+          </span>
+        </div>
+        <ul className="max-h-96 space-y-1 overflow-auto">
+          {visible.map((b, i) => {
             const g = pre[i]?.data?.grade;
             const isGraded = graded.has(b.h);
             return (
@@ -84,11 +120,21 @@ export function GradeQueue() {
             );
           })}
         </ul>
+        </>
+      )}
+      {!SLAB_MASTER_DELEGATE_ID && (
+        <button
+          type="button"
+          onClick={() => { void navigator.clipboard.writeText(slabMasterHtml()).then(() => toast.success("Master HTML copied")); }}
+          className="font-mono text-xs text-muted-foreground underline hover:text-primary"
+        >
+          COPY SLAB MASTER HTML (INSCRIBE ONCE TO UNLOCK LEAN GRADES)
+        </button>
       )}
       {queue.length === 0 ? (
         <button
           disabled={picked.length === 0}
-          onClick={() => setQueue(picked)}
+          onClick={() => { setQueueStart(picked); setQueue(picked); }}
           className="w-full rounded-md bg-primary px-4 py-2 font-mono text-sm text-primary-foreground disabled:opacity-40"
         >
           GRADE {picked.length || ""} · FREE · MINER FEE ONLY
@@ -118,6 +164,13 @@ export function GradeQueue() {
                   contentType: "text/html;charset=utf-8",
                   source: slabCertHtml(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade)),
                   postage: SLAB_POSTAGE,
+                  ...(SLAB_MASTER_DELEGATE_ID
+                    ? {
+                        delegate: SLAB_MASTER_DELEGATE_ID,
+                        metadata: slabDelegateMetadata(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade)),
+                        note: "Lean grade: empty body rendered by the Living Slab master (Tag 11), facts in metadata.",
+                      }
+                    : {}),
                 },
               ]}
               onRevealed={() => setDone((d) => [...d, active])}
