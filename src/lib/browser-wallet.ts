@@ -516,7 +516,9 @@ export async function signParentInputsPsbt(
     const signed = await unisat.signPsbt(base64ToHex(psbtBase64), {
       autoFinalized: false,
       toSignInputs: signIndices.map((index) =>
-        taproot ? { index, address: holderAddress } : { index, address: holderAddress, sighashTypes: [SIGHASH_ALL] },
+        // The reveal PSBT pins SIGHASH_ALL on taproot parents; UniSat refuses any
+        // sighash not whitelisted here, so allow DEFAULT (0) and ALL (1).
+        taproot ? { index, address: holderAddress, sighashTypes: [0, SIGHASH_ALL] } : { index, address: holderAddress, sighashTypes: [SIGHASH_ALL] },
       ),
     });
     if (typeof signed !== "string" || signed.length < 20) throw new Error("UNISAT RETURNED NO SIGNED PSBT");
