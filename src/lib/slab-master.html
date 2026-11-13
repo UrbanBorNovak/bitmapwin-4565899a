@@ -442,22 +442,25 @@ async function runSlabModules(api) {
    and every valid parcel (first "<tx>.<height>.bitmap" child per tx) is tinted by its current holder.
    Nothing is assumed when a read fails. */
 async function jget(u) { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch (e) { return null; } }
-async function chainFacts() {
+async function chainFacts(h) {
   const q = new URLSearchParams(location.search);
   let sat = q.get("sat");
   if (!sat && SELF) { const j = await jget("/r/inscription/" + SELF); sat = j && j.sat != null ? String(j.sat) : null; }
   if (!sat) return { sat: null, bitmap: q.get("bitmap"), image: null };
   const first = await jget("/r/sat/" + sat + "/at/0");
   const bitmap = q.get("bitmap") || (first && first.id) || null;
-  let image = null;
-  for (let k = 1; k <= 8 && !image; k++) {
+  let image = null, signature = null;
+  for (let k = 1; k <= 8 && !(image && signature); k++) {
     const r = await jget("/r/sat/" + sat + "/at/-" + k); if (!r || !r.id || r.id === bitmap) break;
     if (r.id === SELF) continue;
     const i = await jget("/r/inscription/" + r.id);
     const t = (i && (i.content_type || i.contentType) || "").toLowerCase();
-    if (t.startsWith("image/")) image = r.id;
+    if (!image && t.startsWith("image/")) image = r.id;
+    if (!signature && t.startsWith("text/")) { try { const b = await fetch("/content/" + r.id); if (b.ok) {
+      const m = /^([a-z0-9_-]{1,32})\.(\d+)\.bitmap$/i.exec((await b.text()).trim());
+      if (m && +m[2] === h && !/^\d+$/.test(m[1])) signature = { name: m[1], id: r.id }; } } catch (e) {} }
   }
-  return { sat, bitmap, image };
+  return { sat, bitmap, image, signature };
 }
 async function parcelHolders(id, h) {
   const seen = new Map(); let more = false;
@@ -481,8 +484,15 @@ function holderColor(THREE, a) { let x = 2166136261; for (let i = 0; i < a.lengt
 
 async function extras(THREE, F, landGroup, span, landMesh) {
   const hud = (id, t) => { const e = document.getElementById(id); if (e) { e.textContent = t; e.parentElement.style.display = "inline"; } };
-  const C = await chainFacts().catch(() => ({ sat: null, bitmap: null, image: null }));
-  window.BW_CHAIN = { sat: C.sat, bitmap: C.bitmap, image: C.image };
+  const C = await chainFacts(F.h).catch(() => ({ sat: null, bitmap: null, image: null, signature: null }));
+  window.BW_CHAIN = { sat: C.sat, bitmap: C.bitmap, image: C.image, signature: C.signature };
+  if (C.signature) {
+    const n = C.signature.name, d = document.createElement("div");
+    d.textContent = "SIGNED BY " + n.charAt(0).toUpperCase() + n.slice(1);
+    d.title = "Reinscription " + C.signature.id;
+    d.style.cssText = "position:fixed;top:14px;left:50%;transform:translateX(-50%);font:italic 600 20px Georgia,serif;letter-spacing:.06em;color:#f7931a;padding:6px 16px;border:1px solid #f7931a66;border-radius:4px;background:#0009;z-index:5";
+    document.body.appendChild(d);
+  }
   if (C.image) {
     new THREE.TextureLoader().load("/content/" + C.image, (t) => {
       t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter;
