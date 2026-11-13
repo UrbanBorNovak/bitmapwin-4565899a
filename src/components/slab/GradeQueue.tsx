@@ -11,7 +11,8 @@ import { SLAB_POSTAGE, SLAB_TREASURY, certFacts, slabCertHtml } from "@/lib/slab
 import { slabSkin } from "@/lib/slab-skins";
 import { useEffect } from "react";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
-import { SLAB_MASTER_DELEGATE_ID, slabDelegateMetadata, slabMasterHtml } from "@/lib/slab-master-delegate";
+import { SLAB_MASTER_DELEGATE_ID, slabDelegateMetadata } from "@/lib/slab-master-delegate";
+import { SlabMasterInscribe } from "@/components/slab/SlabMasterInscribe";
 
 const PAGE_SIZE = 25;
 
@@ -153,15 +154,7 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
         </ul>
         </>
       )}
-      {!SLAB_MASTER_DELEGATE_ID && (
-        <button
-          type="button"
-          onClick={() => { void navigator.clipboard.writeText(slabMasterHtml()).then(() => toast.success("Master HTML copied")); }}
-          className="font-mono text-xs text-muted-foreground underline hover:text-primary"
-        >
-          COPY SLAB MASTER HTML (INSCRIBE ONCE TO UNLOCK LEAN GRADES)
-        </button>
-      )}
+      {!SLAB_MASTER_DELEGATE_ID && <SlabMasterInscribe />}
       {queue.length === 0 ? (
         <button
           disabled={picked.length === 0}
