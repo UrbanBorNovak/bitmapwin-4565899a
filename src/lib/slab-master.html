@@ -204,15 +204,7 @@ function makeLabelCanvas(F, back) {
 
 let THREE;
 try {
-  if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-    THREE = await import('https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js');
-  } else {
-    try {
-      THREE = await import('/content/0d013bb60fc5bf5a6c77da7371b07dc162ebc7d7f3af0ff3bd00ae5f0c546445i0');
-    } catch (e) {
-      THREE = await import('https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js');
-    }
-  }
+  THREE = await import('/content/0d013bb60fc5bf5a6c77da7371b07dc162ebc7d7f3af0ff3bd00ae5f0c546445i0');
 } catch (err) {
   document.getElementById('fallback').style.display = 'grid';
   document.getElementById('c').style.display = 'none';
