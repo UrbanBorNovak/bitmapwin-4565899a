@@ -26,10 +26,13 @@ export type SlabCertFacts = {
   name: string;
   subs: Record<string, number>;
   cert: string;
+  /** Paid skin id; absent = standard acrylic. */
+  skin?: string;
 };
 
-export function certFacts(height: number, txCount: number, hash: string | null, g: SlabGrade): SlabCertFacts {
+export function certFacts(height: number, txCount: number, hash: string | null, g: SlabGrade, skin?: string): SlabCertFacts {
   return {
+    ...(skin && skin !== "acrylic" ? { skin } : {}),
     p: SLAB_PROTOCOL,
     h: height,
     hash,
