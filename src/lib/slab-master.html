@@ -26,7 +26,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: radial-gra
 <canvas id="c"></canvas>
 <div id="hud">
   <div class="badge">
-    <span><b>LIVING SLAB</b> · <span class="hint">DRAG TO ORBIT · CLICK TO FLIP</span></span>
+    <span><b>LIVING SLAB</b> · <span id="pc">LAND</span> · <span class="hint">DRAG TO ORBIT · CLICK TO FLIP</span></span>
   </div>
 </div>
 <div id="fallback">
@@ -112,6 +112,28 @@ function blockParcelSizes(blockHeight, txCount) {
   }
   return sizes;
 }
+
+/* Exact parcels: /r/block/<height> raw hex -> each tx's total output sats -> side floor(log10(sats))-4, clamped 1..8
+   (bitfeed / bitmap.trade rule, same as the in-app slab). Any doubt returns null. */
+function parseBlockValues(hx){if(typeof hx!=="string"||hx.length<162||hx.length%2||!/^[0-9a-f]+$/i.test(hx.slice(0,200)))return null;
+  let p=160;const L=hx.length;
+  const b=()=>{if(p+2>L)throw 0;const v=parseInt(hx.substr(p,2),16);p+=2;return v};
+  const u32=()=>{const v=b()|b()<<8|b()<<16|(b()<<24>>>0);return v>>>0};
+  const vi=()=>{const f=b();if(f<253)return f;if(f===253)return b()|b()<<8;if(f===254)return u32();const lo=u32(),hi=u32();if(hi)throw 0;return lo};
+  const skip=(n)=>{p+=n*2;if(p>L)throw 0};
+  try{const n=vi(),out=[];if(n<1||n>20000)return null;
+    for(let i=0;i<n;i++){skip(4);let sw=false,ni=vi();if(ni===0){if(b()!==1)return null;sw=true;ni=vi()}
+      for(let k=0;k<ni;k++){skip(36);skip(vi());skip(4)}
+      const no=vi();let sum=0;for(let k=0;k<no;k++){const lo=u32(),hi=u32();sum+=lo+hi*4294967296;skip(vi())}
+      if(sw)for(let k=0;k<ni;k++){const w=vi();for(let q=0;q<w;q++)skip(vi())}
+      skip(4);out.push(sum)}
+    return p===L?out:null}catch(_){return null}}
+async function realSizes(F){
+  try{const r=await fetch("/r/block/"+F.h);if(!r.ok)return null;
+    const hx=(await r.text()).trim().replace(/^"|"$/g,"");if(hx.length>16e6)return null;
+    const v=parseBlockValues(hx);if(!v||(F.tx&&v.length!==F.tx))return null;
+    return v.map(x=>Math.max(1,Math.min(8,Math.floor(Math.log10(Math.max(1,x)))-4)));
+  }catch(_){return null}}
 
 class Mondrian {
   constructor(sizes) {
@@ -286,12 +308,16 @@ async function start3D(THREE) {
   landGroup.position.set(0, -LABEL_H / 2 + 0.02, -0.05);
   group.add(landGroup);
 
-  const sizes = blockParcelSizes(F.h, F.tx);
+  const real = await realSizes(F);
+  window.BW_PARCELS = real ? "block" : "seeded";
+  const pc = document.getElementById("pc"); if (pc) pc.textContent = real ? sizes.length + " REAL TX PARCELS" : "PREVIEW LAND (BLOCK UNREADABLE)";
+  const sizes = real || blockParcelSizes(F.h, F.tx);
   const mon = new Mondrian(sizes);
-  const side = Math.max(mon.len, mon.rows.length);
-  const span = 2.4;
+  let used = 1; for (const q of mon.slots) used = Math.max(used, q.y + q.size);
+  const side = Math.max(mon.len, used);
+  const span = 2.5;
   const unit = span / side;
-  const offY = (side - mon.rows.length) / 2;
+  const offY = (side - used) / 2;
 
   const count = mon.slots.length;
   const landMesh = new THREE.InstancedMesh(
@@ -305,8 +331,8 @@ async function start3D(THREE) {
 
   for (let i = 0; i < count; i++) {
     const s = mon.slots[i];
-    const pSize = s.size * unit * 0.9;
-    const pH = 0.04 + s.size * unit * 0.65;
+    const pSize = s.size * unit * 0.88;
+    const pH = 0.04 + s.size * unit * 0.6;
     const px = (s.x + s.size / 2) * unit - span / 2;
     const py = span / 2 - (s.y + offY + s.size / 2) * unit;
 
