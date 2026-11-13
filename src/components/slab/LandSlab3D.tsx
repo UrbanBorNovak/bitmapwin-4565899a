@@ -39,7 +39,7 @@ const PSA_RED = "#c8102e";
 
 type Props = {
   height: number; layout: BlockLayout; grade: SlabGrade; flipped: boolean; hash: string | null; sat?: number | null;
-  inscriptions?: ParcelInscription[]; selected?: number | null; onPick?: (tx: number | null) => void; skin?: string;
+  inscriptions?: ParcelInscription[]; selected?: number | null; onPick?: (tx: number | null) => void; skin?: string | undefined;
 };
 
 function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: string | null, sat: number | null) {
