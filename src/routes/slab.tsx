@@ -2,6 +2,7 @@ import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 import { layoutFromSizeClasses } from "@/lib/bitmap-layout";
 import { gradeSlab } from "@/lib/land-slab";
 import { fetchBlock } from "@/lib/slab-block";
@@ -36,6 +37,8 @@ function SlabPage() {
   const block = useQuery({ queryKey: ["slab-block", height], queryFn: () => fetchBlock(height), staleTime: Infinity, retry: 1 });
 
   const [picked, setPicked] = useState<number | null>(null);
+  const [tab, setTab] = useState<"grade" | "parcels" | "mine">("grade");
+  const pickParcel = (t: number | null) => { setPicked(t); if (t != null) setTab("parcels"); };
   const hash = block.data?.hash ?? null;
   const ins = useQuery({
     queryKey: ["slab-ins", height, hash],
@@ -81,12 +84,9 @@ function SlabPage() {
           className="w-48 rounded-md border border-border bg-background px-3 py-2 font-mono"
         />
         <button className="rounded-md bg-primary px-4 py-2 font-mono text-sm text-primary-foreground">SLAB IT</button>
-        <button type="button" onClick={() => setFlipped((f) => !f)} className="rounded-md border border-border px-4 py-2 font-mono text-sm">
-          {flipped ? "SHOW FRONT" : "FLIP SLAB"}
-        </button>
       </form>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 md:grid-cols-[1fr_340px] md:items-start">
         <div className="aspect-[4/5] w-full overflow-hidden rounded-xl border border-border bg-card md:aspect-auto md:h-[640px]">
           {block.isPending ? (
             <Status text={`LOADING BLOCK ${height.toLocaleString("en-US")}…`} />
@@ -97,14 +97,26 @@ function SlabPage() {
           ) : (
             <ClientOnly fallback={<Status text="PREPARING SLAB…" />}>
               <Suspense fallback={<Status text="PREPARING SLAB…" />}>
-                <LandSlab3D height={height} layout={data.layout} grade={data.grade} flipped={flipped} hash={data.hash} sat={sat} inscriptions={insItems} selected={picked} onPick={setPicked} />
+                <LandSlab3D height={height} layout={data.layout} grade={data.grade} flipped={flipped} hash={data.hash} sat={sat} inscriptions={insItems} selected={picked} onPick={pickParcel} />
               </Suspense>
             </ClientOnly>
           )}
         </div>
+        {data && (
+          <div className="flex gap-2 md:col-start-1">
+            <button type="button" onClick={() => setFlipped((f) => !f)} className="rounded-md border border-border px-4 py-2 font-mono text-xs hover:border-primary">{flipped ? "SHOW FRONT" : "FLIP SLAB"}</button>
+            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/slab?b=${height}`); toast.success("LINK COPIED"); }} className="rounded-md border border-border px-4 py-2 font-mono text-xs hover:border-primary">COPY LINK</button>
+          </div>
+        )}
 
-        <aside className="space-y-4">
-          <ClientOnly fallback={null}><GradeQueue /></ClientOnly>
+        <aside className="space-y-4 md:col-start-2 md:row-span-2 md:row-start-1">
+          <div role="tablist" aria-label="Slab details" className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 font-mono text-xs">
+            {([["grade", "GRADE"], ["parcels", `PARCELS${insItems.length ? ` · ${insItems.length}` : ""}`], ["mine", "MY LAND"]] as const).map(([k, l]) => (
+              <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)}
+                className={`rounded-md px-2 py-2 transition-colors ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{l}</button>
+            ))}
+          </div>
+          {tab === "grade" && (<>
           {data && (
             <section className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-baseline justify-between">
@@ -122,6 +134,13 @@ function SlabPage() {
             </section>
           )}
           <RarityPanel height={height} hash={hash} />
+          <details className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <summary className="cursor-pointer font-mono text-xs uppercase tracking-widest text-foreground">How the grade works</summary>
+            <p>Vintage from block height, centering from how much of the square the parcels fill, hash from how rare the block hash's digit pattern is, scarcity from the transaction count.</p>
+            <p className="mt-2">The overall grade is the rounded average, capped four points above the weakest score. It is a BitmapWIN rubric, not ownership or an on-chain property.</p>
+          </details>
+          </>)}
+          {tab === "parcels" && (<>
           <section className="rounded-xl border border-border bg-card p-4">
             <h2 className="mb-2 font-mono text-xs uppercase tracking-widest">Inscribed in this land</h2>
             {ins.isPending && hash ? (
@@ -164,11 +183,8 @@ function SlabPage() {
             )}
             <p className="mt-2 text-xs text-muted-foreground">Parcel = position of the reveal transaction in the block. Read live from ordinals.com (mempool.space tags as backup); it shows what was inscribed, not who holds it now.</p>
           </section>
-          <section className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-            <h2 className="mb-2 font-mono text-xs uppercase tracking-widest text-foreground">How the grade works</h2>
-            <p>Vintage from block height, centering from how much of the square the parcels fill, hash from how rare the block hash's digit pattern is, scarcity from the transaction count.</p>
-            <p className="mt-2">The overall grade is the rounded average, capped four points above the weakest score. It is a BitmapWIN rubric, not ownership or an on-chain property.</p>
-          </section>
+          </>)}
+          {tab === "mine" && <ClientOnly fallback={null}><GradeQueue /></ClientOnly>}
         </aside>
       </div>
     </main>
