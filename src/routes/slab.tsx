@@ -86,7 +86,7 @@ function SlabPage() {
         <button className="rounded-md bg-primary px-4 py-2 font-mono text-sm text-primary-foreground">SLAB IT</button>
       </form>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 md:grid-cols-[1fr_340px] md:items-start">
         <div className="aspect-[4/5] w-full overflow-hidden rounded-xl border border-border bg-card md:aspect-auto md:h-[640px]">
           {block.isPending ? (
             <Status text={`LOADING BLOCK ${height.toLocaleString("en-US")}…`} />
@@ -109,7 +109,7 @@ function SlabPage() {
           </div>
         )}
 
-        <aside className="space-y-4">
+        <aside className="space-y-4 md:col-start-2 md:row-span-2 md:row-start-1">
           <div role="tablist" aria-label="Slab details" className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-card p-1 font-mono text-xs">
             {([["grade", "GRADE"], ["parcels", `PARCELS${insItems.length ? ` · ${insItems.length}` : ""}`], ["mine", "MY LAND"]] as const).map(([k, l]) => (
               <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)}
