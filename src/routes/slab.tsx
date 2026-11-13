@@ -198,7 +198,7 @@ function SlabPage() {
             <p className="mt-2 text-xs text-muted-foreground">Parcel = position of the reveal transaction in the block. Read live from ordinals.com (mempool.space tags as backup); it shows what was inscribed, not who holds it now.</p>
           </section>
           </>)}
-          {tab === "mine" && <ClientOnly fallback={null}><GradeQueue /></ClientOnly>}
+          {tab === "mine" && <ClientOnly fallback={null}><GradeQueue skin={skin} /></ClientOnly>}
         </aside>
       </div>
     </main>
