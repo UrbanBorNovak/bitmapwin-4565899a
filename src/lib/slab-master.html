@@ -353,7 +353,7 @@ async function start3D(THREE) {
     const lit = SK.l[2] + Math.min(0.24, s.size * 0.04);
     color.setHSL(hue, sat, lit);
     landMesh.setColorAt(i, color);
-    if (SK.fo && (i * 2654435761 >>> 0) % 3 === 0) { const moss = new THREE.Mesh(new THREE.BoxGeometry(pSize * 0.5, pSize * 0.5, pSize * 0.5), new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.3, 0.6, 0.3 + (i % 5) * 0.03) })); moss.position.set(px, py, pH + pSize * 0.25); landMesh.parent ? landMesh.parent.add(moss) : group.add(moss); }
+    if (SK.fo && (i * 2654435761 >>> 0) % 3 === 0) { const moss = new THREE.Mesh(new THREE.BoxGeometry(pSize * 0.5, pSize * 0.5, pSize * 0.5), new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.3, 0.6, 0.3 + (i % 5) * 0.03) })); moss.position.set(px, py, pH + pSize * 0.25); landGroup.add(moss); }
   }
   landMesh.instanceMatrix.needsUpdate = true;
   if (landMesh.instanceColor) landMesh.instanceColor.needsUpdate = true;
