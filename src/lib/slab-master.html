@@ -236,8 +236,14 @@ if (THREE) {
   start3D(THREE);
 }
 
+const SKINS={acrylic:{c:0xeaf2f5,o:0.35,r:0.05,m:0,ir:0,t:0.96,pl:0x070b10,tr:null,l:[0.075,0.6,0.18],rb:0,fo:0},
+gold:{c:0xffe6a8,o:0.4,r:0.08,m:0.2,ir:0.1,t:0.9,pl:0x3a2a10,tr:0xd4a017,l:[0.11,0.8,0.3],rb:0,fo:0},
+holo:{c:0xffffff,o:0.4,r:0.02,m:0.1,ir:1,t:0.95,pl:0x10121c,tr:0xc0c8d8,l:[0,0.8,0.45],rb:1,fo:0},
+obsidian:{c:0x2a2a30,o:0.6,r:0.1,m:0.3,ir:0,t:0.6,pl:0x050506,tr:0x8a8f98,l:[0.05,0.95,0.22],rb:0,fo:0},
+biome:{c:0xe6f7e8,o:0.3,r:0.05,m:0,ir:0.15,t:0.95,pl:0x0d1a10,tr:0x4a7a3a,l:[0.3,0.35,0.2],rb:0,fo:1}};
 async function start3D(THREE) {
   const F = await loadFacts();
+  const SK = SKINS[F.skin] || SKINS[new URLSearchParams(location.search).get("skin")] || SKINS.acrylic;
   document.title = F.h + ".bitmap " + F.name + " " + F.grade;
 
   const canvas = document.getElementById("c");
@@ -270,23 +276,24 @@ async function start3D(THREE) {
   const LABEL_H = 1.15;
 
   const acrylicMat = new THREE.MeshPhysicalMaterial({
-    transmission: 0.96,
-    roughness: 0.05,
+    transmission: SK.t,
+    roughness: SK.r, metalness: SK.m, iridescence: SK.ir,
     thickness: 0.05,
     ior: 1.1,
     clearcoat: 1.0,
     clearcoatRoughness: 0.05,
     transparent: true,
-    opacity: 0.35,
-    color: 0xeaf2f5,
+    opacity: SK.o,
+    color: SK.c,
     depthWrite: false
   });
   const capsule = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), acrylicMat);
 
-  const backplateMat = new THREE.MeshStandardMaterial({ color: 0x070b10, roughness: 0.85, side: THREE.DoubleSide });
+  const backplateMat = new THREE.MeshStandardMaterial({ color: SK.pl, roughness: 0.85, side: THREE.DoubleSide });
   const backplate = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.28, H - LABEL_H - 0.42), backplateMat);
   backplate.position.set(0, -LABEL_H / 2 + 0.02, -0.09);
   group.add(backplate);
+  if (SK.tr != null) { const tm = new THREE.MeshStandardMaterial({ color: SK.tr, metalness: 0.9, roughness: 0.25 }); const tw = 0.05; [[0, H/2 - tw/2, W, tw], [0, -H/2 + tw/2, W, tw], [-W/2 + tw/2, 0, tw, H], [W/2 - tw/2, 0, tw, H]].forEach(([x, y, w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, D + 0.01), tm); b.position.set(x, y, 0); group.add(b); }); }
 
   const frontTex = new THREE.CanvasTexture(makeLabelCanvas(F, false));
   frontTex.colorSpace = THREE.SRGBColorSpace;
@@ -341,11 +348,12 @@ async function start3D(THREE) {
     dummy.updateMatrix();
     landMesh.setMatrixAt(i, dummy.matrix);
 
-    const hue = 0.075;
-    const sat = 0.6;
-    const lit = 0.18 + Math.min(0.24, s.size * 0.04);
+    const hue = SK.rb ? (i * 0.037) % 1 : SK.l[0];
+    const sat = SK.l[1];
+    const lit = SK.l[2] + Math.min(0.24, s.size * 0.04);
     color.setHSL(hue, sat, lit);
     landMesh.setColorAt(i, color);
+    if (SK.fo && (i * 2654435761 >>> 0) % 3 === 0) { const moss = new THREE.Mesh(new THREE.BoxGeometry(pSize * 0.5, pSize * 0.5, pSize * 0.5), new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.3, 0.6, 0.3 + (i % 5) * 0.03) })); moss.position.set(px, py, pH + pSize * 0.25); landGroup.add(moss); }
   }
   landMesh.instanceMatrix.needsUpdate = true;
   if (landMesh.instanceColor) landMesh.instanceColor.needsUpdate = true;

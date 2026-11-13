@@ -7,14 +7,38 @@ import { resolveWallet } from "@/components/BuyButton";
 import { useWalletSession } from "@/lib/wallet-session";
 import { slabAlbumFn } from "@/lib/slab-album.functions";
 import { fetchSlabGrade } from "@/lib/slab-block";
-import { SLAB_POSTAGE, certFacts, slabCertHtml } from "@/lib/slab-cert";
+import { SLAB_POSTAGE, SLAB_TREASURY, certFacts, slabCertHtml } from "@/lib/slab-cert";
+import { slabSkin } from "@/lib/slab-skins";
+import { useEffect } from "react";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 import { SLAB_MASTER_DELEGATE_ID, slabDelegateMetadata, slabMasterHtml } from "@/lib/slab-master-delegate";
 
 const PAGE_SIZE = 25;
 
 /** Pick held BITMAPs, see their pre-grades, then inscribe one certificate child each. */
-export function GradeQueue() {
+/** Confirmed on Bitcoin: mempool.space reports the reveal as mined. */
+async function revealConfirmed(txid: string): Promise<boolean> {
+  try {
+    const r = await fetch(`https://mempool.space/api/tx/${txid}/status`);
+    return r.ok && (await r.json()).confirmed === true;
+  } catch {
+    return false;
+  }
+}
+
+export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {}) {
+  const skin = slabSkin(skinId);
+  const [agreed, setAgreed] = useState<number | null>(null);
+  const [pending, setPending] = useState<Record<number, string>>({});
+  const [paid, setPaid] = useState<number[]>([]);
+  useEffect(() => {
+    const open = Object.entries(pending).filter(([h]) => !paid.includes(Number(h)));
+    if (!open.length) return;
+    const t = setInterval(async () => {
+      for (const [h, txid] of open) if (await revealConfirmed(txid)) setPaid((p) => (p.includes(Number(h)) ? p : [...p, Number(h)]));
+    }, 30_000);
+    return () => clearInterval(t);
+  }, [pending, paid]);
   const session = useWalletSession();
   const address = session?.ordinalsAddress ?? null;
   const album = useServerFn(slabAlbumFn);
@@ -147,13 +171,31 @@ export function GradeQueue() {
           GRADE {picked.length || ""} · FREE · MINER FEE ONLY
         </button>
       ) : active === undefined ? (
-        <p className="font-mono text-xs text-accent">ALL {queue.length} CERTIFICATES BROADCAST · THEY APPEAR IN YOUR ALBUM AFTER CONFIRMATION</p>
+        <div className="space-y-1 font-mono text-xs">
+          <p className="text-accent">ALL {queue.length} CERTIFICATES BROADCAST · THEY APPEAR IN YOUR ALBUM AFTER CONFIRMATION</p>
+          {Object.entries(pending).map(([h, txid]) => (
+            <p key={h}>{h}.bitmap · {paid.includes(Number(h)) ? "CONFIRMED · COMPLETE" : "WAITING FOR CONFIRMATION"} · <a className="underline" href={`https://mempool.space/tx/${txid}`} target="_blank" rel="noreferrer">TX</a></p>
+          ))}
+        </div>
       ) : (
         <div className="space-y-2">
           <p className="font-mono text-xs">
             {done.length + 1} OF {queue.length} · {active}.bitmap
           </p>
-          {activeGrade ? (
+          {activeGrade && agreed !== active ? (
+            <div className="space-y-2 rounded-md border border-border p-3 font-mono text-xs">
+              <p className="uppercase tracking-widest">Before your wallet opens</p>
+              <ul className="space-y-1">
+                <li className="flex justify-between"><span>GRADING</span><span>0 sats (free)</span></li>
+                <li className="flex justify-between"><span>SKIN · {skin.name}</span><span>{skin.priceSats.toLocaleString("en-US")} sats</span></li>
+                <li className="flex justify-between"><span>POSTAGE</span><span>0 sats (stamped on your BITMAP's own sat)</span></li>
+                <li className="flex justify-between"><span>MINER FEE</span><span>shown in the next step, set by your fee rate</span></li>
+                <li className="flex justify-between border-t border-border pt-1 text-primary"><span>TOTAL BEFORE MINER FEE</span><span>{skin.priceSats.toLocaleString("en-US")} sats</span></li>
+              </ul>
+              {skin.priceSats > 0 ? <p className="break-all text-muted-foreground">Skin fee is an output of the same Bitcoin transaction to {SLAB_TREASURY}. The skin counts as bought only after that transaction is confirmed.</p> : <p className="text-muted-foreground">Pick a skin under the card to change the finish.</p>}
+              <button onClick={() => setAgreed(active!)} className="rounded-md bg-primary px-4 py-2 text-primary-foreground">I UNDERSTAND THE FEES · CONTINUE</button>
+            </div>
+          ) : activeGrade ? (
             <ShadowInscriber
               key={active}
               slug="land-slab"
@@ -169,18 +211,19 @@ export function GradeQueue() {
                   key: "cert",
                   label: "CERTIFICATE",
                   contentType: "text/html;charset=utf-8",
-                  source: slabCertHtml(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade)),
+                  source: slabCertHtml(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade, skin.id)),
                   postage: SLAB_POSTAGE,
+                  ...(skin.priceSats > 0 ? { tribute: { address: SLAB_TREASURY, sats: skin.priceSats } } : {}),
                   ...(SLAB_MASTER_DELEGATE_ID
                     ? {
                         delegate: SLAB_MASTER_DELEGATE_ID,
-                        metadata: slabDelegateMetadata(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade)),
+                        metadata: slabDelegateMetadata(certFacts(active, activeGrade.txCount, activeGrade.hash, activeGrade.grade, skin.id)),
                         note: "Lean grade: empty body rendered by the Living Slab master (Tag 11), facts in metadata.",
                       }
                     : {}),
                 },
               ]}
-              onRevealed={() => setDone((d) => [...d, active])}
+              onRevealed={(txid) => { setPending((p) => ({ ...p, [active!]: txid })); setDone((d) => [...d, active!]); }}
             />
           ) : (
             <p className="font-mono text-xs text-muted-foreground">PREPARING GRADE…</p>
