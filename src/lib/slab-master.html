@@ -504,7 +504,7 @@ async function extras(THREE, F, landGroup, span) {
   const hh = /^[0-9a-f]{64}$/i.test(F.hash || "") ? F.hash : (F.h >>> 0).toString(16).padStart(8, "0").repeat(8);
   const hue = parseInt(hh.slice(-6, -3), 16) / 4096, body = new THREE.Color().setHSL(hue, 0.65, 0.5), acc = new THREE.Color().setHSL((hue + 0.45) % 1, 0.9, 0.6);
   const gd = new THREE.Group(), m = (w, h, d, c, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, emissive: c, emissiveIntensity: 0.15 })); o.position.set(x, y, z); gd.add(o); return o; };
-  const u = 0.022;
+  const u = 0.03; let floorZ = H0 * 0.5;
   m(4*u, 3*u, 3*u, body, 0, 0, 3.5*u);            // body (x forward, z up)
   m(2.4*u, 2.4*u, 2.4*u, body, 2.8*u, 0, 5*u);    // head
   m(0.6*u, 0.6*u, 0.6*u, acc, 4.1*u, 0.6*u, 5.4*u); m(0.6*u, 0.6*u, 0.6*u, acc, 4.1*u, -0.6*u, 5.4*u); // eyes
@@ -532,7 +532,7 @@ async function extras(THREE, F, landGroup, span) {
     st.sp += (target - st.sp) * Math.min(1, dt * 4);
     st.x = Math.max(-R, Math.min(R, st.x + Math.cos(st.yaw) * st.sp * dt));
     st.y = Math.max(-R, Math.min(R, st.y + Math.sin(st.yaw) * st.sp * dt));
-    gd.position.set(st.x, st.y, H0 * 0.5); gd.rotation.z = st.yaw;
+    gd.position.set(st.x, st.y, floorZ); gd.rotation.z = st.yaw;
     const ph = t * 14 * (st.sp > 0.05 ? 1 : 0);
     legs.forEach((l, i) => { l.position.z = u * (1 + 0.5 * Math.max(0, Math.sin(ph + (i % 3 ? Math.PI : 0)))); });
   };
@@ -548,7 +548,7 @@ async function extras(THREE, F, landGroup, span) {
     B.forEach((b, i) => { const w = b[3] - b[0] + 1, h = b[4] - b[1] + 1, d = b[5] - b[2] + 1;
       o.position.set((b[0] + w / 2) * sx - span / 2, span / 2 - (b[2] + d / 2) * sx, 0.06 + (b[1] + h / 2) * sz);
       o.scale.set(w * sx, d * sx, h * sz); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, col.set(PAL[b[6]] || "#888")); });
-    landGroup.add(im);
+    landGroup.add(im); floorZ = 0.06 + top * sz;
     hud("bs", "VOXEL BUILD " + C.build.id.slice(0, 8) + "… · " + B.length.toLocaleString("en-US") + " BOXES");
   }
   if (C.bitmap) {
