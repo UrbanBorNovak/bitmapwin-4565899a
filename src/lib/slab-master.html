@@ -408,9 +408,31 @@ async function start3D(THREE) {
     group.position.y = Math.sin(time * 0.8) * 0.04;
     landGroup.rotation.z = Math.sin(time * 0.3) * 0.08;
 
+    for (const f of HOOKS.slice()) { try { f(time, dt); } catch (e) { HOOKS.splice(HOOKS.indexOf(f), 1); } }
     renderer.render(scene, camera);
   }
   animate();
+  runSlabModules({ THREE, scene, camera, renderer, group, capsule, landGroup, landMesh, facts: F, on: (f) => { if (typeof f === "function") HOOKS.push(f); } });
+}
+
+/* BW-SLAB-MOD-1 upgrades: the newest reinscription on the BitmapWIN collection anchor's own sat whose body starts with
+   "BW-SLAB-MOD-1\n" runs as function(api). Only the anchor holder can reinscribe that sat, so every slab upgrades together.
+   ?mod=off, a missing module or any error keeps this built-in slab; the facts in Tag 5 never change. */
+const HOOKS = [];
+const SLAB_MOD_ANCHOR = "9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0";
+async function runSlabModules(api) {
+  try {
+    if (/[?&]mod=off/.test(location.search)) return;
+    const r0 = await fetch("/r/inscription/" + SLAB_MOD_ANCHOR); if (!r0.ok) return;
+    const sat = (await r0.json()).sat; if (sat == null) return;
+    for (let k = 1; k <= 6; k++) {
+      const r = await fetch("/r/sat/" + sat + "/at/-" + k); if (!r.ok) break;
+      const id = (await r.json()).id; if (!id) break;
+      const c = await fetch("/content/" + id); if (!c.ok) continue;
+      const t = await c.text();
+      if (t.startsWith("BW-SLAB-MOD-1\n")) { window.BW_SLAB_MOD = id; new Function("api", t.slice(14))(api); return; }
+    }
+  } catch (e) {}
 }
 </script>
 </body>
