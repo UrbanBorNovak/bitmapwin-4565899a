@@ -26,7 +26,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: radial-gra
 <canvas id="c"></canvas>
 <div id="hud">
   <div class="badge">
-    <span><b>LIVING SLAB</b> · <span id="pc">LAND</span> · <span class="hint">DRAG TO ORBIT · CLICK TO FLIP</span></span>
+    <span><b>LIVING SLAB</b> · <span id="pc">LAND</span> · <span style="display:none"> · <span id="gs"></span></span><span style="display:none"> · <span id="bs"></span></span><span style="display:none"> · <span id="ks"></span></span> · <span class="hint">DRAG TO ORBIT · CLICK TO FLIP</span></span>
   </div>
 </div>
 <div id="fallback">
@@ -351,6 +351,7 @@ async function start3D(THREE) {
   if (landMesh.instanceColor) landMesh.instanceColor.needsUpdate = true;
   landGroup.add(landMesh);
   group.add(capsule);
+  extras(THREE, F, landGroup, span).catch(() => {});
 
   let targetRotY = 0;
   let targetRotX = 0;
@@ -408,6 +409,7 @@ async function start3D(THREE) {
     group.position.y = Math.sin(time * 0.8) * 0.04;
     landGroup.rotation.z = Math.sin(time * 0.3) * 0.08;
 
+    if (landGroup.userData.tick) landGroup.userData.tick(time, dt);
     for (const f of HOOKS.slice()) { try { f(time, dt); } catch (e) { HOOKS.splice(HOOKS.indexOf(f), 1); } }
     renderer.render(scene, camera);
   }
@@ -433,6 +435,126 @@ async function runSlabModules(api) {
       if (t.startsWith("BW-SLAB-MOD-1\n")) { window.BW_SLAB_MOD = id; new Function("api", t.slice(14))(api); return; }
     }
   } catch (e) {}
+}
+
+/* ===== Inscribed voxel build, mini Guardian (8,000-synapse fly brain) and children count =====
+   Everything is read from ordinals.com: the BITMAP's sat (this slab sits on it), the newest Land Forge
+   build reinscribed there, and /r/children of the BITMAP inscription. Nothing is assumed when a read fails. */
+const PAL = ["#5fa83a","#7a5634","#e3cf8f","#8a8a8a","#6d6d6d","#b8874a","#c79a5b","#a5462f","#f3c43b","#bfe8f5","#ffd27a"];
+function unpackBWVX(r) {
+  const c = (i) => r.charCodeAt(i), B = [];
+  if (c(0) === 66 && c(1) === 87 && c(2) === 50 && c(3) === 0) {
+    for (let i = 4; i + 6 < r.length; i += 7) B.push([c(i), c(i+1), c(i+2), c(i+3), c(i+4), c(i+5), c(i+6)]);
+  } else for (let i = 0; i + 3 < r.length; i += 4) B.push([c(i), c(i+1), c(i+2), c(i), c(i+1), c(i+2), c(i+3)]);
+  return B;
+}
+async function jget(u) { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch (e) { return null; } }
+async function metaOf(id) {
+  const hx = await jget("/r/metadata/" + id); if (typeof hx !== "string") return null;
+  const h = hx.replace(/[^0-9a-f]/gi, ""), b = new Uint8Array(h.length / 2);
+  for (let k = 0; k < b.length; k++) b[k] = parseInt(h.substr(k * 2, 2), 16);
+  try { return decodeCBOR(b); } catch (e) { return null; }
+}
+async function buildOf(id) {
+  const m = await metaOf(id);
+  if (m && /^BWVX[12]$/.test(m.f || "") && typeof m.d === "string") return { id, B: unpackBWVX(atob(m.d.replace(/\s/g, ""))) };
+  try {
+    const r = await fetch("/content/" + id); if (!r.ok || !(r.headers.get("content-type") || "").includes("html")) return null;
+    const t = await r.text(); const x = t.match(/<script id="bwvx"[^>]*data-format="BWVX[12]"[^>]*>([A-Za-z0-9+/=\s]+)<\/script>/);
+    return x ? { id, B: unpackBWVX(atob(x[1].replace(/\s/g, ""))) } : null;
+  } catch (e) { return null; }
+}
+async function chainFacts() {
+  const q = new URLSearchParams(location.search);
+  let sat = q.get("sat");
+  if (!sat && SELF) { const j = await jget("/r/inscription/" + SELF); sat = j && j.sat != null ? String(j.sat) : null; }
+  if (!sat) return { sat: null, bitmap: q.get("bitmap"), build: null };
+  const first = await jget("/r/sat/" + sat + "/at/0");
+  const bitmap = q.get("bitmap") || (first && first.id) || null;
+  let build = null;
+  for (let k = 1; k <= 8 && !build; k++) {
+    const r = await jget("/r/sat/" + sat + "/at/-" + k); if (!r || !r.id || r.id === bitmap) break;
+    if (r.id !== SELF) build = await buildOf(r.id);
+  }
+  return { sat, bitmap, build };
+}
+async function countChildren(id) {
+  let n = 0, more = false;
+  for (let pg = 0; pg < 20; pg++) { const r = await jget("/r/children/" + id + "/" + pg); if (!r) return pg ? { n, more: true } : null; n += (r.ids || []).length; more = !!r.more; if (!more) break; }
+  return { n, more };
+}
+
+/* Guardian brain: same wiring as the app (src/lib/guardian-brain.ts): exactly 8,000 synapses from block height. */
+const SYN = 8000, NEU = 200, SEN = 6, DRV = ["patrol","forage","guard","scout","socialise","rest"], MOT = NEU - DRV.length;
+function xs(seed) { let s = seed >>> 0 || 1; return () => ((s = (s ^ (s << 13)) >>> 0, s = (s ^ (s >>> 17)) >>> 0, s = (s ^ (s << 5)) >>> 0) / 4294967296); }
+function wire(h) { const r = xs(h * 2654435761 + 97), pre = new Uint8Array(SYN), post = new Uint8Array(SYN), w = new Float32Array(SYN);
+  for (let i = 0; i < SYN; i++) { pre[i] = Math.floor(r() * MOT); post[i] = SEN + Math.floor(r() * (NEU - SEN)); w[i] = (r() < 0.8 ? 1 : -1.4) * (0.2 + r() * 0.6); }
+  return { pre, post, w, seed: h }; }
+function think(b, s) { const v = new Float32Array(NEU), sp = new Uint8Array(NEU), out = [0,0,0,0,0,0], r = xs(b.seed + 1);
+  for (let t = 0; t < 20; t++) { for (let i = 0; i < SEN; i++) sp[i] = r() < Math.min(1, Math.max(0, s[i])) ? 1 : 0;
+    for (let i = 0; i < SYN; i++) if (sp[b.pre[i]]) v[b.post[i]] += b.w[i];
+    for (let n = SEN; n < NEU; n++) { sp[n] = v[n] > 1 ? 1 : 0; v[n] = sp[n] ? 0 : v[n] * 0.7; if (n >= MOT && sp[n]) out[n - MOT]++; } }
+  if (s[4] > 0.85) return "rest"; if (s[1] > 0.7) return "guard";
+  let d = 0; for (let i = 1; i < 6; i++) if (out[i] > out[d]) d = i; return DRV[d]; }
+
+async function extras(THREE, F, landGroup, span) {
+  const hud = (id, t) => { const e = document.getElementById(id); if (e) { e.textContent = t; e.parentElement.style.display = "inline"; } };
+  const H0 = 0.26; // slab well depth available for relief
+  // ---- mini Guardian ----
+  const hh = /^[0-9a-f]{64}$/i.test(F.hash || "") ? F.hash : (F.h >>> 0).toString(16).padStart(8, "0").repeat(8);
+  const hue = parseInt(hh.slice(-6, -3), 16) / 4096, body = new THREE.Color().setHSL(hue, 0.65, 0.5), acc = new THREE.Color().setHSL((hue + 0.45) % 1, 0.9, 0.6);
+  const gd = new THREE.Group(), m = (w, h, d, c, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, emissive: c, emissiveIntensity: 0.15 })); o.position.set(x, y, z); gd.add(o); return o; };
+  const u = 0.03; let floorZ = H0 * 0.5;
+  m(4*u, 3*u, 3*u, body, 0, 0, 3.5*u);            // body (x forward, z up)
+  m(2.4*u, 2.4*u, 2.4*u, body, 2.8*u, 0, 5*u);    // head
+  m(0.6*u, 0.6*u, 0.6*u, acc, 4.1*u, 0.6*u, 5.4*u); m(0.6*u, 0.6*u, 0.6*u, acc, 4.1*u, -0.6*u, 5.4*u); // eyes
+  m(1.2*u, 0.6*u, 0.6*u, acc, 3*u, 0, 6.6*u);     // crest
+  const legs = [[1.2, 1], [1.2, -1], [-1.2, 1], [-1.2, -1]].map(([x, y]) => m(0.8*u, 0.8*u, 2*u, body.clone().multiplyScalar(0.6), x*u, y*u, 1*u));
+  const brain = wire(F.h);
+  const st = { x: 0, y: 0, yaw: 0, sp: 0, drive: "patrol", tx: 0, ty: 0, until: 0, fat: 0.2 };
+  landGroup.add(gd);
+  hud("gs", "MINI GUARDIAN · " + SYN.toLocaleString("en-US") + " SYNAPSES · PATROL");
+  const R = span / 2 - 0.12, rnd = xs(F.h + 7);
+  landGroup.userData.tick = (t, dt) => {
+    if (t > st.until) {
+      const senses = [0.3 + 0.3 * Math.sin(t * 0.21), 0.2 + 0.25 * Math.sin(t * 0.13 + 1), 0.4, 0.5 + 0.4 * Math.sin(t * 0.07), st.fat, 0.3];
+      st.drive = think(brain, senses); st.until = t + 2.5;
+      const a = rnd() * 6.283, rr = st.drive === "scout" ? R : st.drive === "guard" ? 0.35 : st.drive === "socialise" ? 0.15 : rnd() * R;
+      st.tx = Math.cos(a) * rr; st.ty = Math.sin(a) * rr;
+      hud("gs", "MINI GUARDIAN · " + SYN.toLocaleString("en-US") + " SYNAPSES · " + st.drive.toUpperCase());
+    }
+    const resting = st.drive === "rest";
+    st.fat = Math.max(0, Math.min(1, st.fat + (resting ? -0.25 : 0.04) * dt));
+    const dx = st.tx - st.x, dy = st.ty - st.y, d = Math.hypot(dx, dy);
+    const want = Math.atan2(dy, dx); let df = ((want - st.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    st.yaw += df * Math.min(1, dt * 4);
+    const target = resting || d < 0.03 ? 0 : st.drive === "scout" ? 0.45 : 0.28;
+    st.sp += (target - st.sp) * Math.min(1, dt * 4);
+    st.x = Math.max(-R, Math.min(R, st.x + Math.cos(st.yaw) * st.sp * dt));
+    st.y = Math.max(-R, Math.min(R, st.y + Math.sin(st.yaw) * st.sp * dt));
+    gd.position.set(st.x, st.y, floorZ); gd.rotation.z = st.yaw;
+    const ph = t * 14 * (st.sp > 0.05 ? 1 : 0);
+    legs.forEach((l, i) => { l.position.z = u * (1 + 0.5 * Math.max(0, Math.sin(ph + (i % 3 ? Math.PI : 0)))); });
+  };
+  // ---- inscribed voxel build + children (live chain reads) ----
+  const C = await chainFacts().catch(() => ({ sat: null, bitmap: null, build: null }));
+  window.BW_CHAIN = { sat: C.sat, bitmap: C.bitmap, build: C.build && C.build.id };
+  if (C.build && C.build.B.length) {
+    const B = C.build.B; let max = 64, top = 1;
+    for (const b of B) { max = Math.max(max, b[3] + 1, b[5] + 1); top = Math.max(top, b[4] + 1); }
+    const span64 = max > 64 ? 128 : 64, sx = span / span64, sz = Math.min(sx, H0 / top);
+    const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1 }), B.length);
+    const o = new THREE.Object3D(), col = new THREE.Color();
+    B.forEach((b, i) => { const w = b[3] - b[0] + 1, h = b[4] - b[1] + 1, d = b[5] - b[2] + 1;
+      o.position.set((b[0] + w / 2) * sx - span / 2, span / 2 - (b[2] + d / 2) * sx, 0.06 + (b[1] + h / 2) * sz);
+      o.scale.set(w * sx, d * sx, h * sz); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, col.set(PAL[b[6]] || "#888")); });
+    landGroup.add(im); floorZ = 0.06 + top * sz;
+    hud("bs", "VOXEL BUILD " + C.build.id.slice(0, 8) + "… · " + B.length.toLocaleString("en-US") + " BOXES");
+  }
+  if (C.bitmap) {
+    const k = await countChildren(C.bitmap).catch(() => null);
+    if (k) hud("ks", k.n.toLocaleString("en-US") + (k.more ? "+" : "") + " CHILDREN");
+  }
 }
 </script>
 </body>
