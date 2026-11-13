@@ -101,7 +101,14 @@ export function GradeQueue() {
           </span>
         </div>
         <ul className="max-h-96 space-y-1 overflow-auto">
-          {visible.map((b, i) => {
+          {visible.length === 0 ? (
+            <li className="flex items-center justify-between gap-2 font-mono text-sm text-muted-foreground">
+              <span>NO BITMAPS MATCH "{search}"</span>
+              <button onClick={() => { setSearch(""); setPage(0); }} className="rounded border border-border px-2 py-1 hover:text-primary">
+                CLEAR SEARCH
+              </button>
+            </li>
+          ) : visible.map((b, i) => {
             const g = pre[i]?.data?.grade;
             const isGraded = graded.has(b.h);
             return (
