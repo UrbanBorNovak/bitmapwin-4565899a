@@ -13,30 +13,33 @@ const CORE: Item[] = [
   { to: "/passport", label: "PASSPORT", icon: IdCard, match: ["/passport", "/my-land", "/inventory", "/wallet"] },
 ];
 
+// Four user-intent groups; experimental and technical pages live under LABS.
 const MORE: { title: string; items: { to: string; label: string }[] }[] = [
-  { title: "LAND & MARKET", items: [
-    { to: "/collections", label: "Land clubs" },
-    { to: "/traits", label: "Traits" }, { to: "/history", label: "Sales history" }, { to: "/leases", label: "Leases" },
-    { to: "/barter", label: "Barter" }, { to: "/ownership", label: "Verify ownership" }, { to: "/archaeology", label: "Archaeology" },
-    { to: "/world-stats", label: "World stats" },
+  { title: "PLAY & EXPLORE", items: [
+    { to: "/slab", label: "Land Slabs" }, { to: "/biternam", label: "Biternam quests" }, { to: "/cities", label: "Cities" },
+    { to: "/explore", label: "Trending" }, { to: "/ranks", label: "Ranks" }, { to: "/church", label: "Church of BITMAP" },
   ] },
-  { title: "CREATE", items: [
+  { title: "TRADE & LAND", items: [
+    { to: "/collections", label: "Land clubs" }, { to: "/history", label: "Sales history" },
+    { to: "/leases", label: "Leases" }, { to: "/barter", label: "Barter" },
+  ] },
+  { title: "CREATE & BUILD", items: [
     { to: "/studio", label: "Studio" }, { to: "/builds", label: "Community builds" }, { to: "/builders", label: "Builders" },
-    { to: "/extenders", label: "Extenders" }, { to: "/registry", label: "3D model registry" }, { to: "/avatars", label: "Avatar studio" }, { to: "/tools", label: "All tools" },
-  ] },
-  { title: "GUARDIANS", items: [
     { to: "/mint", label: "Mint Guardian" }, { to: "/breed", label: "Breeding lab" }, { to: "/command", label: "Command centre" },
-    { to: "/codex", label: "Codex" },
+    { to: "/tools", label: "All tools" },
   ] },
-  { title: "EXPLORE", items: [
-    { to: "/biternam", label: "Biternam quests" }, { to: "/play", label: "Living cards" }, { to: "/cities", label: "Cities" },
-    { to: "/explore", label: "Trending" }, { to: "/stream", label: "World stream" }, { to: "/ranks", label: "Ranks" },
-    { to: "/watch", label: "Toon cinema" }, { to: "/church", label: "Church of BITMAP" },
+  { title: "ABOUT & GUIDES", items: [
+    { to: "/about", label: "About" }, { to: "/land-101", label: "Land 101" }, { to: "/guardians-guide", label: "Guardians guide" },
+    { to: "/play-guide", label: "Player guide" }, { to: "/download", label: "Windows app" },
   ] },
-  { title: "LEARN & BUILD", items: [
-    { to: "/slab", label: "Land Slabs" }, { to: "/about", label: "About" }, { to: "/download", label: "Windows app" }, { to: "/land-101", label: "Land 101" }, { to: "/guardians-guide", label: "Guardians guide" }, { to: "/play-guide", label: "Player guide" },
-    { to: "/docs", label: "Docs & SDK" }, { to: "/dev-tools", label: "Developer tools" },
-  ] },
+];
+
+const LABS: { to: string; label: string }[] = [
+  { to: "/ownership", label: "Verify ownership" }, { to: "/traits", label: "Traits" }, { to: "/archaeology", label: "Archaeology" },
+  { to: "/world-stats", label: "World stats" }, { to: "/extenders", label: "Extenders" }, { to: "/registry", label: "3D model registry" },
+  { to: "/avatars", label: "Avatar studio" }, { to: "/play", label: "Living cards" }, { to: "/codex", label: "Codex" },
+  { to: "/stream", label: "World stream" }, { to: "/watch", label: "Toon cinema" },
+  { to: "/docs", label: "Docs & SDK" }, { to: "/dev-tools", label: "Developer tools" },
 ];
 
 const isOn = (path: string, m: string[]) => m.some((p) => path === p || path.startsWith(`${p}/`));
@@ -105,6 +108,18 @@ export function LeftRail() {
                 </ul>
               </div>
             ))}
+            <details className="mt-6 border-t border-border pt-4" open={LABS.some((i) => isOn(path, [i.to]))}>
+              <summary className="label cursor-pointer text-[0.6rem] text-muted-foreground hover:text-signal">LABS · EXPERIMENTAL</summary>
+              <ul className="mt-2 grid gap-0.5">
+                {LABS.map((i) => (
+                  <li key={i.to}>
+                    <Link to={i.to} className={`block rounded px-2 py-1.5 text-sm ${isOn(path, [i.to]) ? "bg-surface text-bitcoin" : "text-foreground/70 hover:bg-surface hover:text-foreground"}`}>
+                      {i.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </aside>
         </>
       )}
