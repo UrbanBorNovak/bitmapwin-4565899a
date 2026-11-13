@@ -1,0 +1,391 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="bitmapwin" content="BW-SLAB-MASTER-1">
+<title>BITMAPWIN LIVING SLAB</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: radial-gradient(circle at 50% 45%, #0f1722 0%, #05080c 100%); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; color: #fff; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#hud { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 10; }
+.badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(10, 16, 24, 0.75); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px); padding: 8px 18px; border-radius: 9999px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8fa0b5; }
+.badge b { color: #f7931a; }
+.hint { color: #2fe6ff; }
+#fallback { display: none; min-height: 100vh; place-items: center; padding: 20px; }
+.s { width: 320px; border: 10px solid #c8102e; background: #f7f5f0; padding: 20px; color: #111; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.s h1 { font-size: 24px; font-weight: 800; }
+.s .g { font-size: 48px; font-weight: 900; color: #c8102e; margin: 8px 0; }
+.s ul { list-style: none; margin: 12px 0; padding: 0; }
+.s li { display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 4px 0; font-size: 13px; }
+.s small { display: block; margin-top: 12px; color: #777; font-size: 10px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div class="badge">
+    <span><b>LIVING SLAB</b> · <span class="hint">DRAG TO ORBIT · CLICK TO FLIP</span></span>
+  </div>
+</div>
+<div id="fallback">
+  <div class="s">
+    <h1 id="fb-h">7919.BITMAP</h1>
+    <div class="g" id="fb-g">GEM MINT 10</div>
+    <ul id="fb-u"></ul>
+    <div id="fb-c">CERT BW-7919-001</div>
+    <small>BW-SLAB-MASTER-1 · BitmapWIN Living Slab</small>
+  </div>
+</div>
+
+<script type="module">
+const SELF = (location.pathname.match(/[0-9a-f]{64}i\d+/)||[])[0];
+
+function decodeCBOR(b) {
+  let i = 0;
+  const L = a => a < 24 ? a : a == 24 ? b[i++] : a == 25 ? (i += 2, b[i-2]<<8 | b[i-1]) : a == 26 ? (i += 4, ((b[i-4]<<24)>>>0) + (b[i-3]<<16) + (b[i-2]<<8) + b[i-1]) : 0;
+  const I = () => {
+    const x = b[i++], t = x >> 5, a = x & 31;
+    if (t == 0) return L(a);
+    if (t == 1) return -1 - L(a);
+    if (t == 2 || t == 3) {
+      const n = L(a), s = b.slice(i, i + n);
+      i += n;
+      return t == 3 ? new TextDecoder().decode(s) : s;
+    }
+    if (t == 4) { const n = L(a), r = []; for (let k = 0; k < n; k++) r.push(I()); return r; }
+    if (t == 5) { const n = L(a), o = {}; for (let k = 0; k < n; k++) { const key = I(); o[key] = I(); } return o; }
+    if (t == 7) return a == 21 ? true : a == 20 ? false : null;
+    return null;
+  };
+  return I();
+}
+
+async function loadFacts() {
+  const p = new URLSearchParams(location.search);
+  const def = {
+    p: "BW-SLAB-1",
+    h: parseInt(p.get("h") || "7919"),
+    hash: "00000000000000000004a6b297b5e40e69b08f43c398328172c98d6ddc9a33bb",
+    tx: 114,
+    grade: parseInt(p.get("grade") || "10"),
+    name: p.get("name") || "GEM MINT",
+    subs: { vintage: 10, centering: 9, work: 10, scarcity: 10, rarity: 10 },
+    cert: "BW-7919-001"
+  };
+  if (!SELF) return def;
+  try {
+    const r = await fetch("/r/metadata/" + SELF);
+    if (!r.ok) return def;
+    const hx = (await r.json()).replace(/[^0-9a-f]/gi, "");
+    const b = new Uint8Array(hx.length / 2);
+    for (let k = 0; k < b.length; k++) b[k] = parseInt(hx.substr(k * 2, 2), 16);
+    const F = decodeCBOR(b);
+    if (F && F.p === "BW-SLAB-1") return F;
+  } catch(e) {}
+  return def;
+}
+
+function blockParcelSizes(blockHeight, txCount) {
+  let h = blockHeight ^ 0x9e3779b9;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  h = (h ^ (h >>> 16)) >>> 0;
+  let a = h;
+  const rand = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const count = Math.max(32, Math.min(txCount || (80 + (h % 140)), 320));
+  const sizes = [];
+  for (let i = 0; i < count; i++) {
+    const r = rand();
+    let size = 1;
+    if (r > 0.985) size = 5;
+    else if (r > 0.95) size = 4;
+    else if (r > 0.86) size = 3;
+    else if (r > 0.6) size = 2;
+    sizes.push(size);
+  }
+  return sizes;
+}
+
+class Mondrian {
+  constructor(sizes) {
+    let w = 0; for (const s of sizes) w += s * s;
+    this.len = Math.max(1, Math.ceil(Math.sqrt(w)));
+    this.rows = []; this.slots = [];
+    for (const s of sizes) this.place(s);
+  }
+  place(r) {
+    let y = 0;
+    while (true) {
+      if (!this.rows[y]) this.rows[y] = new Uint8Array(this.len);
+      let x = 0;
+      while (x + r <= this.len) {
+        let fit = true;
+        for (let dy = 0; dy < r; dy++) {
+          if (!this.rows[y + dy]) this.rows[y + dy] = new Uint8Array(this.len);
+          for (let dx = 0; dx < r; dx++) {
+            if (this.rows[y + dy][x + dx] !== 0) { fit = false; break; }
+          }
+          if (!fit) break;
+        }
+        if (fit) {
+          for (let dy = 0; dy < r; dy++) {
+            for (let dx = 0; dx < r; dx++) this.rows[y + dy][x + dx] = 1;
+          }
+          this.slots.push({ x, y, size: r });
+          return;
+        }
+        x++;
+      }
+      y++;
+    }
+  }
+}
+
+function makeLabelCanvas(F, back) {
+  const c = document.createElement("canvas");
+  c.width = 1024; c.height = 360;
+  const g = c.getContext("2d");
+  g.fillStyle = "#f7f5f0"; g.fillRect(0, 0, 1024, 360);
+  g.strokeStyle = "#c8102e"; g.lineWidth = 22; g.strokeRect(11, 11, 1002, 338);
+  g.fillStyle = "#111";
+
+  if (!back) {
+    g.font = "bold 50px sans-serif";
+    g.fillText(F.h + ".BITMAP", 48, 92);
+    g.font = "28px monospace";
+    g.fillText("BITCOIN L1 · BLOCK LAND", 48, 140);
+    const subsStr = Object.entries(F.subs || {}).map(([k, v]) => k[0].toUpperCase() + v).join("   ");
+    g.fillText(subsStr, 48, 190);
+    g.fillText("CERT " + (F.cert || "BW-CERT"), 48, 238);
+
+    let bx = 48;
+    const certSeed = (F.cert || "BW-CERT") + "BW";
+    for (let i = 0; i < certSeed.length; i++) {
+      const v = certSeed.charCodeAt(i);
+      for (let b = 0; b < 4; b++) {
+        const w = 2 + ((v >> b) & 3) * 2;
+        if ((v >> b) & 1) g.fillRect(bx, 266, w, 56);
+        bx += w + 2;
+        if (bx > 320) break;
+      }
+      if (bx > 320) break;
+    }
+
+    g.textAlign = "right";
+    g.font = "bold 44px sans-serif";
+    g.fillText(F.name || "MINT", 976, 120);
+    g.font = "bold 156px sans-serif";
+    g.fillStyle = "#c8102e";
+    g.fillText(String(F.grade), 976, 290);
+  } else {
+    g.font = "bold 40px sans-serif";
+    g.fillText("PROVENANCE · VERIFIED ON BITCOIN L1", 48, 84);
+    g.font = "24px monospace";
+    g.fillText("HEIGHT " + F.h, 48, 130);
+    g.fillText("HASH   " + ((F.hash || "").slice(0, 32) || "GENESIS BLOCK HASH"), 48, 166);
+    g.fillText("       " + ((F.hash || "").slice(32) || ""), 48, 198);
+    g.fillText("TXS    " + (F.tx || 1) + " TRANSACTIONS PACKED", 48, 236);
+    g.font = "bold 20px monospace";
+    g.fillStyle = "#c8102e";
+    g.fillText("BW-SLAB-MASTER-1 · BITMAPWIN LIVING SLAB", 48, 290);
+    g.fillStyle = "#555";
+    g.font = "16px monospace";
+    g.fillText("DETERMINISTIC THREE.JS RECURSIVE DELEGATE STANDARD", 48, 324);
+  }
+  return c;
+}
+
+let THREE;
+try {
+  THREE = await import('/content/0d013bb60fc5bf5a6c77da7371b07dc162ebc7d7f3af0ff3bd00ae5f0c546445i0');
+} catch (err) {
+  document.getElementById('fallback').style.display = 'grid';
+  document.getElementById('c').style.display = 'none';
+}
+
+if (THREE) {
+  start3D(THREE);
+}
+
+async function start3D(THREE) {
+  const F = await loadFacts();
+  document.title = F.h + ".bitmap " + F.name + " " + F.grade;
+
+  const canvas = document.getElementById("c");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 8.2);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  scene.add(ambient);
+  const dir = new THREE.DirectionalLight(0xffffff, 2.2);
+  dir.position.set(3, 5, 6);
+  scene.add(dir);
+  const fillOrange = new THREE.PointLight(0xf7931a, 16, 25);
+  fillOrange.position.set(-3, -2, 3);
+  scene.add(fillOrange);
+  const rimCyan = new THREE.PointLight(0x2fe6ff, 14, 25);
+  rimCyan.position.set(3, -1, 3);
+  scene.add(rimCyan);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const W = 3.3, H = 5.4, D = 0.32;
+  const LABEL_H = 1.15;
+
+  const acrylicMat = new THREE.MeshPhysicalMaterial({
+    transmission: 0.96,
+    roughness: 0.05,
+    thickness: 0.05,
+    ior: 1.1,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    transparent: true,
+    opacity: 0.35,
+    color: 0xeaf2f5,
+    depthWrite: false
+  });
+  const capsule = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), acrylicMat);
+
+  const backplateMat = new THREE.MeshStandardMaterial({ color: 0x070b10, roughness: 0.85, side: THREE.DoubleSide });
+  const backplate = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.28, H - LABEL_H - 0.42), backplateMat);
+  backplate.position.set(0, -LABEL_H / 2 + 0.02, -0.09);
+  group.add(backplate);
+
+  const frontTex = new THREE.CanvasTexture(makeLabelCanvas(F, false));
+  frontTex.colorSpace = THREE.SRGBColorSpace;
+  const backTex = new THREE.CanvasTexture(makeLabelCanvas(F, true));
+  backTex.colorSpace = THREE.SRGBColorSpace;
+
+  const labelMatFront = new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.5, side: THREE.FrontSide }); const labelBackplate = new THREE.Mesh(new THREE.BoxGeometry(W - 0.3, LABEL_H - 0.05, 0.04), new THREE.MeshBasicMaterial({ color: 0xf7f5f0 })); labelBackplate.position.set(0, H / 2 - LABEL_H / 2 - 0.12, 0); group.add(labelBackplate);
+  const labelFront = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.3, LABEL_H - 0.05), labelMatFront);
+  labelFront.position.set(0, H / 2 - LABEL_H / 2 - 0.12, D / 2 - 0.05);
+  group.add(labelFront);
+
+  const labelMatBack = new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.5, side: THREE.FrontSide });
+  const labelBack = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.3, LABEL_H - 0.05), labelMatBack);
+  labelBack.position.set(0, H / 2 - LABEL_H / 2 - 0.12, -D / 2 + 0.05);
+  labelBack.rotation.y = Math.PI;
+  group.add(labelBack);
+
+  const landGroup = new THREE.Group();
+  landGroup.position.set(0, -LABEL_H / 2 + 0.02, -0.05);
+  group.add(landGroup);
+
+  const sizes = blockParcelSizes(F.h, F.tx);
+  const mon = new Mondrian(sizes);
+  const side = Math.max(mon.len, mon.rows.length);
+  const span = 2.4;
+  const unit = span / side;
+  const offY = (side - mon.rows.length) / 2;
+
+  const count = mon.slots.length;
+  const landMesh = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.2 }),
+    count
+  );
+
+  const dummy = new THREE.Object3D();
+  const color = new THREE.Color();
+
+  for (let i = 0; i < count; i++) {
+    const s = mon.slots[i];
+    const pSize = s.size * unit * 0.9;
+    const pH = 0.04 + s.size * unit * 0.65;
+    const px = (s.x + s.size / 2) * unit - span / 2;
+    const py = span / 2 - (s.y + offY + s.size / 2) * unit;
+
+    dummy.position.set(px, py, pH / 2);
+    dummy.scale.set(pSize, pSize, pH);
+    dummy.updateMatrix();
+    landMesh.setMatrixAt(i, dummy.matrix);
+
+    const hue = 0.075;
+    const sat = 0.6;
+    const lit = 0.18 + Math.min(0.24, s.size * 0.04);
+    color.setHSL(hue, sat, lit);
+    landMesh.setColorAt(i, color);
+  }
+  landMesh.instanceMatrix.needsUpdate = true;
+  if (landMesh.instanceColor) landMesh.instanceColor.needsUpdate = true;
+  landGroup.add(landMesh);
+  group.add(capsule);
+
+  let targetRotY = 0;
+  let targetRotX = 0;
+  let isFlipped = false;
+  let isDragging = false;
+  let prevPointerX = 0;
+  let prevPointerY = 0;
+
+  window.addEventListener("pointerdown", (e) => {
+    isDragging = true;
+    prevPointerX = e.clientX;
+    prevPointerY = e.clientY;
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (isDragging) {
+      const dx = e.clientX - prevPointerX;
+      const dy = e.clientY - prevPointerY;
+      targetRotY += dx * 0.01;
+      targetRotX += dy * 0.008;
+      targetRotX = Math.max(-0.6, Math.min(0.6, targetRotX));
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+    } else {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = -(e.clientY / window.innerHeight) * 2 + 1;
+      targetRotY = (isFlipped ? Math.PI : 0) + nx * 0.35;
+      targetRotX = -ny * 0.25;
+    }
+  });
+
+  window.addEventListener("pointerup", () => { isDragging = false; });
+
+  window.addEventListener("click", (e) => {
+    if (Math.abs(e.clientX - prevPointerX) < 4 && Math.abs(e.clientY - prevPointerY) < 4) {
+      isFlipped = !isFlipped;
+      targetRotY = isFlipped ? Math.PI : 0;
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  let clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const time = clock.getElapsedTime();
+
+    group.rotation.y += (targetRotY - group.rotation.y) * 0.12;
+    group.rotation.x += (targetRotX - group.rotation.x) * 0.12;
+    group.position.y = Math.sin(time * 0.8) * 0.04;
+    landGroup.rotation.z = Math.sin(time * 0.3) * 0.08;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+</script>
+</body>
+</html>
