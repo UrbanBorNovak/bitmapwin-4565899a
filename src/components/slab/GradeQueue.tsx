@@ -71,7 +71,7 @@ export function GradeQueue() {
       </p>
       {held.isPending ? (
         <p className="font-mono text-xs text-muted-foreground">READING YOUR WALLET…</p>
-      ) : bitmaps.length === 0 ? (
+      ) : all.length === 0 ? (
         <p className="font-mono text-xs text-muted-foreground">NO BITMAPS FOUND IN THIS WALLET</p>
       ) : (
         <>
