@@ -8,6 +8,7 @@ import type { SlabGrade } from "@/lib/land-slab";
 import type { ParcelInscription } from "@/lib/slab-inscriptions.functions";
 import { mathTraits, satReading } from "@/lib/slab-rarity";
 import { drawSlabIcon, slabIcons } from "@/lib/slab-icons";
+import { slabSkin, type SlabSkin } from "@/lib/slab-skins";
 
 const noRay = () => null;
 const zoomSafeEvents = (store: Parameters<typeof r3fEvents>[0]) => ({
@@ -38,7 +39,7 @@ const PSA_RED = "#c8102e";
 
 type Props = {
   height: number; layout: BlockLayout; grade: SlabGrade; flipped: boolean; hash: string | null; sat?: number | null;
-  inscriptions?: ParcelInscription[]; selected?: number | null; onPick?: (tx: number | null) => void;
+  inscriptions?: ParcelInscription[]; selected?: number | null; onPick?: (tx: number | null) => void; skin?: string | undefined;
 };
 
 function labelTexture(height: number, grade: SlabGrade, back: boolean, hash: string | null, sat: number | null) {
@@ -119,7 +120,7 @@ function useGeom(layout: BlockLayout) {
   };
 }
 
-function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map<number, ParcelInscription>; selected: number | null; onPick?: ((tx: number | null) => void) | undefined }) {
+function Land({ layout, ins, selected, onPick, skin }: { layout: BlockLayout; ins: Map<number, ParcelInscription>; selected: number | null; onPick?: ((tx: number | null) => void) | undefined; skin: SlabSkin }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const geom = useGeom(layout);
   const count = layout.parcels.length;
@@ -138,13 +139,13 @@ function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map
       const it = ins.get(i);
       if (it) col.set(inscriptionTint(it.type));
       else if (ins.size) col.setHSL(0.07, 0.3, 0.035 + Math.min(0.03, p.size * 0.006));
-      else col.setHSL(0.075, 0.55, 0.16 + Math.min(0.12, p.size * 0.02));
+      else col.setHSL(skin.rainbow ? (i * 0.071) % 1 : skin.land.hue, skin.land.sat, skin.land.light + Math.min(0.12, p.size * 0.02));
       if (selected === i) col.offsetHSL(0, 0, 0.15);
       m.setColorAt(i, col);
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [layout, geom, ins, selected]);
+  }, [layout, geom, ins, selected, skin]);
   return (
     <instancedMesh
       ref={ref}
@@ -154,7 +155,7 @@ function Land({ layout, ins, selected, onPick }: { layout: BlockLayout; ins: Map
       onPointerOut={() => { document.body.style.cursor = ""; }}
     >
       <boxGeometry />
-      <meshStandardMaterial roughness={0.45} metalness={0.15} emissiveIntensity={0} />
+      <meshStandardMaterial roughness={skin.id === "gold" ? 0.25 : 0.45} metalness={skin.id === "gold" ? 0.7 : 0.15} emissiveIntensity={0} />
     </instancedMesh>
   );
 }
@@ -198,7 +199,30 @@ function ArtTiles({ layout, items }: { layout: BlockLayout; items: ParcelInscrip
   );
 }
 
-function Slab({ height, layout, grade, flipped, hash, sat = null, inscriptions, selected = null, onPick }: Props) {
+/** Voxel moss and little trees on the smaller parcels (Living Biome skin). */
+function Foliage({ layout }: { layout: BlockLayout }) {
+  const leaves = useRef<THREE.InstancedMesh>(null);
+  const geom = useGeom(layout);
+  const picks = useMemo(() => layout.parcels.map((_, i) => i).filter((i) => (i * 2654435761) % 7 < 3).slice(0, 400), [layout]);
+  useEffect(() => {
+    const m = leaves.current; if (!m) return;
+    const o = new THREE.Object3D(); const c = new THREE.Color();
+    picks.forEach((i, k) => {
+      const g = geom(i); const s = Math.max(0.03, g.s * 0.55);
+      o.position.set(g.x, g.y, g.h + s * 0.6); o.scale.set(s, s, s * 1.2); o.updateMatrix();
+      m.setMatrixAt(k, o.matrix); c.setHSL(0.26 + (k % 5) * 0.03, 0.6, 0.28 + (k % 3) * 0.06); m.setColorAt(k, c);
+    });
+    m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [picks, geom]);
+  return (
+    <instancedMesh ref={leaves} args={[undefined, undefined, Math.max(1, picks.length)]} raycast={noRay}>
+      <boxGeometry /><meshStandardMaterial roughness={0.8} />
+    </instancedMesh>
+  );
+}
+
+function Slab({ height, layout, grade, flipped, hash, sat = null, inscriptions, selected = null, onPick, skin: skinId }: Props) {
+  const skin = slabSkin(skinId);
   const ins = useMemo(() => new Map((inscriptions ?? []).map((x) => [x.tx, x])), [inscriptions]);
   const art = useMemo(() => (inscriptions ?? []).filter((x) => x.id && x.type.startsWith("image/") && !x.type.includes("svg")).slice(0, ART_CAP), [inscriptions]);
   const group = useRef<THREE.Group>(null);
@@ -225,13 +249,14 @@ function Slab({ height, layout, grade, flipped, hash, sat = null, inscriptions, 
     <group ref={group}>
       {/* living land inside the well */}
       <group ref={land} position={[0, wellY, -0.06]}>
-        <Land layout={layout} ins={ins} selected={selected} onPick={onPick} />
+        <Land layout={layout} ins={ins} selected={selected} onPick={onPick} skin={skin} />
+        {skin.foliage && <Foliage layout={layout} />}
         <ArtTiles layout={layout} items={art} />
       </group>
       {/* back plate behind the land */}
       <mesh position={[0, wellY, -0.1]} onClick={() => onPick?.(null)}>
         <planeGeometry args={[W - 0.3, H - LABEL_H - 0.45]} />
-        <meshStandardMaterial color="#0b0f14" roughness={0.9} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={skin.plate} roughness={skin.id === "gold" ? 0.4 : 0.9} metalness={skin.id === "gold" ? 0.8 : 0} side={THREE.DoubleSide} />
       </mesh>
       {/* labels */}
       <mesh position={[0, labelY, D / 2 - 0.05]} raycast={noRay}>
@@ -245,17 +270,26 @@ function Slab({ height, layout, grade, flipped, hash, sat = null, inscriptions, 
       {/* acrylic holder */}
       <RoundedBox args={[W, H, D]} radius={0.12} smoothness={4} raycast={noRay}>
         <meshPhysicalMaterial
-          transmission={0.96}
-          roughness={0.04}
+          transmission={skin.capsule.transmission}
+          roughness={skin.capsule.roughness}
+          metalness={skin.capsule.metalness}
+          iridescence={skin.capsule.iridescence}
+          iridescenceIOR={1.6}
           thickness={1.2}
           ior={1.491}
           clearcoat={1}
           clearcoatRoughness={0.05}
           transparent
-          opacity={0.35}
-          color="#eaf2f5"
+          opacity={skin.capsule.opacity}
+          color={skin.capsule.color}
         />
       </RoundedBox>
+      {skin.trim && [[0, H / 2, W, 0.06], [0, -H / 2, W, 0.06], [W / 2, 0, 0.06, H], [-W / 2, 0, 0.06, H]].map(([x, y, w, h], k) => (
+        <mesh key={k} position={[x!, y!, 0]} raycast={noRay}>
+          <boxGeometry args={[w!, h!, D + 0.02]} />
+          <meshStandardMaterial color={skin.trim!} metalness={0.9} roughness={0.2} />
+        </mesh>
+      ))}
     </group>
   );
 }

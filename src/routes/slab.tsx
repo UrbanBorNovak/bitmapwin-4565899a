@@ -10,11 +10,12 @@ import { GradeQueue } from "@/components/slab/GradeQueue";
 import { slabInscriptionsFn } from "@/lib/slab-inscriptions.functions";
 import { satProofQuery } from "@/lib/sat-lookup";
 import { mathTraits, satReading } from "@/lib/slab-rarity";
+import { SLAB_SKINS } from "@/lib/slab-skins";
 
 const LandSlab3D = lazy(() => import("@/components/slab/LandSlab3D").then((m) => ({ default: m.LandSlab3D })));
 
 export const Route = createFileRoute("/slab")({
-  validateSearch: z.object({ b: z.number().int().min(0).optional() }),
+  validateSearch: z.object({ b: z.number().int().min(0).optional(), skin: z.string().optional() }),
   component: SlabPage,
   head: () => ({
     meta: [
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/slab")({
 });
 
 function SlabPage() {
-  const { b } = Route.useSearch();
+  const { b, skin } = Route.useSearch();
   const navigate = Route.useNavigate();
   const height = b ?? 715093;
   const [input, setInput] = useState(String(height));
@@ -62,7 +63,7 @@ function SlabPage() {
   const go = (e: React.FormEvent) => {
     e.preventDefault();
     const n = Number(input.replace(/\D/g, ""));
-    if (Number.isInteger(n) && n >= 0) { setFlipped(false); setPicked(null); navigate({ search: { b: n } }); }
+    if (Number.isInteger(n) && n >= 0) { setFlipped(false); setPicked(null); navigate({ search: (s) => ({ ...s, b: n }) }); }
   };
 
   return (
@@ -97,15 +98,28 @@ function SlabPage() {
           ) : (
             <ClientOnly fallback={<Status text="PREPARING SLAB…" />}>
               <Suspense fallback={<Status text="PREPARING SLAB…" />}>
-                <LandSlab3D height={height} layout={data.layout} grade={data.grade} flipped={flipped} hash={data.hash} sat={sat} inscriptions={insItems} selected={picked} onPick={pickParcel} />
+                <LandSlab3D height={height} layout={data.layout} grade={data.grade} flipped={flipped} hash={data.hash} sat={sat} inscriptions={insItems} selected={picked} onPick={pickParcel} skin={skin} />
               </Suspense>
             </ClientOnly>
           )}
         </div>
         {data && (
+          <div className="flex flex-wrap gap-2 md:col-start-1" role="radiogroup" aria-label="Slab skin">
+            {SLAB_SKINS.map((k) => {
+              const on = (skin ?? "acrylic") === k.id;
+              return (
+                <button key={k.id} type="button" role="radio" aria-checked={on} onClick={() => navigate({ search: (s) => ({ ...s, skin: k.id === "acrylic" ? undefined : k.id }), replace: true })}
+                  className={`rounded-md border px-3 py-1.5 font-mono text-[11px] ${on ? "border-primary text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                  {k.name} · {k.priceSats ? `${k.priceSats.toLocaleString("en-US")} SATS` : "FREE"}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {data && (
           <div className="flex gap-2 md:col-start-1">
             <button type="button" onClick={() => setFlipped((f) => !f)} className="rounded-md border border-border px-4 py-2 font-mono text-xs hover:border-primary">{flipped ? "SHOW FRONT" : "FLIP SLAB"}</button>
-            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/slab?b=${height}`); toast.success("LINK COPIED"); }} className="rounded-md border border-border px-4 py-2 font-mono text-xs hover:border-primary">COPY LINK</button>
+            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/slab?b=${height}${skin ? `&skin=${skin}` : ""}`); toast.success("LINK COPIED"); }} className="rounded-md border border-border px-4 py-2 font-mono text-xs hover:border-primary">COPY LINK</button>
           </div>
         )}
 
