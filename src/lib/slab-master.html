@@ -310,8 +310,8 @@ async function start3D(THREE) {
 
   const real = await realSizes(F);
   window.BW_PARCELS = real ? "block" : "seeded";
-  const pc = document.getElementById("pc"); if (pc) pc.textContent = real ? sizes.length + " REAL TX PARCELS" : "PREVIEW LAND (BLOCK UNREADABLE)";
   const sizes = real || blockParcelSizes(F.h, F.tx);
+  const pc = document.getElementById("pc"); if (pc) pc.textContent = real ? sizes.length + " REAL TX PARCELS" : "PREVIEW LAND (BLOCK UNREADABLE)";
   const mon = new Mondrian(sizes);
   let used = 1; for (const q of mon.slots) used = Math.max(used, q.y + q.size);
   const side = Math.max(mon.len, used);
