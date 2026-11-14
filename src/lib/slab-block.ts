@@ -3,7 +3,13 @@ import { gradeSlab, type SlabGrade } from "@/lib/land-slab";
 import { loadSatProof } from "@/lib/sat-lookup";
 
 export async function fetchBlock(height: number) {
-  const r = await fetch(`/api/public/blocks/${height}`);
+  let r: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    r = await fetch(`/api/public/blocks/${height}`);
+    if (r.status !== 429 && r.status !== 503) break;
+    await new Promise((res) => setTimeout(res, 1500 * 2 ** attempt));
+  }
+  if (!r) throw new Error("block fetch failed");
   if (r.status === 204) return null;
   if (!r.ok) throw new Error(`block ${r.status}`);
   const bytes = new Uint8Array(await r.arrayBuffer());
