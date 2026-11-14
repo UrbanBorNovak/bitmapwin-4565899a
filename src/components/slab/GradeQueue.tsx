@@ -156,7 +156,9 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
                   />
                   {b.h}.bitmap
                 </label>
-                <span className="text-muted-foreground">{isGraded ? "GRADED" : g ? `${g.name} ${g.grade}` : "…"}</span>
+                <span className="text-muted-foreground">{isGraded ? "GRADED" : g ? `${g.name} ${g.grade}` : pre[i]?.isError ? (
+                  <button onClick={() => pre[i]!.refetch()} className="underline hover:text-primary">DATA MISSING · RETRY</button>
+                ) : pre[i]?.isSuccess ? "NOT FOUND" : "…"}</span>
               </li>
             );
           })}
