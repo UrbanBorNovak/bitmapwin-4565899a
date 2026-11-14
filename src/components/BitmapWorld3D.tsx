@@ -4444,6 +4444,7 @@ function BitmapWorld3DInner({
         {/* A soft frame around the screen: darkened corners and a thin lit edge,
             so the readouts sit inside a cockpit instead of floating loose. */}
         {exploring ? <div className="hud-vignette" aria-hidden="true" /> : null}
+        {exploring ? <OasisChatDock cursors={cursors} compact={touchDevice} /> : null}
         {/* Controls sit on the world itself, not stacked above it. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (
@@ -4477,7 +4478,7 @@ function BitmapWorld3DInner({
                     {MEMBER_TITLE}
                   </div>
                 ) : null}
-                {!touchDevice || utilityOpen ? <><OasisOnlinePanel online={cursors.length + 1} /><OasisChatDock cursors={cursors} /></> : null}
+                {!touchDevice || utilityOpen ? <OasisOnlinePanel online={cursors.length + 1} /> : null}
 
 
               </div>

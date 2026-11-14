@@ -21,7 +21,7 @@ import { useWalletSession } from "@/lib/wallet-session";
  * colour beside each name is the same colour as that person's live cursor dot
  * on the map — so you can see who is online and where they are looking.
  */
-export function MapChat({ cursors, className }: { cursors: MapCursor[]; className?: string }) {
+export function MapChat({ cursors, className, listClassName }: { cursors: MapCursor[]; className?: string; listClassName?: string }) {
   const queryClient = useQueryClient();
   const { user } = useAuthSession();
   const wallet = useWalletSession();
@@ -146,7 +146,7 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
         ))}
       </div>
 
-      <div ref={listRef} className="min-h-[220px] flex-1 divide-y divide-border overflow-y-auto md:max-h-[52vh]">
+      <div ref={listRef} className={`flex-1 divide-y divide-border overflow-y-auto ${listClassName ?? "min-h-[220px] md:max-h-[52vh]"}`}>
         {list.length === 0 ? (
           <p className="px-4 py-6 font-mono text-xs text-muted-foreground">
             &gt; {messages.isLoading ? "OPENING THE ROOM…" : "NOBODY HAS SPOKEN IN THE OASIS YET — SAY SOMETHING"}
