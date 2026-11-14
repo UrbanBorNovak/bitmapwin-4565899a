@@ -8,6 +8,10 @@ const TTL = 10 * 60_000;
 
 export type ParcelHolders = {
   height: number;
+  /** A chain read failed: holders or parcels may be missing. Never cached. */
+  incomplete: boolean;
+  /** More children exist than one scan reads: parcels past the cut-off are not listed. */
+  truncated: boolean;
   total: number;
   byAddress: Map<string, number>;
   parcels: { index: number; inscriptionId: string; ownerAddress: string | null }[];
@@ -15,18 +19,19 @@ export type ParcelHolders = {
 
 async function districtInscription(height: number): Promise<string | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("bitmap_index")
     .select("inscription_id")
     .eq("block_height", height)
     .eq("is_valid", true)
     .maybeSingle();
+  if (error) throw new Error(`bitmap_index lookup failed: ${error.message}`);
   return data?.inscription_id ?? null;
 }
 
-export async function parcelHoldersFor(height: number): Promise<ParcelHolders | null> {
+export async function parcelHoldersFor(height: number, opts?: { fresh?: boolean }): Promise<ParcelHolders | null> {
   const hit = cache.get(height);
-  if (hit && hit.expires > Date.now()) return hit.value;
+  if (!opts?.fresh && hit && hit.expires > Date.now()) return hit.value;
   const district = await districtInscription(height);
   if (!district) return null;
   const { scanParcels } = await import("@/lib/parcels.server");
@@ -36,12 +41,15 @@ export async function parcelHoldersFor(height: number): Promise<ParcelHolders | 
   for (const p of valid) if (p.ownerAddress) byAddress.set(p.ownerAddress, (byAddress.get(p.ownerAddress) ?? 0) + 1);
   const value: ParcelHolders = {
     height,
+    incomplete: Boolean(scan.incomplete),
+    truncated: scan.truncated,
     // Only parcels with a resolved live holder share the pool.
     total: [...byAddress.values()].reduce((a, b) => a + b, 0),
     byAddress,
     parcels: valid.map((p) => ({ index: p.index, inscriptionId: p.inscriptionId, ownerAddress: p.ownerAddress })),
   };
-  cache.set(height, { expires: Date.now() + TTL, value });
+  // Never keep a partial scan: the next caller retries the chain instead of reusing gaps.
+  if (!value.incomplete) cache.set(height, { expires: Date.now() + TTL, value });
   return value;
 }
 

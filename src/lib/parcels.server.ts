@@ -35,7 +35,10 @@ type ChildRow = {
   timestamp?: number;
 };
 
-async function ordFetch(path: string, attempts = 3): Promise<Response | null> {
+/** Counts reads that failed for a reason other than "not found", so callers can tell an empty answer from an outage. */
+type ReadTrack = { failed: number };
+
+async function ordFetch(path: string, attempts = 3, track?: ReadTrack): Promise<Response | null> {
   for (let i = 0; i < attempts; i++) {
     try {
       const resp = await fetch(`${ORD}${path}`, {
@@ -47,19 +50,21 @@ async function ordFetch(path: string, attempts = 3): Promise<Response | null> {
         await new Promise((r) => setTimeout(r, 300 * (i + 1)));
         continue;
       }
+      if (track) track.failed++;
       return null;
     } catch {
       await new Promise((r) => setTimeout(r, 300 * (i + 1)));
     }
   }
+  if (track) track.failed++;
   return null;
 }
 
-async function fetchChildren(inscriptionId: string, maxPages: number): Promise<{ rows: ChildRow[]; more: boolean }> {
+async function fetchChildren(inscriptionId: string, maxPages: number, track?: ReadTrack): Promise<{ rows: ChildRow[]; more: boolean }> {
   const rows: ChildRow[] = [];
   let more = false;
   for (let page = 0; page < maxPages; page++) {
-    const resp = await ordFetch(`/r/children/${inscriptionId}/inscriptions/${page}`);
+    const resp = await ordFetch(`/r/children/${inscriptionId}/inscriptions/${page}`, 3, track);
     if (!resp) break;
     const json = (await resp.json()) as { children?: ChildRow[]; more?: boolean };
     const children = json.children ?? [];
@@ -78,8 +83,9 @@ async function fetchChildren(inscriptionId: string, maxPages: number): Promise<{
 async function inspectChild(
   id: string,
   height: number,
+  track?: ReadTrack,
 ): Promise<{ contentType: string | null; parcelIndex: number | null }> {
-  const resp = await ordFetch(`/content/${id}`, 2);
+  const resp = await ordFetch(`/content/${id}`, 2, track);
   if (!resp) return { contentType: null, parcelIndex: null };
   const type = (resp.headers.get("content-type") ?? "").toLowerCase();
   if (type && !type.includes("text/plain")) return { contentType: type || null, parcelIndex: null };
@@ -106,18 +112,21 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
   return out;
 }
 
-async function blockTxCount(height: number): Promise<number | null> {
+async function blockTxCount(height: number, track?: ReadTrack): Promise<number | null> {
   try {
     const resp = await fetch(`https://mempool.space/api/block-height/${height}`, {
       headers: { "user-agent": UA },
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) { if (track) track.failed++; return null; }
     const hash = (await resp.text()).trim();
     const block = await fetch(`https://mempool.space/api/block/${hash}`, { headers: { "user-agent": UA } });
-    if (!block.ok) return null;
+    if (!block.ok) { if (track) track.failed++; return null; }
     const json = (await block.json()) as { tx_count?: number };
-    return typeof json.tx_count === "number" ? json.tx_count : null;
+    if (typeof json.tx_count === "number") return json.tx_count;
+    if (track) track.failed++;
+    return null;
   } catch {
+    if (track) track.failed++;
     return null;
   }
 }
@@ -127,15 +136,16 @@ export async function scanParcels(
   districtInscriptionId: string,
   maxChildren = 300,
 ): Promise<ParcelScan> {
+  const track: ReadTrack = { failed: 0 };
   const [{ rows, more }, maxParcels] = await Promise.all([
-    fetchChildren(districtInscriptionId, 6),
-    blockTxCount(height),
+    fetchChildren(districtInscriptionId, 6, track),
+    blockTxCount(height, track),
   ]);
 
   const truncated = more || rows.length > maxChildren;
   const inspected = rows.slice(0, maxChildren);
 
-  const details = await mapLimit(inspected, 8, (child) => inspectChild(child.id, height));
+  const details = await mapLimit(inspected, 8, (child) => inspectChild(child.id, height, track));
 
   const children = inspected.map((child, i) => ({
     inscriptionId: child.id,
@@ -176,7 +186,7 @@ export async function scanParcels(
 
   const validClaims = claims.filter((claim) => claim.valid);
   const holderAddresses = await mapLimit(validClaims, 8, async (claim) => {
-    const resp = await ordFetch(`/r/inscription/${claim.inscriptionId}`, 2);
+    const resp = await ordFetch(`/r/inscription/${claim.inscriptionId}`, 2, track);
     if (!resp) return null;
     const meta = (await resp.json()) as { address?: string | null };
     return meta.address ?? null;
@@ -191,6 +201,7 @@ export async function scanParcels(
     maxParcels,
     childrenScanned: inspected.length,
     truncated,
+    incomplete: track.failed > 0,
     parcels: claims,
     children,
   };

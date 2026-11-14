@@ -45,3 +45,30 @@ describe("parcel holder proof", () => {
     expect(parcelBadgeLabel([], 715093)).toBe("");
   });
 });
+
+import { checkFresh, decideParcelHolding, RECHECK_MS } from "./bitchat-landowner";
+
+describe("fail-closed parcel checks", () => {
+  const cands = [{ index: 12, inscriptionId: "a" }, { index: 3, inscriptionId: "b" }];
+  const base = { scan: "ok" as const, incomplete: false, truncated: false, candidates: cands, address: addr };
+  it("a failed or partial scan is unavailable, never a badge", () => {
+    expect(decideParcelHolding({ ...base, scan: "failed", live: { a: { address: addr } } }).status).toBe("unavailable");
+    expect(decideParcelHolding({ ...base, incomplete: true, live: { a: { address: addr } } }).status).toBe("unavailable");
+  });
+  it("failed holder lookups are unavailable, not 'holds nothing'", () => {
+    expect(decideParcelHolding({ ...base, live: { a: null, b: { address: other } } })).toEqual({ status: "unavailable", reason: "parcel holder lookup failed" });
+  });
+  it("grants only parcels confirmed live to the signer", () => {
+    expect(decideParcelHolding({ ...base, live: { a: { address: addr }, b: null } })).toEqual({ status: "held", parcels: [12] });
+    expect(decideParcelHolding({ ...base, live: { a: { address: other }, b: { address: other } } })).toEqual({ status: "none" });
+  });
+  it("a cut-off scan with no confirmed parcel cannot say none", () => {
+    expect(decideParcelHolding({ ...base, truncated: true, candidates: [], live: {} }).status).toBe("unavailable");
+  });
+  it("a badge result goes stale after 5 minutes", () => {
+    expect(RECHECK_MS).toBe(300_000);
+    expect(checkFresh(1_000_000, 1_000_000 + 299_999)).toBe(true);
+    expect(checkFresh(1_000_000, 1_000_000 + 300_000)).toBe(false);
+    expect(checkFresh(undefined, 1)).toBe(false);
+  });
+});

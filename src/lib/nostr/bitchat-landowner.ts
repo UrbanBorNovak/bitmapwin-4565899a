@@ -39,6 +39,46 @@ export function proofFresh(issuedAt: number, nowS: number): boolean {
   return issuedAt <= nowS + 120 && nowS - issuedAt <= PROOF_TTL_S;
 }
 
+/** How long a reader trusts a verification result before checking the chain again. */
+export const RECHECK_MS = 5 * 60_000;
+/** A badge shows only while its last successful check is younger than RECHECK_MS. */
+export function checkFresh(checkedAt: number | undefined, nowMs: number): boolean {
+  return typeof checkedAt === "number" && checkedAt <= nowMs + 5_000 && nowMs - checkedAt < RECHECK_MS;
+}
+
+export type HoldingCheck =
+  | { status: "held"; parcels: number[] }
+  | { status: "none" }
+  | { status: "unavailable"; reason: string };
+
+/**
+ * Fail-closed parcel decision. `live[id]` is the live holder read: `null` means
+ * the lookup failed (an inscription always has a holder record when indexers answer).
+ * A partial scan can hide an earlier claim on the same index, so it never grants.
+ */
+export function decideParcelHolding(input: {
+  scan: "ok" | "failed";
+  incomplete: boolean;
+  truncated: boolean;
+  candidates: { index: number; inscriptionId: string }[];
+  live: Record<string, { address: string | null } | null | undefined>;
+  address: string;
+}): HoldingCheck {
+  if (input.scan === "failed") return { status: "unavailable", reason: "parcel scan unavailable" };
+  if (input.incomplete) return { status: "unavailable", reason: "parcel scan incomplete" };
+  const liveAddr: Record<string, string | null> = {};
+  let failed = 0;
+  for (const c of input.candidates) {
+    const r = input.live[c.inscriptionId];
+    if (!r) failed++; else liveAddr[c.inscriptionId] = r.address;
+  }
+  const held = heldParcelIndexes(input.candidates, liveAddr, input.address);
+  if (held.length) return { status: "held", parcels: held };
+  if (failed) return { status: "unavailable", reason: "parcel holder lookup failed" };
+  if (input.truncated) return { status: "unavailable", reason: "too many children to check fully" };
+  return { status: "none" };
+}
+
 /**
  * Parcel indexes `address` holds right now: a valid parcel counts only when its
  * live holder lookup (not the cached scan owner) is exactly `address`.
@@ -57,14 +97,20 @@ export function parcelBadgeLabel(indexes: number[], height: number): string {
   return `${indexes[0]}.${height}${indexes.length > 1 ? ` +${indexes.length - 1}` : ""}`;
 }
 
-const STORE = (h: number, pk: string) => `bitmap.room.proof.${h}.${pk}`;
-export function loadRoomProof(height: number, pubkey: string): RoomProof | null {
+// "proof" = verified and attached to messages; "pending" = signed but the chain
+// check could not run yet, kept so a retry reuses the same signature.
+const STORE = (slot: "proof" | "pending", h: number, pk: string) => `bitmap.room.${slot}.${h}.${pk}`;
+function load(slot: "proof" | "pending", height: number, pubkey: string): RoomProof | null {
   try {
-    const p = JSON.parse(localStorage.getItem(STORE(height, pubkey)) ?? "null") as RoomProof | null;
+    const p = JSON.parse(localStorage.getItem(STORE(slot, height, pubkey)) ?? "null") as RoomProof | null;
     return p && proofFresh(p.issuedAt, Math.floor(Date.now() / 1000)) ? p : null;
   } catch { return null; }
 }
-export function saveRoomProof(height: number, pubkey: string, p: RoomProof | null) {
-  if (p) localStorage.setItem(STORE(height, pubkey), JSON.stringify(p));
-  else localStorage.removeItem(STORE(height, pubkey));
+function save(slot: "proof" | "pending", height: number, pubkey: string, p: RoomProof | null) {
+  if (p) localStorage.setItem(STORE(slot, height, pubkey), JSON.stringify(p));
+  else localStorage.removeItem(STORE(slot, height, pubkey));
 }
+export const loadRoomProof = (h: number, pk: string) => load("proof", h, pk);
+export const saveRoomProof = (h: number, pk: string, p: RoomProof | null) => save("proof", h, pk, p);
+export const loadPendingProof = (h: number, pk: string) => load("pending", h, pk);
+export const savePendingProof = (h: number, pk: string, p: RoomProof | null) => save("pending", h, pk, p);
