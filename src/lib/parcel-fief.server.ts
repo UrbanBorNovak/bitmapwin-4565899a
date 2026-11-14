@@ -29,9 +29,9 @@ async function districtInscription(height: number): Promise<string | null> {
   return data?.inscription_id ?? null;
 }
 
-export async function parcelHoldersFor(height: number): Promise<ParcelHolders | null> {
+export async function parcelHoldersFor(height: number, opts?: { fresh?: boolean }): Promise<ParcelHolders | null> {
   const hit = cache.get(height);
-  if (hit && hit.expires > Date.now()) return hit.value;
+  if (!opts?.fresh && hit && hit.expires > Date.now()) return hit.value;
   const district = await districtInscription(height);
   if (!district) return null;
   const { scanParcels } = await import("@/lib/parcels.server");
