@@ -102,8 +102,8 @@ function MilestonePage() {
           <p className="text-xs text-muted-foreground">Shows the last block mined at or before your moment. Miners set block times, so they can be off by up to about two hours.</p>
           <div className="flex flex-wrap gap-2">
             <Link to="/bitmap/$block" params={{ block: String(found.height) }} className="rounded-md bg-primary px-3 py-2 font-mono text-xs text-primary-foreground">OWNER & MARKET</Link>
-            <Link to="/slab" className="rounded-md border border-border px-3 py-2 font-mono text-xs">3D SLAB</Link>
-            <Link to="/oasis" className="rounded-md border border-border px-3 py-2 font-mono text-xs">OASIS</Link>
+            <Link to="/slab" search={{ b: found.height }} className="rounded-md border border-border px-3 py-2 font-mono text-xs">3D SLAB</Link>
+            <Link to="/oasis" search={{ height: found.height }} className="rounded-md border border-border px-3 py-2 font-mono text-xs">OASIS</Link>
             <a href={`https://mempool.space/block/${found.hash}`} target="_blank" rel="noreferrer" className="rounded-md border border-border px-3 py-2 font-mono text-xs">MEMPOOL ↗</a>
           </div>
         </section>
