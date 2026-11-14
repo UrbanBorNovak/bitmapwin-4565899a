@@ -62,7 +62,7 @@ export function OmnibarTerminal() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/10" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent" />
         <div className="relative max-w-3xl px-5 py-12 md:px-12 md:py-20">
-          <h1 className="display text-4xl font-bold leading-[1.02] md:text-6xl">
+          <h1 className="display text-3xl font-bold leading-[1.02] md:text-5xl">
             Every Bitcoin block <span className="text-bitcoin">is land you can walk,</span> own, and build on.
           </h1>
           <p className="mt-5 max-w-xl text-sm text-muted-foreground md:text-lg">
