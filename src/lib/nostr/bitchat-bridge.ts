@@ -5,8 +5,8 @@
 // server. Each geohash gets its own device-held key (unlinkable across places).
 import { SimplePool } from "nostr-tools/pool";
 import { finalizeEvent, verifyEvent, type Event } from "nostr-tools/pure";
-import { hmac } from "@noble/hashes/hmac";
-import { sha256 } from "@noble/hashes/sha256";
+import { hmac } from "@noble/hashes/hmac.js";
+import { sha256 } from "@noble/hashes/sha2.js";
 
 export const BITCHAT_KIND = 20000;
 export const BITCHAT_RELAYS = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.primal.net", "wss://offchain.pub"];
