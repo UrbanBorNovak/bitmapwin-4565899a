@@ -38,33 +38,5 @@ export const openKennelFn = createServerFn({ method: "POST" })
     return { ok: true as const, error: null, supply };
   });
 
-type Tx = { vout: { scriptpubkey_address?: string; value: number }[] };
-
-/** Records a pup only once its reveal is seen paying the holder's price. */
-export const recordKennelMintFn = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({
-    height: z.number().int().min(0).max(999_999),
-    index: z.number().int().min(0).max(100_000),
-    revealTxid: z.string().regex(/^[0-9a-f]{64}$/i),
-    buyer: addr.optional(),
-  }).parse(d))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: k } = await supabaseAdmin.from("bitmap_kennels").select("*").eq("block_height", data.height).maybeSingle();
-    if (!k || data.index >= k.max_supply) return { ok: false as const, error: "NO SUCH PUP SLOT" };
-    let tx: Tx | null = null;
-    for (let i = 0; i < 4 && !tx; i++) {
-      const r = await fetch(`https://mempool.space/api/tx/${data.revealTxid}`).catch(() => null);
-      if (r?.ok) tx = (await r.json()) as Tx; else await new Promise((s) => setTimeout(s, 1500));
-    }
-    if (!tx) return { ok: false as const, error: "REVEAL NOT SEEN YET — RETRY IN A MINUTE" };
-    const paid = tx.vout.filter((o) => o.scriptpubkey_address === k.payout_address).reduce((n, o) => n + o.value, 0);
-    if (paid < k.price_sats) return { ok: false as const, error: "REVEAL DOES NOT PAY THE KENNEL PRICE" };
-    const { error } = await supabaseAdmin.from("kennel_mints").insert({
-      block_height: data.height, child_index: data.index, inscription_id: `${data.revealTxid.toLowerCase()}i0`,
-      reveal_txid: data.revealTxid.toLowerCase(), buyer_address: data.buyer ?? null,
-    });
-    if (error) return { ok: false as const, error: error.code === "23505" ? "THIS PUP WAS ALREADY RECORDED" : "RECORD FAILED" };
-    await supabaseAdmin.from("bitmap_kennels").update({ minted_count: k.minted_count + 1 }).eq("block_height", data.height);
-    return { ok: true as const, error: null };
-  });
+// The public pup-mint recorder was removed: it could raise minted counts without
+// proving a real child inscription. Legacy kennel rows are read-only now.
