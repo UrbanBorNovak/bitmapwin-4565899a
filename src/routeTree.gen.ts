@@ -97,6 +97,7 @@ import { Route as WatchRouteImport } from './routes/watch'
 import { Route as WebringsRouteImport } from './routes/webrings'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as XmasRouteImport } from './routes/xmas'
+import { Route as ZzBitchatCheckRouteImport } from './routes/zz-bitchat-check'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BiternamAftermathRouteImport } from './routes/biternam_.aftermath'
 import { Route as BiternamArcadeRouteImport } from './routes/biternam_.arcade'
@@ -632,6 +633,11 @@ const WorldStatsRoute = WorldStatsRouteImport.update({
 const XmasRoute = XmasRouteImport.update({
   id: '/xmas',
   path: '/xmas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZzBitchatCheckRoute = ZzBitchatCheckRouteImport.update({
+  id: '/zz-bitchat-check',
+  path: '/zz-bitchat-check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -1213,6 +1219,7 @@ export interface FileRoutesByFullPath {
   '/webrings': typeof WebringsRoute
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
+  '/zz-bitchat-check': typeof ZzBitchatCheckRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/aftermath': typeof BiternamAftermathRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
@@ -1395,6 +1402,7 @@ export interface FileRoutesByTo {
   '/webrings': typeof WebringsRoute
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
+  '/zz-bitchat-check': typeof ZzBitchatCheckRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam/aftermath': typeof BiternamAftermathRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
@@ -1582,6 +1590,7 @@ export interface FileRoutesById {
   '/webrings': typeof WebringsRoute
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
+  '/zz-bitchat-check': typeof ZzBitchatCheckRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/biternam_/aftermath': typeof BiternamAftermathRoute
   '/biternam_/arcade': typeof BiternamArcadeRoute
@@ -1770,6 +1779,7 @@ export interface FileRouteTypes {
     | '/webrings'
     | '/world-stats'
     | '/xmas'
+    | '/zz-bitchat-check'
     | '/.well-known/oauth-protected-resource'
     | '/biternam/aftermath'
     | '/biternam/arcade'
@@ -1952,6 +1962,7 @@ export interface FileRouteTypes {
     | '/webrings'
     | '/world-stats'
     | '/xmas'
+    | '/zz-bitchat-check'
     | '/.well-known/oauth-protected-resource'
     | '/biternam/aftermath'
     | '/biternam/arcade'
@@ -2138,6 +2149,7 @@ export interface FileRouteTypes {
     | '/webrings'
     | '/world-stats'
     | '/xmas'
+    | '/zz-bitchat-check'
     | '/.well-known/oauth-protected-resource'
     | '/biternam_/aftermath'
     | '/biternam_/arcade'
@@ -2325,6 +2337,7 @@ export interface RootRouteChildren {
   WebringsRoute: typeof WebringsRoute
   WorldStatsRoute: typeof WorldStatsRoute
   XmasRoute: typeof XmasRoute
+  ZzBitchatCheckRoute: typeof ZzBitchatCheckRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BiternamAftermathRoute: typeof BiternamAftermathRoute
   BiternamArcadeRoute: typeof BiternamArcadeRoute
@@ -2989,6 +3002,13 @@ declare module '@tanstack/react-router' {
       path: '/xmas'
       fullPath: '/xmas'
       preLoaderRoute: typeof XmasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zz-bitchat-check': {
+      id: '/zz-bitchat-check'
+      path: '/zz-bitchat-check'
+      fullPath: '/zz-bitchat-check'
+      preLoaderRoute: typeof ZzBitchatCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {
@@ -3910,6 +3930,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebringsRoute: WebringsRoute,
   WorldStatsRoute: WorldStatsRoute,
   XmasRoute: XmasRoute,
+  ZzBitchatCheckRoute: ZzBitchatCheckRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BiternamAftermathRoute: BiternamAftermathRoute,
