@@ -43,6 +43,7 @@ import { Route as DevToolsRouteImport } from './routes/dev-tools'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DonateRouteImport } from './routes/donate'
 import { Route as DownloadRouteImport } from './routes/download'
+import { Route as DriveRouteImport } from './routes/drive'
 import { Route as ExperiencesRouteImport } from './routes/experiences'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
@@ -364,6 +365,11 @@ const DonateRoute = DonateRouteImport.update({
 const DownloadRoute = DownloadRouteImport.update({
   id: '/download',
   path: '/download',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriveRoute = DriveRouteImport.update({
+  id: '/drive',
+  path: '/drive',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExperiencesRoute = ExperiencesRouteImport.update({
@@ -1171,6 +1177,7 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/donate': typeof DonateRoute
   '/download': typeof DownloadRoute
+  '/drive': typeof DriveRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -1358,6 +1365,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/donate': typeof DonateRoute
   '/download': typeof DownloadRoute
+  '/drive': typeof DriveRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -1544,6 +1552,7 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/donate': typeof DonateRoute
   '/download': typeof DownloadRoute
+  '/drive': typeof DriveRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -1734,6 +1743,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/donate'
     | '/download'
+    | '/drive'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -1921,6 +1931,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/donate'
     | '/download'
+    | '/drive'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -2106,6 +2117,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/donate'
     | '/download'
+    | '/drive'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -2295,6 +2307,7 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   DonateRoute: typeof DonateRoute
   DownloadRoute: typeof DownloadRoute
+  DriveRoute: typeof DriveRoute
   ExperiencesRoute: typeof ExperiencesRoute
   ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
@@ -2637,6 +2650,13 @@ declare module '@tanstack/react-router' {
       path: '/download'
       fullPath: '/download'
       preLoaderRoute: typeof DownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drive': {
+      id: '/drive'
+      path: '/drive'
+      fullPath: '/drive'
+      preLoaderRoute: typeof DriveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/experiences': {
@@ -3896,6 +3916,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   DonateRoute: DonateRoute,
   DownloadRoute: DownloadRoute,
+  DriveRoute: DriveRoute,
   ExperiencesRoute: ExperiencesRoute,
   ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
