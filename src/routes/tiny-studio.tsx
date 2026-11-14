@@ -44,6 +44,10 @@ function TinyStudio() {
   const [busy, setBusy] = useState(false);
   const [bitmapId, setBitmapId] = useState<{ h: number; id: string } | null>(null);
   const [guardian, setGuardian] = useState<{ h: number; g: string } | null>(null);
+  const frame = useRef<HTMLIFrameElement | null>(null);
+  // The preview frame only trusts replies from this page's own origin.
+  const [host, setHost] = useState("");
+  useEffect(() => setHost(window.location.origin), []);
   useEffect(() => {
     let live = true;
     const t = setTimeout(() => {
@@ -55,9 +59,12 @@ function TinyStudio() {
   // Answers block lookups from the input inside the preview frame (it can't run the on-chain module here).
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
+      // Only our own sandboxed preview frame may ask; any other window is ignored.
+      const own = frame.current?.contentWindow;
+      if (!own || e.source !== own) return;
       const h = e.data?.tsAsk;
-      if (typeof h !== "number" || !Number.isInteger(h) || h < 0 || !e.source) return;
-      const src = e.source as Window;
+      if (typeof h !== "number" || !Number.isInteger(h) || h < 0 || h > 10_000_000) return;
+      const src = own;
       Promise.all([getBitmapHolderFn({ data: { height: h } }), guardianFor(h).catch(() => null)])
         .then(([r, g]) => src.postMessage({ tsH: h, tsId: r?.inscriptionId ?? null, tsG: g }, "*"))
         .catch(() => src.postMessage({ tsH: h, tsId: null }, "*"));
@@ -66,7 +73,7 @@ function TinyStudio() {
     return () => window.removeEventListener("message", onMsg);
   }, []);
   // The preview frame can't run the on-chain lookup module, so it gets the BITMAP id resolved here; the downloaded file never needs it.
-  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined, guardian: guardian?.h === height ? guardian.g : undefined }), [height, bitmapId, guardian]);
+  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined, guardian: guardian?.h === height ? guardian.g : undefined, host: host || undefined }), [height, bitmapId, guardian, host]);
   const html = useMemo(() => buildTinyStudioHtml({ height }), [height]);
   const ready = packed && packed.h === height ? packed : null;
 
@@ -94,7 +101,7 @@ function TinyStudio() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <iframe title="Tiny Studio" srcDoc={previewHtml} sandbox="allow-scripts allow-downloads" className="h-[560px] w-full rounded-lg border border-border bg-background" />
+        <iframe ref={frame} title="Tiny Studio" srcDoc={previewHtml} sandbox="allow-scripts allow-downloads" className="h-[560px] w-full rounded-lg border border-border bg-background" />
         <aside className="space-y-4 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
           <label className="block space-y-1">
             <span className="text-muted-foreground">STARTING BLOCK</span>

@@ -44,7 +44,7 @@ export function unpackBwvx1(bytes: Uint8Array): number[][] {
 const esc = (s: string) => s.replace(/[^A-Za-z0-9+/=]/g, "");
 
 /** bitmapId: optional pre-resolved BITMAP inscription id for `height`, used only when the on-chain OCI module cannot run (e.g. off ordinals.com). */
-export function buildTinyStudioHtml(opts: { height?: number; payload?: string; bitmapId?: string | undefined; guardian?: string | undefined } = {}): string {
+export function buildTinyStudioHtml(opts: { height?: number; payload?: string; bitmapId?: string | undefined; guardian?: string | undefined; host?: string | undefined } = {}): string {
   const h = Math.max(0, Math.floor(opts.height ?? 840000));
   const pal = JSON.stringify(BLOCKS.map((b) => b.top));
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="bitmapwin" content="BWVX1;${h};studio"><title>${h}.bitmap · Tiny Studio</title><style>
@@ -52,9 +52,9 @@ html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monosp
 #u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
 </style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="hidden" value="${h}"><input id="q" placeholder="block or id" style="width:170px"><button id="f">LOAD</button><button id="n">ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">.BWVX</button><button id="v">.HTML</button></div><div id="j"></div><div id="i"></div>
-<script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}"` : ""}${opts.guardian ? ` data-g="${esc(opts.guardian)}"` : ""} data-ih="${h}"></script><script>
+<script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}"` : ""}${opts.guardian ? ` data-g="${esc(opts.guardian)}"` : ""} data-ih="${h}"${opts.host && /^https?:\/\/[a-z0-9.:-]+$/i.test(opts.host) ? ` data-host="${opts.host}"` : ""}></script><script>
 const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl'),$=i=>document.getElementById(i);
-let S=64,V=new Map,Q=new Map,GS='',GD=$('d').dataset.g,GH=+$('d').dataset.ih,K=0,T=1,W=0,H=${h},yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
+let S=64,V=new Map,Q=new Map,GS='',PH=$('d').dataset.host||'',GD=$('d').dataset.g,GH=+$('d').dataset.ih,K=0,T=1,W=0,H=${h},yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
 const key=(x,y,z)=>x+','+y+','+z;
 ${LAND_JS}
 function seed(h){V.clear();S=64;tx=tz=32;LAND(h,(x,y,z,k)=>V.set(key(x,y,z),k));dirty=1}
@@ -118,9 +118,9 @@ try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-typ
 await Promise.all(ps.map(async seg=>{const[pid,pos]=seg.split('@'),[px,py,pz,q]=pos.split(',').map(Number),pb=await fromId(pid,1);if(typeof pb!='string')return;o.c=-~o.c;let B=[];D(pb,(...v)=>B.push(v));
 const mn=j=>Math.min(...B.map(v=>v[j])),m0=mn(0),m1=mn(1),m2=mn(2);B=B.map(v=>[v[0]-m0,v[1]-m1,v[2]-m2,v[3]]);for(let k=0;k<(q%4+4)%4;k++){const m=Math.max(...B.map(v=>v[0]));B=B.map(v=>[v[2],v[1],m-v[0],v[3]])}
 for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push([x,y,z,v[3]])}}));return{a:o,s:sp,n:~~o.c+'/'+ps.length}}catch(e){return null}}
-async function fetchBuild(){GS='';await fb();parent!==window&&GH!=H&&await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);GD=v.data.tsG;GH=H;ok()}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(ok,9e3)});gd(GS||GH==H&&GD);dirty=1;hud()}
+async function fetchBuild(){GS='';await fb();parent!==window&&PH&&GH!=H&&await new Promise(ok=>{const f=v=>{if(v.source===parent&&v.origin===PH&&v.data&&v.data.tsH==H){removeEventListener('message',f);GD=typeof v.data.tsG=='string'?v.data.tsG:'';GH=H;ok()}};addEventListener('message',f);parent.postMessage({tsAsk:H},PH);setTimeout(ok,9e3)});gd(GS||GH==H&&GD);dirty=1;hud()}
 async function fb(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('…');
-const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H&&d.i)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);GD=v.data.tsG;GH=H;ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
+const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H&&d.i)return d.i;if(parent!==window&&PH)return await new Promise(ok=>{const f=v=>{if(v.source===parent&&v.origin===PH&&v.data&&v.data.tsH==H){removeEventListener('message',f);GD=typeof v.data.tsG=='string'?v.data.tsG:'';GH=H;const t=v.data.tsId;ok(typeof t=='string'&&t.length<80?t:null)}};addEventListener('message',f);parent.postMessage({tsAsk:H},PH);setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say('none');return}}
 for(const id of ids){const b=await fromId(id);if(b){b.a?load(b.a,b.s,1):load(b,0,1);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
 say('none')}catch(e){say('offline')}}
