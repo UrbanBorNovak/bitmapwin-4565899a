@@ -90,6 +90,8 @@ export function ShadowInscriber(props: {
   autoReveal?: boolean;
   /** Price and open the payment by itself once on mount, when no job exists yet. */
   autoStart?: boolean;
+  /** Start with this file (e.g. dropped into Block Drive) instead of the default art. */
+  initialFile?: { type: string; bytes: Uint8Array };
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
@@ -224,6 +226,14 @@ export function ShadowInscriber(props: {
     const bytes = new Uint8Array(await f.arrayBuffer());
     setFile({ type: f.type || "application/octet-stream", bytes, url: URL.createObjectURL(f) });
   };
+
+  useEffect(() => {
+    const f = props.initialFile;
+    if (!f) return;
+    const url = URL.createObjectURL(new Blob([f.bytes as BlobPart], { type: f.type }));
+    setFile({ type: f.type, bytes: f.bytes, url });
+    return () => URL.revokeObjectURL(url);
+  }, [props.initialFile]);
 
   const start = async () => {
     setParentNotes([]);
