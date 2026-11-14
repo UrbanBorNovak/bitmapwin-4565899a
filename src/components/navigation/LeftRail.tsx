@@ -17,7 +17,7 @@ const CORE: Item[] = [
 const MORE: { title: string; items: { to: string; label: string }[] }[] = [
   { title: "PLAY & EXPLORE", items: [
     { to: "/slab", label: "Land Slabs" }, { to: "/biternam", label: "Biternam quests" }, { to: "/cities", label: "Cities" },
-    { to: "/explore", label: "Trending" }, { to: "/ranks", label: "Ranks" }, { to: "/church", label: "Church of BITMAP" }, { to: "/bitchat", label: "BITMAP rooms" },
+    { to: "/explore", label: "Trending" }, { to: "/ranks", label: "Ranks" }, { to: "/church", label: "Church of BITMAP" }, { to: "/milestone", label: "Milestone block" }, { to: "/bitchat", label: "BITMAP rooms" },
   ] },
   { title: "TRADE & LAND", items: [
     { to: "/collections", label: "Land clubs" }, { to: "/history", label: "Sales history" },
