@@ -17,7 +17,7 @@ export const isGeohash = (g: string) => /^[0123456789bcdefghjkmnpqrstuvwxyz]{2,7
 
 /** Standard geohash encoding of a latitude/longitude. */
 export function encodeGeohash(lat: number, lon: number, precision = 5): string {
-  let lo = [-90, 90], ln = [-180, 180], out = "", bit = 0, ch = 0, even = true;
+  let lo: [number, number] = [-90, 90], ln: [number, number] = [-180, 180], out = "", bit = 0, ch = 0, even = true;
   while (out.length < precision) {
     const r = even ? ln : lo, v = even ? lon : lat, mid = (r[0] + r[1]) / 2;
     if (v >= mid) { ch = (ch << 1) | 1; r[0] = mid; } else { ch <<= 1; r[1] = mid; }
