@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
+import { BitchatChannel } from "@/components/game/BitchatChannel";
 import { bitmapRoomRelayStatus, postBitmapRoom, subscribeBitmapRoom, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
 
 const FAMOUS = [0, 9, 715093, 717328, 840000];
@@ -33,6 +34,7 @@ function BitchatRooms() {
   const [status, setStatus] = useState("");
   const [connected, setConnected] = useState(0);
   const [relayCount, setRelayCount] = useState(0);
+  const [mode, setMode] = useState<"rooms" | "phone">("rooms");
   const listRef = useRef<HTMLDivElement>(null);
 
   const open = (h: number) => { setHeight(h); setInput(String(h)); };
@@ -76,6 +78,19 @@ function BitchatRooms() {
         <span className="font-mono text-[11px] text-muted-foreground">BW-ROOMS-1 · LIVEOCI</span>
       </header>
 
+      <div role="tablist" className="grid grid-cols-2 gap-1 rounded-md border border-border bg-card p-1 font-mono text-xs">
+        {([["rooms", "BITMAP ROOMS"], ["phone", "PHONE CHANNELS"]] as const).map(([k, label]) => (
+          <button key={k} role="tab" aria-selected={mode === k} onClick={() => setMode(k)}
+            className={`rounded px-3 py-2 ${mode === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>
+        ))}
+      </div>
+
+      {mode === "phone" ? (
+        <section className="space-y-2">
+          <p className="font-mono text-[11px] text-muted-foreground">Location channels (#geohash) on the same relays the BitChat iPhone and Android apps use, so phone users in that area can read and reply. Messages are public and not stored by us.</p>
+          <BitchatChannel />
+        </section>
+      ) : (<>
       <form onSubmit={submitRoom} className="flex gap-2">
         <input value={input} onChange={(e) => setInput(e.target.value)} inputMode="numeric" placeholder="Block number, e.g. 715093"
           className="min-w-0 flex-1 rounded-md border border-border bg-card px-3 py-2 font-mono text-sm text-foreground" />
@@ -122,10 +137,11 @@ function BitchatRooms() {
               <button onClick={send} className="rounded-md bg-primary px-4 py-2 font-mono text-sm text-primary-foreground">SEND</button>
             </div>
             {status && <p className="font-mono text-[11px] text-muted-foreground">{status}</p>}
-            <p className="font-mono text-[10px] text-muted-foreground">✓ ACCEPTED means a relay took it, not that anyone read it. Rooms follow the open BW-ROOMS-1 format (BitChat-style messages on five shared relays). The BitChat phone app does not support it yet, so only people on this page see these rooms.</p>
+            <p className="font-mono text-[10px] text-muted-foreground">✓ ACCEPTED means a relay took it, not that anyone read it. Rooms follow the open BW-ROOMS-1 format (BitChat-style messages on five shared relays). The BitChat phone app does not read block rooms yet; use PHONE CHANNELS to talk with phone users.</p>
           </div>
         </>
       )}
+      </>)}
     </main>
   );
 }
