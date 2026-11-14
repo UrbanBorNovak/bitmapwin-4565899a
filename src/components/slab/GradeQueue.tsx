@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { resolveWallet } from "@/components/BuyButton";
 import { useWalletSession } from "@/lib/wallet-session";
 import { slabAlbumFn } from "@/lib/slab-album.functions";
-import { fetchSlabGrade } from "@/lib/slab-block";
+import { fetchSlabGrade, promoteGrade } from "@/lib/slab-block";
 import { SLAB_POSTAGE, SLAB_TREASURY, certFacts, slabCertHtml } from "@/lib/slab-cert";
 import { slabSkin } from "@/lib/slab-skins";
 import { useEffect } from "react";
@@ -60,13 +60,21 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
   const [queueStart, setQueueStart] = useState<number[]>([]);
   // pre-grades load for the visible page plus every queued BITMAP
   const bitmaps = [...visible, ...all.filter((b) => queueStart.includes(b.h) && !visible.some((v) => v.h === b.h))];
-  const pre = useQueries({
-    queries: bitmaps.map((b) => ({ queryKey: ["slab-pre", b.h], queryFn: () => fetchSlabGrade(b.h), staleTime: Infinity, retry: 2, retryDelay: (n: number) => 2000 * 2 ** n })),
-  });
   const [picked, setPicked] = useState<number[]>([]);
   const [queue, setQueue] = useState<number[]>([]);
   const [done, setDone] = useState<number[]>([]);
   const active = queue.find((h) => !done.includes(h));
+  // the BITMAP being inscribed loads first; the rest share two background slots
+  promoteGrade(active);
+  const pre = useQueries({
+    queries: bitmaps.map((b) => ({
+      queryKey: ["slab-pre", b.h],
+      queryFn: () => fetchSlabGrade(b.h, { priority: b.h === active }),
+      staleTime: Infinity,
+      retry: 1,
+      retryDelay: 3000,
+    })),
+  });
   const activeIdx = bitmaps.findIndex((b) => b.h === active);
   const activeQuery = activeIdx >= 0 ? pre[activeIdx] : undefined;
   const activeGrade = activeQuery?.data ?? null;
@@ -148,7 +156,9 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
                   />
                   {b.h}.bitmap
                 </label>
-                <span className="text-muted-foreground">{isGraded ? "GRADED" : g ? `${g.name} ${g.grade}` : "…"}</span>
+                <span className="text-muted-foreground">{isGraded ? "GRADED" : g ? `${g.name} ${g.grade}` : pre[i]?.isError ? (
+                  <button onClick={() => pre[i]!.refetch()} className="underline hover:text-primary">DATA MISSING · RETRY</button>
+                ) : pre[i]?.isSuccess ? "NOT FOUND" : "…"}</span>
               </li>
             );
           })}
@@ -222,7 +232,9 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
           ) : activeQuery?.isError || (activeQuery?.isSuccess && !activeQuery.data) ? (
             <div className="space-y-2 rounded-md border border-border p-3 font-mono text-xs">
               <p className="text-primary">COULD NOT READ THIS BLOCK RIGHT NOW</p>
-              <p className="text-muted-foreground">The block data source is busy or timed out. Nothing was signed or paid. Try again, or skip this BITMAP.</p>
+              <p className="text-muted-foreground">
+                {activeQuery.data === null && !activeQuery.isError ? "This block was not found." : `Missing: ${(activeQuery.error as Error | null)?.message ?? "block data"}.`} No grade is shown without complete data. Nothing was signed or paid.
+              </p>
               <button onClick={() => activeQuery.refetch()} disabled={activeQuery.isFetching} className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">
                 {activeQuery.isFetching ? "RETRYING…" : "RETRY"}
               </button>
