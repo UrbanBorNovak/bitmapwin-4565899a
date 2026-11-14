@@ -46,7 +46,7 @@ function BitchatRooms() {
     const seen = new Set<string>();
     const stop = subscribeBitmapRoom(height, RELAY_GH, (l) => {
       if (seen.has(l.id)) return; seen.add(l.id);
-      setLines((p) => [...p, l].sort((a, b) => a.at - b.at).slice(-200));
+      setLines((p) => p.some((x) => x.id === l.id) ? p : [...p, l].sort((a, b) => a.at - b.at).slice(-200));
     });
     const t = setInterval(() => { const s = bitchatRelayStatus(RELAY_GH); setRelayCount(s.length); setConnected(s.filter((x) => x.connected).length); }, 2000);
     return () => { alive = false; stop(); clearInterval(t); };
@@ -59,7 +59,7 @@ function BitchatRooms() {
     setStatus("SENDING…");
     try {
       const r = await postBitmapRoom(height, RELAY_GH, nick, text);
-      if (r.outcome.accepted.length) { setLines((p) => [...p, r.line]); setText(""); setStatus(`✓ ACCEPTED BY ${r.outcome.accepted.length}/${r.outcome.of} RELAYS`); }
+      if (r.outcome.accepted.length) { setLines((p) => p.some((x) => x.id === r.line.id) ? p : [...p, r.line]); setText(""); setStatus(`✓ ACCEPTED BY ${r.outcome.accepted.length}/${r.outcome.of} RELAYS`); }
       else setStatus(`✕ NOT SENT (${r.outcome.rejected[0]?.reason ?? "no relay answered"})`);
     } catch (e) { setStatus(`✕ NOT SENT (${(e as Error).message})`); }
   };
@@ -71,7 +71,7 @@ function BitchatRooms() {
   };
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col gap-3 px-3 py-4">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col gap-3 px-3 pb-32 pt-4">
       <header className="flex items-center justify-between">
         <h1 className="font-display text-xl text-foreground">⚡ BITMAP ROOMS</h1>
         <span className="font-mono text-[11px] text-muted-foreground">BITCHAT RELAYS · LIVEOCI</span>
