@@ -70,7 +70,7 @@ export function OmnibarTerminal() {
           </p>
           <form
             className="mt-7 flex max-w-2xl flex-col border border-border-strong bg-card/70 backdrop-blur-md focus-within:border-bitcoin sm:flex-row"
-            onSubmit={(e) => { e.preventDefault(); if (!q.trim()) return navigate({ to: "/oasis" }); go(); }}
+            onSubmit={(e) => { e.preventDefault(); if (!q.trim()) { navigate({ to: "/oasis" }); return; } go(); }}
           >
             <div className="flex min-w-0 flex-1 items-center">
               <Search className="ml-4 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
