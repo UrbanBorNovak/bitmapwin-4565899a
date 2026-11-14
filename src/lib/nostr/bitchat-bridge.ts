@@ -106,7 +106,7 @@ export async function mineNonce(t: { pubkey: string; created_at: number; kind: n
 let pool: SimplePool | null = null;
 const getPool = () => (pool ??= new SimplePool());
 
-export type BitchatLine = { id: string; nick: string; pubkey: string; text: string; at: number; mine?: boolean; proof?: { address: string; signature: string; issuedAt: number } | null };
+export type BitchatLine = { id: string; nick: string; pubkey: string; text: string; at: number; mine?: boolean; proof?: RoomProof | null };
 export function toLine(e: Event): BitchatLine {
   const nick = e.tags.find((t) => t[0] === "n")?.[1] || "anon";
   return { id: e.id, nick: `${nick}#${e.pubkey.slice(-4)}`, pubkey: e.pubkey, text: e.content.slice(0, 500), at: e.created_at };

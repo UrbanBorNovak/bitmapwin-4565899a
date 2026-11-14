@@ -5,8 +5,8 @@ import { liveBitmapFn } from "@/lib/bw-matter.functions";
 import { BitchatChannel } from "@/components/game/BitchatChannel";
 import { bitmapRoomPubkey, bitmapRoomRelayStatus, postBitmapRoom, subscribeBitmapRoom, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
 
-import { landownerMessage, loadRoomProof, saveRoomProof, type RoomProof } from "@/lib/nostr/bitchat-landowner";
-import { verifyRoomOwnersFn } from "@/lib/nostr/bitchat-landowner.functions";
+import { loadRoomProof, parcelBadgeLabel, roomProofMessage, saveRoomProof, type RoomProof } from "@/lib/nostr/bitchat-landowner";
+import { roomRoleFn, verifyRoomOwnersFn, type RoomOwnerCheck } from "@/lib/nostr/bitchat-landowner.functions";
 import { useWalletSession } from "@/lib/wallet-session";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 
@@ -43,9 +43,10 @@ function BitchatRooms() {
   const listRef = useRef<HTMLDivElement>(null);
   const wallet = useWalletSession();
   const verify = useServerFn(verifyRoomOwnersFn);
+  const roomRole = useServerFn(roomRoleFn);
   const [proof, setProof] = useState<RoomProof | null>(null);
   const [proofMsg, setProofMsg] = useState("");
-  const [owners, setOwners] = useState<Record<string, { ok: boolean; reason?: string }>>({});
+  const [owners, setOwners] = useState<Record<string, RoomOwnerCheck>>({});
   const asked = useRef(new Set<string>());
 
   useEffect(() => {
@@ -70,14 +71,21 @@ function BitchatRooms() {
     setProofMsg("OPENING WALLET…");
     try {
       const pubkey = bitmapRoomPubkey(height);
-      const issuedAt = Math.floor(Date.now() / 1000);
       const address = wallet.ordinalsAddress;
-      const signature = await signMessageWithWallet(wallet.provider, address, landownerMessage(height, address, pubkey, issuedAt));
-      const p = { address, signature, issuedAt };
+      setProofMsg("CHECKING ON-CHAIN HOLDINGS…");
+      const role = await roomRole({ data: { height, address } });
+      if (!role.role) { setProofMsg(`✕ THIS WALLET HOLDS NEITHER ${height}.BITMAP NOR ONE OF ITS VALID PARCELS RIGHT NOW`); return; }
+      const kind = role.role === "parcel" ? "parcel" as const : undefined;
+      setProofMsg("OPENING WALLET…");
+      const issuedAt = Math.floor(Date.now() / 1000);
+      const signature = await signMessageWithWallet(wallet.provider, address, roomProofMessage(kind, height, address, pubkey, issuedAt));
+      const p: RoomProof = kind ? { address, signature, issuedAt, kind } : { address, signature, issuedAt };
       const r = (await verify({ data: { height, items: [{ pubkey, ...p }] } }))[pubkey];
       if (!r?.ok) { setProofMsg(`✕ ${(r?.reason ?? "not verified").toUpperCase()}`); return; }
-      saveRoomProof(height, pubkey, p); setProof(p); setOwners((o) => ({ ...o, [pubkey]: { ok: true } }));
-      setProofMsg("✓ VERIFIED · YOUR MESSAGES HERE CARRY THE LANDOWNER BADGE FOR 24H");
+      saveRoomProof(height, pubkey, p); setProof(p); setOwners((o) => ({ ...o, [pubkey]: r }));
+      setProofMsg(r.role === "parcel"
+        ? `✓ VERIFIED · YOUR MESSAGES HERE CARRY THE PARCEL BADGE (${parcelBadgeLabel(r.parcels ?? [], height)}) FOR 24H`
+        : "✓ VERIFIED · YOUR MESSAGES HERE CARRY THE LANDOWNER BADGE FOR 24H");
     } catch (e) { setProofMsg(`✕ ${(e as Error).message}`); }
   };
   const dropProof = () => { if (height != null) { saveRoomProof(height, bitmapRoomPubkey(height), null); setProof(null); setProofMsg(""); } };
@@ -169,23 +177,25 @@ function BitchatRooms() {
 
           <div ref={listRef} className="flex-1 space-y-1 overflow-y-auto rounded-md border border-border bg-card p-3 text-sm" style={{ minHeight: "16rem", maxHeight: "50dvh" }}>
             {lines.length === 0 ? <p className="text-muted-foreground">No messages in the last hour. Say hello.</p> : lines.map((l) => (
-              <p key={l.id} className="break-words">{l.proof && owners[l.pubkey]?.ok ? (
+              <p key={l.id} className="break-words">{l.proof && owners[l.pubkey]?.ok ? (owners[l.pubkey]!.role === "parcel" ? (
+                <span title={`Signed by ${l.proof.address}, which holds parcel${(owners[l.pubkey]!.parcels?.length ?? 0) > 1 ? "s" : ""} ${(owners[l.pubkey]!.parcels ?? []).map((i) => `${i}.${height}`).join(", ")} of ${height}.bitmap on-chain right now`} className="mr-1 rounded-sm border border-dashed border-primary px-1 font-mono text-[10px] text-primary">▦ PARCEL · {parcelBadgeLabel(owners[l.pubkey]!.parcels ?? [], height)}</span>
+              ) : (
                 <span title={`Signed by ${l.proof.address}, which holds ${height}.bitmap on-chain right now`} className="mr-1 rounded-sm border border-primary px-1 font-mono text-[10px] text-primary">👑 LANDOWNER · {height}</span>
-              ) : null}<span className={`font-mono text-xs ${l.mine ? "text-primary" : "text-signal"}`}>{l.nick}</span> <span className="text-foreground">{l.text}</span></p>
+              )) : null}<span className={`font-mono text-xs ${l.mine ? "text-primary" : "text-signal"}`}>{l.nick}</span> <span className="text-foreground">{l.text}</span></p>
             ))}
           </div>
 
           <div className="flex flex-col gap-2">
             <div className="rounded-md border border-border bg-card p-2 font-mono text-[11px] text-muted-foreground">
               {proof ? (
-                <p>👑 <span className="text-primary">LANDOWNER PROOF ON</span> · {proof.address.slice(0, 8)}…{proof.address.slice(-4)} · <button onClick={dropProof} className="underline">REMOVE</button></p>
+                <p>{proof.kind === "parcel" ? "▦" : "👑"} <span className="text-primary">{proof.kind === "parcel" ? "PARCEL HOLDER PROOF ON" : "LANDOWNER PROOF ON"}</span> · {proof.address.slice(0, 8)}…{proof.address.slice(-4)} · <button onClick={dropProof} className="underline">REMOVE</button></p>
               ) : wallet ? (
-                <p>Hold {height}.bitmap? <button onClick={prove} className="text-primary underline">PROVE OWNERSHIP</button> — one wallet signature, no fee, valid 24h.</p>
+                <p>Hold {height}.bitmap or one of its parcels? <button onClick={prove} className="text-primary underline">PROVE OWNERSHIP</button> — one wallet signature, no fee, valid 24h.</p>
               ) : (
                 <p>Hold this BITMAP? <Link to="/wallet" className="text-primary underline">Connect your wallet</Link> to prove it in chat.</p>
               )}
               {proofMsg && <p className="mt-1">{proofMsg}</p>}
-              <p className="mt-1 text-[10px]">The badge shows only when the signature checks out and the signing address holds this BITMAP on-chain right now. Signing never moves funds.</p>
+              <p className="mt-1 text-[10px]">A badge shows only when the signature checks out and the signing address holds this BITMAP, or a valid parcel of it (first claim per transaction index), on-chain right now. Signing never moves funds.</p>
             </div>
             <input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="Nickname (optional)" maxLength={24}
               className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground" />
