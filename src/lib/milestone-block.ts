@@ -15,7 +15,7 @@ export const MILESTONE_PRESETS: MilestonePreset[] = [
 export function momentToUnix(value: string, utc: boolean): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/.exec(value.trim());
   if (!m) return null;
-  const [y, mo, d, h = "0", mi = "0"] = m.slice(1).map((x) => x ?? "0");
+  const [y, mo, d, h, mi] = m.slice(1).map((x) => Number(x ?? 0)) as [number, number, number, number, number];
   const ms = utc
     ? Date.UTC(+y, +mo - 1, +d, +h, +mi)
     : new Date(+y, +mo - 1, +d, +h, +mi).getTime();
