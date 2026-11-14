@@ -9,7 +9,7 @@ import masterHtml from "@/lib/slab-master.html?raw";
 import { SLAB_PROTOCOL, type SlabCertFacts } from "@/lib/slab-cert";
 
 /** Set once the master is inscribed; until then grades inscribe the standalone card. */
-export const SLAB_MASTER_DELEGATE_ID: string | null = "74dd215ccc6438ea94e7e8c82456b0f6a04d19238aab2453e8167b6c0c162131i0";
+export const SLAB_MASTER_DELEGATE_ID: string | null = "b6e0d60df3d446d5923317da987c8795ac2943daed998d7c1f3f7456a4e8608bi0";
 export const SLAB_MASTER_PROTOCOL = "BW-SLAB-MASTER-1";
 
 export const isSlabMasterDelegate = (id: string | null | undefined) =>
