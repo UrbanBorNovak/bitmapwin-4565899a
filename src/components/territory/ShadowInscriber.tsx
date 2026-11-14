@@ -90,6 +90,8 @@ export function ShadowInscriber(props: {
   autoReveal?: boolean;
   /** Price and open the payment by itself once on mount, when no job exists yet. */
   autoStart?: boolean;
+  /** Start with this file (e.g. dropped into Block Drive) instead of the default art. */
+  initialFile?: { type: string; bytes: Uint8Array } | undefined;
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
@@ -225,6 +227,14 @@ export function ShadowInscriber(props: {
     setFile({ type: f.type || "application/octet-stream", bytes, url: URL.createObjectURL(f) });
   };
 
+  useEffect(() => {
+    const f = props.initialFile;
+    if (!f) return;
+    const url = URL.createObjectURL(new Blob([f.bytes as BlobPart], { type: f.type }));
+    setFile({ type: f.type, bytes: f.bytes, url });
+    return () => URL.revokeObjectURL(url);
+  }, [props.initialFile]);
+
   const start = async () => {
     setParentNotes([]);
     try {
@@ -313,7 +323,7 @@ export function ShadowInscriber(props: {
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
         ...(chosenFee !== undefined ? { feeRate: chosenFee } : {}),
-        ...(!file && variant?.postage !== undefined ? { postage: variant.postage } : {}),
+        ...((!file || props.reinscribeOnBitmap) && variant?.postage !== undefined ? { postage: variant.postage } : {}),
         ...(contentEncoding ? { contentEncoding } : {}),
       });
 
