@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapChat } from "@/components/MapChat";
 import { BitchatChannel } from "@/components/game/BitchatChannel";
+import { OasisRadio } from "@/components/game/OasisRadio";
 import type { MapCursor } from "@/lib/map-presence";
 
 /**
@@ -11,7 +12,7 @@ import type { MapCursor } from "@/lib/map-presence";
  */
 export function OasisChatDock({ cursors, compact = false }: { cursors: MapCursor[]; compact?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"world" | "bitchat">("world");
+  const [tab, setTab] = useState<"world" | "radio" | "bitchat">("world");
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -28,7 +29,7 @@ export function OasisChatDock({ cursors, compact = false }: { cursors: MapCursor
     : `right-2 ${open ? "left-2 md:left-auto" : ""} ${top} md:top-auto md:bottom-24 md:right-3 md:max-h-[min(30rem,calc(100%-8rem))]`;
   const width = open ? (compact ? "" : "md:w-[22rem]") : "";
 
-  const openTab = (t: "world" | "bitchat") => { setTab(t); setOpen(true); };
+  const openTab = (t: "world" | "radio" | "bitchat") => { setTab(t); setOpen(true); };
 
   return (
     <div
@@ -40,10 +41,10 @@ export function OasisChatDock({ cursors, compact = false }: { cursors: MapCursor
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-border bg-background/90 backdrop-blur">
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border p-1.5 font-mono text-[11px] tracking-[0.15em]">
             <span className="flex gap-1" role="tablist">
-              {(["world", "bitchat"] as const).map((t) => (
+              {(["world", "radio", "bitchat"] as const).map((t) => (
                 <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
                   className={`border px-2.5 py-1 ${tab === t ? "border-signal bg-signal/10 text-signal" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-                  {t === "world" ? "WORLD" : "BITCHAT"}
+                  {t === "world" ? "WORLD" : t === "radio" ? "📻 RADIO" : "BITCHAT"}
                 </button>
               ))}
             </span>
@@ -51,6 +52,8 @@ export function OasisChatDock({ cursors, compact = false }: { cursors: MapCursor
           </div>
           {tab === "world" ? (
             <MapChat cursors={cursors} className="min-h-0 flex-1 border-0" listClassName="min-h-12 max-h-72" />
+          ) : tab === "radio" ? (
+            <OasisRadio />
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto"><BitchatChannel /></div>
           )}
@@ -60,6 +63,10 @@ export function OasisChatDock({ cursors, compact = false }: { cursors: MapCursor
           <button onClick={() => openTab("world")}
             className="border border-border bg-background/80 px-2.5 py-1.5 font-mono text-[10px] tracking-[0.2em] text-muted-foreground backdrop-blur hover:border-signal hover:text-signal">
             💬 CHAT
+          </button>
+          <button onClick={() => openTab("radio")}
+            className="border border-bitcoin/60 bg-background/80 px-2.5 py-1.5 font-mono text-[10px] tracking-[0.2em] text-bitcoin backdrop-blur hover:bg-bitcoin/10">
+            📻 RADIO
           </button>
           <button onClick={() => openTab("bitchat")}
             className="border border-signal/60 bg-background/80 px-2.5 py-1.5 font-mono text-[10px] tracking-[0.2em] text-signal backdrop-blur hover:bg-signal/10">
