@@ -38,10 +38,16 @@ export function OasisChatDock({ cursors }: { cursors: MapCursor[] }) {
           {tab === "world" ? <MapChat cursors={cursors} className="max-h-72" /> : <div className="max-h-[55vh] overflow-y-auto"><BitchatChannel /></div>}
         </div>
       ) : (
-        <button onClick={() => setOpen(true)}
-          className="border border-border bg-background/80 px-2 py-1 font-mono text-[9px] tracking-[0.2em] text-muted-foreground backdrop-blur hover:border-signal hover:text-signal">
-          💬 CHAT · BITCHAT
-        </button>
+        <div className="flex justify-end gap-1.5">
+          <button onClick={() => { setTab("world"); setOpen(true); }}
+            className="border border-border bg-background/80 px-2 py-1 font-mono text-[9px] tracking-[0.2em] text-muted-foreground backdrop-blur hover:border-signal hover:text-signal">
+            💬 CHAT
+          </button>
+          <button onClick={() => { setTab("bitchat"); setOpen(true); }}
+            className="border border-signal/60 bg-background/80 px-2 py-1 font-mono text-[9px] tracking-[0.2em] text-signal backdrop-blur hover:bg-signal/10">
+            ⚡ BITCHAT
+          </button>
+        </div>
       )}
     </div>
   );
