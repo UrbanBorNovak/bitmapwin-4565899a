@@ -49,10 +49,16 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
     async function ensure(name: string, userId: string | null): Promise<PlayerRow> {
       const { data: found } = await supabaseAdmin
         .from("rank_players")
-        .select("id, name, clan_id, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count")
+        .select("id, name, clan_id, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count, user_id")
         .ilike("name", name)
         .maybeSingle();
-      if (found) return found as PlayerRow;
+      if (found) {
+        // The killer must be the caller's own character; nobody can write
+        // kills onto another account's (or an unclaimed) record.
+        if (userId && found.user_id !== userId) throw new Error("THAT CHARACTER BELONGS TO ANOTHER PLAYER");
+        if (!userId && found.user_id === context.userId) throw new Error("YOU CANNOT SLAY YOURSELF");
+        return found as PlayerRow;
+      }
       // A character born from a signed-in player carries their verified
       // wallet, so the public profile page can find their share book.
       let wallet: string | null = null;
@@ -80,6 +86,16 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
 
     const killer = await ensure(data.killerName, context.userId);
     const victim = await ensure(data.victimName, null);
+    // One recorded duel per killer/victim pair every 30 seconds, so a single
+    // account cannot pile deaths onto another player's record.
+    const { data: recent } = await supabaseAdmin
+      .from("pvp_events")
+      .select("id")
+      .eq("killer_id", killer.id)
+      .eq("victim_id", victim.id)
+      .gte("created_at", new Date(Date.now() - 30_000).toISOString())
+      .limit(1);
+    if (recent && recent.length > 0) throw new Error("THAT DUEL WAS ALREADY RECORDED");
     const wasPk = victim.status !== "chaotic";
 
     const karma = wasPk ? killer.karma - 150 : killer.karma + 50;

@@ -4899,6 +4899,7 @@ export type Database = {
           name: string
           seq: number
           steps: number
+          token_hash: string | null
         }
         Insert: {
           bounty_id: string
@@ -4909,6 +4910,7 @@ export type Database = {
           name: string
           seq: number
           steps?: number
+          token_hash?: string | null
         }
         Update: {
           bounty_id?: string
@@ -4919,6 +4921,7 @@ export type Database = {
           name?: string
           seq?: number
           steps?: number
+          token_hash?: string | null
         }
         Relationships: [
           {
@@ -5725,7 +5728,12 @@ export type Database = {
         Returns: number
       }
       player_stock_issue: {
-        Args: { _address: string; _player_id: string; _shares_offered: number }
+        Args: {
+          _address: string
+          _player_id: string
+          _shares_offered: number
+          _user_id: string
+        }
         Returns: {
           fee_coins: number
           is_open: boolean

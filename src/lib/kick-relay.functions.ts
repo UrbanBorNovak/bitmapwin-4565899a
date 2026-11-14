@@ -1,11 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Opens a WebRTC (WHIP) ingest on the edge relay and restreams it over RTMP to Kick.
 // The stream key passes through once and is never stored.
 const CF = "https://api.cloudflare.com/client/v4/accounts";
 
+// The relay spends the site's Cloudflare account, so only admins may open or close one.
+async function isAdmin(context: { supabase: { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: unknown }> }; userId: string }) {
+  const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  return data === true;
+}
+
 export const openKickRelay = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -15,7 +23,8 @@ export const openKickRelay = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    if (!(await isAdmin(context))) return { ok: false as const, reason: "ADMINS ONLY" };
     const account = process.env["CLOUDFLARE_ACCOUNT_ID"];
     const token = process.env["CLOUDFLARE_STREAM_TOKEN"];
     if (!account || !token) return { ok: false as const, reason: "THE LIVE RELAY IS NOT SET UP YET" };
@@ -41,8 +50,10 @@ export const openKickRelay = createServerFn({ method: "POST" })
   });
 
 export const closeKickRelay = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ uid: z.string().regex(/^[a-f0-9]{32}$/) }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    if (!(await isAdmin(context))) return { ok: false };
     const account = process.env["CLOUDFLARE_ACCOUNT_ID"];
     const token = process.env["CLOUDFLARE_STREAM_TOKEN"];
     if (!account || !token) return { ok: false };

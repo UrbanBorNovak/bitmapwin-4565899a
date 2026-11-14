@@ -75,7 +75,7 @@ export const stampForgeModuleFn = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: mod } = await supabaseAdmin.from("forge_modules").select("id, bit_cost, author_address, author_user, uses").eq("id", data.moduleId).maybeSingle();
     if (!mod) return { ok: false as const, error: "MODULE NOT FOUND" };
-    await supabaseAdmin.from("forge_modules").update({ uses: mod.uses + 1 }).eq("id", mod.id);
+    // Free or self stamps are not counted; uses only grow after a royalty is actually paid.
     if (mod.bit_cost <= 0 || mod.author_user === context.userId) return { ok: true as const, paid: 0, error: null };
     const { assertControls, spendBit } = await import("@/lib/coins.server");
     try {
@@ -91,6 +91,8 @@ export const stampForgeModuleFn = createServerFn({ method: "POST" })
       return { ok: false as const, error: /insufficient|balance/i.test(msg) ? "NOT ENOUGH BIT" : "PAYMENT FAILED — TRY AGAIN" };
     }
     await supabaseAdmin.rpc("coin_apply", { _address: mod.author_address, _delta: mod.bit_cost, _reason: "forge_royalty", _ref: ref });
+    const { data: fresh } = await supabaseAdmin.from("forge_modules").select("uses").eq("id", mod.id).maybeSingle();
+    await supabaseAdmin.from("forge_modules").update({ uses: (fresh?.uses ?? mod.uses) + 1 }).eq("id", mod.id);
     return { ok: true as const, paid: mod.bit_cost, error: null };
   });
 

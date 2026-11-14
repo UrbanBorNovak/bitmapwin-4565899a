@@ -77,8 +77,9 @@ export function BitmapStorefront({ height }: { height: number }) {
       });
       toast("SIGN THE SALE IN YOUR WALLET", { description: `LISTING FOR ${formatSats(priceSats)}` });
       const signed = await signListingPsbt(wallet.provider, psbt, wallet.ordinalsAddress);
-      const offer = await submitOfferFn({ data: { psbt: signed } });
-      await addToStorefrontFn({ data: { offerId: offer.id, height } });
+      const offer = await submitOfferFn({ data: { psbt: signed, storefrontHeight: height } });
+      // Already-known listings can only be featured by their signed-in seller.
+      if (!offer.storefront) await addToStorefrontFn({ data: { offerId: offer.id, height } });
       return offer;
     },
     onSuccess: () => {

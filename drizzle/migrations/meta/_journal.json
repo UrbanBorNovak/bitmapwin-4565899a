@@ -337,6 +337,13 @@
       "when": 1793813397684,
       "tag": "0047_allow_myspace_build_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1794645511262,
+      "tag": "0048_security_fixes_bounty_bids_shares",
+      "breakpoints": true
     }
   ]
 }

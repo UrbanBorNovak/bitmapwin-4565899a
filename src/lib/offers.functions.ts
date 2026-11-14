@@ -8,10 +8,23 @@ const psbtSchema = z
   .regex(/^[A-Za-z0-9+/=\s]+$/, "Offer must be a base64 encoded PSBT");
 
 export const submitOfferFn = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ psbt: psbtSchema }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ psbt: psbtSchema, storefrontHeight: z.number().int().min(0).max(10_000_000).optional() }).parse(data),
+  )
   .handler(async ({ data }) => {
     const { submitOffer } = await import("@/lib/offers.server");
-    return submitOffer(data.psbt);
+    const offer = await submitOffer(data.psbt);
+    // A brand-new listing was just signed by its seller, so it may be placed in a
+    // storefront in the same step. Re-submitting a known PSBT never does this.
+    let storefront = false;
+    if (data.storefrontHeight !== undefined && !offer.duplicate && offer.status === "open") {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin
+        .from("bitmap_storefront_listings")
+        .upsert({ offer_id: offer.id, storefront_height: data.storefrontHeight }, { onConflict: "offer_id" });
+      storefront = !error;
+    }
+    return { ...offer, storefront };
   });
 
 export const inspectOfferFn = createServerFn({ method: "POST" })
