@@ -1,3 +1,4 @@
+import { nostrNow, syncClock } from "./clock";
 // BitChat geohash channel bridge, matched to BitChat's protocol (iOS + Android, checked 2026-11-14):
 // - Messages are kind-20000 events tagged ["g", geohash], optional ["n", nick].
 // - Phones only use the 5 relays CLOSEST to the geohash centre, from the relay list
@@ -135,7 +136,8 @@ export async function signBitchat(gh: string, nick: string, text: string): Promi
   const sk = geohashKey(gh);
   const base = [["g", gh]];
   if (nick.trim()) base.push(["n", nick.trim().slice(0, 24)]);
-  const created_at = Math.floor(Date.now() / 1000);
+  await syncClock();
+  const created_at = nostrNow();
   const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: base, content });
   return finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
 }
@@ -223,12 +225,13 @@ export async function signBitmapRoom(height: number, nick: string, text: string,
   const content = text.trim().slice(0, 500);
   if (!content) throw new Error("EMPTY MESSAGE");
   const sk = bitmapRoomKey(height);
-  const created_at = Math.floor(Date.now() / 1000);
+  await syncClock();
+  const created_at = nostrNow();
   const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: [...bitmapRoomTags(height, nick), ...(proof ? [proofTag(proof)] : [])], content });
   return finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
 }
 
-export async function postBitmapRoom(height: number, nick: string, text: string, proof?: RoomProof | null) {
+export async function postBitmapRoom(height: number, nick: string, text: string, proof?: RoomProof | null, retried = false): Promise<{ line: BitchatLine; outcome: RelayOutcome }> {
   const e = await signBitmapRoom(height, nick, text, proof);
   const relays = [...BITMAP_ROOM_RELAYS];
   const timeout = <T,>(p: Promise<T>) => Promise.race([p, new Promise<T>((_, no) => setTimeout(() => no(new Error("TIMED OUT")), 8000))]);
@@ -238,5 +241,9 @@ export async function postBitmapRoom(height: number, nick: string, text: string,
     if (x.status === "fulfilled") outcome.accepted.push(relays[i]!);
     else outcome.rejected.push({ url: relays[i]!, reason: String((x.reason as Error)?.message ?? x.reason).slice(0, 80) });
   });
+  if (!retried && !outcome.accepted.length && outcome.rejected.some((x) => /created_at|expired/i.test(x.reason))) {
+    await syncClock(true);
+    return postBitmapRoom(height, nick, text, proof, true);
+  }
   return { line: { ...toLine(e), mine: true, proof: proof ?? null }, outcome };
 }
