@@ -32,6 +32,7 @@ export const issuePlayerSharesFn = createServerFn({ method: "POST" })
       _address: data.address,
       _player_id: data.playerId,
       _shares_offered: data.sharesOffered,
+      _user_id: context.userId,
     });
     if (error) throw new Error(error.message);
     const row = (Array.isArray(rows) ? rows[0] : rows) as

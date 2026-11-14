@@ -2,6 +2,17 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { DP_BATCH_MAX, POOL_HERD, TEST_BOUNTY_BITS, keyFromCollision, poolParams, validDp } from "@/lib/kangaroo-pool";
 
+/** Hex SHA-256 of a session token; only this hash is stored. */
+async function tokenHash(token: string) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function newToken() {
+  const b = new Uint8Array(32); crypto.getRandomValues(b);
+  return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
 async function admin() {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 }
@@ -74,12 +85,13 @@ export const joinSpeedBountyFn = createServerFn({ method: "POST" })
     for (let i = 0; i < 6; i++) {
       const { count } = await db.from("speed_bounty_sessions").select("id", { count: "exact", head: true }).eq("bounty_id", b.id);
       const seq = (count ?? 0) + i;
-      const { data: row, error } = await db.from("speed_bounty_sessions").insert({ bounty_id: b.id, seq, name: data.name }).select("id, seq").single();
+      const token = newToken();
+      const { data: row, error } = await db.from("speed_bounty_sessions").insert({ bounty_id: b.id, seq, name: data.name, token_hash: await tokenHash(token) }).select("id, seq").single();
       if (!error && row) {
         const { startsFor } = await import("@/lib/kangaroo-pool");
         const starts = startsFor(b.seed, row.seq, b.herd, BigInt("0x" + b.lo_hex), BigInt("0x" + b.hi_hex))
           .map((s) => ({ tame: s.tame, dHex: s.d.toString(16) }));
-        return { ok: true as const, session: row.id, seq: row.seq, bounty: publicBounty(b), starts };
+        return { ok: true as const, session: row.id, token, seq: row.seq, bounty: publicBounty(b), starts };
       }
     }
     return { ok: false as const, error: "Pool busy, try again." };
@@ -87,8 +99,9 @@ export const joinSpeedBountyFn = createServerFn({ method: "POST" })
 
 /** Submit distinguished points. Each is recomputed on the server; a tame/wild meeting is checked against the key. */
 export const submitDpsFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { session: string; steps: number; dps: { xHex: string; tame: boolean; dHex: string }[] }) => ({
-    session: String(d.session),
+  .inputValidator((d: { session: string; token: string; steps: number; dps: { xHex: string; tame: boolean; dHex: string }[] }) => ({
+    session: String(d.session).slice(0, 64),
+    token: String(d.token ?? "").toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 64),
     steps: Math.max(0, Math.min(Number(d.steps) || 0, 1e12)),
     dps: (Array.isArray(d.dps) ? d.dps : []).slice(0, DP_BATCH_MAX).map((p) => ({
       xHex: String(p.xHex).toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 64), tame: !!p.tame,
@@ -97,8 +110,11 @@ export const submitDpsFn = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     const db = await admin();
-    const { data: s } = await db.from("speed_bounty_sessions").select("id, bounty_id, name, dps").eq("id", data.session).maybeSingle();
-    if (!s) return { ok: false as const, error: "Unknown session" };
+    const { data: s } = await db.from("speed_bounty_sessions").select("id, bounty_id, name, dps, token_hash").eq("id", data.session).maybeSingle();
+    // Only the hunter who joined holds the session token; anyone else is refused.
+    if (!s || !s.token_hash || data.token.length !== 64 || s.token_hash !== (await tokenHash(data.token))) {
+      return { ok: false as const, error: "Session expired — press start again." };
+    }
     const { data: b } = await db.from("speed_bounties").select("*").eq("id", s.bounty_id).single();
     if (!b) return { ok: false as const, error: "Unknown bounty" };
     if (b.status !== "open") return { ok: true as const, accepted: 0, rejected: 0, solved: true, winnerName: b.winner_name };

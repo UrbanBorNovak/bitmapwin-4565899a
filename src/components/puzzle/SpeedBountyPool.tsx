@@ -20,6 +20,7 @@ export function SpeedBountyPool() {
   const worker = useRef<Worker | null>(null);
   const queue = useRef<Dp[]>([]);
   const session = useRef<string | null>(null);
+  const token = useRef<string>("");
   const steps = useRef(0);
 
   const refresh = () => getState().then(setSt).catch(() => {});
@@ -37,7 +38,7 @@ export function SpeedBountyPool() {
       if (!session.current) return;
       const batch = queue.current.splice(0, 64);
       try {
-        const r = await submit({ data: { session: session.current, steps: steps.current, dps: batch } });
+        const r = await submit({ data: { session: session.current, token: token.current, steps: steps.current, dps: batch } });
         if (!r.ok) { setMsg(r.error); return; }
         setMine((m) => ({ ...m, sent: m.sent + batch.length, accepted: m.accepted + r.accepted }));
         if (r.solved) { stop(); setMsg(`TRAP CLOSED · winner ${r.winnerName}`); refresh(); }
@@ -51,7 +52,7 @@ export function SpeedBountyPool() {
     localStorage.setItem("kangaroo-hunter", name);
     const r = await join({ data: { name } }).catch((e) => ({ ok: false as const, error: (e as Error).message }));
     if (!r.ok) { setMsg(r.error); return; }
-    session.current = r.session; steps.current = 0; queue.current = [];
+    session.current = r.session; token.current = r.token; steps.current = 0; queue.current = [];
     setMine({ steps: 0, ms: 0, sent: 0, accepted: 0 });
     const w = new Worker(new URL("../../lib/kangaroo-pool-worker.ts", import.meta.url), { type: "module" });
     worker.current = w;
