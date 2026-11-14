@@ -56,7 +56,16 @@ function decodeCBOR(b) {
     }
     if (t == 4) { const n = L(a), r = []; for (let k = 0; k < n; k++) r.push(I()); return r; }
     if (t == 5) { const n = L(a), o = {}; for (let k = 0; k < n; k++) { const key = I(); o[key] = I(); } return o; }
-    if (t == 7) return a == 21 ? true : a == 20 ? false : null;
+    if (t == 7) {
+      if (a == 25 || a == 26 || a == 27) {
+        const n = a == 25 ? 2 : a == 26 ? 4 : 8, dv = new DataView(b.buffer, b.byteOffset + i, n); i += n;
+        if (n == 4) return dv.getFloat32(0);
+        if (n == 8) return dv.getFloat64(0);
+        const h = dv.getUint16(0), e = (h >> 10) & 31, m = h & 1023, sg = h & 32768 ? -1 : 1;
+        return sg * (e == 0 ? m * Math.pow(2, -24) : e == 31 ? (m ? NaN : Infinity) : (1024 + m) * Math.pow(2, e - 25));
+      }
+      return a == 21 ? true : a == 20 ? false : null;
+    }
     return null;
   };
   return I();
@@ -183,7 +192,7 @@ function makeLabelCanvas(F, back) {
     g.fillText(F.h + ".BITMAP", 48, 92);
     g.font = "28px monospace";
     g.fillText("BITCOIN L1 · BLOCK LAND", 48, 140);
-    const subsStr = Object.entries(F.subs || {}).map(([k, v]) => k[0].toUpperCase() + v).join("   ");
+    const subsStr = Object.entries(F.subs || {}).filter(([k]) => k).map(([k, v]) => String(k)[0].toUpperCase() + (typeof v === "number" ? v : "")).join("   ");
     g.fillText(subsStr, 48, 190);
     g.fillText("CERT " + (F.cert || "BW-CERT"), 48, 238);
 
@@ -233,7 +242,12 @@ try {
 }
 
 if (THREE) {
-  start3D(THREE);
+  start3D(THREE).catch((e) => {
+    console.error("slab 3D failed", e);
+    const fb = document.getElementById("fallback"), c = document.getElementById("c");
+    if (fb) fb.style.display = "grid";
+    if (c) c.style.display = "none";
+  });
 }
 
 const SKINS={acrylic:{c:0xeaf2f5,o:0.35,r:0.05,m:0,ir:0,t:0.96,pl:0x070b10,tr:null,l:[0.075,0.6,0.18],rb:0,fo:0},

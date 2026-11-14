@@ -39,7 +39,8 @@ export function certFacts(height: number, txCount: number, hash: string | null, 
     tx: txCount,
     grade: g.grade,
     name: g.name,
-    subs: Object.fromEntries(g.subs.map((s) => [s.key, s.score])),
+    // whole numbers only: the live on-chain master decodes CBOR integers
+    subs: Object.fromEntries(g.subs.map((s) => [s.key, Math.round(s.score)])),
     cert: g.cert,
   };
 }
