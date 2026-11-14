@@ -55,6 +55,8 @@ function SlabPage() {
   const sat = satProof.data?.sat ?? null;
   const data = useMemo(() => {
     if (!block.data || block.data.classes.length === 0) return null;
+    // grades come only from complete facts; a missing sat or partial block is never graded around
+    if (missingGradeFacts(block.data, sat)) return null;
     const layout = layoutFromSizeClasses(block.data.classes);
     const grade = gradeSlab({ height, txCount: block.data.txCount, hash: block.data.hash, layoutWidth: layout.width, layoutHeight: layout.height, parcelSizes: layout.parcels.map((p) => p.size), sat });
     return { layout, grade, hash: block.data.hash };
@@ -92,9 +94,17 @@ function SlabPage() {
           {block.isPending ? (
             <Status text={`LOADING BLOCK ${height.toLocaleString("en-US")}…`} />
           ) : block.isError ? (
-            <Status text="COULD NOT LOAD THIS BLOCK · TRY AGAIN" />
+            <Retry text={`COULD NOT READ THIS BLOCK · ${(block.error as Error).message}`} busy={block.isFetching} onRetry={() => block.refetch()} />
+          ) : !block.data ? (
+            <Status text="NO BLOCK AT THIS HEIGHT YET" />
+          ) : !data && satProof.isPending ? (
+            <Status text="READING THE SAT…" />
           ) : !data ? (
-            <Status text="NO BLOCK DATA FOR THIS HEIGHT YET" />
+            <Retry
+              text={`GRADE NEEDS COMPLETE DATA · MISSING: ${missingGradeFacts(block.data, sat) ?? "block data"}`}
+              busy={block.isFetching || satProof.isFetching}
+              onRetry={() => { block.refetch(); satProof.refetch(); }}
+            />
           ) : (
             <ClientOnly fallback={<Status text="PREPARING SLAB…" />}>
               <Suspense fallback={<Status text="PREPARING SLAB…" />}>
@@ -237,6 +247,15 @@ function RarityPanel({ height, hash }: { height: number; hash: string | null }) 
         </ul>
       ) : <p className="font-mono text-xs text-muted-foreground">NO MATHEMATICAL TRAITS</p>}
     </section>
+  );
+}
+
+function Retry({ text, busy, onRetry }: { text: string; busy: boolean; onRetry: () => void }) {
+  return (
+    <div className="flex h-full min-h-64 flex-col items-center justify-center gap-3 px-6 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
+      <span>{text}</span>
+      <button type="button" disabled={busy} onClick={onRetry} className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{busy ? "RETRYING…" : "RETRY"}</button>
+    </div>
   );
 }
 
