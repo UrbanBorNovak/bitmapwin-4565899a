@@ -26,39 +26,39 @@ export function OasisFirstWalk() {
     setOpen(false);
   };
   return (
-    <div className="pointer-events-none absolute bottom-44 right-3 z-[80] w-[17rem] md:bottom-6">
-      <div className="hud-panel pointer-events-auto font-mono text-[11px]">
-        <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
-          <span className="label text-signal">FIRST WALK</span>
-          <button type="button" onClick={close} aria-label="Close guide" className="text-muted-foreground hover:text-foreground">
-            <X className="size-3.5" />
-          </button>
-        </div>
-        <div className="space-y-2 px-3 py-2">
+    <section aria-label="First walk guide" className="hud-panel border-x border-t border-border font-mono text-[11px]">
+      <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
+        <span className="label text-signal">FIRST WALK</span>
+        <button type="button" onClick={close} aria-label="Close guide" className="grid size-8 place-items-center text-muted-foreground hover:text-foreground">
+          <X className="size-3.5" />
+        </button>
+      </div>
+      <div className="flex flex-wrap items-start gap-x-6 gap-y-3 px-3 py-2">
+        <div className="min-w-[14rem] flex-1 space-y-1.5">
           <p className="text-foreground">
             You are standing on <span className="text-bitcoin">{height.toLocaleString("en-US")}.bitmap</span>, the land of Bitcoin block #{height.toLocaleString("en-US")}. Anyone can look it up.
           </p>
-          <ol className="space-y-0.5 text-muted-foreground">
+          <ol className="flex flex-wrap gap-x-4 gap-y-0.5 text-muted-foreground">
             <li><span className="text-signal">1</span> Walk around · no wallet needed</li>
             <li><span className="text-signal">2</span> Click a BITMAP to see its record</li>
             <li><span className="text-signal">3</span> Own, build or trade when you want</li>
           </ol>
-          <div>
-            <div className="label mb-1 text-muted-foreground">JUMP TO A FAMOUS BLOCK</div>
-            <div className="grid grid-cols-2 gap-1">
-              {FIRST_WALK_LANDMARKS.map((l) => (
-                <Link key={l.height} to="/oasis" search={{ height: l.height }} reloadDocument className="border border-border px-2 py-1 text-foreground hover:border-signal hover:text-signal">
-                  {l.label}<span className="block text-[10px] text-muted-foreground">#{l.height.toLocaleString("en-US")}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-1 border-t border-border pt-2">
-            <Link to="/marketplace" className="flex-1 border border-border px-2 py-1 text-center text-bitcoin hover:border-bitcoin">OWN LAND</Link>
-            <Link to="/forge" className="flex-1 border border-border px-2 py-1 text-center text-bitcoin hover:border-bitcoin">TRY BUILDING</Link>
+        </div>
+        <div className="min-w-[14rem]">
+          <div className="label mb-1 text-muted-foreground">JUMP TO A FAMOUS BLOCK</div>
+          <div className="grid grid-cols-4 gap-1">
+            {FIRST_WALK_LANDMARKS.map((l) => (
+              <Link key={l.height} to="/oasis" search={{ height: l.height }} reloadDocument className="border border-border px-2 py-1 text-foreground hover:border-signal hover:text-signal">
+                {l.label}<span className="block text-[10px] text-muted-foreground">#{l.height.toLocaleString("en-US")}</span>
+              </Link>
+            ))}
           </div>
         </div>
+        <div className="flex gap-1 self-end">
+          <Link to="/marketplace" className="border border-border px-2 py-1.5 text-center text-bitcoin hover:border-bitcoin">OWN LAND</Link>
+          <Link to="/forge" className="border border-border px-2 py-1.5 text-center text-bitcoin hover:border-bitcoin">TRY BUILDING</Link>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
