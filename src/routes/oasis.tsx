@@ -21,6 +21,7 @@ import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 import { OasisBroadcastControl } from "@/components/game/OasisBroadcastControl";
 import { Button } from "@/components/ui/button";
 import { OasisControlsHint } from "@/components/game/OasisControlsHint";
+import { OasisFirstWalk } from "@/components/game/OasisFirstWalk";
 import { OasisBootScreen } from "@/components/game/OasisBootScreen";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
@@ -207,6 +208,7 @@ function OasisPage() {
         </OasisWorldGuard>
         )}
         {entered ? <OasisControlsHint forceOpen={hintNonce} /> : null}
+        {entered ? <OasisFirstWalk /> : null}
       </div>
     </div>
   );
