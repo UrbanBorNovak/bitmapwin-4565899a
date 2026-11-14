@@ -1,5 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Bitcoin, Boxes, MapPin, Search, Users } from "lucide-react";
+import oasisHero from "@/assets/oasis-hero.jpg";
+
+const PILLARS = [
+  { Icon: Bitcoin, t: "BITCOIN NATIVE", b: "1 block = 1 BITMAP" },
+  { Icon: MapPin, t: "OWN & TRADE", b: "Ownership read from chain" },
+  { Icon: Boxes, t: "BUILD", b: "Voxel builds & worlds" },
+  { Icon: Users, t: "COMMUNITY", b: "Made by builders" },
+];
 
 type Target =
   | { kind: "block"; height: number }
@@ -48,43 +57,60 @@ export function OmnibarTerminal() {
 
   return (
     <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
-      <div className="relative overflow-hidden border border-border-strong bg-card px-5 py-10 md:px-10 md:py-14">
-        <div className="pointer-events-none absolute inset-0 dot-bg" />
-        <div className="relative mx-auto max-w-3xl text-center">
-          <div className="label text-signal">BITCOIN-NATIVE WORLDS</div>
-          <h1 className="display mt-3 text-4xl leading-[0.95] md:text-6xl">
-            THE OPERATING SYSTEM <span className="text-bitcoin">FOR BLOCKSPACE</span>
+      <div className="relative overflow-hidden border border-border-strong bg-background">
+        <img src={oasisHero} alt="" width={1920} height={1088} className="pointer-events-none absolute inset-0 h-full w-full object-cover object-right opacity-80" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/10" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent" />
+        <div className="relative max-w-3xl px-5 py-12 md:px-12 md:py-20">
+          <h1 className="display text-3xl font-bold leading-[1.02] md:text-5xl">
+            Every Bitcoin block <span className="text-bitcoin">is land you can walk,</span> own, and build on.
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
-            Look up any BITMAP, wallet or inscription. Ownership is read from Bitcoin.
+          <p className="mt-5 max-w-xl text-sm text-muted-foreground md:text-lg">
+            BitmapWin turns every block into ownable voxel land in the Oasis. Ownership lives on Bitcoin. The world lives here.
           </p>
           <form
-            className="mt-7 flex border border-border-strong bg-background focus-within:border-bitcoin"
-            onSubmit={(e) => { e.preventDefault(); go(); }}
+            className="mt-7 flex max-w-2xl flex-col border border-border-strong bg-card/70 backdrop-blur-md focus-within:border-bitcoin sm:flex-row"
+            onSubmit={(e) => { e.preventDefault(); if (!q.trim()) { navigate({ to: "/oasis" }); return; } go(); }}
           >
-            <input
-              ref={ref}
-              value={q}
-              onChange={(e) => { setQ(e.target.value); setErr(false); }}
-              placeholder="Block #, 840000.bitmap, inscription id or bc1… address"
-              aria-label="Search BITMAP, wallet or inscription"
-              className="min-w-0 flex-1 bg-transparent px-4 py-4 font-mono text-sm outline-none placeholder:text-muted-foreground"
-            />
-            <kbd className="hidden self-center px-3 font-mono text-[10px] text-muted-foreground sm:block">/</kbd>
-            <button type="submit" className="bg-bitcoin px-5 font-mono text-xs font-bold text-primary-foreground hover:opacity-90">
-              SEARCH ↵
+            <div className="flex min-w-0 flex-1 items-center">
+              <Search className="ml-4 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <input
+                ref={ref}
+                value={q}
+                onChange={(e) => { setQ(e.target.value); setErr(false); }}
+                placeholder="Search block, 840000.bitmap, address or inscription…"
+                aria-label="Search BITMAP, wallet or inscription"
+                className="min-w-0 flex-1 bg-transparent px-3 py-4 font-mono text-sm outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+            <button type="submit" className="flex items-center justify-center gap-2 bg-bitcoin px-6 py-4 text-sm font-bold text-primary-foreground hover:opacity-90">
+              {q.trim() ? "Search" : "Enter the Oasis"} <ArrowRight className="h-4 w-4" aria-hidden />
             </button>
           </form>
           {err && <p className="mt-2 font-mono text-xs text-destructive" role="alert">Not a block number, address or inscription id.</p>}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
             <span className="label">TRENDING:</span>
             {TRENDING.map((h) => (
               <Link key={h} to="/bitmap/$block" params={{ block: String(h) }} className="hover:text-bitcoin">
                 {h.toLocaleString("en-US")}.bitmap
               </Link>
             ))}
-            <Link to="/marketplace" className="hover:text-bitcoin">Floors</Link>
           </div>
+          <div className="mt-8 grid max-w-2xl grid-cols-2 gap-4 md:grid-cols-4">
+            {PILLARS.map(({ Icon, t, b }) => (
+              <div key={t} className="flex gap-2">
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-bitcoin" aria-hidden />
+                <div>
+                  <div className="font-mono text-[11px] font-bold text-bitcoin">{t}</div>
+                  <div className="text-xs text-muted-foreground">{b}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="relative mx-5 mb-5 border border-border-strong bg-card/70 p-4 backdrop-blur-md md:absolute md:bottom-6 md:right-6 md:m-0">
+          <div className="flex items-center gap-2 font-mono text-[11px] text-signal"><span className="h-2 w-2 rounded-full bg-signal" />OASIS · NO WALLET NEEDED</div>
+          <p className="mt-2 max-w-[16rem] text-xs text-muted-foreground">1 block = 1 BITMAP. You own the sat, you own the land.</p>
         </div>
       </div>
 
