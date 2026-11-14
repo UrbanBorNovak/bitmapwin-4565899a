@@ -103,7 +103,7 @@ function BitchatRooms() {
                   <p>CANONICAL: <a className="text-signal underline" href={`https://ordinals.com/inscription/${dossier.inscriptionId}`} target="_blank" rel="noreferrer">{dossier.inscriptionId.slice(0, 10)}…{dossier.inscriptionId.slice(-4)}</a></p>
                   {dossier.sat != null && <p>SAT: {dossier.sat.toLocaleString("en-US")}</p>}
                   <p>SOURCE: {dossier.source}</p>
-                  <Link to="/slab" search={{ h: height } as never} className="text-primary underline">View land slab →</Link>
+                  <Link to="/slab" search={{ b: height }} className="text-primary underline">View land slab →</Link>
                 </div>
               ) : <p className="mt-1 text-muted-foreground">{dossier.error ?? "No canonical BITMAP found for this block — chat still works."}</p>}
           </section>
