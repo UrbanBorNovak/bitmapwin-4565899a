@@ -4,13 +4,13 @@ import { OmnibarTerminal } from "@/components/home/OmnibarTerminal";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BitmapWin — The Operating System for Blockspace" },
+      { title: "BitmapWin — Every Bitcoin Block Is Land" },
       {
         name: "description",
         content:
           "Explore Bitcoin-native worlds built on blockspace. Look up any BITMAP, follow live on-chain trades, and step into community-built 3D districts.",
       },
-      { property: "og:title", content: "BitmapWin — The Operating System for Blockspace" },
+      { property: "og:title", content: "BitmapWin — Every Bitcoin Block Is Land" },
       {
         property: "og:description",
         content:
