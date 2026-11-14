@@ -120,7 +120,15 @@ export function subscribeBitchat(gh: string, onLine: (l: BitchatLine) => void) {
   return () => sub.close();
 }
 
-export async function postBitchat(gh: string, nick: string, text: string) {
+/** Which of this channel's relays currently hold an open socket. */
+export function bitchatRelayStatus(gh: string): { url: string; connected: boolean }[] {
+  const live = pool?.listConnectionStatus() ?? new Map<string, boolean>();
+  const norm = (u: string) => u.replace(/\/$/, "");
+  return bitchatRelaysFor(gh).map((url) => ({ url, connected: [...live.entries()].some(([u, ok]) => ok && norm(u) === url) }));
+}
+
+/** Mine proof of work and sign a BitChat channel message (nothing is sent yet). */
+export async function signBitchat(gh: string, nick: string, text: string): Promise<Event> {
   const content = text.trim().slice(0, 500);
   if (!content) throw new Error("EMPTY MESSAGE");
   const sk = geohashKey(gh);
@@ -128,10 +136,34 @@ export async function postBitchat(gh: string, nick: string, text: string) {
   if (nick.trim()) base.push(["n", nick.trim().slice(0, 24)]);
   const created_at = Math.floor(Date.now() / 1000);
   const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: base, content });
-  const e = finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
+  return finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
+}
+
+/** Relay answers only. Acceptance means a relay stored/forwarded it, never that anyone read it. */
+export type RelayOutcome = { accepted: string[]; rejected: { url: string; reason: string }[]; of: number };
+export type SendState = { kind: "sending" } | { kind: "accepted"; outcome: RelayOutcome } | { kind: "failed"; outcome?: RelayOutcome; reason: string };
+
+export function sendStateFrom(outcome: RelayOutcome): SendState {
+  return outcome.accepted.length > 0
+    ? { kind: "accepted", outcome }
+    : { kind: "failed", outcome, reason: outcome.rejected[0]?.reason || "NO RELAY ANSWERED" };
+}
+
+export async function publishBitchat(gh: string, e: Event): Promise<RelayOutcome> {
   const relays = bitchatRelaysFor(gh);
-  const r = await Promise.allSettled(getPool().publish(relays, e));
-  const ok = r.filter((x) => x.status === "fulfilled").length;
-  if (!ok) throw new Error("NO BITCHAT RELAY ACCEPTED THE MESSAGE");
-  return { line: { ...toLine(e), mine: true }, relays: ok, of: relays.length };
+  const timeout = <T,>(p: Promise<T>) => Promise.race([p, new Promise<T>((_, no) => setTimeout(() => no(new Error("TIMED OUT")), 8000))]);
+  const r = await Promise.allSettled(getPool().publish(relays, e).map(timeout));
+  const out: RelayOutcome = { accepted: [], rejected: [], of: relays.length };
+  r.forEach((x, i) => {
+    if (x.status === "fulfilled") out.accepted.push(relays[i]!);
+    else out.rejected.push({ url: relays[i]!, reason: String((x.reason as Error)?.message ?? x.reason).slice(0, 80) });
+  });
+  return out;
+}
+
+export async function postBitchat(gh: string, nick: string, text: string) {
+  const e = await signBitchat(gh, nick, text);
+  const o = await publishBitchat(gh, e);
+  if (!o.accepted.length) throw new Error("NO BITCHAT RELAY ACCEPTED THE MESSAGE");
+  return { line: { ...toLine(e), mine: true }, relays: o.accepted.length, of: o.of };
 }

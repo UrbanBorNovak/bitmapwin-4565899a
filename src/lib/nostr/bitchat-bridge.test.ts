@@ -25,3 +25,14 @@ describe("bitchat bridge", () => {
     expect(leadingZeroBits(getEventHash({ ...t, tags }))).toBeGreaterThanOrEqual(12);
   });
 });
+
+import { sendStateFrom } from "./bitchat-bridge";
+describe("bitchat send status", () => {
+  it("one relay accepting counts as accepted", () => {
+    expect(sendStateFrom({ accepted: ["wss://a"], rejected: [{ url: "wss://b", reason: "x" }], of: 2 }).kind).toBe("accepted");
+  });
+  it("no relay accepting is a failure with the relay's reason", () => {
+    const s = sendStateFrom({ accepted: [], rejected: [{ url: "wss://b", reason: "pow: difficulty 8<12" }], of: 1 });
+    expect(s).toMatchObject({ kind: "failed", reason: "pow: difficulty 8<12" });
+  });
+});
