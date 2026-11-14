@@ -41,34 +41,27 @@ export function missingGradeFacts(b: BlockFacts, sat: number | null): string | n
 
 /* Background pre-grades run at most two at a time; the active BITMAP jumps the line. */
 export const BACKGROUND_LIMIT = 2;
-type Job = { key: number; run: () => void };
+type Job = { key: number; run: (slot: boolean) => void };
 let running = 0;
 const waiting: Job[] = [];
 const promoted = new Set<number>();
 
 function next() {
-  while (running < BACKGROUND_LIMIT && waiting.length) waiting.shift()!.run();
+  while (running < BACKGROUND_LIMIT && waiting.length) waiting.shift()!.run(true);
 }
 
 export function limited<T>(key: number, work: () => Promise<T>, priority = false): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    let started = false;
-    const run = () => {
-      if (started) return;
-      started = true;
-      running++;
+    const run = (slot: boolean) => {
+      if (slot) running++;
       work().then(resolve, reject).finally(() => {
-        running--;
+        if (slot) running--;
         next();
       });
     };
-    if (priority || promoted.has(key)) {
-      // priority work runs now, outside the background limit
-      started = true;
-      work().then(resolve, reject);
-      return;
-    }
-    waiting.push({ key, run: () => run() });
+    // priority work runs now, outside the background limit
+    if (priority || promoted.has(key)) return run(false);
+    waiting.push({ key, run });
     next();
   });
 }
@@ -79,12 +72,7 @@ export function promoteGrade(key: number | undefined) {
   if (key == null) return;
   promoted.add(key);
   const i = waiting.findIndex((j) => j.key === key);
-  if (i >= 0) {
-    const [job] = waiting.splice(i, 1);
-    job!.run();
-    running--; // promoted job does not hold a background slot
-    next();
-  }
+  if (i >= 0) waiting.splice(i, 1)[0]!.run(false);
 }
 
 /** Test hook. */
