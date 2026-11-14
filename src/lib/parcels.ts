@@ -34,6 +34,8 @@ export type ParcelScan = {
   maxParcels: number | null;
   childrenScanned: number;
   truncated: boolean;
+  /** true when an ord/mempool read failed (not "not found"): the parcel list or holders may be missing entries. */
+  incomplete?: boolean;
   parcels: ChainParcel[];
   /** Every scanned child inscription, so the UI can render their content. */
   children: ChainChild[];
