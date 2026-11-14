@@ -36,3 +36,28 @@ describe("bitchat send status", () => {
     expect(s).toMatchObject({ kind: "failed", reason: "pow: difficulty 8<12" });
   });
 });
+
+import { BITMAP_ROOM_RELAYS, bitmapRoomTags, isBitmapRoomEvent, roomHeight } from "./bitchat-bridge";
+describe("BW-ROOMS-1", () => {
+  it("labels a room with b = block height", () => {
+    expect(bitmapRoomTags(840000, " Urban ")).toEqual([["b", "840000"], ["n", "Urban"]]);
+  });
+  it("only accepts kind 20000 with the exact height", () => {
+    expect(isBitmapRoomEvent({ kind: 20000, tags: [["b", "840000"]] }, 840000)).toBe(true);
+    expect(isBitmapRoomEvent({ kind: 20000, tags: [["b", "84000"]] }, 840000)).toBe(false);
+    expect(isBitmapRoomEvent({ kind: 1, tags: [["b", "840000"]] }, 840000)).toBe(false);
+  });
+  it("ignores BitChat location messages that also carry b", () => {
+    expect(isBitmapRoomEvent({ kind: 20000, tags: [["b", "840000"], ["g", "u2mw"]] }, 840000)).toBe(false);
+  });
+  it("uses the same five relays for every room", () => {
+    expect(BITMAP_ROOM_RELAYS).toHaveLength(5);
+    expect(new Set(BITMAP_ROOM_RELAYS).size).toBe(5);
+  });
+  it("accepts only whole non-negative heights", () => {
+    expect(roomHeight("840000")).toBe(840000);
+    expect(roomHeight(0)).toBe(0);
+    expect(roomHeight("-1")).toBeNull();
+    expect(roomHeight("1.5")).toBeNull();
+  });
+});
