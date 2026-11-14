@@ -218,18 +218,10 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
               if (draft.trim()) send.mutate();
             }}
           >
-            <input
-              value={district}
-              onChange={(e) => setDistrict(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="DISTRICT BLOCK (OPTIONAL)"
-              aria-label="District block height"
-              inputMode="numeric"
-              className="w-full border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
-            />
             <textarea
               value={draft}
               maxLength={MAP_CHAT_MAX_LENGTH}
-              rows={2}
+              rows={1}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -237,7 +229,7 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
                   if (draft.trim()) send.mutate();
                 }
               }}
-              placeholder="TALK ABOUT THE LAND…"
+              placeholder="SAY SOMETHING… (ENTER TO SEND)"
               aria-label="Map chat message"
               className="w-full resize-none border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
             />
