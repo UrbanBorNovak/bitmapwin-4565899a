@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { encodeGeohash, isGeohash, postBitchat, subscribeBitchat, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
+import { bitchatRelaysFor, encodeGeohash, isGeohash, postBitchat, subscribeBitchat, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
 
 const GH_KEY = "bitmap.bitchat.geohash";
 const NICK_KEY = "bitmap.bitchat.nick";
@@ -13,6 +13,8 @@ export function BitchatChannel() {
   const [lines, setLines] = useState<BitchatLine[]>([]);
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [sent, setSent] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const list = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,13 +42,14 @@ export function BitchatChannel() {
     () => setErr("LOCATION NOT SHARED"),
   );
   const send = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || sending) return;
     try {
       localStorage.setItem(NICK_KEY, nick);
-      const l = await postBitchat(gh, nick, text);
-      setText("");
+      setSending(true);
+      const { line: l, relays, of } = await postBitchat(gh, nick, text);
+      setText(""); setSent(`SENT TO ${relays}/${of} BITCHAT RELAYS`);
       setLines((m) => (m.some((x) => x.id === l.id) ? m : [...m, l]));
-    } catch (e) { setErr(e instanceof Error ? e.message : "NOT SENT"); }
+    } catch (e) { setErr(e instanceof Error ? e.message : "NOT SENT"); } finally { setSending(false); }
   };
 
   return (
@@ -63,7 +66,7 @@ export function BitchatChannel() {
           <div className="text-signal">#{gh} · BITCHAT LOCATION CHANNEL · VIA NOSTR</div>
           <div ref={list} className="max-h-48 min-h-16 overflow-y-auto">
             {lines.length === 0 ? <p className="text-muted-foreground">No messages in the last hour.</p> : lines.map((l) => (
-              <p key={l.id}><span className="text-muted-foreground">{time(l.at)} </span><span className="text-bitcoin">&lt;{l.nick}&gt;</span> {l.text}</p>
+              <p key={l.id}><span className="text-muted-foreground">{time(l.at)} </span><span className={l.mine ? "text-signal" : "text-bitcoin"}>&lt;{l.nick}&gt;</span> {l.text}</p>
             ))}
           </div>
           <div className="flex gap-1">
@@ -71,8 +74,10 @@ export function BitchatChannel() {
               className="w-16 border border-border bg-background px-1 py-0.5" />
             <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} maxLength={500}
               placeholder="Message BitChat users here" aria-label="BitChat message" className="min-w-0 flex-1 border border-border bg-background px-1 py-0.5" />
-            <button onClick={send} className="border border-bitcoin px-1 text-bitcoin">SEND</button>
+            <button onClick={send} disabled={sending} className="border border-bitcoin px-1 text-bitcoin disabled:opacity-50">{sending ? "…" : "SEND"}</button>
           </div>
+          {sent && <p className="text-signal">{sent}</p>}
+          <details className="text-muted-foreground"><summary className="cursor-pointer">RELAYS ({bitchatRelaysFor(gh).length})</summary>{bitchatRelaysFor(gh).map((r) => <div key={r}>{r}</div>)}</details>
           <p className="text-muted-foreground">Messages are public and short-lived. Phones with the BitChat app see them in #{gh}.</p>
         </>
       ) : <p className="text-muted-foreground">Join a geohash channel to talk with BitChat users in that area.</p>}
