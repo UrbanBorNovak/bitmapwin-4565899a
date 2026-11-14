@@ -53,7 +53,8 @@ export function OasisRadio() {
     setStatus("SIGNING · PROOF OF WORK…");
     try {
       const proof = loadRoomProof(height, bitmapRoomPubkey(height));
-      const r = await postBitmapRoom(height, nick.trim() || "visitor", body, proof);
+      const { line, outcome: r } = await postBitmapRoom(height, nick.trim() || "visitor", body, proof);
+      setLines((p) => (p.some((x) => x.id === line.id) ? p : [...p, line]));
       setText("");
       setStatus(r.accepted.length ? `SENT · ${r.accepted.length}/${r.of} RELAYS` : "✕ NO RELAY ACCEPTED");
     } catch { setStatus("✕ SEND FAILED"); }
