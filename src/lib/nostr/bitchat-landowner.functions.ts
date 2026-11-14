@@ -30,7 +30,7 @@ export const roomRoleFn = createServerFn({ method: "POST" })
     if (!ADDRESS.test(String(d?.address ?? ""))) throw new Error("bad address");
     return { height: goodHeight(d?.height), address: String(d.address) };
   })
-  .handler(async ({ data }): Promise<{ role: "landowner" | "parcel" | null; parcels: number[]; unavailable?: string }> => {
+  .handler(async ({ data }): Promise<{ role: "landowner" | "parcel" | null; parcels: number[]; unavailable?: string | undefined }> => {
     const { bitmapHolderNow, liveParcelsHeldBy } = await import("@/lib/nostr/bitchat-landowner.server");
     const land = await bitmapHolderNow(data.height);
     if (land.status === "ok" && land.holder === data.address) return { role: "landowner", parcels: [] };
