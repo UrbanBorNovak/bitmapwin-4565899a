@@ -167,3 +167,30 @@ export async function postBitchat(gh: string, nick: string, text: string) {
   if (!o.accepted.length) throw new Error("NO BITCHAT RELAY ACCEPTED THE MESSAGE");
   return { line: { ...toLine(e), mine: true }, relays: o.accepted.length, of: o.of };
 }
+
+/* ---------- BITMAP rooms: kind-20000 on BitChat's geo relays, room tag ["r","bitmap-<height>"] ---------- */
+export const bitmapRoomTag = (height: number) => `bitmap-${height}`;
+
+export function subscribeBitmapRoom(height: number, relayGh: string, onLine: (l: BitchatLine) => void) {
+  const room = bitmapRoomTag(height);
+  const sub = getPool().subscribeMany(
+    bitchatRelaysFor(relayGh),
+    { kinds: [BITCHAT_KIND], "#r": [room], since: Math.floor(Date.now() / 1000) - 3600, limit: 200 },
+    { onevent: (e) => { if (verifyEvent(e) && e.tags.some((t) => t[0] === "r" && t[1] === room)) onLine(toLine(e)); } },
+  );
+  return () => sub.close();
+}
+
+export async function postBitmapRoom(height: number, relayGh: string, nick: string, text: string) {
+  const content = text.trim().slice(0, 500);
+  if (!content) throw new Error("EMPTY MESSAGE");
+  const room = bitmapRoomTag(height);
+  const sk = geohashKey(room);
+  const base = [["r", room], ["t", "bitmap"]];
+  if (nick.trim()) base.push(["n", nick.trim().slice(0, 24)]);
+  const created_at = Math.floor(Date.now() / 1000);
+  const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: base, content });
+  const e = finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
+  const o = await publishBitchat(relayGh, e);
+  return { line: { ...toLine(e), mine: true }, outcome: o };
+}

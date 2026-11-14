@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AvatarsRouteImport } from './routes/avatars'
 import { Route as BarterRouteImport } from './routes/barter'
 import { Route as BetaRouteImport } from './routes/beta'
+import { Route as BitchatRouteImport } from './routes/bitchat'
 import { Route as BiternamRouteImport } from './routes/biternam'
 import { Route as BotRouteImport } from './routes/bot'
 import { Route as BreedRouteImport } from './routes/breed'
@@ -237,6 +238,11 @@ const BarterRoute = BarterRouteImport.update({
 const BetaRoute = BetaRouteImport.update({
   id: '/beta',
   path: '/beta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BitchatRoute = BitchatRouteImport.update({
+  id: '/bitchat',
+  path: '/bitchat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BiternamRoute = BiternamRouteImport.update({
@@ -1134,6 +1140,7 @@ export interface FileRoutesByFullPath {
   '/avatars': typeof AvatarsRoute
   '/barter': typeof BarterRoute
   '/beta': typeof BetaRoute
+  '/bitchat': typeof BitchatRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
@@ -1320,6 +1327,7 @@ export interface FileRoutesByTo {
   '/avatars': typeof AvatarsRoute
   '/barter': typeof BarterRoute
   '/beta': typeof BetaRoute
+  '/bitchat': typeof BitchatRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
@@ -1503,6 +1511,7 @@ export interface FileRoutesById {
   '/avatars': typeof AvatarsRoute
   '/barter': typeof BarterRoute
   '/beta': typeof BetaRoute
+  '/bitchat': typeof BitchatRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
@@ -1691,6 +1700,7 @@ export interface FileRouteTypes {
     | '/avatars'
     | '/barter'
     | '/beta'
+    | '/bitchat'
     | '/biternam'
     | '/bot'
     | '/breed'
@@ -1877,6 +1887,7 @@ export interface FileRouteTypes {
     | '/avatars'
     | '/barter'
     | '/beta'
+    | '/bitchat'
     | '/biternam'
     | '/bot'
     | '/breed'
@@ -2059,6 +2070,7 @@ export interface FileRouteTypes {
     | '/avatars'
     | '/barter'
     | '/beta'
+    | '/bitchat'
     | '/biternam'
     | '/bot'
     | '/breed'
@@ -2246,6 +2258,7 @@ export interface RootRouteChildren {
   AvatarsRoute: typeof AvatarsRoute
   BarterRoute: typeof BarterRoute
   BetaRoute: typeof BetaRoute
+  BitchatRoute: typeof BitchatRoute
   BiternamRoute: typeof BiternamRoute
   BotRoute: typeof BotRoute
   BreedRoute: typeof BreedRoute
@@ -2436,6 +2449,13 @@ declare module '@tanstack/react-router' {
       path: '/beta'
       fullPath: '/beta'
       preLoaderRoute: typeof BetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bitchat': {
+      id: '/bitchat'
+      path: '/bitchat'
+      fullPath: '/bitchat'
+      preLoaderRoute: typeof BitchatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biternam': {
@@ -3831,6 +3851,7 @@ const rootRouteChildren: RootRouteChildren = {
   AvatarsRoute: AvatarsRoute,
   BarterRoute: BarterRoute,
   BetaRoute: BetaRoute,
+  BitchatRoute: BitchatRoute,
   BiternamRoute: BiternamRoute,
   BotRoute: BotRoute,
   BreedRoute: BreedRoute,
