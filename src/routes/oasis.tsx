@@ -154,6 +154,7 @@ function OasisPage() {
           <Link to="/play-guide" className="label text-bitcoin hover:text-foreground">GUIDE →</Link>
         </span>
       </div>
+      {entered ? <OasisFirstWalk /> : null}
       <div
         ref={shellRef}
         data-tour="map-world"
@@ -208,7 +209,6 @@ function OasisPage() {
         </OasisWorldGuard>
         )}
         {entered ? <OasisControlsHint forceOpen={hintNonce} /> : null}
-        {entered ? <OasisFirstWalk /> : null}
       </div>
     </div>
   );
