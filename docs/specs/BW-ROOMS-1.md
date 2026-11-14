@@ -52,6 +52,13 @@ or at least one valid parcel `<index>.<height>.bitmap` child (first claim per in
 index below the block's tx count). Parcel numbers come from that live lookup, never
 from the message. A failing proof shows as a plain visitor.
 
+Readers MUST fail closed: if a custody source cannot be reached (holder lookup,
+child scan, block tx count), the result is "unavailable" and no badge is shown,
+never "holds nothing" and never a cached earlier answer. A partial child scan never
+grants a parcel badge, because a missed earlier claim could invalidate it. Results
+are re-checked after 5 minutes; an unavailable check may be retried with the same
+signature.
+
 ## What this is not
 
 - Joining or posting alone does not prove BITMAP ownership. Anyone can post in any room; only a holder proof (above) earns a badge.
