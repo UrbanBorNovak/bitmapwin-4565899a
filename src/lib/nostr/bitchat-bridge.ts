@@ -9,6 +9,7 @@ import { SimplePool } from "nostr-tools/pool";
 import { finalizeEvent, getEventHash, getPublicKey, verifyEvent, type Event } from "nostr-tools/pure";
 import { hmac } from "@noble/hashes/hmac.js";
 import { sha256 } from "@noble/hashes/sha2.js";
+import { proofTag, readProofTag, type RoomProof } from "@/lib/nostr/bitchat-landowner";
 import geoRelays from "@/lib/vendor/bitchat-georelays.json";
 
 export const BITCHAT_KIND = 20000;
@@ -105,7 +106,7 @@ export async function mineNonce(t: { pubkey: string; created_at: number; kind: n
 let pool: SimplePool | null = null;
 const getPool = () => (pool ??= new SimplePool());
 
-export type BitchatLine = { id: string; nick: string; pubkey: string; text: string; at: number; mine?: boolean };
+export type BitchatLine = { id: string; nick: string; pubkey: string; text: string; at: number; mine?: boolean; proof?: { address: string; signature: string; issuedAt: number } | null };
 export function toLine(e: Event): BitchatLine {
   const nick = e.tags.find((t) => t[0] === "n")?.[1] || "anon";
   return { id: e.id, nick: `${nick}#${e.pubkey.slice(-4)}`, pubkey: e.pubkey, text: e.content.slice(0, 500), at: e.created_at };
@@ -210,22 +211,25 @@ export function subscribeBitmapRoom(height: number, onLine: (l: BitchatLine) => 
   const sub = getPool().subscribeMany(
     [...BITMAP_ROOM_RELAYS],
     { kinds: [BITCHAT_KIND], "#b": [String(height)], since: Math.floor(Date.now() / 1000) - 3600, limit: 200 },
-    { onevent: (e) => { if (verifyEvent(e) && isBitmapRoomEvent(e, height)) onLine(toLine(e)); } },
+    { onevent: (e) => { if (verifyEvent(e) && isBitmapRoomEvent(e, height)) onLine({ ...toLine(e), proof: readProofTag(e.tags) }); } },
   );
   return () => sub.close();
 }
 
-export async function signBitmapRoom(height: number, nick: string, text: string): Promise<Event> {
+/** Device-held public key used in a block room (what the landowner proof delegates to). */
+export const bitmapRoomPubkey = (height: number) => getPublicKey(bitmapRoomKey(height));
+
+export async function signBitmapRoom(height: number, nick: string, text: string, proof?: RoomProof | null): Promise<Event> {
   const content = text.trim().slice(0, 500);
   if (!content) throw new Error("EMPTY MESSAGE");
   const sk = bitmapRoomKey(height);
   const created_at = Math.floor(Date.now() / 1000);
-  const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: bitmapRoomTags(height, nick), content });
+  const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: [...bitmapRoomTags(height, nick), ...(proof ? [proofTag(proof)] : [])], content });
   return finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
 }
 
-export async function postBitmapRoom(height: number, nick: string, text: string) {
-  const e = await signBitmapRoom(height, nick, text);
+export async function postBitmapRoom(height: number, nick: string, text: string, proof?: RoomProof | null) {
+  const e = await signBitmapRoom(height, nick, text, proof);
   const relays = [...BITMAP_ROOM_RELAYS];
   const timeout = <T,>(p: Promise<T>) => Promise.race([p, new Promise<T>((_, no) => setTimeout(() => no(new Error("TIMED OUT")), 8000))]);
   const r = await Promise.allSettled(getPool().publish(relays, e).map(timeout));
@@ -234,5 +238,5 @@ export async function postBitmapRoom(height: number, nick: string, text: string)
     if (x.status === "fulfilled") outcome.accepted.push(relays[i]!);
     else outcome.rejected.push({ url: relays[i]!, reason: String((x.reason as Error)?.message ?? x.reason).slice(0, 80) });
   });
-  return { line: { ...toLine(e), mine: true }, outcome };
+  return { line: { ...toLine(e), mine: true, proof: proof ?? null }, outcome };
 }
