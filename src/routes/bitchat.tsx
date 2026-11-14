@@ -2,9 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
-import { bitchatRelayStatus, postBitmapRoom, subscribeBitmapRoom, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
+import { bitmapRoomRelayStatus, postBitmapRoom, subscribeBitmapRoom, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
 
-const RELAY_GH = "u2mwt";
 const FAMOUS = [0, 9, 715093, 717328, 840000];
 
 export const Route = createFileRoute("/bitchat")({
@@ -44,11 +43,11 @@ function BitchatRooms() {
     let alive = true;
     lookup({ data: { height } }).then((d) => alive && setDossier(d)).catch(() => alive && setDossier({ inscriptionId: null, sat: null, source: null, error: "LiveOCI lookup failed" }));
     const seen = new Set<string>();
-    const stop = subscribeBitmapRoom(height, RELAY_GH, (l) => {
+    const stop = subscribeBitmapRoom(height, (l) => {
       if (seen.has(l.id)) return; seen.add(l.id);
       setLines((p) => p.some((x) => x.id === l.id) ? p : [...p, l].sort((a, b) => a.at - b.at).slice(-200));
     });
-    const t = setInterval(() => { const s = bitchatRelayStatus(RELAY_GH); setRelayCount(s.length); setConnected(s.filter((x) => x.connected).length); }, 2000);
+    const t = setInterval(() => { const s = bitmapRoomRelayStatus(); setRelayCount(s.length); setConnected(s.filter((x) => x.connected).length); }, 2000);
     return () => { alive = false; stop(); clearInterval(t); };
   }, [height, lookup]);
 
@@ -58,7 +57,7 @@ function BitchatRooms() {
     if (height == null || !text.trim()) return;
     setStatus("SENDING…");
     try {
-      const r = await postBitmapRoom(height, RELAY_GH, nick, text);
+      const r = await postBitmapRoom(height, nick, text);
       if (r.outcome.accepted.length) { setLines((p) => p.some((x) => x.id === r.line.id) ? p : [...p, r.line]); setText(""); setStatus(`✓ ACCEPTED BY ${r.outcome.accepted.length}/${r.outcome.of} RELAYS`); }
       else setStatus(`✕ NOT SENT (${r.outcome.rejected[0]?.reason ?? "no relay answered"})`);
     } catch (e) { setStatus(`✕ NOT SENT (${(e as Error).message})`); }
@@ -123,7 +122,7 @@ function BitchatRooms() {
               <button onClick={send} className="rounded-md bg-primary px-4 py-2 font-mono text-sm text-primary-foreground">SEND</button>
             </div>
             {status && <p className="font-mono text-[11px] text-muted-foreground">{status}</p>}
-            <p className="font-mono text-[10px] text-muted-foreground">✓ ACCEPTED means a relay took it, not that anyone read it. BITMAP rooms use BitChat's relays and message format; the BitChat phone app does not list these rooms yet, so phone users only see its location channels.</p>
+            <p className="font-mono text-[10px] text-muted-foreground">✓ ACCEPTED means a relay took it, not that anyone read it. Rooms follow the open BW-ROOMS-1 format (BitChat-style messages on five shared relays). The BitChat phone app does not support it yet, so only people on this page see these rooms.</p>
           </div>
         </>
       )}

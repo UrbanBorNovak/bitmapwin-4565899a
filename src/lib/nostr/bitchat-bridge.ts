@@ -168,29 +168,71 @@ export async function postBitchat(gh: string, nick: string, text: string) {
   return { line: { ...toLine(e), mine: true }, relays: o.accepted.length, of: o.of };
 }
 
-/* ---------- BITMAP rooms: kind-20000 on BitChat's geo relays, room tag ["r","bitmap-<height>"] ---------- */
-export const bitmapRoomTag = (height: number) => `bitmap-${height}`;
+/* ---------- BW-ROOMS-1: one chat room per BITMAP block (docs/specs/BW-ROOMS-1.md) ----------
+ * kind-20000, room label ["b", "<height>"] (single letter so relays filter on it; BitChat uses g/n/t/r/m/p/x),
+ * fixed relay set shared by every client, per-room key derived from "bitmap|<height>". */
+export const BITMAP_ROOM_RELAYS = [
+  "wss://nos.lol",
+  "wss://relay.primal.net",
+  "wss://offchain.pub",
+  "wss://nostr.mom",
+  "wss://relay.nostr.net",
+] as const;
 
-export function subscribeBitmapRoom(height: number, relayGh: string, onLine: (l: BitchatLine) => void) {
-  const room = bitmapRoomTag(height);
+export function roomHeight(h: unknown): number | null {
+  const n = typeof h === "string" && /^\d{1,7}$/.test(h) ? Number(h) : h;
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n < 10_000_000 ? n : null;
+}
+
+export const bitmapRoomKey = (height: number) => hmac(sha256, seed(), new TextEncoder().encode(`bitchat-geo:bitmap|${height}`));
+
+/** Unsigned BW-ROOMS-1 tags (before proof of work). */
+export function bitmapRoomTags(height: number, nick: string): string[][] {
+  const tags = [["b", String(height)]];
+  if (nick.trim()) tags.push(["n", nick.trim().slice(0, 24)]);
+  return tags;
+}
+
+/** A received event belongs to the room only if it is kind 20000 with exactly this b value and no location/bridge label. */
+export function isBitmapRoomEvent(e: Pick<Event, "kind" | "tags">, height: number): boolean {
+  return e.kind === BITCHAT_KIND
+    && e.tags.some((t) => t[0] === "b" && t[1] === String(height))
+    && !e.tags.some((t) => t[0] === "g" || t[0] === "r");
+}
+
+export function bitmapRoomRelayStatus(): { url: string; connected: boolean }[] {
+  const live = pool?.listConnectionStatus() ?? new Map<string, boolean>();
+  const norm = (u: string) => u.replace(/\/$/, "");
+  return BITMAP_ROOM_RELAYS.map((url) => ({ url, connected: [...live.entries()].some(([u, ok]) => ok && norm(u) === url) }));
+}
+
+export function subscribeBitmapRoom(height: number, onLine: (l: BitchatLine) => void) {
   const sub = getPool().subscribeMany(
-    bitchatRelaysFor(relayGh),
-    { kinds: [BITCHAT_KIND], "#r": [room], since: Math.floor(Date.now() / 1000) - 3600, limit: 200 },
-    { onevent: (e) => { if (verifyEvent(e) && e.tags.some((t) => t[0] === "r" && t[1] === room)) onLine(toLine(e)); } },
+    [...BITMAP_ROOM_RELAYS],
+    { kinds: [BITCHAT_KIND], "#b": [String(height)], since: Math.floor(Date.now() / 1000) - 3600, limit: 200 },
+    { onevent: (e) => { if (verifyEvent(e) && isBitmapRoomEvent(e, height)) onLine(toLine(e)); } },
   );
   return () => sub.close();
 }
 
-export async function postBitmapRoom(height: number, relayGh: string, nick: string, text: string) {
+export async function signBitmapRoom(height: number, nick: string, text: string): Promise<Event> {
   const content = text.trim().slice(0, 500);
   if (!content) throw new Error("EMPTY MESSAGE");
-  const room = bitmapRoomTag(height);
-  const sk = geohashKey(room);
-  const base = [["r", room], ["t", "bitmap"]];
-  if (nick.trim()) base.push(["n", nick.trim().slice(0, 24)]);
+  const sk = bitmapRoomKey(height);
   const created_at = Math.floor(Date.now() / 1000);
-  const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: base, content });
-  const e = finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
-  const o = await publishBitchat(relayGh, e);
-  return { line: { ...toLine(e), mine: true }, outcome: o };
+  const tags = await mineNonce({ pubkey: getPublicKey(sk), created_at, kind: BITCHAT_KIND, tags: bitmapRoomTags(height, nick), content });
+  return finalizeEvent({ kind: BITCHAT_KIND, created_at, tags, content }, sk);
+}
+
+export async function postBitmapRoom(height: number, nick: string, text: string) {
+  const e = await signBitmapRoom(height, nick, text);
+  const relays = [...BITMAP_ROOM_RELAYS];
+  const timeout = <T,>(p: Promise<T>) => Promise.race([p, new Promise<T>((_, no) => setTimeout(() => no(new Error("TIMED OUT")), 8000))]);
+  const r = await Promise.allSettled(getPool().publish(relays, e).map(timeout));
+  const outcome: RelayOutcome = { accepted: [], rejected: [], of: relays.length };
+  r.forEach((x, i) => {
+    if (x.status === "fulfilled") outcome.accepted.push(relays[i]!);
+    else outcome.rejected.push({ url: relays[i]!, reason: String((x.reason as Error)?.message ?? x.reason).slice(0, 80) });
+  });
+  return { line: { ...toLine(e), mine: true }, outcome };
 }
