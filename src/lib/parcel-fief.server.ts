@@ -8,8 +8,10 @@ const TTL = 10 * 60_000;
 
 export type ParcelHolders = {
   height: number;
-  /** A read failed or the child list was cut off: missing parcels are possible. */
+  /** A chain read failed: holders or parcels may be missing. Never cached. */
   incomplete: boolean;
+  /** More children exist than one scan reads: parcels past the cut-off are not listed. */
+  truncated: boolean;
   total: number;
   byAddress: Map<string, number>;
   parcels: { index: number; inscriptionId: string; ownerAddress: string | null }[];
@@ -39,7 +41,8 @@ export async function parcelHoldersFor(height: number): Promise<ParcelHolders | 
   for (const p of valid) if (p.ownerAddress) byAddress.set(p.ownerAddress, (byAddress.get(p.ownerAddress) ?? 0) + 1);
   const value: ParcelHolders = {
     height,
-    incomplete: Boolean(scan.incomplete) || scan.truncated,
+    incomplete: Boolean(scan.incomplete),
+    truncated: scan.truncated,
     // Only parcels with a resolved live holder share the pool.
     total: [...byAddress.values()].reduce((a, b) => a + b, 0),
     byAddress,
