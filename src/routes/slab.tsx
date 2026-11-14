@@ -5,7 +5,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { layoutFromSizeClasses } from "@/lib/bitmap-layout";
 import { gradeSlab } from "@/lib/land-slab";
-import { fetchBlock } from "@/lib/slab-block";
+import { fetchBlock, missingGradeFacts } from "@/lib/slab-block";
 import { GradeQueue } from "@/components/slab/GradeQueue";
 import { slabInscriptionsFn } from "@/lib/slab-inscriptions.functions";
 import { satProofQuery } from "@/lib/sat-lookup";
