@@ -61,14 +61,15 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
   // pre-grades load for the visible page plus every queued BITMAP
   const bitmaps = [...visible, ...all.filter((b) => queueStart.includes(b.h) && !visible.some((v) => v.h === b.h))];
   const pre = useQueries({
-    queries: bitmaps.map((b) => ({ queryKey: ["slab-pre", b.h], queryFn: () => fetchSlabGrade(b.h), staleTime: Infinity })),
+    queries: bitmaps.map((b) => ({ queryKey: ["slab-pre", b.h], queryFn: () => fetchSlabGrade(b.h), staleTime: Infinity, retry: 2, retryDelay: (n: number) => 2000 * 2 ** n })),
   });
   const [picked, setPicked] = useState<number[]>([]);
   const [queue, setQueue] = useState<number[]>([]);
   const [done, setDone] = useState<number[]>([]);
   const active = queue.find((h) => !done.includes(h));
   const activeIdx = bitmaps.findIndex((b) => b.h === active);
-  const activeGrade = activeIdx >= 0 ? pre[activeIdx]?.data : null;
+  const activeQuery = activeIdx >= 0 ? pre[activeIdx] : undefined;
+  const activeGrade = activeQuery?.data ?? null;
 
   if (!address) {
     return (
@@ -218,6 +219,14 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
               ]}
               onRevealed={(txid) => { setPending((p) => ({ ...p, [active!]: txid })); setDone((d) => [...d, active!]); }}
             />
+          ) : activeQuery?.isError || (activeQuery?.isSuccess && !activeQuery.data) ? (
+            <div className="space-y-2 rounded-md border border-border p-3 font-mono text-xs">
+              <p className="text-primary">COULD NOT READ THIS BLOCK RIGHT NOW</p>
+              <p className="text-muted-foreground">The block data source is busy or timed out. Nothing was signed or paid. Try again, or skip this BITMAP.</p>
+              <button onClick={() => activeQuery.refetch()} disabled={activeQuery.isFetching} className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">
+                {activeQuery.isFetching ? "RETRYING…" : "RETRY"}
+              </button>
+            </div>
           ) : (
             <p className="font-mono text-xs text-muted-foreground">PREPARING GRADE…</p>
           )}
