@@ -18,25 +18,29 @@ export function OasisChatDock({ cursors }: { cursors: MapCursor[] }) {
   }, [open]);
   return (
     <div
-      className="pointer-events-auto fixed bottom-24 left-3 z-40 w-[min(22rem,80vw)]"
+      className="pointer-events-auto fixed bottom-24 right-3 z-40 w-[min(22rem,86vw)]"
       onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") setOpen(false); }}
       onKeyUp={(e) => e.stopPropagation()}
     >
       {open ? (
         <div className="border border-border bg-background/85 backdrop-blur">
-          <div className="flex items-center justify-between border-b border-border px-2 py-1 font-mono text-[9px] tracking-[0.2em] text-signal">
-            <span className="flex gap-2">
-              <button onClick={() => setTab("world")} className={tab === "world" ? "text-signal" : "text-muted-foreground"}>WORLD CHAT</button>
-              <button onClick={() => setTab("bitchat")} className={tab === "bitchat" ? "text-signal" : "text-muted-foreground"}>BITCHAT</button>
+          <div className="flex items-center justify-between gap-2 border-b border-border p-1.5 font-mono text-[11px] tracking-[0.15em]">
+            <span className="flex gap-1" role="tablist">
+              {(["world", "bitchat"] as const).map((t) => (
+                <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
+                  className={`border px-2.5 py-1 ${tab === t ? "border-signal bg-signal/10 text-signal" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+                  {t === "world" ? "WORLD" : "BITCHAT"}
+                </button>
+              ))}
             </span>
-            <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-bitcoin">ESC ✕</button>
+            <button onClick={() => setOpen(false)} aria-label="Close chat" className="px-2 py-1 text-muted-foreground hover:text-bitcoin">✕</button>
           </div>
-          {tab === "world" ? <MapChat cursors={cursors} className="max-h-72" /> : <BitchatChannel />}
+          {tab === "world" ? <MapChat cursors={cursors} className="max-h-72" /> : <div className="max-h-[55vh] overflow-y-auto"><BitchatChannel /></div>}
         </div>
       ) : (
         <button onClick={() => setOpen(true)}
           className="border border-border bg-background/80 px-2 py-1 font-mono text-[9px] tracking-[0.2em] text-muted-foreground backdrop-blur hover:border-signal hover:text-signal">
-          💬 CHAT · ENTER
+          💬 CHAT · BITCHAT
         </button>
       )}
     </div>
