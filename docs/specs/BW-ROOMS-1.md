@@ -38,8 +38,22 @@ Clients SHOULD sign with a per-room key so a person is not linkable across
 rooms: `sk = HMAC-SHA256(device_seed, "bitchat-geo:bitmap|<height>")`.
 Display names are `nickname#<last 4 hex of pubkey>`.
 
+## Holder proof (optional)
+
+A holder may BIP-322-sign one delegation of the room's Nostr pubkey and attach it to
+each message as `["proof", "<address>", "<signature>", "<issuedAt>", "<kind>?"]`.
+
+- BITMAP holder (no kind): `bitmapwin.app BW-ROOMS-1: I hold <height>.bitmap at <address> and delegate room chat to nostr <pubkey>, issued <issuedAt>`
+- Parcel holder (kind `parcel`): `bitmapwin.app BW-ROOMS-1: I hold parcels of <height>.bitmap at <address> and delegate room chat to nostr <pubkey>, issued <issuedAt>`
+
+Readers show a badge only if the proof is under 24 hours old, the signature verifies
+for that exact text, and the address holds right now the canonical BITMAP (landowner)
+or at least one valid parcel `<index>.<height>.bitmap` child (first claim per index,
+index below the block's tx count). Parcel numbers come from that live lookup, never
+from the message. A failing proof shows as a plain visitor.
+
 ## What this is not
 
-- Joining or posting does not prove BITMAP ownership. Anyone can post in any room.
+- Joining or posting alone does not prove BITMAP ownership. Anyone can post in any room; only a holder proof (above) earns a badge.
 - Messages are ephemeral; relays may drop them at any time. Nothing is stored by bitmapwin.app.
 - The BitChat phone app does not support this format yet.
