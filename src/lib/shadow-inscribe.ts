@@ -224,8 +224,9 @@ export async function prepareJob(input: {
     revealFee,
     // postage 0 is only honoured for reinscriptions (pointer onto an existing sat):
     // the new inscription rides the parent's sat, so no fresh output is needed.
+    // Xverse refuses wallet sends under 1,500 sats; the surplus comes back as change in the reveal.
     commitAmount: (input.postage === 0 && pointer !== undefined
-      ? Math.max(330, revealFee + (tribute?.sats ?? 0) + extraSats)
+      ? Math.max(MIN_WALLET_SEND, revealFee + (tribute?.sats ?? 0) + extraSats)
       : Math.max(330, input.postage ?? INSCRIBE_POSTAGE) + revealFee + (tribute?.sats ?? 0) + extraSats),
     ...(parents.length ? { parents } : {}),
     ...(delegate ? { delegate } : {}),
@@ -263,6 +264,9 @@ export async function findCommitOutput(job: InscribeJob): Promise<{ txid: string
  * Inputs:  [ parent 0 .. parent n-1 ] [ commit ]
  * Outputs: [ parent 0 .. parent n-1 ] [ inscription (546) ]  + fee from the tail
  */
+/** Smallest amount wallets (Xverse) will send in one transfer. */
+export const MIN_WALLET_SEND = 1500;
+
 export async function revealJob(
   job: InscribeJob,
   utxo: { txid: string; vout: number; value: number },
