@@ -62,6 +62,7 @@ import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MatterRouteImport } from './routes/matter'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MilestoneRouteImport } from './routes/milestone'
 import { Route as MintRouteImport } from './routes/mint'
 import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
@@ -458,6 +459,11 @@ const MatterRoute = MatterRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MilestoneRoute = MilestoneRouteImport.update({
+  id: '/milestone',
+  path: '/milestone',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MintRoute = MintRouteImport.update({
@@ -1184,6 +1190,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/matter': typeof MatterRoute
   '/mcp': typeof McpRoute
+  '/milestone': typeof MilestoneRoute
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
@@ -1369,6 +1376,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/matter': typeof MatterRoute
   '/mcp': typeof McpRoute
+  '/milestone': typeof MilestoneRoute
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
@@ -1555,6 +1563,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/matter': typeof MatterRoute
   '/mcp': typeof McpRoute
+  '/milestone': typeof MilestoneRoute
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
@@ -1744,6 +1753,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/matter'
     | '/mcp'
+    | '/milestone'
     | '/mint'
     | '/my-land'
     | '/my-world'
@@ -1929,6 +1939,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/matter'
     | '/mcp'
+    | '/milestone'
     | '/mint'
     | '/my-land'
     | '/my-world'
@@ -2114,6 +2125,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/matter'
     | '/mcp'
+    | '/milestone'
     | '/mint'
     | '/my-land'
     | '/my-world'
@@ -2302,6 +2314,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   MatterRoute: typeof MatterRoute
   McpRoute: typeof McpRoute
+  MilestoneRoute: typeof MilestoneRoute
   MintRoute: typeof MintRoute
   MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
@@ -2757,6 +2770,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/milestone': {
+      id: '/milestone'
+      path: '/milestone'
+      fullPath: '/milestone'
+      preLoaderRoute: typeof MilestoneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mint': {
@@ -3895,6 +3915,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   MatterRoute: MatterRoute,
   McpRoute: McpRoute,
+  MilestoneRoute: MilestoneRoute,
   MintRoute: MintRoute,
   MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
