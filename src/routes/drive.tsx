@@ -8,11 +8,12 @@ import { resolveWallet } from "@/components/BuyButton";
 import { useWalletSession } from "@/lib/wallet-session";
 import { slabAlbumFn } from "@/lib/slab-album.functions";
 import { driveContentsFn, type DriveFile } from "@/lib/block-drive.functions";
+import { parcelOwnersFn } from "@/lib/parcel-owners.functions";
 import { checkDriveFile, driveContentType, driveKind, DRIVE_MAX_BYTES } from "@/lib/block-drive";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 
 export const Route = createFileRoute("/drive")({
-  validateSearch: z.object({ b: z.number().int().min(0).optional() }),
+  validateSearch: z.object({ b: z.number().int().min(0).optional(), p: z.number().int().min(0).optional() }),
   component: DrivePage,
   head: () => ({
     meta: [
@@ -36,7 +37,8 @@ async function digestOf(bytes: Uint8Array): Promise<string> {
 const KIND_LABEL = { journal: "JOURNAL", image: "PHOTO", model: "3D MODEL", avatar: "AVATAR", page: "PAGE", text: "TEXT", other: "FILE" } as const;
 
 function DrivePage() {
-  const { b } = Route.useSearch();
+  const { b, p } = Route.useSearch();
+  const parcel = p ?? null;
   const navigate = Route.useNavigate();
   const [lookup, setLookup] = useState(b != null ? String(b) : "");
   const height = b ?? null;
@@ -51,9 +53,15 @@ function DrivePage() {
   const ownsIt = height != null && mine.some((x) => x.h === height);
 
   const contents = useServerFn(driveContentsFn);
-  const listing = useQuery({ queryKey: ["drive", height], queryFn: () => contents({ data: { height: height! } }), enabled: height != null, staleTime: 60_000 });
+  const listing = useQuery({ queryKey: ["drive", height, parcel], queryFn: () => contents({ data: { height: height!, ...(parcel != null ? { parcelIndex: parcel } : {}) } }), enabled: height != null, staleTime: 60_000 });
+  const owners = useServerFn(parcelOwnersFn);
+  const parcels = useQuery({ queryKey: ["parcel-owners", height], queryFn: () => owners({ data: { height: height! } }), enabled: height != null, staleTime: 60_000 });
+  const myParcels = (parcels.data ?? []).filter((x) => address && x.owner === address).map((x) => x.index);
+  const canWrite = parcel == null ? ownsIt : myParcels.includes(parcel);
 
   const open = (h: number) => navigate({ search: { b: h } });
+  const openParcel = (i: number | null) => navigate({ search: { b: height!, ...(i != null ? { p: i } : {}) } });
+  const [parcelInput, setParcelInput] = useState("");
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-10">
@@ -107,8 +115,18 @@ function DrivePage() {
                 <h2 className="font-display text-2xl text-primary">{height.toLocaleString("en-US")}.bitmap</h2>
                 <Link to="/bitmap/$block" params={{ block: String(height) }} className="font-mono text-xs text-accent underline">BITMAP PAGE</Link>
               </div>
-              {ownsIt ? <Uploader key={height} height={height} onDone={() => void listing.refetch()} />
-                : address && !held.isPending ? <p className="text-sm text-muted-foreground">This BITMAP isn't in your connected wallet, so you can read its drive but not add to it.</p> : null}
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2 font-mono text-xs">
+                <span className="text-muted-foreground">FOLDER</span>
+                <button onClick={() => openParcel(null)} className={`rounded border px-2 py-1 ${parcel == null ? "border-primary text-primary" : "border-border hover:border-primary"}`}>DISTRICT · {height}.bitmap</button>
+                {myParcels.slice(0, 12).map((i) => (
+                  <button key={i} onClick={() => openParcel(i)} className={`rounded border px-2 py-1 ${parcel === i ? "border-primary text-primary" : "border-border hover:border-primary"}`}>▦ {i}.{height}</button>
+                ))}
+                <input value={parcelInput} onChange={(e) => setParcelInput(e.target.value.replace(/\D/g, ""))} placeholder="Parcel #" inputMode="numeric" aria-label="Parcel number" className="w-24 rounded border border-border bg-background px-2 py-1" />
+                <button onClick={() => parcelInput && openParcel(Number(parcelInput))} className="rounded border border-border px-2 py-1 hover:border-primary">OPEN PARCEL</button>
+                {parcel != null && <span className="ml-auto text-accent">▦ PARCEL {parcel}.{height}.bitmap</span>}
+              </div>
+              {canWrite ? <Uploader key={`${height}-${parcel}`} height={height} parcel={parcel} onDone={() => void listing.refetch()} />
+                : address && !held.isPending ? <p className="text-sm text-muted-foreground">{parcel == null ? "This BITMAP isn't in your connected wallet" : "Your connected wallet doesn't hold this parcel"}, so you can read this drive but not add to it.</p> : null}
               <Listing state={listing.data} pending={listing.isPending} onRetry={() => void listing.refetch()} />
             </>
           )}
@@ -127,21 +145,34 @@ function Listing({ state, pending, onRetry }: { state: Awaited<ReturnType<typeof
       <button onClick={onRetry} className="rounded border border-border px-2 py-1 font-mono text-xs hover:border-primary">TRY AGAIN</button>
     </div>
   );
+  return <ListingTabs state={state} />;
+}
+
+function ListingTabs({ state }: { state: Extract<Awaited<ReturnType<typeof driveContentsFn>>, { ok: true }> }) {
+  const [tab, setTab] = useState<"all" | "sat" | "kids">("all");
+  const tagged = [...state.files.map((f) => ({ f, how: "sat" as const })), ...state.children.map((f) => ({ f, how: "kids" as const }))]
+    .sort((a, b) => (b.f.timestamp ?? 0) - (a.f.timestamp ?? 0));
+  const rows = tab === "all" ? tagged : tagged.filter((x) => x.how === tab);
+  const where = state.parcelIndex != null ? "PARCEL" : "BITMAP";
+  const tabs = [["all", `ALL · ${tagged.length}`], ["sat", `ON THE SAT · ${state.files.length}`], ["kids", `CHILDREN · ${state.children.length}`]] as const;
   return (
     <div className="space-y-2">
-      <p className="font-mono text-xs text-muted-foreground">
-        ON THIS SAT · {state.files.length} FILE{state.files.length === 1 ? "" : "S"} BESIDE THE BITMAP ITSELF{state.more ? " · SHOWING NEWEST 40" : ""}
-      </p>
-      {state.files.length === 0 ? <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Nothing has been reinscribed on this BITMAP yet.</p> : (
+      <div className="flex flex-wrap gap-2 font-mono text-xs">
+        {tabs.map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`rounded border px-2 py-1 ${tab === k ? "border-primary text-primary" : "border-border hover:border-primary"}`}>{l}</button>
+        ))}
+        {(state.more || state.moreChildren) && <span className="self-center text-muted-foreground">SHOWING NEWEST 40 OF EACH</span>}
+      </div>
+      {rows.length === 0 ? <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Nothing stored on this {where} here yet.</p> : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {state.files.map((f) => <FileCard key={f.id} f={f} />)}
+          {rows.map((x) => <FileCard key={x.f.id} f={x.f} how={x.how} />)}
         </ul>
       )}
     </div>
   );
 }
 
-function FileCard({ f }: { f: DriveFile }) {
+function FileCard({ f, how }: { f: DriveFile; how: "sat" | "kids" }) {
   const kind = driveKind(f.contentType ?? "");
   return (
     <li className="overflow-hidden rounded-lg border border-border bg-card/60">
@@ -150,6 +181,7 @@ function FileCard({ f }: { f: DriveFile }) {
           : <span className="font-mono text-sm text-muted-foreground">{KIND_LABEL[kind]}</span>}
       </div>
       <div className="space-y-1 p-2 font-mono text-[11px]">
+        <p className="text-muted-foreground">{how === "sat" ? "◉ ON THE SAT" : "⧉ CHILD"}</p>
         <p className="truncate text-accent">{f.number != null ? `#${f.number.toLocaleString("en-US")}` : f.id.slice(0, 12)}</p>
         <p className="truncate text-muted-foreground">{f.contentType ?? "unknown"} · {f.length != null ? `${f.length.toLocaleString("en-US")} B` : "?"}</p>
         {f.timestamp && <p className="text-muted-foreground">{new Date(f.timestamp * 1000).toISOString().slice(0, 10)}</p>}
@@ -159,7 +191,9 @@ function FileCard({ f }: { f: DriveFile }) {
   );
 }
 
-function Uploader({ height, onDone }: { height: number; onDone: () => void }) {
+function Uploader({ height, parcel, onDone }: { height: number; parcel: number | null; onDone: () => void }) {
+  const [mode, setMode] = useState<"sat" | "child">("sat");
+  const target = parcel != null ? `${parcel}.${height}.bitmap` : `${height}.bitmap`;
   const [staged, setStaged] = useState<Staged | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [over, setOver] = useState(false);
@@ -186,7 +220,19 @@ function Uploader({ height, onDone }: { height: number; onDone: () => void }) {
     </div>
   );
 
+  const modePicker = (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {([["sat", "◉ STAMP ON THE SAT", `Reinscribed onto ${target}'s own sat. No extra postage. Travels with it when sold.`], ["child", "⧉ LINK AS A CHILD", `A new inscription on its own sat with ${target} as its parent. Small postage; can be sent or sold separately.`]] as const).map(([k, l, d]) => (
+        <button key={k} onClick={() => { setMode(k); setAgreed(false); }} className={`rounded-lg border p-3 text-left ${mode === k ? "border-primary" : "border-border hover:border-primary"}`}>
+          <span className={`block font-mono text-xs ${mode === k ? "text-primary" : ""}`}>{l}</span>
+          <span className="text-xs text-muted-foreground">{d}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   if (!staged) return (
+    <div className="space-y-3">{modePicker}
     <div className="grid gap-3 sm:grid-cols-2">
       <label
         onDragOver={(e) => { e.preventDefault(); setOver(true); }}
@@ -207,9 +253,11 @@ function Uploader({ height, onDone }: { height: number; onDone: () => void }) {
         </div>
       </div>
     </div>
+    </div>
   );
 
   if (!agreed) return (
+    <div className="space-y-3">{modePicker}
     <div className="space-y-2 rounded-lg border border-border p-4 font-mono text-xs">
       <p className="uppercase tracking-widest">Before your wallet opens</p>
       <ul className="space-y-1">
@@ -217,32 +265,35 @@ function Uploader({ height, onDone }: { height: number; onDone: () => void }) {
         <li className="flex justify-between"><span>TYPE</span><span>{staged.type}</span></li>
         <li className="flex justify-between"><span>SIZE ON CHAIN</span><span>{staged.bytes.length.toLocaleString("en-US")} bytes</span></li>
         <li className="flex justify-between"><span>SITE FEE</span><span>0 sats</span></li>
-        <li className="flex justify-between"><span>POSTAGE</span><span>0 sats (stamped on your BITMAP's own sat)</span></li>
+        <li className="flex justify-between gap-2"><span>WHERE</span><span className="truncate">{mode === "sat" ? `ON ${target.toUpperCase()}'S OWN SAT` : `CHILD OF ${target.toUpperCase()}`}</span></li>
+        <li className="flex justify-between"><span>POSTAGE</span><span>{mode === "sat" ? "0 sats (stamped on the existing sat)" : "standard postage on a new sat, shown in the next step"}</span></li>
         <li className="flex justify-between"><span>MINER FEE</span><span>shown in the next step, set by your fee rate</span></li>
       </ul>
-      <p className="text-muted-foreground">This is public and permanent: it can't be edited or deleted later. Your BITMAP returns to you in the same transaction. Some outside viewers show only the newest file on a sat.</p>
+      <p className="text-muted-foreground">This is public and permanent: it can't be edited or deleted later. Your {parcel != null ? "parcel" : "BITMAP"} is used as the parent and returns to you in the same transaction.{mode === "sat" ? " Some outside viewers show only the newest file on a sat." : ""}</p>
       <div className="flex gap-2">
         <button onClick={() => setAgreed(true)} className="rounded-md bg-primary px-4 py-2 text-primary-foreground">I UNDERSTAND · CONTINUE</button>
         <button onClick={() => setStaged(null)} className="rounded-md border border-border px-4 py-2">CANCEL</button>
       </div>
+    </div>
     </div>
   );
 
   return (
     <div className="space-y-2">
       <ShadowInscriber
-        key={staged.digest}
+        key={`${staged.digest}-${mode}-${parcel}`}
         slug="block-drive"
         height={height}
-        index={0}
-        digest={`bw-drive-${height}-${staged.digest}`}
+        index={parcel ?? 0}
+        digest={`bw-drive-${height}-${parcel ?? "d"}-${mode}-${staged.digest}`}
         claimParentsForHeight={height}
-        reinscribeOnBitmap
+        {...(parcel != null ? { parcelIndex: parcel } : {})}
+        reinscribeOnBitmap={mode === "sat"}
         allowUpload={false}
         initialFile={initialFile}
-        artifactLabel={`${staged.name.toUpperCase()} → ${height}.BITMAP'S OWN SAT`}
-        actionLabel="STORE ON MY BITMAP"
-        artifactVariants={[{ key: "file", label: "FILE", contentType: staged.type, source: "", postage: 0 }]}
+        artifactLabel={`${staged.name.toUpperCase()} → ${mode === "sat" ? `${target.toUpperCase()}'S OWN SAT` : `CHILD OF ${target.toUpperCase()}`}`}
+        actionLabel={mode === "sat" ? "STORE ON THE SAT" : "INSCRIBE AS CHILD"}
+        artifactVariants={[{ key: "file", label: "FILE", contentType: staged.type, source: "", ...(mode === "sat" ? { postage: 0 } : {}) }]}
         onRevealed={(txid) => setDone(txid)}
       />
       <button onClick={() => setStaged(null)} className="font-mono text-xs text-muted-foreground underline">CHOOSE A DIFFERENT FILE</button>
