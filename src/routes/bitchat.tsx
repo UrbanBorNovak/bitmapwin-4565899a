@@ -73,7 +73,7 @@ function BitchatRooms() {
     <main className="mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col gap-3 px-3 pb-32 pt-4">
       <header className="flex items-center justify-between">
         <h1 className="font-display text-xl text-foreground">⚡ BITMAP ROOMS</h1>
-        <span className="font-mono text-[11px] text-muted-foreground">BITCHAT RELAYS · LIVEOCI</span>
+        <span className="font-mono text-[11px] text-muted-foreground">BW-ROOMS-1 · LIVEOCI</span>
       </header>
 
       <form onSubmit={submitRoom} className="flex gap-2">
