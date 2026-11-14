@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { buildTinyStudioHtml } from "@/lib/tiny-studio";
 import { brotliPackFn } from "@/lib/brotli-pack.functions";
