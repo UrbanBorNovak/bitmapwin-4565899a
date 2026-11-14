@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { liveBitmapFn } from "@/lib/bw-matter.functions";
 import { BitchatChannel } from "@/components/game/BitchatChannel";
-import { bitmapRoomRelayStatus, postBitmapRoom, subscribeBitmapRoom, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
+import { bitmapRoomPubkey, bitmapRoomRelayStatus, postBitmapRoom, subscribeBitmapRoom, type BitchatLine } from "@/lib/nostr/bitchat-bridge";
+
+import { landownerMessage, loadRoomProof, saveRoomProof, type RoomProof } from "@/lib/nostr/bitchat-landowner";
+import { verifyRoomOwnersFn } from "@/lib/nostr/bitchat-landowner.functions";
+import { useWalletSession } from "@/lib/wallet-session";
+import { signMessageWithWallet } from "@/lib/browser-wallet";
 
 const FAMOUS = [0, 9, 715093, 717328, 840000];
 
@@ -36,6 +41,46 @@ function BitchatRooms() {
   const [relayCount, setRelayCount] = useState(0);
   const [mode, setMode] = useState<"rooms" | "phone">("rooms");
   const listRef = useRef<HTMLDivElement>(null);
+  const wallet = useWalletSession();
+  const verify = useServerFn(verifyRoomOwnersFn);
+  const [proof, setProof] = useState<RoomProof | null>(null);
+  const [proofMsg, setProofMsg] = useState("");
+  const [owners, setOwners] = useState<Record<string, { ok: boolean; reason?: string }>>({});
+  const asked = useRef(new Set<string>());
+
+  useEffect(() => {
+    setOwners({}); asked.current.clear(); setProofMsg("");
+    setProof(height == null ? null : loadRoomProof(height, bitmapRoomPubkey(height)));
+  }, [height]);
+
+  // Re-check every new proof once (signature + live on-chain holder); results live only in page memory.
+  useEffect(() => {
+    if (height == null) return;
+    const todo = lines.filter((l) => l.proof && !asked.current.has(l.pubkey));
+    if (!todo.length) return;
+    todo.forEach((l) => asked.current.add(l.pubkey));
+    const uniq = new Map(todo.map((l) => [l.pubkey, { pubkey: l.pubkey, ...l.proof! }]));
+    verify({ data: { height, items: [...uniq.values()] } })
+      .then((r) => setOwners((p) => ({ ...p, ...r })))
+      .catch(() => todo.forEach((l) => asked.current.delete(l.pubkey)));
+  }, [lines, height, verify]);
+
+  const prove = async () => {
+    if (height == null || !wallet) return;
+    setProofMsg("OPENING WALLET…");
+    try {
+      const pubkey = bitmapRoomPubkey(height);
+      const issuedAt = Math.floor(Date.now() / 1000);
+      const address = wallet.ordinalsAddress;
+      const signature = await signMessageWithWallet(wallet.provider, address, landownerMessage(height, address, pubkey, issuedAt));
+      const p = { address, signature, issuedAt };
+      const r = (await verify({ data: { height, items: [{ pubkey, ...p }] } }))[pubkey];
+      if (!r?.ok) { setProofMsg(`✕ ${(r?.reason ?? "not verified").toUpperCase()}`); return; }
+      saveRoomProof(height, pubkey, p); setProof(p); setOwners((o) => ({ ...o, [pubkey]: { ok: true } }));
+      setProofMsg("✓ VERIFIED · YOUR MESSAGES HERE CARRY THE LANDOWNER BADGE FOR 24H");
+    } catch (e) { setProofMsg(`✕ ${(e as Error).message}`); }
+  };
+  const dropProof = () => { if (height != null) { saveRoomProof(height, bitmapRoomPubkey(height), null); setProof(null); setProofMsg(""); } };
 
   const open = (h: number) => { setHeight(h); setInput(String(h)); };
 
@@ -59,7 +104,7 @@ function BitchatRooms() {
     if (height == null || !text.trim()) return;
     setStatus("SENDING…");
     try {
-      const r = await postBitmapRoom(height, nick, text);
+      const r = await postBitmapRoom(height, nick, text, proof);
       if (r.outcome.accepted.length) { setLines((p) => p.some((x) => x.id === r.line.id) ? p : [...p, r.line]); setText(""); setStatus(`✓ ACCEPTED BY ${r.outcome.accepted.length}/${r.outcome.of} RELAYS`); }
       else setStatus(`✕ NOT SENT (${r.outcome.rejected[0]?.reason ?? "no relay answered"})`);
     } catch (e) { setStatus(`✕ NOT SENT (${(e as Error).message})`); }
@@ -124,11 +169,24 @@ function BitchatRooms() {
 
           <div ref={listRef} className="flex-1 space-y-1 overflow-y-auto rounded-md border border-border bg-card p-3 text-sm" style={{ minHeight: "16rem", maxHeight: "50dvh" }}>
             {lines.length === 0 ? <p className="text-muted-foreground">No messages in the last hour. Say hello.</p> : lines.map((l) => (
-              <p key={l.id} className="break-words"><span className={`font-mono text-xs ${l.mine ? "text-primary" : "text-signal"}`}>{l.nick}</span> <span className="text-foreground">{l.text}</span></p>
+              <p key={l.id} className="break-words">{l.proof && owners[l.pubkey]?.ok ? (
+                <span title={`Signed by ${l.proof.address}, which holds ${height}.bitmap on-chain right now`} className="mr-1 rounded-sm border border-primary px-1 font-mono text-[10px] text-primary">👑 LANDOWNER · {height}</span>
+              ) : null}<span className={`font-mono text-xs ${l.mine ? "text-primary" : "text-signal"}`}>{l.nick}</span> <span className="text-foreground">{l.text}</span></p>
             ))}
           </div>
 
           <div className="flex flex-col gap-2">
+            <div className="rounded-md border border-border bg-card p-2 font-mono text-[11px] text-muted-foreground">
+              {proof ? (
+                <p>👑 <span className="text-primary">LANDOWNER PROOF ON</span> · {proof.address.slice(0, 8)}…{proof.address.slice(-4)} · <button onClick={dropProof} className="underline">REMOVE</button></p>
+              ) : wallet ? (
+                <p>Hold {height}.bitmap? <button onClick={prove} className="text-primary underline">PROVE OWNERSHIP</button> — one wallet signature, no fee, valid 24h.</p>
+              ) : (
+                <p>Hold this BITMAP? <Link to="/wallet" className="text-primary underline">Connect your wallet</Link> to prove it in chat.</p>
+              )}
+              {proofMsg && <p className="mt-1">{proofMsg}</p>}
+              <p className="mt-1 text-[10px]">The badge shows only when the signature checks out and the signing address holds this BITMAP on-chain right now. Signing never moves funds.</p>
+            </div>
             <input value={nick} onChange={(e) => setNick(e.target.value)} placeholder="Nickname (optional)" maxLength={24}
               className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground" />
             <div className="flex gap-2">
