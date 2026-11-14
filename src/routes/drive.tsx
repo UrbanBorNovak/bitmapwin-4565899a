@@ -169,7 +169,7 @@ function Uploader({ height, onDone }: { height: number; onDone: () => void }) {
 
   const stage = async (name: string, type: string, bytes: Uint8Array) => {
     const c = checkDriveFile(bytes.length);
-    if (!c.ok) return toast.error(c.reason);
+    if (!c.ok) { toast.error(c.reason); return; }
     setAgreed(false); setDone(null);
     setStaged({ name, type, bytes, digest: await digestOf(bytes) });
   };

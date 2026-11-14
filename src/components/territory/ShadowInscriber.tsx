@@ -91,7 +91,7 @@ export function ShadowInscriber(props: {
   /** Price and open the payment by itself once on mount, when no job exists yet. */
   autoStart?: boolean;
   /** Start with this file (e.g. dropped into Block Drive) instead of the default art. */
-  initialFile?: { type: string; bytes: Uint8Array };
+  initialFile?: { type: string; bytes: Uint8Array } | undefined;
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
