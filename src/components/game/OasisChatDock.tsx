@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { MapChat } from "@/components/MapChat";
+import { BitchatChannel } from "@/components/game/BitchatChannel";
 import type { MapCursor } from "@/lib/map-presence";
 
 /** World chat for the Oasis. Enter opens, Esc closes; typing never moves the player. */
 export function OasisChatDock({ cursors }: { cursors: MapCursor[] }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"world" | "bitchat">("world");
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -23,10 +25,13 @@ export function OasisChatDock({ cursors }: { cursors: MapCursor[] }) {
       {open ? (
         <div className="border border-border bg-background/85 backdrop-blur">
           <div className="flex items-center justify-between border-b border-border px-2 py-1 font-mono text-[9px] tracking-[0.2em] text-signal">
-            <span>WORLD CHAT</span>
+            <span className="flex gap-2">
+              <button onClick={() => setTab("world")} className={tab === "world" ? "text-signal" : "text-muted-foreground"}>WORLD CHAT</button>
+              <button onClick={() => setTab("bitchat")} className={tab === "bitchat" ? "text-signal" : "text-muted-foreground"}>BITCHAT</button>
+            </span>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-bitcoin">ESC ✕</button>
           </div>
-          <MapChat cursors={cursors} className="max-h-72" />
+          {tab === "world" ? <MapChat cursors={cursors} className="max-h-72" /> : <BitchatChannel />}
         </div>
       ) : (
         <button onClick={() => setOpen(true)}
