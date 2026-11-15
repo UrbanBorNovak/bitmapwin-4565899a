@@ -37,7 +37,7 @@ export const Route = createFileRoute("/oasis")({
     const title = `${h}.BITMAP in The Oasis — Bitcoin-native world`;
     const description =
       "Walk and fly through every Bitcoin block as a shared 3D world. Visit BITMAP districts, find community builds, join Shard Raids and meet Guardians.";
-    const player = `https://bitmapwin.app/embed/oasis?height=${h}`;
+    const image = "https://bitmapwin.app/share/oasis-card.jpg";
     return {
       meta: [
         { title },
@@ -46,12 +46,13 @@ export const Route = createFileRoute("/oasis")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: `https://bitmapwin.app/oasis?height=${h}` },
-        { name: "twitter:card", content: "player" },
+        { property: "og:image", content: image },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
-        { name: "twitter:player", content: player },
-        { name: "twitter:player:width", content: "1280" },
-        { name: "twitter:player:height", content: "720" },
+        { name: "twitter:image", content: image },
       ],
     };
   },
