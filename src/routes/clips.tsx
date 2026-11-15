@@ -15,6 +15,7 @@ export const Route = createFileRoute("/clips")({
     const title = "Bitmap Clips — Turn Any BITMAP Into a 3D Video";
     const description =
       "Animate a BITMAP's parcels in 3D with scenes, text overlays and generative music, then export an MP4 right in your browser. Built by @bitlodo.";
+    const image = "https://bitmapwin.app/share/clips-card.jpg";
     return {
       meta: [
         { title },
@@ -22,7 +23,14 @@ export const Route = createFileRoute("/clips")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary" },
+        { property: "og:url", content: "https://bitmapwin.app/clips" },
+        { property: "og:image", content: image },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
       ],
     };
   },
