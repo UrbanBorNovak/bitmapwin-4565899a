@@ -1,0 +1,5 @@
+(define-fungible-token sbtc)
+(define-public (mint (n uint) (to principal)) (ft-mint? sbtc n to))
+(define-public (transfer (n uint) (from principal) (to principal) (memo (optional (buff 34))))
+  (begin (asserts! (is-eq tx-sender from) (err u1)) (ft-transfer? sbtc n from to)))
+(define-read-only (get-balance (who principal)) (ok (ft-get-balance sbtc who)))
