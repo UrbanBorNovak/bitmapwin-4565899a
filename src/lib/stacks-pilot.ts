@@ -10,9 +10,13 @@ import { hexToBytes, bytesToHex } from "@noble/hashes/utils.js";
 export const PILOT_NETWORK = "testnet" as const;
 export const TESTNET_CHAIN_ID = 0x80000000;
 export const HIRO_TESTNET = "https://api.testnet.hiro.so";
+/** Throwaway key that deployed the test token (holds no role). */
 export const PILOT_DEPLOYER = "ST37VBHJYMWAPABF1ARD0CY3THYEPKPSM4HE7QS6F";
-export const PILOT_STAKE = `${PILOT_DEPLOYER}.bw-stake-pilot-v1`;
+/** v2 adds treasury-only funding with per-call, per-reward-period and pool-balance caps. Deployed by the testnet admin. */
+export const PILOT_STAKE = "ST2P0SD4JPHFKJ42DDH2VQVS59P7XJFYC4K8NHGWR.bw-stake-pilot-v2";
 export const PILOT_TOKEN = `${PILOT_DEPLOYER}.bw-test-sbtc`;
+/** Testnet stand-in for the treasury: a 2-of-3 Stacks multisig. The only principal the contract accepts `fund` from. */
+export const PILOT_TREASURY = "SN38Y8C9FJ7J624BJJK7ZY5HBN790X6646M3XB25X";
 export const EXPLORER_TX = (txid: string) => `https://explorer.hiro.so/txid/${txid.startsWith("0x") ? txid : `0x${txid}`}?chain=testnet`;
 export const STX_FAUCET = "https://explorer.hiro.so/sandbox/faucet?chain=testnet";
 
