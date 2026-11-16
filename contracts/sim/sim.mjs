@@ -83,7 +83,6 @@ ok("pauser can pause but nothing else", () => {
   assert.equal(err(call("schedule-key", [pub(k3)], P)), 401);
   assert.equal(err(call("revoke-epoch", [Cl.uint(1), Cl.uint(0)], P)), 401);
   assert.equal(err(call("emergency-key", [pub(k2), Cl.uint(0)], P)), 401);
-  assert.equal(String(ro("is-paused", []).value ?? ro("is-paused", [])), String(ro("is-paused", []).value ?? ro("is-paused", [])));
   assert.ok(isOk(call("unpause", [], D)));
 });
 

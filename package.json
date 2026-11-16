@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.96",
+    "@hirosystems/clarinet-sdk": "^3.8.1",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/cloud-auth-js": "^1.1.2",
     "@lovable.dev/mcp-js": "^1.0.0",
@@ -57,7 +58,7 @@
     "@scure/base": "^2.4.0",
     "@scure/btc-signer": "^2.4.1",
     "@stacks/connect": "^8.2.7",
-    "@stacks/transactions": "7.7.0",
+    "@stacks/transactions": "^7.7.0",
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
