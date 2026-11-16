@@ -44,4 +44,16 @@ describe("reward pool reconciliation", () => {
     expect(r.summary).toMatchObject({ expected: "100", matches: true });
     expect(r.findings).toEqual([]);
   });
+  it("funding from an address other than the treasury is suspicious", () => {
+    const r = reconcilePool([fund("100")], 100n, POOL, ASSET, { treasury: B, contractHeld: 100n });
+    expect(r.findings).toEqual([expect.objectContaining({ kind: "fund-sender", suspicious: true })]);
+  });
+  it("contract pool-held must equal funding minus payouts and ignore direct transfers", () => {
+    const ok = reconcilePool([fund("60000"), tx("d", null, B, B, POOL, "5000")], 65000n, POOL, ASSET, { treasury: A, contractHeld: 60000n });
+    expect(ok.summary).toMatchObject({ matches: true, held: "60000", direct: "5000" });
+    expect(ok.findings.some((f) => f.suspicious)).toBe(false);
+    const bad = reconcilePool([fund("60000"), tx("d", null, B, B, POOL, "5000")], 65000n, POOL, ASSET, { treasury: A, contractHeld: 65000n });
+    expect(bad.findings).toContainEqual(expect.objectContaining({ kind: "pool-held-mismatch", suspicious: true }));
+    expect(bad.summary.matches).toBe(false);
+  });
 });

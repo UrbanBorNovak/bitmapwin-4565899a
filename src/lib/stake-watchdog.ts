@@ -33,6 +33,10 @@ export const ACKNOWLEDGED_ADMIN_TXIDS: string[] = [
   "0xf3bc9e39257131ef9695717066d40e2c2fd37a762e65d17efd22680f3bf399cb", // set-pauser: grant the dedicated pause-only key
   "0x7c7581174bad6bf52ebaa6672c8dc63ecf0f22481e1f2df758bd173e47941ee0", // set-pauser: remove the admin from the pauser list
   "0xb0a2845f682d7fff941249b46ad24c61691469a6fd73709c99bb88efca2e3370", // unpause after the pause-only key drill
+  // bw-stake-pilot-v2 setup (2026-11-16)
+  "0x839a68d3f2e2d73a77fd401499a044b4246c79cda042256f21ba898a473bbc84", // v2 schedule-key: oracle epoch 1
+  "0x2428b06f1a4d14200156c8fcd0ea30168134bf5ff81b432a2aba385c87e6fc0f", // v2 set-pauser: pause-only key
+  "0xf9b0584932033ca093ad64833c7428dba7fb8e24d30f4bc6769597e4639cc5bc", // v2 set-funding: drill limits (2-block periods)
 ];
 /** More oracle signatures than this in one hour is treated as a signer spike. */
 export const MAX_SIGNATURES_PER_HOUR = 60;
