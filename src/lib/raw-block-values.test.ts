@@ -17,7 +17,7 @@ describe("raw block reader", () => {
   it("refuses truncated or altered bytes instead of returning part of the block", () => {
     expect(() => txValuesFromRawBlock(RAW.subarray(0, RAW.length - 10), HASH, 2)).toThrow();
     const altered = RAW.slice();
-    altered[altered.length - 20] ^= 0xff;
+    altered[altered.length - 20] = altered[altered.length - 20]! ^ 0xff;
     expect(() => txValuesFromRawBlock(altered, HASH, 2)).toThrow(/merkle/);
   });
 });

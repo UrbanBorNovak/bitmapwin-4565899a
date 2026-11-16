@@ -22,7 +22,7 @@ export type PageResult = {
 export async function collectPages(
   txCount: number,
   load: PageLoader,
-  opts: { concurrency: number; rounds: number; deadline: number; now?: () => number; resume?: Array<number[] | null> },
+  opts: { concurrency: number; rounds: number; deadline: number; now?: () => number; resume?: Array<number[] | null> | undefined },
 ): Promise<PageResult> {
   const now = opts.now ?? Date.now;
   const pages = Math.ceil(txCount / PAGE_SIZE);
