@@ -29,6 +29,7 @@ export const ADMIN_FUNCTIONS = ["set-admin", "set-pauser", "set-rate-cap", "unpa
 /** Admin txids reviewed by the team (e.g. the unpause after an incident). */
 export const ACKNOWLEDGED_ADMIN_TXIDS: string[] = [
   "0x2f4d1d5631f118ab6187fa5ceb302803ac193debae0a7f4dbf75609eb4ed1761", // unpause after the 2026-11-16 pause drill
+  "0x6e449a7311d29b7d4358355e0cd8244b78c7da6e7576451cffee9f6a77c847fc", // unpause after the watchdog re-paused on the drill unpause
 ];
 /** More oracle signatures than this in one hour is treated as a signer spike. */
 export const MAX_SIGNATURES_PER_HOUR = 60;
