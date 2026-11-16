@@ -1,0 +1,10 @@
+[project]
+name = "bwstake"
+[contracts.mock-sbtc]
+path = "contracts/mock-sbtc.clar"
+clarity_version = 3
+epoch = 3.0
+[contracts.stake]
+path = "contracts/stake.clar"
+clarity_version = 3
+epoch = 3.0
