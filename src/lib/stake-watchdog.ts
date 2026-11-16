@@ -37,6 +37,7 @@ export const ACKNOWLEDGED_ADMIN_TXIDS: string[] = [
   "0x839a68d3f2e2d73a77fd401499a044b4246c79cda042256f21ba898a473bbc84", // v2 schedule-key: oracle epoch 1
   "0x2428b06f1a4d14200156c8fcd0ea30168134bf5ff81b432a2aba385c87e6fc0f", // v2 set-pauser: pause-only key
   "0xf9b0584932033ca093ad64833c7428dba7fb8e24d30f4bc6769597e4639cc5bc", // v2 set-funding: drill limits (2-block periods)
+  "0x85423cee92d8173f78aad5c2655869389423d2c6634a57e8b9fd5eca4371c980", // v2 set-funding: pilot limits (144-block periods)
 ];
 /** More oracle signatures than this in one hour is treated as a signer spike. */
 export const MAX_SIGNATURES_PER_HOUR = 60;
