@@ -45,7 +45,7 @@ describe("stake watchdog", () => {
     expect(shouldPause(bad, false, false)).toBe(true);
     expect(shouldPause(bad, true, false)).toBe(false);
     expect(shouldPause(bad, false, true)).toBe(false);
-    expect(shouldPause(bad, null, false)).toBe(false);
+    expect(shouldPause(bad, null, false)).toBe(true);
     expect(shouldPause([], false, false)).toBe(false);
   });
   it("refuses mainnet contracts", () => {

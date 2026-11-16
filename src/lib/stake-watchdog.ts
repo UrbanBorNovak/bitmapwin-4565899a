@@ -78,5 +78,5 @@ export function compareAttestations(txs: ContractTx[], log: LogRow[], signatures
 
 /** Pause only when something is suspicious, the contract is not paused yet, and no pause is already in flight. */
 export function shouldPause(findings: Finding[], contractPaused: boolean | null, pauseInFlight: boolean): boolean {
-  return findings.some((f) => f.suspicious) && contractPaused === false && !pauseInFlight;
+  return findings.some((f) => f.suspicious) && contractPaused !== true && !pauseInFlight; // unreadable status still pauses
 }
