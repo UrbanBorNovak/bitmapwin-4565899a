@@ -8,18 +8,30 @@
  *
  * Sources, in order:
  *  1. mempool.space block summary — real vsize for EVERY transaction, one call.
- *  2. Esplora (blockstream.info) paginated tx pages — real vsizes for a bounded
- *     prefix of the block when mempool.space is unreachable.
+ *  2. The raw block itself — parsed and proven against the block hash, the
+ *     transaction count and the merkle root, so it is all-or-nothing.
+ *  3. Esplora paginated tx pages — every page, retried in rounds. If a page
+ *     still fails, only the prefix before it is returned and it is marked
+ *     incomplete (never cached, never graded).
  */
+import { txValuesFromRawBlock } from "@/lib/raw-block-values";
+import { collectPages } from "@/lib/block-pages";
+
 
 const MEMPOOL = "https://mempool.space/api";
 const COMMUNITY_MEMPOOL = "https://mempool.emzy.de/api";
 const ESPLORA = "https://blockstream.info/api";
 
-/** Esplora returns 25 txs per page; cap the fan-out for very large blocks. */
-const ESPLORA_MAX_PAGES = 24;
-const ESPLORA_CONCURRENCY = 2;
+/** Outbound fetches waiting at once on the server runtime; stay under its cap of 6. */
+const ESPLORA_CONCURRENCY = 4;
+const ESPLORA_ROUNDS = 3;
+/** Time the page fallback may spend before returning what it has (marked incomplete). */
+const ESPLORA_BUDGET_MS = 24_000;
 const RETRY_DELAYS = [0, 500, 1_500] as const;
+const ONCE = [0] as const;
+/** Stage budgets measured from the start of a block read, inside the route's overall deadline. */
+const RAW_STOP_MS = 15_000;
+const TOTAL_STOP_MS = 26_000;
 
 const blockCache = new Map<number, BlockBytes>();
 const metaCache = new Map<number, BlockMeta>();
@@ -31,7 +43,7 @@ export type BlockBytes = {
   txCount: number;
   /** how many of them we have real vsizes for (bytes.length) */
   covered: number;
-  source: "mempool-summary" | "esplora-pages";
+  source: "mempool-summary" | "raw-block" | "esplora-pages";
   bytes: Uint8Array;
 };
 
@@ -62,9 +74,14 @@ async function withUpstreamSlot<T>(task: () => Promise<T>): Promise<T> {
   return task();
 }
 
-async function fetchWithBackoff(url: string, accept: string, timeoutMs: number): Promise<Response> {
+async function fetchWithBackoff(
+  url: string,
+  accept: string,
+  timeoutMs: number,
+  delays: readonly number[] = RETRY_DELAYS,
+): Promise<Response> {
   let lastError: unknown;
-  for (const delay of RETRY_DELAYS) {
+  for (const delay of delays) {
     if (delay > 0) await sleep(delay + Math.floor(Math.random() * 250));
     try {
       const response = await withUpstreamSlot(() =>
@@ -83,24 +100,25 @@ async function fetchWithBackoff(url: string, accept: string, timeoutMs: number):
   throw lastError instanceof Error ? lastError : new Error("Bitcoin indexer unavailable");
 }
 
-async function json<T>(url: string, timeoutMs = 12_000): Promise<T> {
-  const response = await fetchWithBackoff(url, "application/json", timeoutMs);
+async function json<T>(url: string, timeoutMs = 12_000, delays: readonly number[] = RETRY_DELAYS): Promise<T> {
+  const response = await fetchWithBackoff(url, "application/json", timeoutMs, delays);
   return (await response.json()) as T;
 }
 
-async function blockHashFromProvider(base: string, height: number): Promise<string> {
-  const response = await fetchWithBackoff(`${base}/block-height/${height}`, "text/plain", 8_000);
+async function blockHashFromProvider(base: string, height: number, delays: readonly number[]): Promise<string> {
+  const response = await fetchWithBackoff(`${base}/block-height/${height}`, "text/plain", 6_000, delays);
   return (await response.text()).trim();
 }
 
+/** One quick try per mirror before the last one gets full retries, so a stalled mirror can't eat the budget. */
 async function blockHash(height: number): Promise<string> {
   try {
-    return await blockHashFromProvider(COMMUNITY_MEMPOOL, height);
+    return await blockHashFromProvider(COMMUNITY_MEMPOOL, height, ONCE);
   } catch {
     try {
-      return await blockHashFromProvider(MEMPOOL, height);
+      return await blockHashFromProvider(MEMPOOL, height, ONCE);
     } catch {
-      return blockHashFromProvider(ESPLORA, height);
+      return blockHashFromProvider(ESPLORA, height, RETRY_DELAYS);
     }
   }
 }
@@ -120,10 +138,10 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
       tx_count: number;
     };
     try {
-      header = await json(`${COMMUNITY_MEMPOOL}/block/${hash}`);
+      header = await json(`${COMMUNITY_MEMPOOL}/block/${hash}`, 6_000, ONCE);
     } catch {
       try {
-        header = await json(`${MEMPOOL}/block/${hash}`);
+        header = await json(`${MEMPOOL}/block/${hash}`, 6_000, ONCE);
       } catch {
         header = await json(`${ESPLORA}/block/${hash}`);
       }
@@ -142,57 +160,86 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
   return request;
 }
 
-async function valuesFromMempoolSummary(hash: string): Promise<number[]> {
+/** One row per transaction, all valid — anything else falls through to the backups. */
+async function valuesFromMempoolSummary(hash: string, txCount: number): Promise<number[]> {
   let rows: Array<{ value?: number }>;
   try {
-    rows = await json(`${COMMUNITY_MEMPOOL}/v1/block/${hash}/summary`, 15_000);
+    rows = await json(`${COMMUNITY_MEMPOOL}/v1/block/${hash}/summary`, 8_000, ONCE);
   } catch {
-    rows = await json(`${MEMPOOL}/v1/block/${hash}/summary`, 15_000);
+    rows = await json(`${MEMPOOL}/v1/block/${hash}/summary`, 8_000, ONCE);
   }
+  if (!Array.isArray(rows) || rows.length !== txCount) throw new Error("incomplete mempool summary");
   const out: number[] = [];
   for (const row of rows) {
-    if (typeof row.value === "number" && row.value >= 0) out.push(row.value);
+    if (typeof row.value !== "number" || row.value < 0) throw new Error("invalid mempool summary row");
+    out.push(row.value);
   }
-  if (out.length === 0) throw new Error("empty mempool summary");
   return out;
+}
+
+/** The whole raw block, verified end to end; throws unless every transaction is proven. */
+async function valuesFromRawBlock(hash: string, txCount: number, stopAt: number): Promise<number[]> {
+  let lastError: unknown;
+  for (const base of [COMMUNITY_MEMPOOL, ESPLORA, MEMPOOL]) {
+    if (Date.now() >= stopAt) break;
+    try {
+      const response = await fetchWithBackoff(`${base}/block/${hash}/raw`, "application/octet-stream", 12_000, [0, 800]);
+      const raw = new Uint8Array(await response.arrayBuffer());
+      return txValuesFromRawBlock(raw, hash, txCount);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("raw block unavailable");
 }
 
 type EsploraTx = { vout?: Array<{ value?: number }> };
 
-async function valuesFromEsploraPages(hash: string, txCount: number): Promise<number[]> {
-  const pages = Math.min(ESPLORA_MAX_PAGES, Math.ceil(txCount / 25));
-  const starts = Array.from({ length: pages }, (_, i) => i * 25);
-  const results: number[][] = new Array(pages).fill(null).map(() => []);
-  let cursor = 0;
+/** Pages already read for a block, so a retry continues instead of starting over. */
+const pageProgress = new Map<string, Array<number[] | null>>();
 
-  const worker = async () => {
-    for (;;) {
-      const index = cursor++;
-      if (index >= starts.length) return;
-      const start = starts[index]!;
-      try {
-        let txs: EsploraTx[];
+async function valuesFromEsploraPages(
+  hash: string,
+  txCount: number,
+  stopAt: number,
+): Promise<{ values: number[]; complete: boolean }> {
+  const providers = [COMMUNITY_MEMPOOL, ESPLORA, MEMPOOL];
+  const failures = new Map<string, number>();
+  const result = await collectPages(
+    txCount,
+    async (start, attempt) => {
+      // Spread pages across providers, and steer away from ones failing during this read.
+      const rotated = providers.map((_, k) => providers[(attempt + start / 25 + k) % providers.length]!);
+      const order = rotated.sort((a, b) => (failures.get(a) ?? 0) - (failures.get(b) ?? 0));
+      let lastError: unknown;
+      for (const base of order) {
         try {
-          txs = await json(`${COMMUNITY_MEMPOOL}/block/${hash}/txs/${start}`);
-        } catch {
-          txs = await json(`${ESPLORA}/block/${hash}/txs/${start}`);
+          const txs = await json<EsploraTx[]>(`${base}/block/${hash}/txs/${start}`, 5_000, ONCE);
+          return txs.map((tx) => (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0));
+        } catch (error) {
+          failures.set(base, (failures.get(base) ?? 0) + 1);
+          lastError = error;
         }
-        results[index] = txs.map((tx) =>
-          (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0),
-        );
-      } catch {
-        results[index] = [];
       }
-    }
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(ESPLORA_CONCURRENCY, pages) }, () => worker()),
+      throw lastError;
+    },
+    {
+      concurrency: ESPLORA_CONCURRENCY,
+      rounds: ESPLORA_ROUNDS,
+      deadline: Math.min(stopAt, Date.now() + ESPLORA_BUDGET_MS),
+      resume: pageProgress.get(hash),
+    },
   );
-
-  const flat = results.flat();
-  if (flat.length === 0) throw new Error("esplora returned no transactions");
-  return flat;
+  if (result.complete) pageProgress.delete(hash);
+  else {
+    if (pageProgress.size >= 20) {
+      const oldest = pageProgress.keys().next().value;
+      if (oldest !== undefined) pageProgress.delete(oldest);
+    }
+    pageProgress.set(hash, result.pages);
+  }
+  if (result.values.length === 0) throw new Error("esplora returned no transactions");
+  return { values: result.values, complete: result.complete };
 }
 
 /** Build the one-byte-per-transaction size map for a confirmed block. */
@@ -217,6 +264,8 @@ export type TxValues = {
   txCount: number;
   source: BlockBytes["source"];
   values: number[];
+  /** true only when every transaction in the block was read */
+  complete: boolean;
 };
 
 const valuesCache = new Map<number, TxValues>();
@@ -226,22 +275,29 @@ export async function buildTxValues(height: number): Promise<TxValues> {
   if (cached) return cached;
 
   const request = (async (): Promise<TxValues> => {
+    const startedAt = Date.now();
     const meta = await fetchBlockMeta(height);
 
     let values: number[];
     let source: BlockBytes["source"] = "mempool-summary";
+    let complete = true;
     try {
-      values = await valuesFromMempoolSummary(meta.hash);
+      values = await valuesFromMempoolSummary(meta.hash, meta.txCount);
     } catch {
-      source = "esplora-pages";
-      values = await valuesFromEsploraPages(meta.hash, meta.txCount);
+      try {
+        source = "raw-block";
+        values = await valuesFromRawBlock(meta.hash, meta.txCount, startedAt + RAW_STOP_MS);
+      } catch {
+        source = "esplora-pages";
+        ({ values, complete } = await valuesFromEsploraPages(meta.hash, meta.txCount, startedAt + TOTAL_STOP_MS));
+      }
     }
-    return { height: meta.height, hash: meta.hash, txCount: meta.txCount, source, values };
+    return { height: meta.height, hash: meta.hash, txCount: meta.txCount, source, values, complete };
   })();
 
   {
     const tx = await request;
-    if (tx.values.length < tx.txCount) return tx; // partial: never cache
+    if (!tx.complete || tx.values.length < tx.txCount) return tx; // partial: never cache
     if (valuesCache.size >= 150) {
       const oldest = valuesCache.keys().next().value;
       if (oldest !== undefined) valuesCache.delete(oldest);
@@ -261,7 +317,8 @@ async function buildBlockBytesUncached(height: number): Promise<BlockBytes> {
     height: tx.height,
     hash: tx.hash,
     txCount: tx.txCount,
-    covered: bytes.length,
+    // A partial read can never claim full coverage.
+    covered: tx.complete ? bytes.length : Math.min(bytes.length, tx.txCount - 1),
     source: tx.source,
     bytes,
   };

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 /** Overall budget so a slow upstream returns 503 instead of hanging the request. */
-function deadline<T>(work: Promise<T>, ms = 20_000): Promise<T> {
+function deadline<T>(work: Promise<T>, ms = 28_000): Promise<T> {
   return Promise.race([
     work,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Upstream timeout")), ms)),

@@ -59,7 +59,13 @@ export const slabInscriptionsFn = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ height: z.number().int().min(0).max(5_000_000), hash: z.string().regex(/^[0-9a-f]{64}$/) }).parse(d))
   .handler(async ({ data }): Promise<SlabInscriptions> => {
     try {
-      const [ord, rows] = await Promise.all([ordIds(data.height), summary(data.hash).catch(() => null)]);
+      const [ord, summaryRows, meta] = await Promise.all([
+        ordIds(data.height),
+        summary(data.hash).catch(() => null),
+        import("@/lib/block-bytes.server").then((m) => m.fetchBlockMeta(data.height)).catch(() => null),
+      ]);
+      // A summary missing transactions would silently drop parcels: only a full one counts.
+      const rows = summaryRows && meta && meta.hash === data.hash && summaryRows.length === meta.txCount ? summaryRows : null;
       if (ord && rows) {
         const pos = new Map(rows.map((t, i) => [t.txid, i]));
         const mapped = ord.ids
@@ -72,7 +78,8 @@ export const slabInscriptionsFn = createServerFn({ method: "GET" })
           }),
         );
         const rest = mapped.slice(DETAIL_CAP).map((m) => ({ ...m, number: null, type: "unknown" }));
-        return { items: [...details, ...rest], total: ord.ids.length, more: ord.more, source: "ord" };
+        // Every ord id is revealed in this block, so an unmapped id means the list is incomplete.
+        return { items: [...details, ...rest], total: ord.ids.length, more: ord.more || mapped.length < ord.ids.length, source: "ord" };
       }
       if (rows) {
         const items: ParcelInscription[] = [];
