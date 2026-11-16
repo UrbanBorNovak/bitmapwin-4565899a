@@ -24,7 +24,7 @@ export async function fetchBlock(height: number): Promise<BlockFacts | null> {
   let partial = false;
   for (let attempt = 0; attempt < 3; attempt++) {
     // After a partial answer, bypass any cached copy so the server re-reads the chain.
-    const url = partial ? `/api/public/blocks/${height}?fresh=${Date.now()}` : `/api/public/blocks/${height}`;
+    const url: string = partial ? `/api/public/blocks/${height}?fresh=${Date.now()}` : `/api/public/blocks/${height}`;
     r = await fetch(url, partial ? { cache: "no-store" } : undefined).catch(() => null);
     partial = !!r && r.ok && r.status !== 204 && isPartial(r);
     if (r && r.status !== 429 && r.status !== 503 && !r.headers.get("x-degraded") && !partial) break;

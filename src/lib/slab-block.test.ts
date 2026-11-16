@@ -40,7 +40,7 @@ describe("partial block reads", () => {
     const { vi } = await import("vitest");
     const { fetchBlock } = await import("@/lib/slab-block");
     vi.useFakeTimers();
-    const calls: Array<{ url: string; cache?: string }> = [];
+    const calls: Array<{ url: string; cache?: string | undefined }> = [];
     const answer = (covered: number) =>
       new Response(new Uint8Array(covered).fill(1), {
         headers: { "x-tx-count": "3", "x-tx-covered": String(covered), "x-block-hash": "00ab" },
