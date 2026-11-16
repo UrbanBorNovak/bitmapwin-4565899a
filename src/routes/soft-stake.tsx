@@ -7,6 +7,8 @@ import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { bindingMessage, validateBinding } from "@/lib/stacks-softstake";
 import { pilotAttestFn, type PilotAttestResult } from "@/lib/stacks-pilot.functions";
 import { EXPLORER_TX, PILOT_STAKE, STX_FAUCET } from "@/lib/stacks-pilot";
+import { useQuery } from "@tanstack/react-query";
+import { watchdogStatusFn } from "@/lib/stake-watchdog.functions";
 
 export const Route = createFileRoute("/soft-stake")({
   component: SoftStakePage,
@@ -116,6 +118,8 @@ function SoftStakePage() {
         <p className="mt-1 text-muted-foreground">Rewards are BitmapWin Test sBTC on Stacks testnet. Mainnet rewards are switched off. Ownership is checked on real Bitcoin; BitmapWin signs that check, so this pilot trusts BitmapWin, not only the chain.</p>
       </div>
 
+      <WatchdogPanel />
+
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4">
         <p className="font-mono text-xs tracking-widest text-muted-foreground">1 · YOUR WALLETS</p>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -196,4 +200,38 @@ function SoftStakePage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return <div className="rounded border border-border p-2"><p className="text-[10px] text-muted-foreground">{label}</p><p className="mt-1 text-sm">{value}</p></div>;
+}
+
+function WatchdogPanel() {
+  const getStatus = useServerFn(watchdogStatusFn);
+  const q = useQuery({ queryKey: ["stake-watchdog"], queryFn: () => getStatus(), refetchInterval: 60_000, staleTime: 30_000 });
+  const d = q.data;
+  const state = !d ? "CHECKING…" : !d.ok ? "NO DATA" : d.paused ? "PILOT PAUSED" : d.error ? "CHECK INCOMPLETE" : d.suspicious > 0 ? "SUSPICIOUS · PAUSING" : "ALL STAKES MATCH";
+  const tone = d?.ok && !d.paused && !d.error && d.suspicious === 0 ? "text-signal" : "text-bitcoin";
+  return (
+    <section className="space-y-2 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="tracking-widest text-muted-foreground">WATCHDOG · TESTNET</p>
+        <p className={tone}>{state}</p>
+      </div>
+      <p className="text-muted-foreground">Every few minutes it compares each stake on the contract with the list of approvals BitmapWin actually signed. A stake nobody signed, or an unexpected admin action, pauses the whole pilot: staking, funding and claims stop, and the test tokens stay in the contract.</p>
+      {d && !d.ok && <p className="text-muted-foreground">{d.reason}.</p>}
+      {d?.ok && (
+        <>
+          <p className="text-muted-foreground">Last check {new Date(d.ranAt).toLocaleString("en-US", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" })} UTC · testnet block {d.burnHeight.toLocaleString("en-US")} · {d.checked.toLocaleString("en-US")} contract calls compared.</p>
+          {d.error && <p className="text-bitcoin">{d.error}. It will try again on the next run.</p>}
+          {d.pauseTxid && <p>Pause sent: <a href={EXPLORER_TX(d.pauseTxid)} target="_blank" rel="noreferrer" className="underline">{short(d.pauseTxid)}</a></p>}
+          {d.findings.length > 0 && (
+            <ul className="space-y-1">
+              {d.findings.map((f, i) => (
+                <li key={i} className={f.suspicious ? "text-bitcoin" : "text-muted-foreground"}>
+                  {f.suspicious ? "SUSPICIOUS" : "INFO"}{f.height != null ? ` · ${f.height}.bitmap` : ""} · {f.detail}{f.txid && <> · <a href={EXPLORER_TX(f.txid)} target="_blank" rel="noreferrer" className="underline">{short(f.txid)}</a></>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  );
 }

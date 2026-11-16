@@ -192,6 +192,7 @@ import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/b
 import { Route as ApiPublicBlocksTxCountsRouteImport } from './routes/api/public/blocks.tx-counts'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
 import { Route as ApiPublicInscriptionIdRouteImport } from './routes/api/public/inscription.$id'
+import { Route as ApiPublicJobsStakeWatchdogRouteImport } from './routes/api/public/jobs/stake-watchdog'
 import { Route as ApiPublicLandSkinHeightRouteImport } from './routes/api/public/land-skin.$height'
 import { Route as ApiPublicMarketSplatRouteImport } from './routes/api/public/market.$'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
@@ -1120,6 +1121,12 @@ const ApiPublicInscriptionIdRoute = ApiPublicInscriptionIdRouteImport.update({
   path: '/public/inscription/$id',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicJobsStakeWatchdogRoute =
+  ApiPublicJobsStakeWatchdogRouteImport.update({
+    id: '/public/jobs/stake-watchdog',
+    path: '/public/jobs/stake-watchdog',
+    getParentRoute: () => ApiRoute,
+  } as any)
 const ApiPublicLandSkinHeightRoute = ApiPublicLandSkinHeightRouteImport.update({
   id: '/public/land-skin/$height',
   path: '/public/land-skin/$height',
@@ -1350,6 +1357,7 @@ export interface FileRoutesByFullPath {
   '/api/public/blocks/tx-counts': typeof ApiPublicBlocksTxCountsRoute
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
+  '/api/public/jobs/stake-watchdog': typeof ApiPublicJobsStakeWatchdogRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/market/$': typeof ApiPublicMarketSplatRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
@@ -1539,6 +1547,7 @@ export interface FileRoutesByTo {
   '/api/public/blocks/tx-counts': typeof ApiPublicBlocksTxCountsRoute
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
+  '/api/public/jobs/stake-watchdog': typeof ApiPublicJobsStakeWatchdogRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/market/$': typeof ApiPublicMarketSplatRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
@@ -1733,6 +1742,7 @@ export interface FileRoutesById {
   '/api/public/blocks/tx-counts': typeof ApiPublicBlocksTxCountsRoute
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
+  '/api/public/jobs/stake-watchdog': typeof ApiPublicJobsStakeWatchdogRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/market/$': typeof ApiPublicMarketSplatRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
@@ -1928,6 +1938,7 @@ export interface FileRouteTypes {
     | '/api/public/blocks/tx-counts'
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
+    | '/api/public/jobs/stake-watchdog'
     | '/api/public/land-skin/$height'
     | '/api/public/market/$'
     | '/api/public/blocks/$height/meta'
@@ -2117,6 +2128,7 @@ export interface FileRouteTypes {
     | '/api/public/blocks/tx-counts'
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
+    | '/api/public/jobs/stake-watchdog'
     | '/api/public/land-skin/$height'
     | '/api/public/market/$'
     | '/api/public/blocks/$height/meta'
@@ -2310,6 +2322,7 @@ export interface FileRouteTypes {
     | '/api/public/blocks/tx-counts'
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
+    | '/api/public/jobs/stake-watchdog'
     | '/api/public/land-skin/$height'
     | '/api/public/market/$'
     | '/api/public/blocks/$height/meta'
@@ -3745,6 +3758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicInscriptionIdRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/jobs/stake-watchdog': {
+      id: '/api/public/jobs/stake-watchdog'
+      path: '/public/jobs/stake-watchdog'
+      fullPath: '/api/public/jobs/stake-watchdog'
+      preLoaderRoute: typeof ApiPublicJobsStakeWatchdogRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/land-skin/$height': {
       id: '/api/public/land-skin/$height'
       path: '/public/land-skin/$height'
@@ -3832,6 +3852,7 @@ interface ApiRouteChildren {
   ApiPublicBlocksTxCountsRoute: typeof ApiPublicBlocksTxCountsRoute
   ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
   ApiPublicInscriptionIdRoute: typeof ApiPublicInscriptionIdRoute
+  ApiPublicJobsStakeWatchdogRoute: typeof ApiPublicJobsStakeWatchdogRoute
   ApiPublicLandSkinHeightRoute: typeof ApiPublicLandSkinHeightRoute
   ApiPublicMarketSplatRoute: typeof ApiPublicMarketSplatRoute
   ApiPublicOgBitmapBlockRoute: typeof ApiPublicOgBitmapBlockRoute
@@ -3856,6 +3877,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicBlocksTxCountsRoute: ApiPublicBlocksTxCountsRoute,
   ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
   ApiPublicInscriptionIdRoute: ApiPublicInscriptionIdRoute,
+  ApiPublicJobsStakeWatchdogRoute: ApiPublicJobsStakeWatchdogRoute,
   ApiPublicLandSkinHeightRoute: ApiPublicLandSkinHeightRoute,
   ApiPublicMarketSplatRoute: ApiPublicMarketSplatRoute,
   ApiPublicOgBitmapBlockRoute: ApiPublicOgBitmapBlockRoute,

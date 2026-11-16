@@ -39,3 +39,22 @@ export async function testnetBurnHeight(): Promise<number> {
   if (!Number.isInteger(h) || h <= 0) throw new Error("bad burn height");
   return h;
 }
+
+/**
+ * Watchdog pause: signed by the pilot pauser (the testnet admin address holds the
+ * pauser role on-chain). `pause` can only stop the pilot, never move funds.
+ */
+export async function broadcastPilotPause(): Promise<string> {
+  const { makeContractCall, broadcastTransaction, PostConditionMode } = await import("@stacks/transactions");
+  const { PILOT_STAKE } = await import("@/lib/stacks-pilot");
+  const { assertTestnetContract } = await import("@/lib/stake-watchdog");
+  assertTestnetContract(PILOT_STAKE);
+  const [contractAddress, contractName] = PILOT_STAKE.split(".") as [string, string];
+  const tx = await makeContractCall({
+    contractAddress, contractName, functionName: "pause", functionArgs: [],
+    senderKey: adminKey(), network: "testnet", fee: 30000n, postConditionMode: PostConditionMode.Deny,
+  });
+  const r = (await broadcastTransaction({ transaction: tx, network: "testnet" })) as { txid?: string; error?: string; reason?: string };
+  if (!r?.txid || r.error) throw new Error(`pause broadcast failed: ${r?.reason ?? r?.error ?? "unknown"}`);
+  return r.txid;
+}
