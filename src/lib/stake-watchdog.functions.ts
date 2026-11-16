@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { PoolSummary } from "@/lib/stake-watchdog";
 
 export type WatchdogStatus =
   | { ok: true; ranAt: string; burnHeight: number; checked: number; suspicious: number; paused: boolean | null; pauseTxid: string | null; error: string | null;
-      pool: { funded: string; paidOut: string; direct: string; expected: string; actual: string; matches: boolean } | null;
+      pool: PoolSummary | null;
       findings: { kind: string; suspicious: boolean; txid: string | null; height: number | null; detail: string }[] }
   | { ok: false; reason: string };
 
