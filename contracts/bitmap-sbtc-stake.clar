@@ -1,11 +1,11 @@
-;; BW-STACKS-1 · BitmapWin soft-stake vault (DRAFT — not deployed, not audited)
+;; BW-STACKS-1 - BitmapWin soft-stake vault (DRAFT - not deployed, not audited)
 ;; BITMAPs stay on Bitcoin L1. An oracle key attests live custody; rewards accrue
 ;; per weight only from sBTC actually deposited through `fund`.
 ;;
 ;; Key roles (see docs/specs/BW-STACKS-1-ORACLE.md):
-;;   admin   – hardware-wallet multisig. Schedules/rotates/revokes keys, unpauses.
-;;   pausers – can only pause. A stolen pauser key causes downtime, never loss.
-;;   oracle  – per-epoch secp256k1 key. Can only sign custody attestations.
+;;   admin   - hardware-wallet multisig. Schedules/rotates/revokes keys, unpauses.
+;;   pausers - can only pause. A stolen pauser key causes downtime, never loss.
+;;   oracle  - per-epoch secp256k1 key. Can only sign custody attestations.
 
 (define-constant SELF (as-contract tx-sender))
 (define-constant SCALE u1000000000000)
