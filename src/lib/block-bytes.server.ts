@@ -29,6 +29,9 @@ const ESPLORA_ROUNDS = 3;
 const ESPLORA_BUDGET_MS = 14_000;
 const RETRY_DELAYS = [0, 500, 1_500] as const;
 const ONCE = [0] as const;
+/** Stage budgets measured from the start of a block read, inside the route's overall deadline. */
+const RAW_STOP_MS = 15_000;
+const TOTAL_STOP_MS = 26_000;
 
 const blockCache = new Map<number, BlockBytes>();
 const metaCache = new Map<number, BlockMeta>();
@@ -174,9 +177,10 @@ async function valuesFromMempoolSummary(hash: string, txCount: number): Promise<
 }
 
 /** The whole raw block, verified end to end; throws unless every transaction is proven. */
-async function valuesFromRawBlock(hash: string, txCount: number): Promise<number[]> {
+async function valuesFromRawBlock(hash: string, txCount: number, stopAt: number): Promise<number[]> {
   let lastError: unknown;
   for (const base of [COMMUNITY_MEMPOOL, ESPLORA, MEMPOOL]) {
+    if (Date.now() >= stopAt) break;
     try {
       const response = await fetchWithBackoff(`${base}/block/${hash}/raw`, "application/octet-stream", 12_000, [0, 800]);
       const raw = new Uint8Array(await response.arrayBuffer());
@@ -190,7 +194,11 @@ async function valuesFromRawBlock(hash: string, txCount: number): Promise<number
 
 type EsploraTx = { vout?: Array<{ value?: number }> };
 
-async function valuesFromEsploraPages(hash: string, txCount: number): Promise<{ values: number[]; complete: boolean }> {
+async function valuesFromEsploraPages(
+  hash: string,
+  txCount: number,
+  stopAt: number,
+): Promise<{ values: number[]; complete: boolean }> {
   const providers = [COMMUNITY_MEMPOOL, ESPLORA, MEMPOOL];
   const result = await collectPages(
     txCount,
@@ -208,7 +216,7 @@ async function valuesFromEsploraPages(hash: string, txCount: number): Promise<{ 
       }
       throw lastError;
     },
-    { concurrency: ESPLORA_CONCURRENCY, rounds: ESPLORA_ROUNDS, deadline: Date.now() + ESPLORA_BUDGET_MS },
+    { concurrency: ESPLORA_CONCURRENCY, rounds: ESPLORA_ROUNDS, deadline: Math.min(stopAt, Date.now() + ESPLORA_BUDGET_MS) },
   );
   if (result.values.length === 0) throw new Error("esplora returned no transactions");
   return { values: result.values, complete: result.complete };
@@ -247,6 +255,7 @@ export async function buildTxValues(height: number): Promise<TxValues> {
   if (cached) return cached;
 
   const request = (async (): Promise<TxValues> => {
+    const startedAt = Date.now();
     const meta = await fetchBlockMeta(height);
 
     let values: number[];
@@ -257,10 +266,10 @@ export async function buildTxValues(height: number): Promise<TxValues> {
     } catch {
       try {
         source = "raw-block";
-        values = await valuesFromRawBlock(meta.hash, meta.txCount);
+        values = await valuesFromRawBlock(meta.hash, meta.txCount, startedAt + RAW_STOP_MS);
       } catch {
         source = "esplora-pages";
-        ({ values, complete } = await valuesFromEsploraPages(meta.hash, meta.txCount));
+        ({ values, complete } = await valuesFromEsploraPages(meta.hash, meta.txCount, startedAt + TOTAL_STOP_MS));
       }
     }
     return { height: meta.height, hash: meta.hash, txCount: meta.txCount, source, values, complete };
