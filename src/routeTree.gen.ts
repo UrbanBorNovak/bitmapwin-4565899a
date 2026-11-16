@@ -103,6 +103,7 @@ import { Route as WebringsRouteImport } from './routes/webrings'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as XmasRouteImport } from './routes/xmas'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as ApiOpsPauserProofRouteImport } from './routes/api/ops-pauser-proof'
 import { Route as BiternamAftermathRouteImport } from './routes/biternam_.aftermath'
 import { Route as BiternamArcadeRouteImport } from './routes/biternam_.arcade'
 import { Route as BiternamArchiveRouteImport } from './routes/biternam_.archive'
@@ -673,6 +674,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiOpsPauserProofRoute = ApiOpsPauserProofRouteImport.update({
+  id: '/ops-pauser-proof',
+  path: '/ops-pauser-proof',
+  getParentRoute: () => ApiRoute,
+} as any)
 const BiternamAftermathRoute = BiternamAftermathRouteImport.update({
   id: '/biternam_/aftermath',
   path: '/biternam/aftermath',
@@ -1268,6 +1274,7 @@ export interface FileRoutesByFullPath {
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/api/ops-pauser-proof': typeof ApiOpsPauserProofRoute
   '/biternam/aftermath': typeof BiternamAftermathRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
   '/biternam/archive': typeof BiternamArchiveRoute
@@ -1458,6 +1465,7 @@ export interface FileRoutesByTo {
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/api/ops-pauser-proof': typeof ApiOpsPauserProofRoute
   '/biternam/aftermath': typeof BiternamAftermathRoute
   '/biternam/arcade': typeof BiternamArcadeRoute
   '/biternam/archive': typeof BiternamArchiveRoute
@@ -1653,6 +1661,7 @@ export interface FileRoutesById {
   '/world-stats': typeof WorldStatsRoute
   '/xmas': typeof XmasRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/api/ops-pauser-proof': typeof ApiOpsPauserProofRoute
   '/biternam_/aftermath': typeof BiternamAftermathRoute
   '/biternam_/arcade': typeof BiternamArcadeRoute
   '/biternam_/archive': typeof BiternamArchiveRoute
@@ -1849,6 +1858,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/xmas'
     | '/.well-known/oauth-protected-resource'
+    | '/api/ops-pauser-proof'
     | '/biternam/aftermath'
     | '/biternam/arcade'
     | '/biternam/archive'
@@ -2039,6 +2049,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/xmas'
     | '/.well-known/oauth-protected-resource'
+    | '/api/ops-pauser-proof'
     | '/biternam/aftermath'
     | '/biternam/arcade'
     | '/biternam/archive'
@@ -2233,6 +2244,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/xmas'
     | '/.well-known/oauth-protected-resource'
+    | '/api/ops-pauser-proof'
     | '/biternam_/aftermath'
     | '/biternam_/arcade'
     | '/biternam_/archive'
@@ -3135,6 +3147,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ops-pauser-proof': {
+      id: '/api/ops-pauser-proof'
+      path: '/ops-pauser-proof'
+      fullPath: '/api/ops-pauser-proof'
+      preLoaderRoute: typeof ApiOpsPauserProofRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/biternam_/aftermath': {
       id: '/biternam_/aftermath'
       path: '/biternam/aftermath'
@@ -3838,6 +3857,7 @@ const ApiPublicBlocksHeightRouteWithChildren =
   )
 
 interface ApiRouteChildren {
+  ApiOpsPauserProofRoute: typeof ApiOpsPauserProofRoute
   ApiPublicAgentSchemaRoute: typeof ApiPublicAgentSchemaRoute
   ApiPublicBtcpayWebhookRoute: typeof ApiPublicBtcpayWebhookRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
@@ -3863,6 +3883,7 @@ interface ApiRouteChildren {
 }
 
 const ApiRouteChildren: ApiRouteChildren = {
+  ApiOpsPauserProofRoute: ApiOpsPauserProofRoute,
   ApiPublicAgentSchemaRoute: ApiPublicAgentSchemaRoute,
   ApiPublicBtcpayWebhookRoute: ApiPublicBtcpayWebhookRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
