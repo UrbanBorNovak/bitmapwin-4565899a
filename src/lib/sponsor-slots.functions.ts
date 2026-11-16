@@ -78,3 +78,43 @@ export const recordLaunchTicketFn = createServerFn({ method: "POST" })
     if (!rows?.length) return { ok: false as const, error: "No seat without a ticket for this address" };
     return { ok: true as const, inscriptionId: id, error: null };
   });
+
+/** Whether Lightning checkout (BTCPay) is configured. */
+export const btcpayEnabledFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { btcpayConfig } = await import("@/lib/btcpay.server");
+  return { enabled: !!btcpayConfig() };
+});
+
+/** Creates a Lightning invoice for a slot; the slide goes live only once BTCPay reports it settled. */
+export const createLightningSponsorFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({
+    slot: z.enum(["cafe", "launch", "all"]), title: z.string().trim().min(2).max(40), handle: z.string().trim().max(30).default(""),
+    media: z.string().trim().min(8).max(400),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    const { parseSponsorMedia } = await import("@/lib/sponsor-slots");
+    if (!parseSponsorMedia(data.media)) return { ok: false as const, error: "Use an inscription id or an https image link" };
+    const { btcpayConfig, createSponsorInvoice } = await import("@/lib/btcpay.server");
+    const c = btcpayConfig();
+    if (!c) return { ok: false as const, error: "Lightning checkout is not available right now" };
+    try {
+      const inv = await createSponsorInvoice(c, { bw: "sponsor", ...data });
+      return { ok: true as const, ...inv, error: null };
+    } catch (e) {
+      console.error("btcpay invoice", e);
+      return { ok: false as const, error: "Could not create a Lightning invoice — try again" };
+    }
+  });
+
+/** Checks an invoice with BTCPay and activates the slide when settled. */
+export const checkLightningSponsorFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ invoiceId: z.string().regex(/^[A-Za-z0-9_-]{6,64}$/) }).parse(d))
+  .handler(async ({ data }) => {
+    const { btcpayConfig, activateSettledInvoice } = await import("@/lib/btcpay.server");
+    const c = btcpayConfig();
+    if (!c) return { ok: false as const, status: "Unavailable" };
+    try {
+      const r = await activateSettledInvoice(c, data.invoiceId);
+      return { ok: r.ok, status: r.status, endsAt: r.endsAt ?? null };
+    } catch { return { ok: false as const, status: "Error", endsAt: null }; }
+  });

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { sendBitcoinFromWallet, signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { DONATION_ADDRESS } from "@/lib/donations";
+import { LightningSponsorPay } from "@/components/launch/LightningSponsorPay";
 import { bookSponsorSlotFn } from "@/lib/sponsor-slots.functions";
 import { SPONSOR_HOURS, SPONSOR_SLOTS, parseSponsorMedia, sponsorMessage, type SponsorSlot } from "@/lib/sponsor-slots";
 
@@ -55,7 +56,7 @@ export function SponsorBooking({ wallet }: { wallet: ConnectedWallet | null }) {
         <input value={media} onChange={(e) => setMedia(e.target.value)} placeholder="Inscription id or https image link" className="rounded border border-border bg-background px-2 py-2" />
       </div>
       {!wallet ? (
-        <p className="mt-3 text-muted-foreground">Connect a wallet above to book.</p>
+        <p className="mt-3 text-muted-foreground">Connect a wallet above to pay on-chain, or use Lightning below.</p>
       ) : txid ? (
         <button disabled={!!busy} onClick={() => run(() => confirm(txid))} className="btn-term mt-3 w-full px-3 py-2">RETRY CONFIRMATION</button>
       ) : (
@@ -69,6 +70,8 @@ export function SponsorBooking({ wallet }: { wallet: ConnectedWallet | null }) {
           {busy ?? `PAY ${SPONSOR_SLOTS[slot].sats.toLocaleString("en-US")} SATS & BOOK`}
         </button>
       )}
+      <LightningSponsorPay slot={slot} title={title} handle={handle} media={media} valid={valid}
+        onBooked={(endsAt) => { setMsg(`Booked — live until ${new Date(endsAt).toLocaleString("en-US")}`); setTitle(""); setHandle(""); setMedia(""); }} />
       {msg && <p className="mt-2 text-signal">{msg}</p>}
     </section>
   );
