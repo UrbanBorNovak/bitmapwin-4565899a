@@ -26,7 +26,6 @@
 (define-constant ERR-RATE (err u409))
 (define-constant ERR-STATE (err u410))
 (define-constant ERR-CAP (err u411))
-(define-constant FUND-PERIOD u144) ;; funding period, burn blocks (~1 day)
 
 (define-data-var admin principal tx-sender)
 (define-data-var paused bool false)
@@ -40,9 +39,11 @@
 (define-data-var funder principal tx-sender)
 (define-data-var cap-call uint u0)
 (define-data-var cap-period uint u0)
-(define-data-var cap-total uint u0)
-(define-data-var funded-total uint u0)       ;; counts only `fund`, never unsolicited transfers
-(define-map funded-in uint uint)            ;; period index -> funded that period
+(define-data-var cap-pool uint u0)         ;; max reward-pool balance right after a `fund`
+(define-data-var fund-period uint u144)    ;; reward-period length, burn blocks (configurable)
+(define-data-var funded-total uint u0)     ;; counts only `fund`, never unsolicited transfers
+(define-data-var pool-held uint u0)        ;; funded and not yet paid out; unsolicited transfers excluded
+(define-map funded-in uint uint)           ;; period index -> funded that period
 
 (define-map pausers principal bool)
 ;; revoked-from: stakes attested at or after this burn height under this key are void.
@@ -90,16 +91,20 @@
 (define-public (set-rate-cap (n uint))
   (begin (asserts! (is-admin) ERR-AUTH) (ok (var-set rate-cap n))))
 
-;; Admin sets the treasury principal and all three caps together.
-(define-public (set-funding (who principal) (per-call uint) (per-period uint) (total uint))
+;; Admin sets the treasury principal, the reward-period length and all three caps together.
+(define-public (set-funding (who principal) (per-call uint) (period-len uint) (per-period uint) (pool-max uint))
   (begin (asserts! (is-admin) ERR-AUTH)
-    (var-set funder who) (var-set cap-call per-call) (var-set cap-period per-period) (var-set cap-total total)
+    (asserts! (> period-len u0) ERR-STATE)
+    (var-set funder who) (var-set cap-call per-call) (var-set fund-period period-len)
+    (var-set cap-period per-period) (var-set cap-pool pool-max)
     (ok true)))
 
 (define-read-only (funding)
   { funder: (var-get funder), per-call: (var-get cap-call), per-period: (var-get cap-period),
-    total: (var-get cap-total), funded-total: (var-get funded-total),
-    funded-this-period: (default-to u0 (map-get? funded-in (/ burn-block-height FUND-PERIOD))) })
+    period-len: (var-get fund-period), pool-max: (var-get cap-pool),
+    pool-held: (var-get pool-held), funded-total: (var-get funded-total),
+    period: (/ burn-block-height (var-get fund-period)),
+    funded-this-period: (default-to u0 (map-get? funded-in (/ burn-block-height (var-get fund-period)))) })
 
 (define-public (pause)
   (begin
@@ -143,6 +148,10 @@
     (ok next)))
 
 ;; ---------- accounting ----------
+;; Every payout lowers the tracked pool balance (never below zero).
+(define-private (paid (n uint))
+  (var-set pool-held (if (> n (var-get pool-held)) u0 (- (var-get pool-held) n))))
+
 (define-private (recycle (amount uint))
   (if (> (var-get total-weight) u0)
     (var-set acc (+ (var-get acc) (/ (* amount SCALE) (var-get total-weight))))
@@ -158,24 +167,26 @@
         (ok true)
         (if (stake-void s)
           (begin (recycle owed) (ok true))
-          (as-contract (contract-call? .mock-sbtc
-                         transfer owed tx-sender (get owner s) none)))))
+          (begin (paid owed) (as-contract (contract-call? .mock-sbtc
+                         transfer owed tx-sender (get owner s) none))))))
     (ok true)))
 
 (define-public (fund (amount uint))
-  (let ((period (/ burn-block-height FUND-PERIOD))
+  (let ((period (/ burn-block-height (var-get fund-period)))
         (in-period (+ amount (default-to u0 (map-get? funded-in period))))
+        (held (+ amount (var-get pool-held)))
         (total (+ amount (var-get funded-total))))
     (asserts! (not (var-get paused)) ERR-PAUSED)
     (asserts! (is-eq tx-sender (var-get funder)) ERR-AUTH)
     (asserts! (and (> amount u0) (<= amount (var-get cap-call))) ERR-CAP)
     (asserts! (<= in-period (var-get cap-period)) ERR-CAP)
-    (asserts! (<= total (var-get cap-total)) ERR-CAP)
+    (asserts! (<= held (var-get cap-pool)) ERR-CAP)
     (try! (contract-call? .mock-sbtc
             transfer amount tx-sender SELF none))
     (map-set funded-in period in-period)
     (var-set funded-total total)
-    (print { event: "fund", amount: amount, period: period, funded-total: total, epoch: (var-get epoch) })
+    (var-set pool-held held)
+    (print { event: "fund", amount: amount, period: period, pool-held: held, funded-total: total, epoch: (var-get epoch) })
     ;; Only `amount` (plus stranded) is shared out; tokens sent outside `fund` stay unshared.
     (let ((share (+ amount (var-get stranded))))
       (var-set stranded u0)
@@ -213,8 +224,8 @@
     (asserts! (not (stake-void s)) ERR-KEY)
     (map-set stakes h (merge s { debt: (* (get weight s) (var-get acc)) }))
     (if (> owed u0)
-      (as-contract (contract-call? .mock-sbtc
-                     transfer owed tx-sender me none))
+      (begin (paid owed) (as-contract (contract-call? .mock-sbtc
+                     transfer owed tx-sender me none)))
       (ok true))))
 
 ;; Anyone may close an expired or void stake (the watcher does this every block).
