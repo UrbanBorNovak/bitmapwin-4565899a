@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { WalletConnect } from "@/components/WalletConnect";
@@ -102,7 +102,7 @@ function SoftStakePage() {
 
       <div className="rounded-lg border border-bitcoin/60 bg-card/60 p-4 font-mono text-xs leading-relaxed">
         <p className="text-bitcoin">TEST ONLY · NO REAL VALUE</p>
-        <p className="mt-1 text-muted-foreground">Rewards are BitmapWin Test sBTC on Stacks testnet. Mainnet rewards are switched off. Ownership is checked on real Bitcoin; BitmapWin signs that check, so this pilot trusts BitmapWin, not only the chain. <Link to="/docs" className="underline">Read the design</Link>.</p>
+        <p className="mt-1 text-muted-foreground">Rewards are BitmapWin Test sBTC on Stacks testnet. Mainnet rewards are switched off. Ownership is checked on real Bitcoin; BitmapWin signs that check, so this pilot trusts BitmapWin, not only the chain.</p>
       </div>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4">

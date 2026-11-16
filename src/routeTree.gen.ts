@@ -85,6 +85,7 @@ import { Route as ShadowNotesRouteImport } from './routes/shadow-notes'
 import { Route as ShordRouteImport } from './routes/shord'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlabRouteImport } from './routes/slab'
+import { Route as SoftStakeRouteImport } from './routes/soft-stake'
 import { Route as SpeedBountyRouteImport } from './routes/speed-bounty'
 import { Route as StoreKitRouteImport } from './routes/store-kit'
 import { Route as StreamRouteImport } from './routes/stream'
@@ -577,6 +578,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SlabRoute = SlabRouteImport.update({
   id: '/slab',
   path: '/slab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoftStakeRoute = SoftStakeRouteImport.update({
+  id: '/soft-stake',
+  path: '/soft-stake',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SpeedBountyRoute = SpeedBountyRouteImport.update({
@@ -1231,6 +1237,7 @@ export interface FileRoutesByFullPath {
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slab': typeof SlabRoute
+  '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1418,6 +1425,7 @@ export interface FileRoutesByTo {
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slab': typeof SlabRoute
+  '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1610,6 +1618,7 @@ export interface FileRoutesById {
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slab': typeof SlabRoute
+  '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1803,6 +1812,7 @@ export interface FileRouteTypes {
     | '/shord'
     | '/sitemap.xml'
     | '/slab'
+    | '/soft-stake'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -1990,6 +2000,7 @@ export interface FileRouteTypes {
     | '/shord'
     | '/sitemap.xml'
     | '/slab'
+    | '/soft-stake'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -2181,6 +2192,7 @@ export interface FileRouteTypes {
     | '/shord'
     | '/sitemap.xml'
     | '/slab'
+    | '/soft-stake'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -2373,6 +2385,7 @@ export interface RootRouteChildren {
   ShordRoute: typeof ShordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlabRoute: typeof SlabRoute
+  SoftStakeRoute: typeof SoftStakeRoute
   SpeedBountyRoute: typeof SpeedBountyRoute
   StoreKitRoute: typeof StoreKitRoute
   StreamRoute: typeof StreamRoute
@@ -2968,6 +2981,13 @@ declare module '@tanstack/react-router' {
       path: '/slab'
       fullPath: '/slab'
       preLoaderRoute: typeof SlabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/soft-stake': {
+      id: '/soft-stake'
+      path: '/soft-stake'
+      fullPath: '/soft-stake'
+      preLoaderRoute: typeof SoftStakeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/speed-bounty': {
@@ -4000,6 +4020,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShordRoute: ShordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlabRoute: SlabRoute,
+  SoftStakeRoute: SoftStakeRoute,
   SpeedBountyRoute: SpeedBountyRoute,
   StoreKitRoute: StoreKitRoute,
   StreamRoute: StreamRoute,
