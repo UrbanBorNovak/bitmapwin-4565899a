@@ -203,17 +203,20 @@ async function valuesFromEsploraPages(
   stopAt: number,
 ): Promise<{ values: number[]; complete: boolean }> {
   const providers = [COMMUNITY_MEMPOOL, ESPLORA, MEMPOOL];
+  const failures = new Map<string, number>();
   const result = await collectPages(
     txCount,
     async (start, attempt) => {
-      // Each round starts on a different provider, then falls through the rest.
+      // Spread pages across providers, and steer away from ones failing during this read.
+      const rotated = providers.map((_, k) => providers[(attempt + start / 25 + k) % providers.length]!);
+      const order = rotated.sort((a, b) => (failures.get(a) ?? 0) - (failures.get(b) ?? 0));
       let lastError: unknown;
-      for (let k = 0; k < providers.length; k++) {
-        const base = providers[(attempt + k) % providers.length]!;
+      for (const base of order) {
         try {
           const txs = await json<EsploraTx[]>(`${base}/block/${hash}/txs/${start}`, 6_000, [0, 600]);
           return txs.map((tx) => (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0));
         } catch (error) {
+          failures.set(base, (failures.get(base) ?? 0) + 1);
           lastError = error;
         }
       }
