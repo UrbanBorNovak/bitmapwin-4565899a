@@ -35,11 +35,12 @@ const isOk = (r) => r.type === "ok" || r.type === 7;
 
 simnet.callPublicFn("mock-sbtc", "mint", [Cl.uint(10_000_000), Cl.principal(D)], D);
 simnet.callPublicFn("mock-sbtc", "mint", [Cl.uint(1_000_000), Cl.principal(W2)], D);
-const setFunding = (who, c, p, t, by = D) => call("set-funding", [Cl.principal(who), Cl.uint(c), Cl.uint(p), Cl.uint(t)], by);
+const setFunding = (who, c, len, p, pool, by = D) => call("set-funding", [Cl.principal(who), Cl.uint(c), Cl.uint(len), Cl.uint(p), Cl.uint(pool)], by);
+const fstat = (k) => Number(ro("funding", []).value[k].value);
 
 ok("funding is off until caps are set", () => {
   assert.equal(err(fund(1)), 411);
-  assert.ok(isOk(setFunding(D, 200_000, 300_000, 1_000_000)));
+  assert.ok(isOk(setFunding(D, 200_000, 144, 300_000, 1_000_000)));
 });
 
 ok("off-chain hash matches contract", () => {
@@ -140,29 +141,56 @@ ok("expired stake can't claim; eviction pays the owner", () => {
 ok("only the treasury may fund", () => {
   assert.equal(err(call("fund", [Cl.uint(100)], W2)), 401);
   assert.equal(err(call("fund", [Cl.uint(100)], P)), 401);
-  assert.equal(err(setFunding(W2, 1e9, 1e9, 1e9, W2)), 401);       // stranger can't make itself funder
-  assert.equal(err(setFunding(P, 1e9, 1e9, 1e9, P)), 401);         // pause-only key can't either
+  assert.equal(err(setFunding(W2, 1e9, 144, 1e9, 1e9, W2)), 401);       // stranger can't make itself funder
+  assert.equal(err(setFunding(P, 1e9, 144, 1e9, 1e9, P)), 401);         // pause-only key can't either
   assert.equal(err(fund(0)), 411);
 });
 
-ok("per-call, per-period and total caps refuse over-limit funding", () => {
-  simnet.mineEmptyBurnBlocks(150);                                  // fresh period
-  assert.ok(isOk(setFunding(D, 1_000, 1_500, 200_000)));
-  assert.equal(err(fund(1_001)), 411);                              // per call
+ok("period length must be positive and only admin sets it", () => {
+  assert.equal(err(setFunding(D, 1_000, 0, 1_500, 1e9)), 410);
+  assert.equal(err(setFunding(P, 1_000, 10, 1_500, 1e9, P)), 401);
+});
+
+ok("per-call cap: exactly the cap passes, one more is refused", () => {
+  assert.ok(isOk(setFunding(D, 1_000, 1_000, 1e9, 1e12)));
+  assert.equal(err(fund(1_001)), 411);
   assert.ok(isOk(fund(1_000)));
-  assert.equal(err(fund(501)), 411);                                // per period
-  assert.ok(isOk(fund(500)));
-  simnet.mineEmptyBurnBlocks(145);                                  // next period resets
+});
+
+ok("reward-period cap: boundary, then reset in the next configured period", () => {
+  assert.ok(isOk(setFunding(D, 1_000, 50, 1_500, 1e12)));          // 50-block periods
+  simnet.mineEmptyBurnBlocks(50 - (tip() % 50));                    // start of a fresh period
+  assert.equal(fstat("funded-this-period"), 0);
   assert.ok(isOk(fund(1_000)));
-  const f = ro("funding", []).value;
-  const total = Number(f["funded-total"].value);
-  assert.ok(isOk(setFunding(D, 1_000, 1_500, total + 10)));
+  assert.equal(err(fund(501)), 411);                                // 1,501 > 1,500
+  assert.ok(isOk(fund(500)));                                       // exactly 1,500
+  assert.equal(err(fund(1)), 411);
+  simnet.mineEmptyBurnBlocks(50);                                   // next period: allowance resets
+  assert.equal(fstat("funded-this-period"), 0);
+  assert.ok(isOk(fund(1_000)));
+});
+
+ok("pool-balance cap: boundary, and payouts free room again", () => {
+  const held = fstat("pool-held");
+  assert.ok(isOk(setFunding(D, 1e9, 144, 1e9, held + 700)));
   simnet.mineEmptyBurnBlocks(145);
-  assert.equal(err(fund(11)), 411);                                 // lifetime total
-  assert.ok(isOk(fund(10)));
+  assert.equal(err(fund(701)), 411);                                // would exceed pool cap
+  assert.ok(isOk(fund(700)));                                       // lands exactly on the cap
+  assert.equal(fstat("pool-held"), held + 700);
   const b = bal(SELF);
   assert.equal(err(fund(1)), 411);
-  assert.equal(bal(SELF), b);                                        // refused calls move nothing
+  assert.equal(bal(SELF), b);                                       // refused calls move nothing
+  // a holder claims; the tracked pool falls, so the treasury may top up again
+  assert.ok(isOk(attest(k3, 3, 30, 100, W1)));
+  assert.ok(isOk(setFunding(D, 1e9, 144, 1e9, fstat("pool-held") + 10_000)));
+  assert.ok(isOk(fund(10_000)));
+  assert.equal(err(fund(1)), 411);
+  const before = fstat("pool-held");
+  assert.ok(isOk(call("claim", [Cl.uint(30)], W1)));
+  const after = fstat("pool-held");
+  assert.ok(after < before);
+  assert.ok(isOk(fund(before - after)));                            // exactly the room the payout freed
+  assert.equal(err(fund(1)), 411);
 });
 
 ok("unsolicited transfers stay unshared and don't use caps", () => {
@@ -173,6 +201,7 @@ ok("unsolicited transfers stay unshared and don't use caps", () => {
   assert.equal(Number(ro("pending", [Cl.uint(20)]).value), p0);
   const f1 = ro("funding", []).value;
   assert.equal(f1["funded-total"].value, f0["funded-total"].value);
+  assert.equal(f1["pool-held"].value, f0["pool-held"].value);       // pool cap ignores unsolicited tokens
   assert.equal(err(call("fund", [Cl.uint(1)], W2)), 401);           // sending tokens grants no funder role
 });
 console.log(`${passed} passed`);
