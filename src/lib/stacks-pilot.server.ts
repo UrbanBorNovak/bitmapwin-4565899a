@@ -22,7 +22,7 @@ const oracleKey = () => derive("STACKS_PILOT_ORACLE_SEED", "BW-STACKS-1/testnet/
 const pauserKey = () => derive("STACKS_PILOT_PAUSER_SEED", "BW-STACKS-1/testnet/pauser");
 
 /** Testnet admin principal (public). Its key is not loaded by the running app. */
-export const PILOT_ADMIN_ADDRESS = "ST2P0SD4DRBJYC4ZMBDQ0Z9KHM2D3S26JZ2MJV0ZZ";
+export const PILOT_ADMIN_ADDRESS = "ST2P0SD4JPHFKJ42DDH2VQVS59P7XJFYC4K8NHGWR";
 
 export function pilotPublicInfo() {
   return {
