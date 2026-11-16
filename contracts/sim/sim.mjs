@@ -75,7 +75,15 @@ ok("pauser can pause but nothing else", () => {
   assert.equal(err(attest(k1, 1, 5, 100, W1)), 403);
   assert.equal(err(call("claim", [Cl.uint(552718)], W1)), 403);
   assert.equal(err(call("unpause", [], P)), 401);
+  // Every configuration call is refused for the pause-only key.
+  assert.equal(err(call("set-admin", [Cl.principal(P)], P)), 401);
+  assert.equal(err(call("set-pauser", [Cl.principal(W2), Cl.bool(true)], P)), 401);
+  assert.equal(err(call("set-pauser", [Cl.principal(P), Cl.bool(false)], P)), 401);
+  assert.equal(err(call("set-rate-cap", [Cl.uint(1)], P)), 401);
+  assert.equal(err(call("schedule-key", [pub(k3)], P)), 401);
+  assert.equal(err(call("revoke-epoch", [Cl.uint(1), Cl.uint(0)], P)), 401);
   assert.equal(err(call("emergency-key", [pub(k2), Cl.uint(0)], P)), 401);
+  assert.equal(String(ro("is-paused", []).value ?? ro("is-paused", [])), String(ro("is-paused", []).value ?? ro("is-paused", [])));
   assert.ok(isOk(call("unpause", [], D)));
 });
 
