@@ -1,8 +1,8 @@
 // Server-only watchdog run for the testnet soft-stake pilot. Reads the pilot
 // contract's calls from the Hiro testnet API, compares them with the oracle's
 // signing log and pauses the contract when something does not match.
-import { HIRO_TESTNET, PILOT_STAKE, PILOT_TOKEN } from "@/lib/stacks-pilot";
-import { assertTestnetContract, compareAttestations, reconcilePool, shouldPause, WATCHDOG_ARMED_FROM, type ContractTx, type Finding, type PoolSummary, type PoolTx } from "@/lib/stake-watchdog";
+import { HIRO_TESTNET, PILOT_STAKE, PILOT_TOKEN, PILOT_TREASURY } from "@/lib/stacks-pilot";
+import { assertTestnetContract, compareAttestations, reconcilePool, shouldPause, WATCHDOG_ARMED_FROM, type ContractTx, type Finding, type FundingConfig, type PoolSummary, type PoolTx } from "@/lib/stake-watchdog";
 
 const PAGE = 50;
 const MAX_PAGES = 40;
@@ -51,6 +51,18 @@ async function contractPaused(): Promise<boolean | null> {
   } catch (e) { console.error("watchdog status", e); return null; }
 }
 
+/** The contract's funding guard (treasury, caps, reward period, pool-held). Throws if unreadable. */
+export async function fundingConfig(): Promise<FundingConfig> {
+  const { fetchCallReadOnlyFunction, cvToJSON } = await import("@stacks/transactions");
+  const [contractAddress, contractName] = PILOT_STAKE.split(".") as [string, string];
+  const cv = await fetchCallReadOnlyFunction({ contractAddress, contractName, functionName: "funding", functionArgs: [], senderAddress: contractAddress, network: "testnet" });
+  const v = (cvToJSON(cv) as any)?.value;
+  const g = (k: string) => String(v?.[k]?.value ?? "");
+  if (!v || !g("funder")) throw new Error("funding config unreadable");
+  return { funder: g("funder"), perCall: g("per-call"), periodLen: Number(g("period-len")), perPeriod: g("per-period"), poolMax: g("pool-max"),
+    poolHeld: g("pool-held"), fundedThisPeriod: g("funded-this-period"), period: Number(g("period")) };
+}
+
 export const POOL_ASSET = `${PILOT_TOKEN}::tsbtc`;
 
 async function poolBalance(): Promise<bigint> {
@@ -81,10 +93,15 @@ async function poolHistory(): Promise<PoolTx[]> {
 /** Balance read before and after the history; if it moved in between, skip this run instead of guessing. */
 async function checkPool(): Promise<{ findings: Finding[]; summary: PoolSummary | null }> {
   const before = await poolBalance();
+  const cfgBefore = await fundingConfig();
   const history = await poolHistory();
   const after = await poolBalance();
-  if (before !== after) return { findings: [{ kind: "pool-moving", suspicious: false, detail: "The pool balance changed during the check; it will be reconciled on the next run." }], summary: null };
-  return reconcilePool(history, after, PILOT_STAKE, POOL_ASSET);
+  const cfg = await fundingConfig();
+  if (before !== after || cfgBefore.poolHeld !== cfg.poolHeld) return { findings: [{ kind: "pool-moving", suspicious: false, detail: "The pool balance changed during the check; it will be reconciled on the next run." }], summary: null };
+  const findings: Finding[] = [];
+  if (cfg.funder !== PILOT_TREASURY) findings.push({ kind: "fund-sender", suspicious: true, detail: "The contract accepts funding from an address that is not the published treasury." });
+  const r = reconcilePool(history, after, PILOT_STAKE, POOL_ASSET, { treasury: PILOT_TREASURY, contractHeld: BigInt(cfg.poolHeld || "0") });
+  return { findings: [...findings, ...r.findings], summary: { ...r.summary, funding: cfg } };
 }
 
 export type WatchdogRun = { ok: boolean; burnHeight: number; checked: number; suspicious: number; findings: Finding[]; paused: boolean | null; pauseTxid: string | null; error: string | null; pool: PoolSummary | null };

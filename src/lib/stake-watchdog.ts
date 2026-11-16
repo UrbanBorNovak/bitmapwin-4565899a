@@ -14,7 +14,7 @@ export type ContractTx = {
 };
 export type LogRow = { stx_address: string; height: number; weight: number; epoch: number; issued: number };
 export type Finding = {
-  kind: "unmatched-attest" | "admin-call" | "log-spike" | "rejected-attest" | "pool-mismatch" | "pool-outflow" | "claim-recipient" | "direct-deposit" | "pool-moving";
+  kind: "unmatched-attest" | "admin-call" | "log-spike" | "rejected-attest" | "pool-mismatch" | "pool-outflow" | "claim-recipient" | "direct-deposit" | "pool-moving" | "fund-sender" | "pool-held-mismatch";
   suspicious: boolean;
   txid?: string;
   sender?: string;
@@ -23,9 +23,9 @@ export type Finding = {
 };
 
 /** Burn height the watchdog was switched on. Earlier calls were the pre-watchdog deploy tests. */
-export const WATCHDOG_ARMED_FROM = 39264;
+export const WATCHDOG_ARMED_FROM = 39282; // bw-stake-pilot-v2 deploy
 /** Calls only the admin may make. Any one the team has not acknowledged pauses the pilot. */
-export const ADMIN_FUNCTIONS = ["set-admin", "set-pauser", "set-rate-cap", "unpause", "schedule-key", "revoke-epoch", "emergency-key"];
+export const ADMIN_FUNCTIONS = ["set-admin", "set-pauser", "set-rate-cap", "unpause", "schedule-key", "revoke-epoch", "emergency-key", "set-funding"];
 /** Admin txids reviewed by the team (e.g. the unpause after an incident). */
 export const ACKNOWLEDGED_ADMIN_TXIDS: string[] = [
   "0x2f4d1d5631f118ab6187fa5ceb302803ac193debae0a7f4dbf75609eb4ed1761", // unpause after the 2026-11-16 pause drill
@@ -96,7 +96,9 @@ export type PoolTx = {
   sender: string;
   transfers: { asset: string; amount: string; sender: string | null; recipient: string | null }[];
 };
-export type PoolSummary = { funded: string; paidOut: string; direct: string; expected: string; actual: string; matches: boolean };
+export type PoolSummary = { funded: string; paidOut: string; direct: string; expected: string; actual: string; matches: boolean; held?: string | null; funding?: FundingConfig | null };
+/** The contract's own funding guard, read live from `funding`. Amounts are strings (uint). */
+export type FundingConfig = { funder: string; perCall: string; periodLen: number; perPeriod: string; poolMax: string; poolHeld: string; fundedThisPeriod: string; period: number };
 
 /** Pilot calls that may legitimately pay tokens out: claim pays the caller, attest/evict settle a replaced or closed stake. */
 export const PAYOUT_FUNCTIONS = ["claim", "attest", "evict"];
@@ -107,7 +109,7 @@ export const PAYOUT_FUNCTIONS = ["claim", "attest", "evict"];
  * and only leave through claim/attest/evict. Any other outflow, a claim paid to someone other than the caller,
  * or a live balance that differs from the rebuilt one is suspicious. BigInt maths: amounts never lose precision.
  */
-export function reconcilePool(txs: PoolTx[], actualBalance: bigint, pool: string, asset: string): { findings: Finding[]; summary: PoolSummary } {
+export function reconcilePool(txs: PoolTx[], actualBalance: bigint, pool: string, asset: string, opts: { treasury?: string; contractHeld?: bigint | null } = {}): { findings: Finding[]; summary: PoolSummary } {
   let funded = 0n, paid = 0n, direct = 0n;
   const findings: Finding[] = [];
   for (const t of txs) {
@@ -116,7 +118,10 @@ export function reconcilePool(txs: PoolTx[], actualBalance: bigint, pool: string
       if (x.asset !== asset) continue;
       const amt = BigInt(x.amount);
       if (x.recipient === pool && x.sender !== pool) {
-        if (t.fn === "fund") funded += amt;
+        if (t.fn === "fund") {
+          funded += amt;
+          if (opts.treasury && t.sender !== opts.treasury) findings.push({ kind: "fund-sender", suspicious: true, txid: t.txid, detail: `${amt.toLocaleString("en-US")} test sats were funded by an address that is not the treasury.` });
+        }
         else { direct += amt; findings.push({ kind: "direct-deposit", suspicious: false, txid: t.txid, detail: `${amt.toLocaleString("en-US")} test sats sent straight to the pool, outside fund. Counted, not shared out.` }); }
       } else if (x.sender === pool && x.recipient !== pool) {
         paid += amt;
@@ -133,6 +138,11 @@ export function reconcilePool(txs: PoolTx[], actualBalance: bigint, pool: string
   if (!matches) {
     findings.push({ kind: "pool-mismatch", suspicious: true, detail: `Pool holds ${actualBalance.toLocaleString("en-US")} test sats but funding minus payouts gives ${expected.toLocaleString("en-US")}.` });
   }
+  // The contract's pool-held counts funding minus payouts and must ignore unsolicited transfers.
+  const heldExpected = funded > paid ? funded - paid : 0n;
+  if (opts.contractHeld != null && opts.contractHeld !== heldExpected) {
+    findings.push({ kind: "pool-held-mismatch", suspicious: true, detail: `The contract counts ${opts.contractHeld.toLocaleString("en-US")} test sats of funded rewards but funding minus payouts gives ${heldExpected.toLocaleString("en-US")}.` });
+  }
   const str = (n: bigint) => n.toString();
-  return { findings, summary: { funded: str(funded), paidOut: str(paid), direct: str(direct), expected: str(expected), actual: str(actualBalance), matches } };
+  return { findings, summary: { funded: str(funded), paidOut: str(paid), direct: str(direct), expected: str(expected), actual: str(actualBalance), matches: matches && (opts.contractHeld == null || opts.contractHeld === heldExpected), held: opts.contractHeld == null ? null : str(opts.contractHeld) } };
 }
