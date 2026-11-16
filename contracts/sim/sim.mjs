@@ -154,7 +154,7 @@ ok("per-call, per-period and total caps refuse over-limit funding", () => {
   assert.ok(isOk(fund(500)));
   simnet.mineEmptyBurnBlocks(145);                                  // next period resets
   assert.ok(isOk(fund(1_000)));
-  const f = ro("funding", []).value.value;
+  const f = ro("funding", []).value;
   const total = Number(f["funded-total"].value);
   assert.ok(isOk(setFunding(D, 1_000, 1_500, total + 10)));
   simnet.mineEmptyBurnBlocks(145);
@@ -166,12 +166,12 @@ ok("per-call, per-period and total caps refuse over-limit funding", () => {
 });
 
 ok("unsolicited transfers stay unshared and don't use caps", () => {
-  const f0 = ro("funding", []).value.value;
+  const f0 = ro("funding", []).value;
   assert.ok(isOk(attest(k3, 3, 20, 100, W1)));
   const p0 = Number(ro("pending", [Cl.uint(20)]).value);
   simnet.callPublicFn("mock-sbtc", "transfer", [Cl.uint(5_000), Cl.principal(W2), Cl.principal(SELF), Cl.none()], W2);
   assert.equal(Number(ro("pending", [Cl.uint(20)]).value), p0);
-  const f1 = ro("funding", []).value.value;
+  const f1 = ro("funding", []).value;
   assert.equal(f1["funded-total"].value, f0["funded-total"].value);
   assert.equal(err(call("fund", [Cl.uint(1)], W2)), 401);           // sending tokens grants no funder role
 });
