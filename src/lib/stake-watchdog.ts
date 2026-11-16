@@ -30,6 +30,9 @@ export const ADMIN_FUNCTIONS = ["set-admin", "set-pauser", "set-rate-cap", "unpa
 export const ACKNOWLEDGED_ADMIN_TXIDS: string[] = [
   "0x2f4d1d5631f118ab6187fa5ceb302803ac193debae0a7f4dbf75609eb4ed1761", // unpause after the 2026-11-16 pause drill
   "0x6e449a7311d29b7d4358355e0cd8244b78c7da6e7576451cffee9f6a77c847fc", // unpause after the watchdog re-paused on the drill unpause
+  "0xf3bc9e39257131ef9695717066d40e2c2fd37a762e65d17efd22680f3bf399cb", // set-pauser: grant the dedicated pause-only key
+  "0x7c7581174bad6bf52ebaa6672c8dc63ecf0f22481e1f2df758bd173e47941ee0", // set-pauser: remove the admin from the pauser list
+  "0xb0a2845f682d7fff941249b46ad24c61691469a6fd73709c99bb88efca2e3370", // unpause after the pause-only key drill
 ];
 /** More oracle signatures than this in one hour is treated as a signer spike. */
 export const MAX_SIGNATURES_PER_HOUR = 60;

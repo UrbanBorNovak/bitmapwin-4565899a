@@ -7,6 +7,12 @@ import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { bindingMessage, validateBinding } from "@/lib/stacks-softstake";
 import { pilotAttestFn, type PilotAttestResult } from "@/lib/stacks-pilot.functions";
 import { EXPLORER_TX, PILOT_STAKE, STX_FAUCET } from "@/lib/stacks-pilot";
+
+/** Pause-only key drill on Stacks testnet, 2026-11-16: pause succeeded, unpause returned err u401. */
+const PAUSER_PROOF = {
+  pause: "85c33f7d4b32a92e699fd4da877fbb1830bb45b6d550a7876772b7d8bce4099c",
+  unpause: "8338a4e034af182100c81af6c02dff6576863f4f838becfbca0cb57b1c4ae068",
+};
 import { useQuery } from "@tanstack/react-query";
 import { watchdogStatusFn } from "@/lib/stake-watchdog.functions";
 
@@ -234,6 +240,7 @@ function WatchdogPanel() {
               <p className="text-[11px] text-muted-foreground">Test sats, read from Stacks testnet. Expected = funded + sent directly − paid out.</p>
             </div>
           ) : !d.error && <p className="text-muted-foreground">Reward pool not reconciled on this run.</p>}
+          <p className="text-[11px] text-muted-foreground">The watchdog holds a pause-only key. On testnet it paused the pilot (<a href={EXPLORER_TX(PAUSER_PROOF.pause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.pause)}</a>), and its attempts to unpause (<a href={EXPLORER_TX(PAUSER_PROOF.unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.unpause)}</a>) or change admin, pausers, rate cap or oracle keys were all refused by the contract.</p>
           {d.pauseTxid && <p>Pause sent: <a href={EXPLORER_TX(d.pauseTxid)} target="_blank" rel="noreferrer" className="underline">{short(d.pauseTxid)}</a></p>}
           {d.findings.length > 0 && (
             <ul className="space-y-1">

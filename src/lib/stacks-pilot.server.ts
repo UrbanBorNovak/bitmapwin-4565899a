@@ -17,13 +17,19 @@ function derive(secretName: string, domain: string): string {
   return `${bytesToHex(k)}01`; // compressed
 }
 const oracleKey = () => derive("STACKS_PILOT_ORACLE_SEED", "BW-STACKS-1/testnet/oracle");
-const adminKey = () => derive("STACKS_PILOT_ADMIN_SEED", "BW-STACKS-1/testnet/admin");
+// Pause-only key: holds the contract's pauser role and nothing else. The admin
+// seed is never read by app code; only the offline ops script in contracts/sim uses it.
+const pauserKey = () => derive("STACKS_PILOT_PAUSER_SEED", "BW-STACKS-1/testnet/pauser");
+
+/** Testnet admin principal (public). Its key is not loaded by the running app. */
+export const PILOT_ADMIN_ADDRESS = "ST2P0SD4JPHFKJ42DDH2VQVS59P7XJFYC4K8NHGWR";
 
 export function pilotPublicInfo() {
   return {
     network: "testnet" as const,
     oraclePublicKey: privateKeyToPublic(oracleKey()) as string,
-    adminAddress: privateKeyToAddress(adminKey(), "testnet"),
+    adminAddress: PILOT_ADMIN_ADDRESS,
+    pauserAddress: privateKeyToAddress(pauserKey(), "testnet"),
   };
 }
 
@@ -41,8 +47,8 @@ export async function testnetBurnHeight(): Promise<number> {
 }
 
 /**
- * Watchdog pause: signed by the pilot pauser (the testnet admin address holds the
- * pauser role on-chain). `pause` can only stop the pilot, never move funds.
+ * Watchdog pause: signed by the dedicated pause-only key. On-chain that principal
+ * may call `pause` and nothing else; unpause and every config call return err u401.
  */
 export async function broadcastPilotPause(): Promise<string> {
   const { makeContractCall, broadcastTransaction, PostConditionMode } = await import("@stacks/transactions");
@@ -52,7 +58,7 @@ export async function broadcastPilotPause(): Promise<string> {
   const [contractAddress, contractName] = PILOT_STAKE.split(".") as [string, string];
   const tx = await makeContractCall({
     contractAddress, contractName, functionName: "pause", functionArgs: [],
-    senderKey: adminKey(), network: "testnet", fee: 30000n, postConditionMode: PostConditionMode.Deny,
+    senderKey: pauserKey(), network: "testnet", fee: 30000n, postConditionMode: PostConditionMode.Deny,
   });
   const r = (await broadcastTransaction({ transaction: tx, network: "testnet" })) as { txid?: string; error?: string; reason?: string };
   if (!r?.txid || r.error) throw new Error(`pause broadcast failed: ${r?.reason ?? r?.error ?? "unknown"}`);
