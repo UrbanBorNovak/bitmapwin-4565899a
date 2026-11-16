@@ -25,6 +25,8 @@
 (define-constant ERR-WEIGHT (err u408))
 (define-constant ERR-RATE (err u409))
 (define-constant ERR-STATE (err u410))
+(define-constant ERR-CAP (err u411))
+(define-constant FUND-PERIOD u144) ;; funding period, burn blocks (~1 day)
 
 (define-data-var admin principal tx-sender)
 (define-data-var paused bool false)
@@ -33,6 +35,14 @@
 (define-data-var total-weight uint u0)
 (define-data-var acc uint u0)            ;; sBTC sats per weight x SCALE
 (define-data-var stranded uint u0)       ;; recycled while nobody was staked
+
+;; Funding: only the treasury multisig, within caps. All caps start at 0 = funding off.
+(define-data-var funder principal tx-sender)
+(define-data-var cap-call uint u0)
+(define-data-var cap-period uint u0)
+(define-data-var cap-total uint u0)
+(define-data-var funded-total uint u0)       ;; counts only `fund`, never unsolicited transfers
+(define-map funded-in uint uint)            ;; period index -> funded that period
 
 (define-map pausers principal bool)
 ;; revoked-from: stakes attested at or after this burn height under this key are void.
@@ -79,6 +89,17 @@
 
 (define-public (set-rate-cap (n uint))
   (begin (asserts! (is-admin) ERR-AUTH) (ok (var-set rate-cap n))))
+
+;; Admin sets the treasury principal and all three caps together.
+(define-public (set-funding (who principal) (per-call uint) (per-period uint) (total uint))
+  (begin (asserts! (is-admin) ERR-AUTH)
+    (var-set funder who) (var-set cap-call per-call) (var-set cap-period per-period) (var-set cap-total total)
+    (ok true)))
+
+(define-read-only (funding)
+  { funder: (var-get funder), per-call: (var-get cap-call), per-period: (var-get cap-period),
+    total: (var-get cap-total), funded-total: (var-get funded-total),
+    funded-this-period: (default-to u0 (map-get? funded-in (/ burn-block-height FUND-PERIOD))) })
 
 (define-public (pause)
   (begin
@@ -142,13 +163,23 @@
     (ok true)))
 
 (define-public (fund (amount uint))
-  (begin
+  (let ((period (/ burn-block-height FUND-PERIOD))
+        (in-period (+ amount (default-to u0 (map-get? funded-in period))))
+        (total (+ amount (var-get funded-total))))
     (asserts! (not (var-get paused)) ERR-PAUSED)
+    (asserts! (is-eq tx-sender (var-get funder)) ERR-AUTH)
+    (asserts! (and (> amount u0) (<= amount (var-get cap-call))) ERR-CAP)
+    (asserts! (<= in-period (var-get cap-period)) ERR-CAP)
+    (asserts! (<= total (var-get cap-total)) ERR-CAP)
     (try! (contract-call? .mock-sbtc
             transfer amount tx-sender SELF none))
-    (let ((total (+ amount (var-get stranded))))
+    (map-set funded-in period in-period)
+    (var-set funded-total total)
+    (print { event: "fund", amount: amount, period: period, funded-total: total, epoch: (var-get epoch) })
+    ;; Only `amount` (plus stranded) is shared out; tokens sent outside `fund` stay unshared.
+    (let ((share (+ amount (var-get stranded))))
       (var-set stranded u0)
-      (recycle total)
+      (recycle share)
       (ok true))))
 
 ;; ---------- staking ----------
