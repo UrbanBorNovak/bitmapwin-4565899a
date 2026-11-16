@@ -237,6 +237,11 @@ function BitmapDetail() {
   });
 
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
+  // The scan reads a bounded prefix of the block; never present that as the whole block.
+  const scanPartial = !!scan.data && scan.data.txCount > 0 && scan.data.scannedTxCount < scan.data.txCount;
+  const scanScope = scan.data && scanPartial
+    ? ` IN FIRST ${scan.data.scannedTxCount.toLocaleString("en-US")} OF ${scan.data.txCount.toLocaleString("en-US")} TX`
+    : "";
   const history = [...(trades.data ?? [])].sort((a, b) => b.hop - a.hop);
   const lastSale = history.find((t) => t.price_sats > 0) ?? null;
   const owner = liveHolder.data?.ownerAddress ?? parcel?.ownerAddress ?? history[0]?.buyer_address ?? oci.data?.ownerAddress ?? null;
@@ -532,16 +537,16 @@ function BitmapDetail() {
             />
             <Field
               k="ON-CHAIN INSCRIPTIONS (SCANNED)"
-              v={scan.data ? String(scan.data.inscriptions.length) : "…"}
+              v={scan.data ? `${scan.data.inscriptions.length.toLocaleString("en-US")}${scanScope}` : "…"}
             />
             <Field
               k="BITMAP CLAIMS IN BLOCK"
               v={
                 claims.length === 0
                   ? scan.data
-                    ? "NONE"
+                    ? `NONE${scanScope}`
                     : "…"
-                  : claims.map((c) => `${c.bitmapHeight}.bitmap`).join(", ")
+                  : `${claims.map((c) => `${c.bitmapHeight}.bitmap`).join(", ")}${scanScope}`
               }
             />
             <Field
@@ -635,8 +640,8 @@ function BitmapDetail() {
           />
           <Metric label="DISTINCT TRADERS" value={String(distinctTraders)} />
           <Metric
-            label="INSCRIPTIONS IN BLOCK"
-            value={scan.data ? scan.data.inscriptions.length.toLocaleString("en-US") : "…"}
+            label={scanPartial ? "INSCRIPTIONS FOUND (PARTIAL SCAN)" : "INSCRIPTIONS IN BLOCK"}
+            value={scan.data ? `${scan.data.inscriptions.length.toLocaleString("en-US")}${scanPartial ? "+" : ""}` : "…"}
           />
           <Metric
             label="BITMAP CLAIMS HERE"
@@ -714,7 +719,7 @@ function BitmapDetail() {
       {scan.data && scan.data.inscriptions.length > 0 && (
         <div className="mt-8 border border-border">
           <div className="border-b border-border px-6 py-3">
-            <h2 className="label">INSCRIPTIONS FOUND IN BLOCK {block}</h2>
+            <h2 className="label">INSCRIPTIONS FOUND IN BLOCK {block}{scanScope}</h2>
           </div>
           <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {scan.data.inscriptions.slice(0, 40).map((i) => (
