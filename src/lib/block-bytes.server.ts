@@ -105,19 +105,20 @@ async function json<T>(url: string, timeoutMs = 12_000, delays: readonly number[
   return (await response.json()) as T;
 }
 
-async function blockHashFromProvider(base: string, height: number): Promise<string> {
-  const response = await fetchWithBackoff(`${base}/block-height/${height}`, "text/plain", 8_000);
+async function blockHashFromProvider(base: string, height: number, delays: readonly number[]): Promise<string> {
+  const response = await fetchWithBackoff(`${base}/block-height/${height}`, "text/plain", 6_000, delays);
   return (await response.text()).trim();
 }
 
+/** One quick try per mirror before the last one gets full retries, so a stalled mirror can't eat the budget. */
 async function blockHash(height: number): Promise<string> {
   try {
-    return await blockHashFromProvider(COMMUNITY_MEMPOOL, height);
+    return await blockHashFromProvider(COMMUNITY_MEMPOOL, height, ONCE);
   } catch {
     try {
-      return await blockHashFromProvider(MEMPOOL, height);
+      return await blockHashFromProvider(MEMPOOL, height, ONCE);
     } catch {
-      return blockHashFromProvider(ESPLORA, height);
+      return blockHashFromProvider(ESPLORA, height, RETRY_DELAYS);
     }
   }
 }
@@ -137,10 +138,10 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
       tx_count: number;
     };
     try {
-      header = await json(`${COMMUNITY_MEMPOOL}/block/${hash}`);
+      header = await json(`${COMMUNITY_MEMPOOL}/block/${hash}`, 6_000, ONCE);
     } catch {
       try {
-        header = await json(`${MEMPOOL}/block/${hash}`);
+        header = await json(`${MEMPOOL}/block/${hash}`, 6_000, ONCE);
       } catch {
         header = await json(`${ESPLORA}/block/${hash}`);
       }
