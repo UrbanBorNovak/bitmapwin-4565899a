@@ -85,6 +85,7 @@ import { Route as ShadowNotesRouteImport } from './routes/shadow-notes'
 import { Route as ShordRouteImport } from './routes/shord'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlabRouteImport } from './routes/slab'
+import { Route as SoftStakeRouteImport } from './routes/soft-stake'
 import { Route as SpeedBountyRouteImport } from './routes/speed-bounty'
 import { Route as StoreKitRouteImport } from './routes/store-kit'
 import { Route as StreamRouteImport } from './routes/stream'
@@ -176,6 +177,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
+import { Route as ApiPublicStakePilotRouteImport } from './routes/api/public/stake-pilot'
 import { Route as BiternamEmbassyEmporiumRouteImport } from './routes/biternam_.embassy.emporium'
 import { Route as CollectionsGuardiansHeightRouteImport } from './routes/collections.guardians_.$height'
 import { Route as EmbedBitmapBlockRouteImport } from './routes/embed.bitmap.$block'
@@ -576,6 +578,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SlabRoute = SlabRouteImport.update({
   id: '/slab',
   path: '/slab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoftStakeRoute = SoftStakeRouteImport.update({
+  id: '/soft-stake',
+  path: '/soft-stake',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SpeedBountyRoute = SpeedBountyRouteImport.update({
@@ -1036,6 +1043,11 @@ const ApiPublicResolveRegistryRoute =
     path: '/public/resolve-registry',
     getParentRoute: () => ApiRoute,
   } as any)
+const ApiPublicStakePilotRoute = ApiPublicStakePilotRouteImport.update({
+  id: '/public/stake-pilot',
+  path: '/public/stake-pilot',
+  getParentRoute: () => ApiRoute,
+} as any)
 const BiternamEmbassyEmporiumRoute = BiternamEmbassyEmporiumRouteImport.update({
   id: '/biternam_/embassy/emporium',
   path: '/biternam/embassy/emporium',
@@ -1225,6 +1237,7 @@ export interface FileRoutesByFullPath {
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slab': typeof SlabRoute
+  '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1316,6 +1329,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/api/public/stake-pilot': typeof ApiPublicStakePilotRoute
   '/biternam/embassy/emporium': typeof BiternamEmbassyEmporiumRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
@@ -1411,6 +1425,7 @@ export interface FileRoutesByTo {
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slab': typeof SlabRoute
+  '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1502,6 +1517,7 @@ export interface FileRoutesByTo {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/api/public/stake-pilot': typeof ApiPublicStakePilotRoute
   '/biternam/embassy/emporium': typeof BiternamEmbassyEmporiumRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
@@ -1602,6 +1618,7 @@ export interface FileRoutesById {
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slab': typeof SlabRoute
+  '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
@@ -1693,6 +1710,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/api/public/stake-pilot': typeof ApiPublicStakePilotRoute
   '/biternam_/embassy/emporium': typeof BiternamEmbassyEmporiumRoute
   '/collections/guardians_/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
@@ -1794,6 +1812,7 @@ export interface FileRouteTypes {
     | '/shord'
     | '/sitemap.xml'
     | '/slab'
+    | '/soft-stake'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -1885,6 +1904,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/api/public/stake-pilot'
     | '/biternam/embassy/emporium'
     | '/collections/guardians/$height'
     | '/embed/bitmap/$block'
@@ -1980,6 +2000,7 @@ export interface FileRouteTypes {
     | '/shord'
     | '/sitemap.xml'
     | '/slab'
+    | '/soft-stake'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -2071,6 +2092,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/api/public/stake-pilot'
     | '/biternam/embassy/emporium'
     | '/collections/guardians/$height'
     | '/embed/bitmap/$block'
@@ -2170,6 +2192,7 @@ export interface FileRouteTypes {
     | '/shord'
     | '/sitemap.xml'
     | '/slab'
+    | '/soft-stake'
     | '/speed-bounty'
     | '/store-kit'
     | '/stream'
@@ -2261,6 +2284,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/api/public/stake-pilot'
     | '/biternam_/embassy/emporium'
     | '/collections/guardians_/$height'
     | '/embed/bitmap/$block'
@@ -2361,6 +2385,7 @@ export interface RootRouteChildren {
   ShordRoute: typeof ShordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlabRoute: typeof SlabRoute
+  SoftStakeRoute: typeof SoftStakeRoute
   SpeedBountyRoute: typeof SpeedBountyRoute
   StoreKitRoute: typeof StoreKitRoute
   StreamRoute: typeof StreamRoute
@@ -2956,6 +2981,13 @@ declare module '@tanstack/react-router' {
       path: '/slab'
       fullPath: '/slab'
       preLoaderRoute: typeof SlabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/soft-stake': {
+      id: '/soft-stake'
+      path: '/soft-stake'
+      fullPath: '/soft-stake'
+      preLoaderRoute: typeof SoftStakeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/speed-bounty': {
@@ -3595,6 +3627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/stake-pilot': {
+      id: '/api/public/stake-pilot'
+      path: '/public/stake-pilot'
+      fullPath: '/api/public/stake-pilot'
+      preLoaderRoute: typeof ApiPublicStakePilotRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/biternam_/embassy/emporium': {
       id: '/biternam_/embassy/emporium'
       path: '/biternam/embassy/emporium'
@@ -3768,6 +3807,7 @@ interface ApiRouteChildren {
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
+  ApiPublicStakePilotRoute: typeof ApiPublicStakePilotRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
   ApiPublicBlocksTxCountsRoute: typeof ApiPublicBlocksTxCountsRoute
   ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
@@ -3791,6 +3831,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
+  ApiPublicStakePilotRoute: ApiPublicStakePilotRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
   ApiPublicBlocksTxCountsRoute: ApiPublicBlocksTxCountsRoute,
   ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
@@ -3979,6 +4020,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShordRoute: ShordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlabRoute: SlabRoute,
+  SoftStakeRoute: SoftStakeRoute,
   SpeedBountyRoute: SpeedBountyRoute,
   StoreKitRoute: StoreKitRoute,
   StreamRoute: StreamRoute,

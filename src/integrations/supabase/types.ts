@@ -4933,6 +4933,42 @@ export type Database = {
           },
         ]
       }
+      stake_pilot_attestations: {
+        Row: {
+          btc_address: string
+          created_at: string
+          epoch: number
+          height: number
+          id: number
+          issued: number
+          network: string
+          stx_address: string
+          weight: number
+        }
+        Insert: {
+          btc_address: string
+          created_at?: string
+          epoch: number
+          height: number
+          id?: never
+          issued: number
+          network?: string
+          stx_address: string
+          weight: number
+        }
+        Update: {
+          btc_address?: string
+          created_at?: string
+          epoch?: number
+          height?: number
+          id?: never
+          issued?: number
+          network?: string
+          stx_address?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       stand_seats: {
         Row: {
           address: string

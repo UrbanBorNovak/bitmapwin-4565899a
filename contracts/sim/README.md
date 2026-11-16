@@ -8,3 +8,9 @@ cd contracts/sim && npm i @hirosystems/clarinet-sdk @stacks/transactions
 sed "s#'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token#.mock-sbtc#g" ../bitmap-sbtc-stake.clar > contracts/stake.clar
 node sim.mjs
 ```
+
+## Testnet pilot deployment (done 2026-11-16)
+- `ST37VBHJYMWAPABF1ARD0CY3THYEPKPSM4HE7QS6F.bw-test-sbtc` - test token, anyone may mint ≤1,000,000 per call.
+- `ST37VBHJYMWAPABF1ARD0CY3THYEPKPSM4HE7QS6F.bw-stake-pilot-v1` - the vault with the sBTC principal swapped to the test token.
+- Oracle key epoch 1 = the public key served by `/api/public/stake-pilot`. Admin and pauser = the project's derived admin address (same endpoint). The deployer key was throwaway and holds no role.
+- `deploy-testnet.mjs` reproduces it (`DEPLOYER_KEY_FILE=... node deploy-testnet.mjs deploy|config`). Mainnet is never a target.

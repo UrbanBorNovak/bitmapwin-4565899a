@@ -62,6 +62,8 @@
 (define-read-only (stake-void (s { owner: principal, weight: uint, debt: uint, expires: uint, epoch: uint, at: uint }))
   (>= (get at s) (default-to NEVER (get revoked-from (map-get? keys (get epoch s))))))
 
+(define-read-only (get-stake (h uint)) (map-get? stakes h))
+
 (define-read-only (status)
   { paused: (var-get paused), epoch: (var-get epoch), total-weight: (var-get total-weight),
     rate-cap: (var-get rate-cap), stranded: (var-get stranded) })

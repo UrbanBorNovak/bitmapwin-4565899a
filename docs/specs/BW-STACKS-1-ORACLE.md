@@ -53,3 +53,9 @@ Watcher job (every few minutes):
 - While paused, honest holders cannot claim.
 - The admin multisig can install any key: holders trust those three people. A future version could add a time-lock on non-emergency admin actions.
 - Stacks cannot read Ordinals; custody truth is the oracle's word, checked publicly afterwards.
+
+## 8. Testnet pilot (live)
+- Page `/soft-stake`. Rewards are BitmapWin Test sBTC on Stacks testnet; `MAINNET_REWARDS_ENABLED = false`, mainnet Stacks addresses are refused, and the signer only hashes for a testnet contract.
+- Oracle and admin keys are derived on the server from two project secrets (testnet tier of section 2).
+- Verified on testnet: a stake signed by the real oracle key was accepted, funding was paid on claim, and a tampered signature was refused (`err u402`).
+- Not built yet: the watcher job, slab grade in the weight, automatic re-confirmation.

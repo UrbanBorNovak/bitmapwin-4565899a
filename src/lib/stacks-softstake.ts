@@ -1,29 +1,38 @@
 /**
  * BW-STACKS-1 soft-stake helpers (pure, browser-safe).
  * The BITMAP never moves: the holder signs a BIP-322 binding message on L1,
- * a relayer checks live custody, and the Clarity vault only accrues sBTC
- * while an oracle attestation for that custody is unexpired.
+ * the oracle checks live custody, and the Clarity vault only accrues while an
+ * oracle attestation for that custody is unexpired.
  */
 export const STAKE_PREFIX = "BITMAPWIN-STAKE-1";
-/** Attestations expire after this many Bitcoin blocks (~1 day). */
-export const ATTESTATION_TTL = 144;
 /** Weight cap on holding days so ancient wallets can't dominate. */
 export const MAX_HOLD_DAYS = 1460;
+/** Mainnet rewards are switched off. Only the testnet pilot exists. */
+export const MAINNET_REWARDS_ENABLED = false as const;
+export type StakeNetwork = "testnet" | "mainnet";
 
 export interface Binding {
   height: number;
   btcAddress: string;
   stxAddress: string;
   issuedAt: number; // unix seconds
+  network: StakeNetwork;
 }
 
-const STX_RE = /^S[PM][0-9A-HJKMNP-TV-Z]{38,40}$/;
-const BTC_RE = /^(bc1p|tb1p|bcrt1p)[02-9ac-hj-np-z]{58}$/;
+const STX_MAINNET = /^S[PM][0-9A-HJKMNP-TV-Z]{38,40}$/;
+const STX_TESTNET = /^S[TN][0-9A-HJKMNP-TV-Z]{38,40}$/;
+const BTC_RE = /^bc1p[02-9ac-hj-np-z]{58}$/;
+
+export const isTestnetStx = (a: string) => STX_TESTNET.test(a);
+export const isMainnetStx = (a: string) => STX_MAINNET.test(a);
 
 export function validateBinding(b: Binding): string | null {
-  if (!Number.isInteger(b.height) || b.height < 0) return "Invalid BITMAP height";
+  if (b.network !== "testnet" && !MAINNET_REWARDS_ENABLED) return "Mainnet rewards are disabled";
+  if (!Number.isInteger(b.height) || b.height < 0 || b.height > 2_000_000) return "Invalid BITMAP height";
   if (!BTC_RE.test(b.btcAddress)) return "Bitcoin address must be Taproot (bc1p…)";
-  if (!STX_RE.test(b.stxAddress)) return "Invalid Stacks address";
+  if (b.network === "testnet" && !isTestnetStx(b.stxAddress)) {
+    return isMainnetStx(b.stxAddress) ? "Switch your Stacks wallet to Testnet" : "Invalid Stacks testnet address";
+  }
   if (!Number.isInteger(b.issuedAt) || b.issuedAt <= 0) return "Invalid timestamp";
   return null;
 }
@@ -34,6 +43,7 @@ export function bindingMessage(b: Binding): string {
   if (err) throw new Error(err);
   return [
     STAKE_PREFIX,
+    `network: stacks-${b.network}`,
     `bitmap: ${b.height}.bitmap`,
     `btc: ${b.btcAddress}`,
     `stx: ${b.stxAddress}`,
@@ -47,12 +57,11 @@ export function bindingFresh(issuedAt: number, nowSec: number): boolean {
 }
 
 /**
- * Integer weight: (1 + min(days held, cap)) × grade multiplier (grade 1–10 → 10–100, /10).
- * Ungraded BITMAPs use grade 5 (×1.0 baseline would be 50/10 = 5 → we normalise to 10).
+ * Integer weight: (1 + min(days held, cap)) × grade / 5.
+ * Ungraded = grade 5 (×1.0); grade 10 = ×2.0; grade 1 = ×0.2.
  */
 export function stakeWeight(daysHeld: number, grade: number | null): number {
   const d = Math.max(0, Math.min(MAX_HOLD_DAYS, Math.floor(daysHeld)));
   const g = grade == null ? 5 : Math.max(1, Math.min(10, Math.round(grade)));
-  // grade 5 → ×1.0, grade 10 → ×2.0, grade 1 → ×0.2
   return Math.floor(((1 + d) * g) / 5);
 }
