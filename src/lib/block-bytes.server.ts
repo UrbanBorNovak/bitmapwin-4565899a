@@ -26,7 +26,7 @@ const ESPLORA = "https://blockstream.info/api";
 const ESPLORA_CONCURRENCY = 4;
 const ESPLORA_ROUNDS = 3;
 /** Time the page fallback may spend before returning what it has (marked incomplete). */
-const ESPLORA_BUDGET_MS = 14_000;
+const ESPLORA_BUDGET_MS = 24_000;
 const RETRY_DELAYS = [0, 500, 1_500] as const;
 const ONCE = [0] as const;
 /** Stage budgets measured from the start of a block read, inside the route's overall deadline. */
