@@ -4969,6 +4969,45 @@ export type Database = {
         }
         Relationships: []
       }
+      stake_pilot_watchdog_runs: {
+        Row: {
+          burn_height: number
+          checked: number
+          contract_paused: boolean | null
+          error: string | null
+          findings: Json
+          id: number
+          network: string
+          pause_txid: string | null
+          ran_at: string
+          suspicious: number
+        }
+        Insert: {
+          burn_height: number
+          checked?: number
+          contract_paused?: boolean | null
+          error?: string | null
+          findings?: Json
+          id?: never
+          network?: string
+          pause_txid?: string | null
+          ran_at?: string
+          suspicious?: number
+        }
+        Update: {
+          burn_height?: number
+          checked?: number
+          contract_paused?: boolean | null
+          error?: string | null
+          findings?: Json
+          id?: never
+          network?: string
+          pause_txid?: string | null
+          ran_at?: string
+          suspicious?: number
+        }
+        Relationships: []
+      }
       stand_seats: {
         Row: {
           address: string
