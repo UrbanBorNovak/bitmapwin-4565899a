@@ -34,6 +34,13 @@ const err = (r) => (r.type === "err" || r.type === 8 ? Number(r.value.value) : n
 const isOk = (r) => r.type === "ok" || r.type === 7;
 
 simnet.callPublicFn("mock-sbtc", "mint", [Cl.uint(10_000_000), Cl.principal(D)], D);
+simnet.callPublicFn("mock-sbtc", "mint", [Cl.uint(1_000_000), Cl.principal(W2)], D);
+const setFunding = (who, c, p, t, by = D) => call("set-funding", [Cl.principal(who), Cl.uint(c), Cl.uint(p), Cl.uint(t)], by);
+
+ok("funding is off until caps are set", () => {
+  assert.equal(err(fund(1)), 411);
+  assert.ok(isOk(setFunding(D, 200_000, 300_000, 1_000_000)));
+});
 
 ok("off-chain hash matches contract", () => {
   const onchain = ro("attestation-hash", [Cl.uint(1), Cl.uint(5), Cl.principal(W1), Cl.uint(7), Cl.uint(9)]);
@@ -128,5 +135,44 @@ ok("expired stake can't claim; eviction pays the owner", () => {
   const b = bal(W1);
   assert.ok(isOk(call("evict", [Cl.uint(10)], P)));
   assert.ok(bal(W1) > b);
+});
+
+ok("only the treasury may fund", () => {
+  assert.equal(err(call("fund", [Cl.uint(100)], W2)), 401);
+  assert.equal(err(call("fund", [Cl.uint(100)], P)), 401);
+  assert.equal(err(setFunding(W2, 1e9, 1e9, 1e9, W2)), 401);       // stranger can't make itself funder
+  assert.equal(err(setFunding(P, 1e9, 1e9, 1e9, P)), 401);         // pause-only key can't either
+  assert.equal(err(fund(0)), 411);
+});
+
+ok("per-call, per-period and total caps refuse over-limit funding", () => {
+  simnet.mineEmptyBurnBlocks(150);                                  // fresh period
+  assert.ok(isOk(setFunding(D, 1_000, 1_500, 200_000)));
+  assert.equal(err(fund(1_001)), 411);                              // per call
+  assert.ok(isOk(fund(1_000)));
+  assert.equal(err(fund(501)), 411);                                // per period
+  assert.ok(isOk(fund(500)));
+  simnet.mineEmptyBurnBlocks(145);                                  // next period resets
+  assert.ok(isOk(fund(1_000)));
+  const f = ro("funding", []).value.value;
+  const total = Number(f["funded-total"].value);
+  assert.ok(isOk(setFunding(D, 1_000, 1_500, total + 10)));
+  simnet.mineEmptyBurnBlocks(145);
+  assert.equal(err(fund(11)), 411);                                 // lifetime total
+  assert.ok(isOk(fund(10)));
+  const b = bal(SELF);
+  assert.equal(err(fund(1)), 411);
+  assert.equal(bal(SELF), b);                                        // refused calls move nothing
+});
+
+ok("unsolicited transfers stay unshared and don't use caps", () => {
+  const f0 = ro("funding", []).value.value;
+  assert.ok(isOk(attest(k3, 3, 20, 100, W1)));
+  const p0 = Number(ro("pending", [Cl.uint(20)]).value);
+  simnet.callPublicFn("mock-sbtc", "transfer", [Cl.uint(5_000), Cl.principal(W2), Cl.principal(SELF), Cl.none()], W2);
+  assert.equal(Number(ro("pending", [Cl.uint(20)]).value), p0);
+  const f1 = ro("funding", []).value.value;
+  assert.equal(f1["funded-total"].value, f0["funded-total"].value);
+  assert.equal(err(call("fund", [Cl.uint(1)], W2)), 401);           // sending tokens grants no funder role
 });
 console.log(`${passed} passed`);
