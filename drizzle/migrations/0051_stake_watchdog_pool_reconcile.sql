@@ -1,0 +1,2 @@
+ALTER TABLE public.stake_pilot_watchdog_runs ADD COLUMN IF NOT EXISTS pool jsonb;
+COMMENT ON COLUMN public.stake_pilot_watchdog_runs.pool IS 'Testnet reward pool reconciliation: funded, paid out, direct deposits, expected and actual balance.';

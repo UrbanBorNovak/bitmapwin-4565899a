@@ -4979,6 +4979,7 @@ export type Database = {
           id: number
           network: string
           pause_txid: string | null
+          pool: Json | null
           ran_at: string
           suspicious: number
         }
@@ -4991,6 +4992,7 @@ export type Database = {
           id?: never
           network?: string
           pause_txid?: string | null
+          pool?: Json | null
           ran_at?: string
           suspicious?: number
         }
@@ -5003,6 +5005,7 @@ export type Database = {
           id?: never
           network?: string
           pause_txid?: string | null
+          pool?: Json | null
           ran_at?: string
           suspicious?: number
         }

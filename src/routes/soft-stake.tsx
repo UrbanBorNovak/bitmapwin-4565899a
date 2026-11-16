@@ -27,6 +27,7 @@ export const Route = createFileRoute("/soft-stake")({
 type Live = Awaited<ReturnType<typeof import("@/lib/stacks-pilot-client").readPilot>>;
 type Tx = { label: string; txid: string; status: string };
 const STX_KEY = "bitmap.stake-pilot.stx";
+const sats = (n: string) => { try { return BigInt(n).toLocaleString("en-US"); } catch { return n; } };
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 function SoftStakePage() {
@@ -206,7 +207,7 @@ function WatchdogPanel() {
   const getStatus = useServerFn(watchdogStatusFn);
   const q = useQuery({ queryKey: ["stake-watchdog"], queryFn: () => getStatus(), refetchInterval: 60_000, staleTime: 30_000 });
   const d = q.data;
-  const state = !d ? "CHECKING…" : !d.ok ? "NO DATA" : d.paused ? "PILOT PAUSED" : d.error ? "CHECK INCOMPLETE" : d.suspicious > 0 ? "SUSPICIOUS · PAUSING" : "ALL STAKES MATCH";
+  const state = !d ? "CHECKING…" : !d.ok ? "NO DATA" : d.paused ? "PILOT PAUSED" : d.error ? "CHECK INCOMPLETE" : d.suspicious > 0 ? "SUSPICIOUS · PAUSING" : "STAKES AND POOL MATCH";
   const tone = d?.ok && !d.paused && !d.error && d.suspicious === 0 ? "text-signal" : "text-bitcoin";
   return (
     <section className="space-y-2 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
@@ -214,12 +215,25 @@ function WatchdogPanel() {
         <p className="tracking-widest text-muted-foreground">WATCHDOG · TESTNET</p>
         <p className={tone}>{state}</p>
       </div>
-      <p className="text-muted-foreground">Every few minutes it compares each stake on the contract with the list of approvals BitmapWin actually signed. A stake nobody signed, or an unexpected admin action, pauses the whole pilot: staking, funding and claims stop, and the test tokens stay in the contract.</p>
+      <p className="text-muted-foreground">Every few minutes it compares each stake on the contract with the list of approvals BitmapWin actually signed. It also rebuilds the reward pool balance from every funding and payout and checks it against what the pool really holds. A stake nobody signed, an unexpected admin action, or pool tokens that cannot be explained pause the whole pilot: staking, funding and claims stop, and the test tokens stay in the contract.</p>
       {d && !d.ok && <p className="text-muted-foreground">{d.reason}.</p>}
       {d?.ok && (
         <>
           <p className="text-muted-foreground">Last check {new Date(d.ranAt).toLocaleString("en-US", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" })} UTC · testnet block {d.burnHeight.toLocaleString("en-US")} · {d.checked.toLocaleString("en-US")} contract calls compared.</p>
           {d.error && <p className="text-bitcoin">{d.error}. It will try again on the next run.</p>}
+          {d.pool ? (
+            <div className="space-y-1">
+              <p className={d.pool.matches ? "text-signal" : "text-bitcoin"}>REWARD POOL · {d.pool.matches ? "BALANCE EXPLAINED" : "BALANCE DOES NOT MATCH"}</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <Stat label="FUNDED" value={sats(d.pool.funded)} />
+                <Stat label="SENT DIRECTLY" value={sats(d.pool.direct)} />
+                <Stat label="PAID OUT" value={sats(d.pool.paidOut)} />
+                <Stat label="EXPECTED" value={sats(d.pool.expected)} />
+                <Stat label="IN POOL NOW" value={sats(d.pool.actual)} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Test sats, read from Stacks testnet. Expected = funded + sent directly − paid out.</p>
+            </div>
+          ) : !d.error && <p className="text-muted-foreground">Reward pool not reconciled on this run.</p>}
           {d.pauseTxid && <p>Pause sent: <a href={EXPLORER_TX(d.pauseTxid)} target="_blank" rel="noreferrer" className="underline">{short(d.pauseTxid)}</a></p>}
           {d.findings.length > 0 && (
             <ul className="space-y-1">
