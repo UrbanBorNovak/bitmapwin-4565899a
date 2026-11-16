@@ -214,7 +214,7 @@ async function valuesFromEsploraPages(
       let lastError: unknown;
       for (const base of order) {
         try {
-          const txs = await json<EsploraTx[]>(`${base}/block/${hash}/txs/${start}`, 6_000, [0, 600]);
+          const txs = await json<EsploraTx[]>(`${base}/block/${hash}/txs/${start}`, 5_000, ONCE);
           return txs.map((tx) => (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0));
         } catch (error) {
           failures.set(base, (failures.get(base) ?? 0) + 1);
