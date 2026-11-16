@@ -18,7 +18,7 @@ export type Finding = {
   suspicious: boolean;
   txid?: string;
   sender?: string;
-  height?: number;
+  height?: number | undefined;
   detail: string;
 };
 
