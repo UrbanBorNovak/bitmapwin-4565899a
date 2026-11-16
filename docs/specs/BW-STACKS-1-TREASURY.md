@@ -52,21 +52,23 @@ Rewards vault contract → holders claim
 - A tranche above the published cap: suspicious → pause.
 - Existing rules continue: pool mismatch, non-payout outflow, wrong claim recipient, unlogged attestation, unreviewed admin call.
 
-## 6. Contract gaps to close before mainnet
+## 6. Contract funding guard (draft contract, simulated)
 
-The current `fund` in contracts/bitmap-sbtc-stake.clar accepts any sender and has no cap. Before mainnet:
+contracts/bitmap-sbtc-stake.clar now enforces:
 
-- [ ] Add a `funder` principal (set by admin) and reject `fund` from anyone else.
-- [ ] Add `max-fund-per-call` and `max-pool` (admin-set) and reject above them.
-- [ ] Emit a `print` event with amount and epoch on each `fund`.
-- [ ] Extend the simulator: wrong funder refused, over-cap refused, pause-only key cannot change funder/caps.
+- [x] `fund` only from the `funder` principal (the Stacks treasury multisig), set by admin via `set-funding`. Others get u401.
+- [x] Caps per call, per 144-block period, and lifetime total (u411). All caps start at 0, so funding is off until the admin sets them.
+- [x] `print` event with amount, period, running total and epoch on each `fund`.
+- [x] Tokens sent outside `fund` are never shared out and never count toward caps.
+- [x] Simulator: wrong funder, pause-only key and strangers refused; each cap refused when exceeded; refused calls move nothing.
+- [ ] The deployed testnet pilot (bw-stake-pilot-v1) predates this guard; a new version must be deployed to use it.
 - [ ] External audit covers the above.
 
 ## 7. Launch checklist
 
 - [ ] L1 and Stacks multisigs created; addresses published.
 - [ ] Caps decided and published.
-- [ ] Contract gaps (§6) closed, simulated, audited.
+- [ ] Contract guard (§6) deployed and audited.
 - [ ] Watchdog knows the treasury principal and caps.
 - [ ] One small dry-run tranche end-to-end on testnet, then mainnet.
 - [ ] Explicit reviewed switch to enable mainnet rewards.
