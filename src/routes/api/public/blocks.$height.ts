@@ -42,7 +42,8 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
             return Response.json(data, {
               headers: {
                 ...CORS,
-                "cache-control": "public, max-age=2592000, immutable",
+                "cache-control":
+                  data.sides.length >= data.txCount ? "public, max-age=2592000, immutable" : "no-store",
               },
             });
           }
@@ -52,7 +53,9 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
             headers: {
               ...CORS,
               "content-type": "application/octet-stream",
-              "cache-control": "public, max-age=2592000, immutable",
+              // Partial reads (an upstream page failed) are never cached, so a retry re-reads the chain.
+              "cache-control":
+                block.covered >= block.txCount ? "public, max-age=2592000, immutable" : "no-store",
               "x-block-hash": block.hash,
               "x-tx-count": String(block.txCount),
               "x-tx-covered": String(block.covered),
