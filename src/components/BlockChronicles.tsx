@@ -23,7 +23,7 @@ import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 
 /** The BITMAP as it stands in the Oasis: its real transaction parcels on an isometric tile. */
 function VoxelLand({ height, className = "" }: { hash?: string; salt?: number; height: number; className?: string }) {
-  const { data } = useQuery({ ...blockSizeMapQuery(height), staleTime: Infinity });
+  const { data } = useQuery({ ...blockSizeMapQuery(height) });
   const paths = useMemo(() => {
     const rects = parcelRects(data?.classes, 64);
     // iso projection of tile cell (x,z) in 0..64 → svg

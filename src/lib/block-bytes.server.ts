@@ -200,7 +200,9 @@ export async function buildBlockBytes(height: number): Promise<BlockBytes> {
   const cached = blockCache.get(height);
   if (cached) return cached;
   const block = await buildBlockBytesUncached(height);
-  blockCache.set(height, block);
+  // Only a complete map is permanent; a partial read (failed upstream page)
+  // must be re-fetched on the next request instead of being pinned.
+  if (block.covered >= block.txCount) blockCache.set(height, block);
   return block;
 }
 
@@ -239,6 +241,7 @@ export async function buildTxValues(height: number): Promise<TxValues> {
 
   {
     const tx = await request;
+    if (tx.values.length < tx.txCount) return tx; // partial: never cache
     if (valuesCache.size >= 150) {
       const oldest = valuesCache.keys().next().value;
       if (oldest !== undefined) valuesCache.delete(oldest);

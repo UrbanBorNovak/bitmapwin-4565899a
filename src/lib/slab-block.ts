@@ -12,12 +12,22 @@ export class GradeDataUnavailable extends Error {
 
 export type BlockFacts = { classes: number[]; hash: string | null; txCount: number; covered: number };
 
+function isPartial(r: Response): boolean {
+  const count = Number(r.headers.get("x-tx-count"));
+  const covered = Number(r.headers.get("x-tx-covered"));
+  return Number.isFinite(count) && Number.isFinite(covered) && count > 0 && covered < count;
+}
+
 /** null = the block does not exist; throws GradeDataUnavailable on a degraded or failed read. */
 export async function fetchBlock(height: number): Promise<BlockFacts | null> {
   let r: Response | null = null;
+  let partial = false;
   for (let attempt = 0; attempt < 3; attempt++) {
-    r = await fetch(`/api/public/blocks/${height}`).catch(() => null);
-    if (r && r.status !== 429 && r.status !== 503 && !r.headers.get("x-degraded")) break;
+    // After a partial answer, bypass any cached copy so the server re-reads the chain.
+    const url: string = partial ? `/api/public/blocks/${height}?fresh=${Date.now()}` : `/api/public/blocks/${height}`;
+    r = await fetch(url, partial ? { cache: "no-store" } : undefined).catch(() => null);
+    partial = !!r && r.ok && r.status !== 204 && isPartial(r);
+    if (r && r.status !== 429 && r.status !== 503 && !r.headers.get("x-degraded") && !partial) break;
     if (attempt < 2) await new Promise((res) => setTimeout(res, 1500 * 2 ** attempt));
   }
   if (!r) throw new GradeDataUnavailable("block data source unreachable");

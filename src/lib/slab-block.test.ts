@@ -34,3 +34,30 @@ describe("pre-grade limiter", () => {
     promoteGrade(undefined);
   });
 });
+
+describe("partial block reads", () => {
+  it("retries a partial block answer with a fresh, uncached request", async () => {
+    const { vi } = await import("vitest");
+    const { fetchBlock } = await import("@/lib/slab-block");
+    vi.useFakeTimers();
+    const calls: Array<{ url: string; cache?: string | undefined }> = [];
+    const answer = (covered: number) =>
+      new Response(new Uint8Array(covered).fill(1), {
+        headers: { "x-tx-count": "3", "x-tx-covered": String(covered), "x-block-hash": "00ab" },
+      });
+    vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
+      calls.push({ url, cache: init?.cache });
+      return answer(calls.length === 1 ? 2 : 3);
+    });
+    const p = fetchBlock(552718);
+    await vi.runAllTimersAsync();
+    const facts = await p;
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    expect(calls).toHaveLength(2);
+    expect(calls[0]!.url).toBe("/api/public/blocks/552718");
+    expect(calls[1]!.url).toMatch(/^\/api\/public\/blocks\/552718\?fresh=\d+$/);
+    expect(calls[1]!.cache).toBe("no-store");
+    expect(facts && missingGradeFacts(facts, 1)).toBeNull();
+  });
+});
