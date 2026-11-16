@@ -194,6 +194,9 @@ async function valuesFromRawBlock(hash: string, txCount: number, stopAt: number)
 
 type EsploraTx = { vout?: Array<{ value?: number }> };
 
+/** Pages already read for a block, so a retry continues instead of starting over. */
+const pageProgress = new Map<string, Array<number[] | null>>();
+
 async function valuesFromEsploraPages(
   hash: string,
   txCount: number,
@@ -208,7 +211,7 @@ async function valuesFromEsploraPages(
       for (let k = 0; k < providers.length; k++) {
         const base = providers[(attempt + k) % providers.length]!;
         try {
-          const txs = await json<EsploraTx[]>(`${base}/block/${hash}/txs/${start}`, 8_000);
+          const txs = await json<EsploraTx[]>(`${base}/block/${hash}/txs/${start}`, 6_000, [0, 600]);
           return txs.map((tx) => (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0));
         } catch (error) {
           lastError = error;
@@ -216,8 +219,21 @@ async function valuesFromEsploraPages(
       }
       throw lastError;
     },
-    { concurrency: ESPLORA_CONCURRENCY, rounds: ESPLORA_ROUNDS, deadline: Math.min(stopAt, Date.now() + ESPLORA_BUDGET_MS) },
+    {
+      concurrency: ESPLORA_CONCURRENCY,
+      rounds: ESPLORA_ROUNDS,
+      deadline: Math.min(stopAt, Date.now() + ESPLORA_BUDGET_MS),
+      resume: pageProgress.get(hash),
+    },
   );
+  if (result.complete) pageProgress.delete(hash);
+  else {
+    if (pageProgress.size >= 20) {
+      const oldest = pageProgress.keys().next().value;
+      if (oldest !== undefined) pageProgress.delete(oldest);
+    }
+    pageProgress.set(hash, result.pages);
+  }
   if (result.values.length === 0) throw new Error("esplora returned no transactions");
   return { values: result.values, complete: result.complete };
 }

@@ -39,3 +39,21 @@ describe("backup page loader", () => {
     expect(result.values).toEqual(page(0, 25));
   });
 });
+
+describe("backup page loader across retries", () => {
+  it("continues from pages already read instead of starting over", async () => {
+    const first = await collectPages(100, async (start) => {
+      if (start >= 50) throw new Error("down");
+      return page(start, 25);
+    }, opts);
+    expect(first.complete).toBe(false);
+    const asked: number[] = [];
+    const second = await collectPages(100, async (start) => {
+      asked.push(start);
+      return page(start, 25);
+    }, { ...opts, resume: first.pages });
+    expect(asked.sort((a, b) => a - b)).toEqual([50, 75]);
+    expect(second.complete).toBe(true);
+    expect(second.values).toEqual(page(0, 100));
+  });
+});

@@ -8,6 +8,8 @@ export type PageResult = {
   values: number[];
   complete: boolean;
   failedPages: number;
+  /** every page read so far (null = not yet), to resume from on the next try */
+  pages: Array<number[] | null>;
 };
 
 /**
@@ -20,11 +22,12 @@ export type PageResult = {
 export async function collectPages(
   txCount: number,
   load: PageLoader,
-  opts: { concurrency: number; rounds: number; deadline: number; now?: () => number },
+  opts: { concurrency: number; rounds: number; deadline: number; now?: () => number; resume?: Array<number[] | null> },
 ): Promise<PageResult> {
   const now = opts.now ?? Date.now;
   const pages = Math.ceil(txCount / PAGE_SIZE);
-  const results: Array<number[] | null> = new Array(pages).fill(null);
+  const results: Array<number[] | null> =
+    opts.resume && opts.resume.length === pages ? opts.resume.slice() : new Array(pages).fill(null);
   const expected = (i: number) => Math.min(PAGE_SIZE, txCount - i * PAGE_SIZE);
 
   for (let round = 0; round < opts.rounds; round++) {
@@ -37,7 +40,12 @@ export async function collectPages(
         const index = todo[cursor++];
         if (index === undefined) return;
         try {
-          const page = await load(index * PAGE_SIZE, round);
+          // A page still loading at the deadline is abandoned, never waited on.
+          const left = opts.deadline - now();
+          const page = await Promise.race([
+            load(index * PAGE_SIZE, round),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("page deadline")), Math.max(0, left))),
+          ]);
           if (page.length === expected(index)) results[index] = page;
         } catch {
           /* retried next round */
@@ -56,5 +64,5 @@ export async function collectPages(
       gap = true;
     } else if (!gap) values.push(...page);
   }
-  return { values, complete: failedPages === 0 && values.length === txCount, failedPages };
+  return { values, complete: failedPages === 0 && values.length === txCount, failedPages, pages: results };
 }
