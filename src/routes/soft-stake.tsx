@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { WalletConnect } from "@/components/WalletConnect";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
@@ -42,11 +42,22 @@ function SoftStakePage() {
   const h = Number(height);
   const validHeight = height !== "" && Number.isInteger(h) && h >= 0;
 
+  const latest = useRef(0);
   const refresh = async () => {
     if (!stx || !validHeight) return;
-    try { const { readPilot } = await import("@/lib/stacks-pilot-client"); setLive(await readPilot(h, stx)); } catch { setMsg("Could not read the testnet contract. Try again."); }
+    const ticket = ++latest.current; // only the newest lookup may write
+    try {
+      const { readPilot } = await import("@/lib/stacks-pilot-client");
+      const r = await readPilot(h, stx);
+      if (ticket === latest.current) setLive(r);
+    } catch { if (ticket === latest.current) setMsg("Could not read the testnet contract. Try again."); }
   };
-  useEffect(() => { setLive(null); setAtt(null); if (stx && validHeight) void refresh(); }, [stx, height]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setLive(null); setAtt(null);
+    if (!stx || !validHeight) { latest.current++; return; }
+    const t = setTimeout(() => void refresh(), 400);
+    return () => clearTimeout(t);
+  }, [stx, height]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Poll pending transactions until they settle, then re-read the contract.
   useEffect(() => {
