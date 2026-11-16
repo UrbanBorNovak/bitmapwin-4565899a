@@ -93,7 +93,7 @@ function SoftStakePage() {
   const expired = live?.stake ? live.burnHeight > live.stake.expires : false;
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
       <header className="space-y-2">
         <p className="font-mono text-xs tracking-widest text-signal">SOFT-STAKE PILOT · STACKS TESTNET</p>
         <h1 className="font-display text-3xl">Keep your BITMAP. Earn test sBTC.</h1>
@@ -179,7 +179,7 @@ function SoftStakePage() {
 
       {msg && <p className="text-sm text-destructive">{msg}</p>}
       <p className="font-mono text-[11px] text-muted-foreground">Contract: <a href={`https://explorer.hiro.so/txid/${PILOT_STAKE}?chain=testnet`} target="_blank" rel="noreferrer" className="underline">{PILOT_STAKE}</a></p>
-    </main>
+    </div>
   );
 }
 
