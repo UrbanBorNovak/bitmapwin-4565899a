@@ -14,7 +14,7 @@ export type ContractTx = {
 };
 export type LogRow = { stx_address: string; height: number; weight: number; epoch: number; issued: number };
 export type Finding = {
-  kind: "unmatched-attest" | "admin-call" | "log-spike" | "rejected-attest";
+  kind: "unmatched-attest" | "admin-call" | "log-spike" | "rejected-attest" | "pool-mismatch" | "pool-outflow" | "claim-recipient" | "direct-deposit" | "pool-moving";
   suspicious: boolean;
   txid?: string;
   sender?: string;
@@ -82,4 +82,54 @@ export function compareAttestations(txs: ContractTx[], log: LogRow[], signatures
 /** Pause only when something is suspicious, the contract is not paused yet, and no pause is already in flight. */
 export function shouldPause(findings: Finding[], contractPaused: boolean | null, pauseInFlight: boolean): boolean {
   return findings.some((f) => f.suspicious) && contractPaused !== true && !pauseInFlight; // unreadable status still pauses
+}
+
+// ---------- reward pool reconciliation ----------
+/** A confirmed transaction touching the pool, with its token transfers (Hiro transactions_with_transfers). */
+export type PoolTx = {
+  txid: string;
+  status: "success" | "failed";
+  fn: string | null; // pilot function name, null when the tx is not a pilot call (e.g. a plain token transfer)
+  sender: string;
+  transfers: { asset: string; amount: string; sender: string | null; recipient: string | null }[];
+};
+export type PoolSummary = { funded: string; paidOut: string; direct: string; expected: string; actual: string; matches: boolean };
+
+/** Pilot calls that may legitimately pay tokens out: claim pays the caller, attest/evict settle a replaced or closed stake. */
+export const PAYOUT_FUNCTIONS = ["claim", "attest", "evict"];
+
+/**
+ * Rebuild the pool balance from its full confirmed history and compare it with the live balance.
+ * Tokens may only enter through `fund` (direct transfers are reported, not suspicious, since anyone can send them)
+ * and only leave through claim/attest/evict. Any other outflow, a claim paid to someone other than the caller,
+ * or a live balance that differs from the rebuilt one is suspicious. BigInt maths: amounts never lose precision.
+ */
+export function reconcilePool(txs: PoolTx[], actualBalance: bigint, pool: string, asset: string): { findings: Finding[]; summary: PoolSummary } {
+  let funded = 0n, paid = 0n, direct = 0n;
+  const findings: Finding[] = [];
+  for (const t of txs) {
+    if (t.status !== "success") continue; // failed transactions move nothing
+    for (const x of t.transfers) {
+      if (x.asset !== asset) continue;
+      const amt = BigInt(x.amount);
+      if (x.recipient === pool && x.sender !== pool) {
+        if (t.fn === "fund") funded += amt;
+        else { direct += amt; findings.push({ kind: "direct-deposit", suspicious: false, txid: t.txid, detail: `${amt.toLocaleString("en-US")} test sats sent straight to the pool, outside fund. Counted, not shared out.` }); }
+      } else if (x.sender === pool && x.recipient !== pool) {
+        paid += amt;
+        if (!t.fn || !PAYOUT_FUNCTIONS.includes(t.fn)) {
+          findings.push({ kind: "pool-outflow", suspicious: true, txid: t.txid, detail: `${amt.toLocaleString("en-US")} test sats left the pool through ${t.fn ?? "a non-pilot call"}, which should never pay out.` });
+        } else if (t.fn === "claim" && x.recipient !== t.sender) {
+          findings.push({ kind: "claim-recipient", suspicious: true, txid: t.txid, detail: `A claim paid ${amt.toLocaleString("en-US")} test sats to an address other than the one claiming.` });
+        }
+      }
+    }
+  }
+  const expected = funded + direct - paid;
+  const matches = expected === actualBalance;
+  if (!matches) {
+    findings.push({ kind: "pool-mismatch", suspicious: true, detail: `Pool holds ${actualBalance.toLocaleString("en-US")} test sats but funding minus payouts gives ${expected.toLocaleString("en-US")}.` });
+  }
+  const str = (n: bigint) => n.toString();
+  return { findings, summary: { funded: str(funded), paidOut: str(paid), direct: str(direct), expected: str(expected), actual: str(actualBalance), matches } };
 }
