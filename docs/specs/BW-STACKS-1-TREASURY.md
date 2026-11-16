@@ -62,7 +62,13 @@ contracts/bitmap-sbtc-stake.clar now enforces:
 - [x] `print` event with amount, period, running total and epoch on each `fund`.
 - [x] Tokens sent outside `fund` are never shared out and never count toward caps.
 - [x] Simulator: wrong funder, pause-only key and strangers refused; each cap passes at exactly its limit and refuses one sat more; period allowance resets in the next period; payouts reopen pool room; refused calls move nothing.
-- [ ] The deployed testnet pilot (bw-stake-pilot-v1) predates this guard; a new version must be deployed to use it.
+- [x] Deployed on testnet as `ST2P0SD4JPHFKJ42DDH2VQVS59P7XJFYC4K8NHGWR.bw-stake-pilot-v2` (2026-11-16, burn 39283); treasury stand-in is the 2-of-3 testnet multisig `SN38Y8C9FJ7J624BJJK7ZY5HBN790X6646M3XB25X` (keys derived from the testnet admin seed, so not independent signers).
+- [x] On-chain drill (drill limits: 50,000 per call, 2-block periods, 60,000 per period, 100,000 pool):
+  stranger `fund` u401 (0x21d3f0d3…), pause-only key `unpause` u401 (0x0c1d9b75…) and `set-funding` u401 (0x5be8a033…);
+  50,001 u411 (0x62c6406f…); 50,000 ok (0xeb05edab…); +10,000 ok, period full at 60,000 (0x0a24cb41…); +1 u411 (0xd3fa3fb1…);
+  unsolicited 5,000 transfer ok, pool-held stayed 60,000 while the balance read 65,000 (0xa0f000ea…);
+  next period: 40,001 u411 on pool cap (0x8a277d0c…); 40,000 ok, pool-held exactly 100,000 (0x9ab48ceb…); +1 u411 though the period had room (0x172e84d0…).
+- [x] Pilot limits then set to 50,000 per call, 144-block periods, 100,000 per period, 250,000 pool (0x85423cee…). The watchdog reconciled the result with no suspicious findings.
 - [ ] External audit covers the above.
 
 ## 7. Launch checklist

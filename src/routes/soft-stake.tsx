@@ -12,6 +12,7 @@ import { EXPLORER_TX, PILOT_STAKE, STX_FAUCET } from "@/lib/stacks-pilot";
 const PAUSER_PROOF = {
   pause: "85c33f7d4b32a92e699fd4da877fbb1830bb45b6d550a7876772b7d8bce4099c",
   unpause: "8338a4e034af182100c81af6c02dff6576863f4f838becfbca0cb57b1c4ae068",
+  v2Unpause: "0c1d9b7525040834b497caccac2bc91be716ddbdca9a5b2aabc7580f5e301429",
 };
 import { useQuery } from "@tanstack/react-query";
 import { watchdogStatusFn } from "@/lib/stake-watchdog.functions";
@@ -251,7 +252,7 @@ function WatchdogPanel() {
               <p className="text-[11px] text-muted-foreground">Funded rewards = funded − paid out. Tokens sent directly are not counted toward any limit.</p>
             </div>
           )}
-          <p className="text-[11px] text-muted-foreground">The watchdog holds a pause-only key. On testnet it paused the pilot (<a href={EXPLORER_TX(PAUSER_PROOF.pause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.pause)}</a>), and its attempts to unpause (<a href={EXPLORER_TX(PAUSER_PROOF.unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.unpause)}</a>) or change admin, pausers, rate cap or oracle keys were all refused by the contract.</p>
+          <p className="text-[11px] text-muted-foreground">The watchdog holds a pause-only key. On testnet it paused the pilot (<a href={EXPLORER_TX(PAUSER_PROOF.pause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.pause)}</a>), and its attempts to unpause (<a href={EXPLORER_TX(PAUSER_PROOF.unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.unpause)}</a>) or change admin, pausers, rate cap or oracle keys were all refused by the contract. The current contract refused it too (<a href={EXPLORER_TX(PAUSER_PROOF.v2Unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.v2Unpause)}</a>).</p>
           {d.pauseTxid && <p>Pause sent: <a href={EXPLORER_TX(d.pauseTxid)} target="_blank" rel="noreferrer" className="underline">{short(d.pauseTxid)}</a></p>}
           {d.findings.length > 0 && (
             <ul className="space-y-1">

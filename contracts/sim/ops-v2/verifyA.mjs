@@ -1,0 +1,10 @@
+import { T, Cl, ADMIN, TREASURY, STAKE, TOKEN, pauserKey, PAUSER, nonceOf, send, asAdmin, asTreasury, call } from "./lib.mjs";
+let a = await nonceOf(ADMIN), t = await nonceOf(TREASURY), p = await nonceOf(PAUSER);
+await send(await asAdmin(STAKE, "fund", [Cl.uint(1000)], a++), "A1 stranger fund (expect u401)");
+await send(await call(STAKE, "unpause", [], { senderKey: pauserKey, nonce: p++ }), "A2 pauser unpause (expect u401)");
+await send(await call(STAKE, "set-funding", [Cl.principal(PAUSER), Cl.uint(1e9), Cl.uint(1), Cl.uint(1e9), Cl.uint(1e9)], { senderKey: pauserKey, nonce: p++ }), "A3 pauser set-funding (expect u401)");
+await send(await asTreasury(STAKE, "fund", [Cl.uint(50001)], t++), "A4 over per-call (expect u411)");
+await send(await asTreasury(STAKE, "fund", [Cl.uint(50000)], t++), "A5 exactly per-call (expect ok)");
+await send(await asTreasury(STAKE, "fund", [Cl.uint(10000)], t++), "A6 period reaches 60,000 (expect ok)");
+await send(await asTreasury(STAKE, "fund", [Cl.uint(1)], t++), "A7 one over period (expect u411)");
+await send(await asAdmin(TOKEN, "transfer", [Cl.uint(5000), Cl.principal(ADMIN), Cl.principal(STAKE), Cl.none()], a++), "A8 unsolicited transfer (expect ok)");
