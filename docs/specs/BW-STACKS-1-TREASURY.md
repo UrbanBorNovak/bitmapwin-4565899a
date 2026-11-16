@@ -57,10 +57,11 @@ Rewards vault contract → holders claim
 contracts/bitmap-sbtc-stake.clar now enforces:
 
 - [x] `fund` only from the `funder` principal (the Stacks treasury multisig), set by admin via `set-funding`. Others get u401.
-- [x] Caps per call, per 144-block period, and lifetime total (u411). All caps start at 0, so funding is off until the admin sets them.
+- [x] Caps per call, per reward period, and on the reward-pool balance (u411), matching §3. The period length is set by the admin in `set-funding` (must be > 0). All caps start at 0, so funding is off until the admin sets them.
+- [x] The pool cap checks `pool-held` (funded minus paid out) after the new tranche; payouts free room again. Lifetime funding is still reported (`funded-total`) but not capped.
 - [x] `print` event with amount, period, running total and epoch on each `fund`.
 - [x] Tokens sent outside `fund` are never shared out and never count toward caps.
-- [x] Simulator: wrong funder, pause-only key and strangers refused; each cap refused when exceeded; refused calls move nothing.
+- [x] Simulator: wrong funder, pause-only key and strangers refused; each cap passes at exactly its limit and refuses one sat more; period allowance resets in the next period; payouts reopen pool room; refused calls move nothing.
 - [ ] The deployed testnet pilot (bw-stake-pilot-v1) predates this guard; a new version must be deployed to use it.
 - [ ] External audit covers the above.
 
