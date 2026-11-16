@@ -78,9 +78,14 @@ export async function runStakeWatchdog(): Promise<WatchdogRun> {
     const findings = compareAttestations(txs, log.data ?? [], hour.count ?? 0);
     const suspicious = findings.filter((f) => f.suspicious).length;
     // A pause sent in the last 30 minutes that has not landed yet is still in flight.
+    // Only a pause still pending in the mempool counts; a landed or dropped one never blocks a new pause.
     const recent = await db.from("stake_pilot_watchdog_runs").select("pause_txid").not("pause_txid", "is", null)
-      .gte("ran_at", new Date(Date.now() - 1800_000).toISOString()).limit(1);
-    const inFlight = (recent.data?.length ?? 0) > 0 && paused !== true;
+      .gte("ran_at", new Date(Date.now() - 1800_000).toISOString()).order("ran_at", { ascending: false }).limit(1);
+    let inFlight = false;
+    const lastPause = recent.data?.[0]?.pause_txid;
+    if (lastPause && paused !== true) {
+      try { inFlight = String((await hiro(`/extended/v1/tx/0x${lastPause.replace(/^0x/, "")}`))?.tx_status) === "pending"; } catch { inFlight = false; }
+    }
     let pauseTxid: string | null = null; let error: string | null = null;
     if (shouldPause(findings, paused, inFlight)) {
       try { pauseTxid = await broadcastPilotPause(); } catch (e) { error = e instanceof Error ? e.message : "pause failed"; console.error("watchdog pause", e); }
