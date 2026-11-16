@@ -34,7 +34,7 @@ export default function ComicGuardian3D({ height, guardian }: { height: number; 
     const size = Math.max((x1 - x0 + 1) / f, (z1 - z0 + 1) / f, h);
     return { top: ((max >= 0 ? max : any) + 1) / f, frame: { cx, cz, size, h } };
   }, [build.data]);
-  const sizes = useQuery({ ...blockSizeMapQuery(height), staleTime: Infinity });
+  const sizes = useQuery({ ...blockSizeMapQuery(height) });
   // Big parcels only in 3D (each is its own mesh); tiny ones read as the dark ground.
   const parcels = useMemo(() => parcelRects(sizes.data?.classes, FORGE_SPAN).filter((r) => r.x1 - r.x0 >= 2).slice(0, 300), [sizes.data]);
   const hasBuild = !!frame;
