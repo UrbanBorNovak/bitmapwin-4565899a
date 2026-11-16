@@ -168,6 +168,7 @@ import { Route as TraitsTraitRouteImport } from './routes/traits.$trait'
 import { Route as TraitsRanksRouteImport } from './routes/traits.ranks'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicAgentSchemaRouteImport } from './routes/api/public/agent-schema'
+import { Route as ApiPublicBtcpayWebhookRouteImport } from './routes/api/public/btcpay-webhook'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicCollectionBackfillRouteImport } from './routes/api/public/collection-backfill'
 import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
@@ -993,6 +994,11 @@ const ApiPublicAgentSchemaRoute = ApiPublicAgentSchemaRouteImport.update({
   path: '/public/agent-schema',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicBtcpayWebhookRoute = ApiPublicBtcpayWebhookRouteImport.update({
+  id: '/public/btcpay-webhook',
+  path: '/public/btcpay-webhook',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
   id: '/public/coin-rewards',
   path: '/public/coin-rewards',
@@ -1302,6 +1308,7 @@ export interface FileRoutesByFullPath {
   '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
+  '/api/public/btcpay-webhook': typeof ApiPublicBtcpayWebhookRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/collection-backfill': typeof ApiPublicCollectionBackfillRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
@@ -1487,6 +1494,7 @@ export interface FileRoutesByTo {
   '/traits': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
+  '/api/public/btcpay-webhook': typeof ApiPublicBtcpayWebhookRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/collection-backfill': typeof ApiPublicCollectionBackfillRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
@@ -1677,6 +1685,7 @@ export interface FileRoutesById {
   '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/agent-schema': typeof ApiPublicAgentSchemaRoute
+  '/api/public/btcpay-webhook': typeof ApiPublicBtcpayWebhookRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/collection-backfill': typeof ApiPublicCollectionBackfillRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
@@ -1868,6 +1877,7 @@ export interface FileRouteTypes {
     | '/traits/'
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
+    | '/api/public/btcpay-webhook'
     | '/api/public/coin-rewards'
     | '/api/public/collection-backfill'
     | '/api/public/crawl-bss'
@@ -2053,6 +2063,7 @@ export interface FileRouteTypes {
     | '/traits'
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
+    | '/api/public/btcpay-webhook'
     | '/api/public/coin-rewards'
     | '/api/public/collection-backfill'
     | '/api/public/crawl-bss'
@@ -2242,6 +2253,7 @@ export interface FileRouteTypes {
     | '/traits/'
     | '/.lovable/oauth/consent'
     | '/api/public/agent-schema'
+    | '/api/public/btcpay-webhook'
     | '/api/public/coin-rewards'
     | '/api/public/collection-backfill'
     | '/api/public/crawl-bss'
@@ -3527,6 +3539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgentSchemaRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/btcpay-webhook': {
+      id: '/api/public/btcpay-webhook'
+      path: '/public/btcpay-webhook'
+      fullPath: '/api/public/btcpay-webhook'
+      preLoaderRoute: typeof ApiPublicBtcpayWebhookRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/coin-rewards': {
       id: '/api/public/coin-rewards'
       path: '/public/coin-rewards'
@@ -3741,6 +3760,7 @@ const ApiPublicBlocksHeightRouteWithChildren =
 
 interface ApiRouteChildren {
   ApiPublicAgentSchemaRoute: typeof ApiPublicAgentSchemaRoute
+  ApiPublicBtcpayWebhookRoute: typeof ApiPublicBtcpayWebhookRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicCollectionBackfillRoute: typeof ApiPublicCollectionBackfillRoute
   ApiPublicCrawlBssRoute: typeof ApiPublicCrawlBssRoute
@@ -3763,6 +3783,7 @@ interface ApiRouteChildren {
 
 const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicAgentSchemaRoute: ApiPublicAgentSchemaRoute,
+  ApiPublicBtcpayWebhookRoute: ApiPublicBtcpayWebhookRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicCollectionBackfillRoute: ApiPublicCollectionBackfillRoute,
   ApiPublicCrawlBssRoute: ApiPublicCrawlBssRoute,
