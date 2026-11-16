@@ -87,6 +87,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlabRouteImport } from './routes/slab'
 import { Route as SoftStakeRouteImport } from './routes/soft-stake'
 import { Route as SpeedBountyRouteImport } from './routes/speed-bounty'
+import { Route as StakePilotRouteImport } from './routes/stake-pilot'
 import { Route as StoreKitRouteImport } from './routes/store-kit'
 import { Route as StreamRouteImport } from './routes/stream'
 import { Route as StudioRouteImport } from './routes/studio'
@@ -588,6 +589,11 @@ const SoftStakeRoute = SoftStakeRouteImport.update({
 const SpeedBountyRoute = SpeedBountyRouteImport.update({
   id: '/speed-bounty',
   path: '/speed-bounty',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakePilotRoute = StakePilotRouteImport.update({
+  id: '/stake-pilot',
+  path: '/stake-pilot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreKitRoute = StoreKitRouteImport.update({
@@ -1239,6 +1245,7 @@ export interface FileRoutesByFullPath {
   '/slab': typeof SlabRoute
   '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
+  '/stake-pilot': typeof StakePilotRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -1427,6 +1434,7 @@ export interface FileRoutesByTo {
   '/slab': typeof SlabRoute
   '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
+  '/stake-pilot': typeof StakePilotRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -1620,6 +1628,7 @@ export interface FileRoutesById {
   '/slab': typeof SlabRoute
   '/soft-stake': typeof SoftStakeRoute
   '/speed-bounty': typeof SpeedBountyRoute
+  '/stake-pilot': typeof StakePilotRoute
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -1814,6 +1823,7 @@ export interface FileRouteTypes {
     | '/slab'
     | '/soft-stake'
     | '/speed-bounty'
+    | '/stake-pilot'
     | '/store-kit'
     | '/stream'
     | '/studio'
@@ -2002,6 +2012,7 @@ export interface FileRouteTypes {
     | '/slab'
     | '/soft-stake'
     | '/speed-bounty'
+    | '/stake-pilot'
     | '/store-kit'
     | '/stream'
     | '/studio'
@@ -2194,6 +2205,7 @@ export interface FileRouteTypes {
     | '/slab'
     | '/soft-stake'
     | '/speed-bounty'
+    | '/stake-pilot'
     | '/store-kit'
     | '/stream'
     | '/studio'
@@ -2387,6 +2399,7 @@ export interface RootRouteChildren {
   SlabRoute: typeof SlabRoute
   SoftStakeRoute: typeof SoftStakeRoute
   SpeedBountyRoute: typeof SpeedBountyRoute
+  StakePilotRoute: typeof StakePilotRoute
   StoreKitRoute: typeof StoreKitRoute
   StreamRoute: typeof StreamRoute
   StudioRoute: typeof StudioRoute
@@ -2995,6 +3008,13 @@ declare module '@tanstack/react-router' {
       path: '/speed-bounty'
       fullPath: '/speed-bounty'
       preLoaderRoute: typeof SpeedBountyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stake-pilot': {
+      id: '/stake-pilot'
+      path: '/stake-pilot'
+      fullPath: '/stake-pilot'
+      preLoaderRoute: typeof StakePilotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store-kit': {
@@ -4022,6 +4042,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlabRoute: SlabRoute,
   SoftStakeRoute: SoftStakeRoute,
   SpeedBountyRoute: SpeedBountyRoute,
+  StakePilotRoute: StakePilotRoute,
   StoreKitRoute: StoreKitRoute,
   StreamRoute: StreamRoute,
   StudioRoute: StudioRoute,

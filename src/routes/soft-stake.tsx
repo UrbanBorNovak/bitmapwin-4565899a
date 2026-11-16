@@ -104,7 +104,7 @@ function SoftStakePage() {
   const expired = live?.stake ? live.burnHeight > live.stake.expires : false;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 pt-10 pb-32">
       <header className="space-y-2">
         <p className="font-mono text-xs tracking-widest text-signal">SOFT-STAKE PILOT · STACKS TESTNET</p>
         <h1 className="font-display text-3xl">Keep your BITMAP. Earn test sBTC.</h1>
