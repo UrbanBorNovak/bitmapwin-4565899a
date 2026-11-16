@@ -182,10 +182,8 @@ function SoftStakePage() {
                 disabled={!stakeMine || expired || live.pending <= 0 || !!busy} className="rounded-md bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50">CLAIM TEST sBTC</button>
               <button onClick={() => send("Mint test tokens", "token", "mint", async () => { const { Cl } = await import("@stacks/transactions"); return [Cl.uint(100000), Cl.principal(stx)]; })}
                 disabled={!stx || !!busy} className="rounded-md border border-border px-3 py-2 hover:border-primary disabled:opacity-50">MINT 100,000 TEST t-sats</button>
-              <button onClick={() => send("Fund pool", "stake", "fund", async () => { const { Cl } = await import("@stacks/transactions"); return [Cl.uint(50000)]; })}
-                disabled={!stx || live.balance < 50000 || !!busy} className="rounded-md border border-border px-3 py-2 hover:border-primary disabled:opacity-50">FUND POOL 50,000</button>
             </div>
-            <p className="text-muted-foreground">The pool pays only what someone deposits. Funding splits it across everyone staked at that moment, by weight.</p>
+            <p className="text-muted-foreground">Only the pilot treasury (a 2-of-3 test multisig) can fund the pool, within fixed limits per top-up, per reward period and on the pool balance. Each top-up is split across everyone staked at that moment, by weight. Tokens sent to the pool any other way are never paid out.</p>
           </div>
         )}
       </section>
@@ -240,6 +238,19 @@ function WatchdogPanel() {
               <p className="text-[11px] text-muted-foreground">Test sats, read from Stacks testnet. Expected = funded + sent directly − paid out.</p>
             </div>
           ) : !d.error && <p className="text-muted-foreground">Reward pool not reconciled on this run.</p>}
+          {d.pool?.funding && (
+            <div className="space-y-1">
+              <p className="text-muted-foreground">FUNDING LIMITS · ENFORCED BY THE CONTRACT</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <Stat label="PER TOP-UP" value={sats(d.pool.funding.perCall)} />
+                <Stat label="REWARD PERIOD" value={`${d.pool.funding.periodLen.toLocaleString("en-US")} blocks`} />
+                <Stat label="THIS PERIOD" value={`${sats(d.pool.funding.fundedThisPeriod)} / ${sats(d.pool.funding.perPeriod)}`} />
+                <Stat label="FUNDED REWARDS" value={`${sats(d.pool.funding.poolHeld)} / ${sats(d.pool.funding.poolMax)}`} />
+                <Stat label="TREASURY" value={short(d.pool.funding.funder)} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Funded rewards = funded − paid out. Tokens sent directly are not counted toward any limit.</p>
+            </div>
+          )}
           <p className="text-[11px] text-muted-foreground">The watchdog holds a pause-only key. On testnet it paused the pilot (<a href={EXPLORER_TX(PAUSER_PROOF.pause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.pause)}</a>), and its attempts to unpause (<a href={EXPLORER_TX(PAUSER_PROOF.unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.unpause)}</a>) or change admin, pausers, rate cap or oracle keys were all refused by the contract.</p>
           {d.pauseTxid && <p>Pause sent: <a href={EXPLORER_TX(d.pauseTxid)} target="_blank" rel="noreferrer" className="underline">{short(d.pauseTxid)}</a></p>}
           {d.findings.length > 0 && (
