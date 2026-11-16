@@ -14,7 +14,7 @@ export const watchdogStatusFn = createServerFn({ method: "GET" }).handler(async 
     .order("ran_at", { ascending: false }).limit(1).maybeSingle();
   if (r.error) return { ok: false, reason: "Watchdog log unavailable" };
   if (!r.data) return { ok: false, reason: "The watchdog has not run yet" };
-  const findings = ((r.data.findings as any[]) ?? []).slice(0, 20).map((f) => ({
+  const findings = [...((r.data.findings as any[]) ?? [])].sort((a, b) => Number(!!b.suspicious) - Number(!!a.suspicious)).slice(0, 20).map((f) => ({
     kind: String(f.kind), suspicious: !!f.suspicious, txid: f.txid ?? null, height: f.height ?? null, detail: String(f.detail ?? ""),
   }));
   return { ok: true, ranAt: r.data.ran_at, burnHeight: r.data.burn_height, checked: r.data.checked, suspicious: r.data.suspicious,
