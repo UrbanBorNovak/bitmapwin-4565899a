@@ -59,3 +59,4 @@ export async function txStatus(txid: string): Promise<"pending" | "success" | "f
     return s === "success" ? "success" : s === "pending" ? "pending" : s ? "failed" : "unknown";
   } catch { return "unknown"; }
 }
+

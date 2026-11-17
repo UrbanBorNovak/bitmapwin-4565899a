@@ -126,6 +126,8 @@ function SoftStakePage() {
         <p className="mt-1 text-muted-foreground">Rewards are BitmapWin Test sBTC on Stacks testnet. Mainnet rewards are switched off. Ownership is checked on real Bitcoin; BitmapWin signs that check, so this pilot trusts BitmapWin, not only the chain.</p>
       </div>
 
+      <NetworkPanel />
+
       <WatchdogPanel />
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4">
@@ -206,6 +208,34 @@ function SoftStakePage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return <div className="rounded border border-border p-2"><p className="text-[10px] text-muted-foreground">{label}</p><p className="mt-1 text-sm">{value}</p></div>;
+}
+
+function NetworkPanel() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  const q = useQuery({ enabled: ready, queryKey: ["stake-network"], queryFn: async () => (await import("@/lib/stacks-pilot-network")).readNetwork(), refetchInterval: 60_000, staleTime: 30_000 });
+  const d = q.data; const t = (n: number) => `${n.toLocaleString("en-US")} t-sats`;
+  const days = d ? d.periodLen / 144 : 1;
+  return (
+    <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
+      <p className="tracking-widest text-muted-foreground">PILOT NETWORK · LIVE FROM STACKS TESTNET</p>
+      {!d ? <p className="text-muted-foreground">{q.isError ? "Could not read the testnet contract." : "Reading the contract…"}</p> : (
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat label="BITMAPS STAKED" value={`${d.staked.toLocaleString("en-US")} (${d.active.toLocaleString("en-US")} active)`} />
+            <Stat label="TOTAL WEIGHT" value={d.totalWeight.toLocaleString("en-US")} />
+            <Stat label="REWARDS FUNDED" value={t(d.fundedTotal)} />
+            <Stat label="PAID OUT (CLAIMED)" value={t(d.paidOut)} />
+            <Stat label="WAITING TO BE CLAIMED" value={t(d.poolHeld)} />
+            <Stat label="FUNDED THIS PERIOD" value={t(d.fundedThisPeriod)} />
+            <Stat label={`MAX PER ${days === 1 ? "DAY" : `${days} DAYS`}`} value={t(d.perPeriod)} />
+            <Stat label="MAX PER WEIGHT / PERIOD" value={d.totalWeight > 0 ? t(Math.floor(d.perPeriod / d.totalWeight)) : "—"} />
+          </div>
+          <p className="text-muted-foreground">Rewards are only what the treasury actually funds, split by weight among BITMAPs staked at that moment. There is no fixed yield. Test tokens only.</p>
+        </>
+      )}
+    </section>
+  );
 }
 
 function WatchdogPanel() {
