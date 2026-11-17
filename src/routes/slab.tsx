@@ -10,7 +10,8 @@ import { GradeQueue } from "@/components/slab/GradeQueue";
 import { slabInscriptionsFn } from "@/lib/slab-inscriptions.functions";
 import { satProofQuery } from "@/lib/sat-lookup";
 import { mathTraits, satReading } from "@/lib/slab-rarity";
-import { SLAB_SKINS } from "@/lib/slab-skins";
+import { SLAB_SKINS, slabSkin } from "@/lib/slab-skins";
+import { recycleNote } from "@/lib/fee-recycling";
 
 const LandSlab3D = lazy(() => import("@/components/slab/LandSlab3D").then((m) => ({ default: m.LandSlab3D })));
 
@@ -125,6 +126,11 @@ function SlabPage() {
               );
             })}
           </div>
+        )}
+        {data && slabSkin(skin).priceSats > 0 && (
+          <a href="/soft-stake" className="block rounded-md border border-signal/40 px-3 py-1.5 font-mono text-[11px] text-signal hover:border-signal md:col-start-1">
+            ♻ {recycleNote(slabSkin(skin).priceSats)} →
+          </a>
         )}
         {data && (
           <div className="flex gap-2 md:col-start-1">

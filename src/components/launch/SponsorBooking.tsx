@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { sendBitcoinFromWallet, signMessageWithWallet, type ConnectedWallet } from "@/lib/browser-wallet";
 import { DONATION_ADDRESS } from "@/lib/donations";
+import { recycleNote } from "@/lib/fee-recycling";
 import { LightningSponsorPay } from "@/components/launch/LightningSponsorPay";
 import { bookSponsorSlotFn } from "@/lib/sponsor-slots.functions";
 import { SPONSOR_HOURS, SPONSOR_SLOTS, parseSponsorMedia, sponsorMessage, type SponsorSlot } from "@/lib/sponsor-slots";
@@ -50,6 +51,9 @@ export function SponsorBooking({ wallet }: { wallet: ConnectedWallet | null }) {
           </button>
         ))}
       </div>
+      <a href="/soft-stake" className="mt-2 block rounded border border-signal/40 px-2 py-1.5 text-signal hover:border-signal">
+        ♻ 50% of screen sats are meant for the BITMAP holder staking pool · {recycleNote(SPONSOR_SLOTS[slot].sats)} →
+      </a>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={40} placeholder="Title" className="rounded border border-border bg-background px-2 py-2" />
         <input value={handle} onChange={(e) => setHandle(e.target.value)} maxLength={30} placeholder="@handle (optional)" className="rounded border border-border bg-background px-2 py-2" />

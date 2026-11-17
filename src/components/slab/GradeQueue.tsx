@@ -9,6 +9,7 @@ import { slabAlbumFn } from "@/lib/slab-album.functions";
 import { fetchSlabGrade, promoteGrade } from "@/lib/slab-block";
 import { SLAB_POSTAGE, SLAB_TREASURY, certFacts, slabCertHtml } from "@/lib/slab-cert";
 import { slabSkin } from "@/lib/slab-skins";
+import { recycleNote } from "@/lib/fee-recycling";
 import { useEffect } from "react";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 import { SLAB_MASTER_DELEGATE_ID, slabDelegateMetadata } from "@/lib/slab-master-delegate";
@@ -192,6 +193,7 @@ export function GradeQueue({ skin: skinId }: { skin?: string | undefined } = {})
               <ul className="space-y-1">
                 <li className="flex justify-between"><span>GRADING</span><span>0 sats (free)</span></li>
                 <li className="flex justify-between"><span>SKIN · {skin.name}</span><span>{skin.priceSats.toLocaleString("en-US")} sats</span></li>
+                {skin.priceSats > 0 && <li className="text-signal">↳ ♻ {recycleNote(skin.priceSats)}</li>}
                 <li className="flex justify-between"><span>POSTAGE</span><span>0 sats (stamped on your BITMAP's own sat)</span></li>
                 <li className="flex justify-between"><span>MINER FEE</span><span>shown in the next step, set by your fee rate</span></li>
                 <li className="flex justify-between border-t border-border pt-1 text-primary"><span>TOTAL BEFORE MINER FEE</span><span>{skin.priceSats.toLocaleString("en-US")} sats</span></li>
