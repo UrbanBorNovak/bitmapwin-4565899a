@@ -17,7 +17,11 @@ export async function connectStacksTestnet(): Promise<string> {
 
 export async function callPilot(which: "stake" | "token", functionName: string, functionArgs: unknown[]): Promise<string> {
   const { request } = await import("@stacks/connect");
-  const res = await request("stx_callContract", {
+  // Xverse's default routing sends stx_* calls through its Bitcoin provider,
+  // which throws "d is not a function". Pin the dedicated Stacks provider.
+  const w = window as unknown as { StacksProvider?: unknown; LeatherProvider?: unknown; XverseProviders?: { StacksProvider?: unknown } };
+  const provider = w.LeatherProvider ?? w.XverseProviders?.StacksProvider ?? w.StacksProvider;
+  const res = await request((provider ? { provider } : {}) as never, "stx_callContract", {
     contract: (which === "stake" ? PILOT_STAKE : PILOT_TOKEN) as `${string}.${string}`,
     functionName, functionArgs: functionArgs as never, network: "testnet", postConditionMode: "allow",
   });
@@ -25,10 +29,18 @@ export async function callPilot(which: "stake" | "token", functionName: string, 
   return res.txid;
 }
 
+async function retry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+  let err: unknown;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); } catch (e) { err = e; await new Promise((r) => setTimeout(r, 400 * 2 ** i)); }
+  }
+  throw err;
+}
+
 async function readOnly(contractId: string, fn: string, args: unknown[], sender: string) {
   const { fetchCallReadOnlyFunction, cvToJSON } = await import("@stacks/transactions");
   const [contractAddress, contractName] = contractId.split(".") as [string, string];
-  const cv = await fetchCallReadOnlyFunction({ contractAddress, contractName, functionName: fn, functionArgs: args as never, senderAddress: sender, network: "testnet" });
+  const cv = await retry(() => fetchCallReadOnlyFunction({ contractAddress, contractName, functionName: fn, functionArgs: args as never, senderAddress: sender, network: "testnet" }));
   return cvToJSON(cv);
 }
 
@@ -39,7 +51,7 @@ export async function readPilot(height: number, stx: string) {
     readOnly(PILOT_STAKE, "get-stake", [Cl.uint(height)], stx),
     readOnly(PILOT_STAKE, "pending", [Cl.uint(height)], stx),
     readOnly(PILOT_TOKEN, "get-balance", [Cl.principal(stx)], stx),
-    fetch(`${HIRO_TESTNET}/v2/info`).then((r) => r.json()),
+    retry(() => fetch(`${HIRO_TESTNET}/v2/info`).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })),
   ]);
   const s = stake?.value?.value;
   const num = (v: any) => Number(v?.value ?? 0);
