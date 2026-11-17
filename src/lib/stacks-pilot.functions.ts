@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export type PilotAttestResult =
-  | { ok: true; epoch: number; height: number; weight: number; issued: number; signature: string; daysHeld: number; clock: "chain" | "unknown" }
+  | { ok: true; epoch: number; height: number; weight: number; issued: number; signature: string; daysHeld: number; clock: "chain" | "unknown"; baseWeight: number; tier: 1 | 2 | 3; reasons: string[] }
   | { ok: false; status: "rejected" | "unavailable"; reason: string };
 
 const MAX_PER_HOUR = 6;
@@ -53,7 +53,11 @@ export const pilotAttestFn = createServerFn({ method: "POST" })
       const last = moves.get(data.height); const tip = Number(await tipRes.text());
       if (last != null && Number.isInteger(tip) && tip >= last) { daysHeld = Math.floor((tip - last) / 144); clock = "chain"; }
     } catch (e) { console.error("pilot custody clock", e); }
-    const weight = stakeWeight(daysHeld, null);
+    const baseWeight = stakeWeight(daysHeld, null);
+    const { stakeTier, tieredWeight } = await import("@/lib/stake-tiers");
+    const { readTierProofs } = await import("@/lib/stake-tiers.server");
+    const { tier, reasons } = stakeTier(await readTierProofs(data.height));
+    const weight = tieredWeight(baseWeight, tier);
 
     const { signAttestation, testnetBurnHeight, PILOT_ORACLE_EPOCH } = await import("@/lib/stacks-pilot.server");
     let issued: number;
@@ -65,5 +69,5 @@ export const pilotAttestFn = createServerFn({ method: "POST" })
       weight, epoch: PILOT_ORACLE_EPOCH, issued, network: "testnet",
     });
     if (log.error) { console.error("pilot log", log.error); return unavailable("Pilot log unavailable"); }
-    return { ok: true, ...att, signature, daysHeld, clock };
+    return { ok: true, ...att, signature, daysHeld, clock, baseWeight, tier, reasons };
   });

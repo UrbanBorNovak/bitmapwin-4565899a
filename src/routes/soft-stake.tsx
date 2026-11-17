@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { TIER_LABELS, MAX_STAKE_WEIGHT, type TierProofKey } from "@/lib/stake-tiers";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { WalletConnect } from "@/components/WalletConnect";
@@ -154,6 +155,12 @@ function SoftStakePage() {
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4">
         <p className="font-mono text-xs tracking-widest text-muted-foreground">2 · PROVE YOU HOLD IT</p>
+        <div className="grid gap-2 font-mono text-[11px] sm:grid-cols-3">
+          <div className="rounded border border-border p-2"><p className="text-foreground">×1 · PLAIN</p><p className="text-muted-foreground">Any BITMAP you hold.</p></div>
+          <div className="rounded border border-border p-2"><p className="text-primary">×2 · ACTIVE LAND</p><p className="text-muted-foreground">A <a href="/slab" className="underline">Living Slab</a> grade or a <a href="/forge" className="underline">Land Forge</a> build inscribed on its sat.</p></div>
+          <div className="rounded border border-border p-2"><p className="text-signal">×3 · HISTORIC</p><p className="text-muted-foreground">Patoshi block, milestone block (genesis, pizza, halvings) or an inscribed Guardian.</p></div>
+        </div>
+        <p className="text-[11px] text-muted-foreground">Every boost is checked on the chain when you sign. Hold-time weight × boost, up to the contract maximum of {MAX_STAKE_WEIGHT.toLocaleString("en-US")}.</p>
         <div className="flex flex-wrap items-center gap-2">
           <input value={height} onChange={(e) => setHeight(e.target.value.replace(/\D/g, ""))} placeholder="BITMAP number, e.g. 552718"
             inputMode="numeric" aria-label="BITMAP number" className="min-w-[200px] flex-1 rounded-md border border-border bg-background px-3 py-2 font-mono text-sm" />
@@ -165,7 +172,8 @@ function SoftStakePage() {
         {att && (
           <div className="space-y-2 rounded border border-signal/60 p-3 font-mono text-xs">
             <p className="text-signal">VERIFIED · WEIGHT {att.weight.toLocaleString("en-US")}</p>
-            <p className="text-muted-foreground">{att.clock === "chain" ? `Held ${att.daysHeld.toLocaleString("en-US")} days since its last on-chain move.` : "Holding time could not be read, so it counts as 0 days."} Slab grade is not counted in the pilot yet.</p>
+            <p className="text-muted-foreground">{att.clock === "chain" ? `Held ${att.daysHeld.toLocaleString("en-US")} days since its last on-chain move.` : "Holding time could not be read, so it counts as 0 days."}</p>
+            <p className="text-muted-foreground">BOOST ×{att.tier} · base {att.baseWeight.toLocaleString("en-US")} × {att.tier} = {att.weight.toLocaleString("en-US")}{att.reasons.length ? ` · ${att.reasons.map((r) => TIER_LABELS[r as TierProofKey] ?? r).join(", ")}` : " · no boost found"}</p>
             <p className="text-muted-foreground">Submit within about 20 minutes, or sign again.</p>
             <button onClick={submitStake} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy === "Stake" ? "OPENING WALLET…" : "STAKE ON TESTNET"}</button>
           </div>
