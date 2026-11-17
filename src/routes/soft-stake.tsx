@@ -15,6 +15,7 @@ const PAUSER_PROOF = {
   v2Unpause: "0c1d9b7525040834b497caccac2bc91be716ddbdca9a5b2aabc7580f5e301429",
 };
 import { useQuery } from "@tanstack/react-query";
+import { FEE_RECYCLING_ACTIVE, RECYCLE_SPLIT, RECYCLE_STREAMS, splitFee } from "@/lib/fee-recycling";
 import { watchdogStatusFn } from "@/lib/stake-watchdog.functions";
 
 export const Route = createFileRoute("/soft-stake")({
@@ -130,6 +131,8 @@ function SoftStakePage() {
       </div>
 
       <NetworkPanel />
+
+      <FeeRecyclingPanel />
 
       <WatchdogPanel />
 
@@ -311,6 +314,28 @@ function WatchdogPanel() {
           )}
         </>
       )}
+    </section>
+  );
+}
+
+function FeeRecyclingPanel() {
+  const ex = splitFee(2100);
+  const bar = [["TO STAKERS NOW", RECYCLE_SPLIT.pool, "bg-bitcoin"], ["PoX RESERVE", RECYCLE_SPLIT.reserve, "bg-signal"], ["RUNWAY", RECYCLE_SPLIT.runway, "bg-muted-foreground"]] as const;
+  return (
+    <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="tracking-widest text-muted-foreground">FEE RECYCLING · HOW SITE FEES FEED THE POOL</p>
+        <span className={FEE_RECYCLING_ACTIVE ? "text-signal" : "text-bitcoin"}>{FEE_RECYCLING_ACTIVE ? "ACTIVE" : "NOT ACTIVE YET · MAINNET OFF"}</span>
+      </div>
+      <div className="flex h-3 overflow-hidden rounded border border-border">
+        {bar.map(([l, pct, c]) => <div key={l} className={c} style={{ width: `${pct}%` }} />)}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {bar.map(([l, pct]) => <Stat key={l} label={l} value={`${pct}%`} />)}
+      </div>
+      <p className="text-muted-foreground">Fees from {RECYCLE_STREAMS.join(", ")}: {RECYCLE_SPLIT.pool}% is paid into the staking pool for the current period, {RECYCLE_SPLIT.reserve}% builds a stacked STX reserve whose PoX Bitcoin yield funds later periods, {RECYCLE_SPLIT.runway}% covers running the site.</p>
+      <p className="text-muted-foreground">Example: a 2,100 sat skin → {ex.pool.toLocaleString("en-US")} to stakers · {ex.reserve.toLocaleString("en-US")} to reserve · {ex.runway.toLocaleString("en-US")} runway.</p>
+      <p className="text-[11px] text-muted-foreground">Recycled so far: 0 sats. This pilot is funded only by the test treasury shown above; no real fees are recycled until mainnet rewards are switched on. Every future top-up will link its Bitcoin and Stacks transactions here.</p>
     </section>
   );
 }
