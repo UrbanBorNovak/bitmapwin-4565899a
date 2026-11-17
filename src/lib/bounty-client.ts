@@ -111,3 +111,10 @@ export async function cancelAndRefund(id: number) {
   const { Cl } = await import("@stacks/transactions");
   return callContract(BOUNTY_CONTRACT, "cancel-and-refund", [Cl.uint(id)]);
 }
+
+/** Bounties a builder can still answer: open and not past the deadline. Matches for `height` come first, then the biggest reward. */
+export function answerableBounties(bounties: Bounty[], tip: number, height: number | null, me = ""): Bounty[] {
+  return bounties
+    .filter((b) => b.status === "open" && tip <= b.deadline && b.poster !== me)
+    .sort((a, b) => Number(b.height === height) - Number(a.height === height) || b.amount - a.amount || a.id - b.id);
+}

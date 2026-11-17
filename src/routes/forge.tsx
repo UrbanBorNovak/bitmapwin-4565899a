@@ -17,6 +17,7 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
 import { RegistryDrawer } from "@/components/forge/RegistryDrawer";
+import { BountiesDrawer } from "@/components/forge/BountiesDrawer";
 import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, FORGE_SPAN_XL, type ForgeSpan, decodeBuild, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { forgeBuildQuery } from "@/lib/forge";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
@@ -443,6 +444,8 @@ function ForgePage() {
   // Smart auto-load: the BITMAP's live on-chain build fills an empty canvas; otherwise we ask first.
   const chainQ = useQuery(forgeBuildQuery(height));
   const chainBuild = chainQ.data ?? null;
+  /** Build inscribed in this session (reveal output 0), offered to the Bounties drawer. */
+  const [lastInscribed, setLastInscribed] = useState<string | null>(null);
   const [pendingLoad, setPendingLoad] = useState<string | null>(null);
   const loadedFor = useRef<string | null>(null);
   const loadChainBuild = (force: boolean): void => {
@@ -1141,6 +1144,14 @@ function ForgePage() {
               <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
               <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
               <RegistryDrawer height={height} canPlace={role === "bitmap"} />
+              <BountiesDrawer
+                height={height}
+                refs={[
+                  ...(lastInscribed ? [{ label: "JUST INSCRIBED", id: lastInscribed }] : []),
+                  ...(chainBuild?.inscriptionId && chainBuild.inscriptionId !== lastInscribed ? [{ label: `${height}.BITMAP BUILD`, id: chainBuild.inscriptionId }] : []),
+                ]}
+                onOpenBitmap={(h) => setInput(String(h))}
+              />
               <label data-testid="forge-import" className="cursor-pointer rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">
                 ⇪ IMPORT .BWVX/.VOX
                 <input type="file" accept=".bwvx,.vox" className="hidden" onChange={(e) => {
@@ -1225,6 +1236,7 @@ function ForgePage() {
                 allowUpload={false}
                 claimParentsForHeight={height}
                 reinscribeOnBitmap
+                onRevealed={(txid) => setLastInscribed(`${txid.replace(/^0x/, "")}i0`)}
                 {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
                 artifactVariants={[
                   ...(asmHtml ? [{ key: "asm", label: xl ? "XL RECURSIVE BUILD · 128³" : livePlacements.length ? "RECURSIVE BUILD" : "BUILD + GUARDIAN", contentType: "text/html;charset=utf-8", source: asmHtml, note: `${livePlacements.length} inscribed piece${livePlacements.length === 1 ? "" : "s"} pulled live from Bitcoin${perch ? " · your Guardian perched on top" : ""} · ${(asmBytes / 1024).toFixed(1)} KB.`, ...(payouts.length ? { tributes: payouts } : {}) }] : []),

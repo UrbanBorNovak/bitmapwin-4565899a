@@ -173,7 +173,7 @@ function BountyCard({ b, tip, me, busy, onSubmit, onAccept, onRefund }: {
         <div className="flex flex-wrap gap-2">
           <input className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1.5 font-mono text-xs" placeholder="Inscription id of your build (…i0)" value={ref} onChange={(e) => setRef(e.target.value)} />
           <button className="rounded border border-signal/60 px-3 py-1.5 font-mono text-xs text-signal disabled:opacity-50" disabled={!okRef || busy} onClick={() => onSubmit(ref)}>Submit build</button>
-          <Link to="/forge" className="self-center font-mono text-xs text-muted-foreground hover:text-foreground">Build it in Land Forge</Link>
+          <Link to="/forge" search={{ height: b.height }} className="self-center font-mono text-xs text-muted-foreground hover:text-foreground">Build it in Land Forge</Link>
         </div>
       )}
       {mine && b.status === "open" && expired && (
