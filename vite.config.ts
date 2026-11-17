@@ -38,6 +38,29 @@ function stripThreeSourceAnnotations(): Plugin {
   };
 }
 
+/**
+ * @stacks/connect drags in the Reown/Lit wallet UI, which touches HTMLElement
+ * at import time. If it reaches the server bundle the bundler can co-locate
+ * shared polyfills with it, and every published page then 500s on startup.
+ * The wallet is only ever opened in the browser, so the server gets a stub.
+ */
+function stubBrowserWalletsOnServer(): Plugin {
+  const STUB = "\0bitmap:stacks-connect-server-stub";
+  return {
+    name: "bitmap:stub-browser-wallets-on-server",
+    enforce: "pre",
+    resolveId(id) {
+      if (this.environment?.name === "client") return null;
+      if (id === "@stacks/connect" || id.startsWith("@stacks/connect/")) return STUB;
+      return null;
+    },
+    load(id) {
+      if (id !== STUB) return null;
+      return "export async function request() { throw new Error('Stacks wallet is browser-only'); }\nexport default {};\n";
+    },
+  };
+}
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -45,7 +68,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [mcpPlugin(), stripThreeSourceAnnotations()],
+    plugins: [stubBrowserWalletsOnServer(), mcpPlugin(), stripThreeSourceAnnotations()],
     resolve: {
       alias: {
         // snarkjs' exports map only defines "node"/"browser" conditions, which

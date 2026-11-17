@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { bindingMessage, bindingFresh, stakeWeight, validateBinding, MAINNET_REWARDS_ENABLED } from "./stacks-softstake";
-import { attestationHash, PILOT_STAKE } from "./stacks-pilot";
+import { PILOT_STAKE } from "./stacks-pilot";
+import { attestationHash } from "./stacks-attestation";
 
 const b = { height: 552718, btcAddress: "bc1p" + "q".repeat(58), stxAddress: "ST2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7", issuedAt: 1_800_000_000, network: "testnet" as const };
 

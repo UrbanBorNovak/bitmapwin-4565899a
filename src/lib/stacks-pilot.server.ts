@@ -4,7 +4,8 @@ import { privateKeyToAddress, privateKeyToPublic, signMessageHashRsv } from "@st
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
-import { attestationHash, HIRO_TESTNET, type Attestation } from "@/lib/stacks-pilot";
+import { HIRO_TESTNET, type Attestation } from "@/lib/stacks-pilot";
+import { attestationHash } from "@/lib/stacks-attestation";
 
 /** Oracle key epoch the pilot contract was configured with. */
 export const PILOT_ORACLE_EPOCH = 1;
