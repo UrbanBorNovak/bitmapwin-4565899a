@@ -65,3 +65,18 @@ export function stakeWeight(daysHeld: number, grade: number | null): number {
   const g = grade == null ? 5 : Math.max(1, Math.min(10, Math.round(grade)));
   return Math.floor(((1 + d) * g) / 5);
 }
+
+/** A stake's share of total active weight, in basis points (10,000 = 100%), rounded down. */
+export function stakeShareBps(weight: number, activeWeight: number): number {
+  if (!(weight > 0) || !(activeWeight > 0) || weight > activeWeight) return 0;
+  return Math.floor((weight * 10_000) / activeWeight);
+}
+
+/**
+ * Claimable rewards follow the contract exactly: every top-up adds amount / total weight
+ * to a running "reward per weight"; a stake is owed weight × (growth since it was staked),
+ * rounded down. This returns that growth per weight, recovered from the claimable figure.
+ */
+export function rewardPerWeight(claimable: number, weight: number): number {
+  return weight > 0 ? Math.floor(claimable / weight) : 0;
+}

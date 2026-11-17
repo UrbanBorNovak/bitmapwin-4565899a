@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { WalletConnect } from "@/components/WalletConnect";
 import { saveWalletSession, useWalletSession } from "@/lib/wallet-session";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
-import { bindingMessage, validateBinding } from "@/lib/stacks-softstake";
+import { bindingMessage, rewardPerWeight, stakeShareBps, validateBinding, MAINNET_REWARDS_ENABLED } from "@/lib/stacks-softstake";
 import { pilotAttestFn, type PilotAttestResult } from "@/lib/stacks-pilot.functions";
 import { EXPLORER_TX, PILOT_STAKE, STX_FAUCET } from "@/lib/stacks-pilot";
 
@@ -112,6 +112,9 @@ function SoftStakePage() {
 
   const stakeMine = live?.stake && live.stake.owner === stx;
   const expired = live?.stake ? live.burnHeight > live.stake.expires : false;
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+  const net = useQuery({ enabled: ready, queryKey: ["stake-network"], queryFn: async () => (await import("@/lib/stacks-pilot-network")).readNetwork(), refetchInterval: 60_000, staleTime: 30_000 }).data;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 pt-10 pb-32">
@@ -179,6 +182,19 @@ function SoftStakePage() {
               <Stat label="CLAIMABLE" value={`${live.pending.toLocaleString("en-US")} t-sats`} />
               <Stat label="YOUR TEST sBTC" value={`${live.balance.toLocaleString("en-US")} t-sats`} />
             </div>
+            {live.stake && stakeMine && !expired && net && (() => {
+              const w = live.stake.weight, bps = stakeShareBps(w, net.activeWeight), per = rewardPerWeight(live.pending, w);
+              return (
+                <div className="space-y-2 rounded border border-signal/60 p-3">
+                  <p className="text-signal">YOUR SHARE · {(bps / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}% OF ACTIVE WEIGHT</p>
+                  <p className="text-muted-foreground">Your weight {w.toLocaleString("en-US")} ÷ active weight {net.activeWeight.toLocaleString("en-US")} ({net.active.toLocaleString("en-US")} active BITMAP{net.active === 1 ? "" : "s"}).</p>
+                  <p className="text-muted-foreground">HOW CLAIMABLE IS WORKED OUT</p>
+                  <p>Each treasury top-up adds (top-up ÷ total staked weight at that moment) to a running reward per weight. You are owed your weight × how much that grew since you staked, rounded down.</p>
+                  <p>Since you staked: {per.toLocaleString("en-US")} t-sats per weight × weight {w.toLocaleString("en-US")} = <span className="text-signal">{live.pending.toLocaleString("en-US")} t-sats</span> claimable.</p>
+                  <p className="text-muted-foreground">So the next top-up pays you about {(bps / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}% of it, if weights stay the same. Tokens that arrived while nobody was staked are shared out with the next top-up. Test tokens only{MAINNET_REWARDS_ENABLED ? "" : " · mainnet rewards are off"}.</p>
+                </div>
+              );
+            })()}
             {live.stake && stakeMine && <p className="text-muted-foreground">{expired ? "Expired: sign and stake again to keep earning." : `Re-confirm before testnet block ${live.stake.expires.toLocaleString("en-US")} (now ${live.burnHeight.toLocaleString("en-US")}).`}</p>}
             <div className="flex flex-wrap gap-2">
               <button onClick={() => send("Claim", "stake", "claim", async () => { const { Cl } = await import("@stacks/transactions"); return [Cl.uint(h)]; })}
@@ -223,7 +239,7 @@ function NetworkPanel() {
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label="BITMAPS STAKED" value={`${d.staked.toLocaleString("en-US")} (${d.active.toLocaleString("en-US")} active)`} />
-            <Stat label="TOTAL WEIGHT" value={d.totalWeight.toLocaleString("en-US")} />
+            <Stat label="ACTIVE WEIGHT" value={d.activeWeight.toLocaleString("en-US")} />
             <Stat label="REWARDS FUNDED" value={t(d.fundedTotal)} />
             <Stat label="PAID OUT (CLAIMED)" value={t(d.paidOut)} />
             <Stat label="WAITING TO BE CLAIMED" value={t(d.poolHeld)} />

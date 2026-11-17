@@ -33,3 +33,11 @@ describe("BW-STACKS-1 pilot rules", () => {
     expect(() => attestationHash({ epoch: 1, height: 1, owner: b.stxAddress, weight: 1, issued: 1 }, "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7.x")).toThrow(/testnet/);
   });
 });
+
+import { stakeShareBps, rewardPerWeight } from "./stacks-softstake";
+describe("stake share", () => {
+  it("weight 2 of active weight 2 is 100%", () => expect(stakeShareBps(2, 2)).toBe(10_000));
+  it("weight 1 of 3 rounds down to 33.33%", () => expect(stakeShareBps(1, 3)).toBe(3_333));
+  it("an inactive stake (no active weight) has no share", () => expect(stakeShareBps(2, 0)).toBe(0));
+  it("150,000 claimable on weight 2 is 75,000 per weight", () => expect(rewardPerWeight(150_000, 2)).toBe(75_000));
+});

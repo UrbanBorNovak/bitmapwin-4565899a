@@ -8,7 +8,7 @@ async function readOnly(contractId: string, fn: string, args: unknown[], sender:
 }
 
 export type PilotNetwork = {
-  staked: number; active: number; totalWeight: number; fundedTotal: number; poolHeld: number;
+  staked: number; active: number; activeWeight: number; totalWeight: number; fundedTotal: number; poolHeld: number;
   paidOut: number; unshared: number; perPeriod: number; periodLen: number; fundedThisPeriod: number; burnHeight: number;
 };
 
@@ -41,6 +41,7 @@ export async function readNetwork(): Promise<PilotNetwork> {
   return {
     staked: live.length,
     active: live.filter((s: any) => burnHeight <= n(s.expires)).length,
+    activeWeight: live.filter((s: any) => burnHeight <= n(s.expires)).reduce((a: number, s: any) => a + n(s.weight), 0),
     totalWeight: n(st["total-weight"]), unshared: n(st.stranded),
     fundedTotal: n(f["funded-total"]), poolHeld: n(f["pool-held"]),
     paidOut: n(f["funded-total"]) - n(f["pool-held"]),
