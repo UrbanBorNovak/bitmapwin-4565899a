@@ -7,7 +7,7 @@ describe("splitFee", () => {
 
 import { recycleNote as _rn } from "./fee-recycling";
 import { test as _t, expect as _e } from "vitest";
-_t("checkout note for 2,100 sat skin names 1,050 to stakers and says not active", () => {
-  _e(_rn(2100)).toContain("1,050 sats to BITMAP stakers");
+_t("checkout note for 2,100 sat skin names 1,050 to the builder fund and says not active", () => {
+  _e(_rn(2100)).toContain("1,050 sats to the BITMAP builder fund");
   _e(_rn(2100)).toContain("not active yet");
 });

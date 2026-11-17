@@ -52,7 +52,7 @@ export function SponsorBooking({ wallet }: { wallet: ConnectedWallet | null }) {
         ))}
       </div>
       <a href="/soft-stake" className="mt-2 block rounded border border-signal/40 px-2 py-1.5 text-signal hover:border-signal">
-        ♻ 50% of screen sats are meant for the BITMAP holder staking pool · {recycleNote(SPONSOR_SLOTS[slot].sats)} →
+        ♻ 50% of screen sats are meant for the BITMAP builder fund · {recycleNote(SPONSOR_SLOTS[slot].sats)} →
       </a>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={40} placeholder="Title" className="rounded border border-border bg-background px-2 py-2" />

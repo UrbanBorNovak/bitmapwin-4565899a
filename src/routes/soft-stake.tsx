@@ -124,12 +124,12 @@ function SoftStakePage() {
       <header className="space-y-2">
         <p className="font-mono text-xs tracking-widest text-signal">LAND ATTESTATION PILOT · STACKS TESTNET</p>
         <h1 className="font-display text-3xl">Your BITMAP stays put. Prove custody, prove you build.</h1>
-        <p className="text-muted-foreground">Your BITMAP never leaves your wallet. You sign once to prove you hold it, and a test contract pays you test tokens while you keep holding.</p>
+        <p className="text-muted-foreground">Your BITMAP never leaves your wallet. You sign once to prove you hold it, and the registry records it. Builder-fund payouts in this pilot are test tokens only.</p>
       </header>
 
       <div className="rounded-lg border border-bitcoin/60 bg-card/60 p-4 font-mono text-xs leading-relaxed">
         <p className="text-bitcoin">TEST ONLY · NO REAL VALUE</p>
-        <p className="mt-1 text-muted-foreground">Rewards are BitmapWin Test sBTC on Stacks testnet. Mainnet rewards are switched off. Ownership is checked on real Bitcoin; BitmapWin signs that check, so this pilot trusts BitmapWin, not only the chain.</p>
+        <p className="mt-1 text-muted-foreground">Payouts are BitmapWin Test sBTC on Stacks testnet. Mainnet payouts are switched off. Ownership is checked on real Bitcoin; BitmapWin signs that check, so this pilot trusts BitmapWin, not only the chain.</p>
       </div>
 
       <NetworkPanel />
@@ -253,14 +253,14 @@ function NetworkPanel() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label="BITMAPS REGISTERED" value={`${d.staked.toLocaleString("en-US")} (${d.active.toLocaleString("en-US")} active)`} />
             <Stat label="ACTIVE WEIGHT" value={d.activeWeight.toLocaleString("en-US")} />
-            <Stat label="REWARDS FUNDED" value={t(d.fundedTotal)} />
+            <Stat label="FUND TOTAL" value={t(d.fundedTotal)} />
             <Stat label="PAID OUT (CLAIMED)" value={t(d.paidOut)} />
             <Stat label="WAITING TO BE CLAIMED" value={t(d.poolHeld)} />
             <Stat label="FUNDED THIS PERIOD" value={t(d.fundedThisPeriod)} />
             <Stat label={`MAX PER ${days === 1 ? "DAY" : `${days} DAYS`}`} value={t(d.perPeriod)} />
             <Stat label="MAX PER WEIGHT / PERIOD" value={d.totalWeight > 0 ? t(Math.floor(d.perPeriod / d.totalWeight)) : "—"} />
           </div>
-          <p className="text-muted-foreground">Rewards are only what the treasury actually funds, split by weight among BITMAPs staked at that moment. There is no fixed yield. Test tokens only.</p>
+          <p className="text-muted-foreground">Payouts are only what the treasury actually funds, split by Proof-of-Build weight among BITMAPs registered at that moment. Nothing is promised in advance. Test tokens only.</p>
         </>
       )}
     </section>
@@ -279,7 +279,7 @@ function WatchdogPanel() {
         <p className="tracking-widest text-muted-foreground">WATCHDOG · TESTNET</p>
         <p className={tone}>{state}</p>
       </div>
-      <p className="text-muted-foreground">Every few minutes it compares each stake on the contract with the list of approvals BitmapWin actually signed. It also rebuilds the reward pool balance from every funding and payout and checks it against what the pool really holds. A stake nobody signed, an unexpected admin action, or pool tokens that cannot be explained pause the whole pilot: staking, funding and claims stop, and the test tokens stay in the contract.</p>
+      <p className="text-muted-foreground">Every few minutes it compares each registration on the contract with the list of approvals BitmapWin actually signed. It also rebuilds the builder fund balance from every funding and payout and checks it against what the pool really holds. A registration nobody signed, an unexpected admin action, or pool tokens that cannot be explained pause the whole pilot: registering, funding and claims stop, and the test tokens stay in the contract.</p>
       {d && !d.ok && <p className="text-muted-foreground">{d.reason}.</p>}
       {d?.ok && (
         <>
@@ -287,7 +287,7 @@ function WatchdogPanel() {
           {d.error && <p className="text-bitcoin">{d.error}. It will try again on the next run.</p>}
           {d.pool ? (
             <div className="space-y-1">
-              <p className={d.pool.matches ? "text-signal" : "text-bitcoin"}>REWARD POOL · {d.pool.matches ? "BALANCE EXPLAINED" : "BALANCE DOES NOT MATCH"}</p>
+              <p className={d.pool.matches ? "text-signal" : "text-bitcoin"}>BUILDER FUND · {d.pool.matches ? "BALANCE EXPLAINED" : "BALANCE DOES NOT MATCH"}</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 <Stat label="FUNDED" value={sats(d.pool.funded)} />
                 <Stat label="SENT DIRECTLY" value={sats(d.pool.direct)} />
@@ -303,12 +303,12 @@ function WatchdogPanel() {
               <p className="text-muted-foreground">FUNDING LIMITS · ENFORCED BY THE CONTRACT</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 <Stat label="PER TOP-UP" value={sats(d.pool.funding.perCall)} />
-                <Stat label="REWARD PERIOD" value={`${d.pool.funding.periodLen.toLocaleString("en-US")} blocks`} />
+                <Stat label="FUNDING PERIOD" value={`${d.pool.funding.periodLen.toLocaleString("en-US")} blocks`} />
                 <Stat label="THIS PERIOD" value={`${sats(d.pool.funding.fundedThisPeriod)} / ${sats(d.pool.funding.perPeriod)}`} />
-                <Stat label="FUNDED REWARDS" value={`${sats(d.pool.funding.poolHeld)} / ${sats(d.pool.funding.poolMax)}`} />
+                <Stat label="FUND BALANCE" value={`${sats(d.pool.funding.poolHeld)} / ${sats(d.pool.funding.poolMax)}`} />
                 <Stat label="TREASURY" value={short(d.pool.funding.funder)} />
               </div>
-              <p className="text-[11px] text-muted-foreground">Funded rewards = funded − paid out. Tokens sent directly are not counted toward any limit.</p>
+              <p className="text-[11px] text-muted-foreground">Fund balance = funded − paid out. Tokens sent directly are not counted toward any limit.</p>
             </div>
           )}
           <p className="text-[11px] text-muted-foreground">The watchdog holds a pause-only key. On testnet it paused the pilot (<a href={EXPLORER_TX(PAUSER_PROOF.pause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.pause)}</a>), and its attempts to unpause (<a href={EXPLORER_TX(PAUSER_PROOF.unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.unpause)}</a>) or change admin, pausers, rate cap or oracle keys were all refused by the contract. The current contract refused it too (<a href={EXPLORER_TX(PAUSER_PROOF.v2Unpause)} target="_blank" rel="noreferrer" className="underline">{short(PAUSER_PROOF.v2Unpause)}</a>).</p>
@@ -343,9 +343,9 @@ function FeeRecyclingPanel() {
       <div className="grid grid-cols-3 gap-2">
         {bar.map(([l, pct]) => <Stat key={l} label={l} value={`${pct}%`} />)}
       </div>
-      <p className="text-muted-foreground">Fees from {RECYCLE_STREAMS.join(", ")}: {RECYCLE_SPLIT.pool}% is paid into the staking pool for the current period, {RECYCLE_SPLIT.reserve}% builds a stacked STX reserve whose PoX Bitcoin yield funds later periods, {RECYCLE_SPLIT.runway}% covers running the site.</p>
-      <p className="text-muted-foreground">Example: a 2,100 sat skin → {ex.pool.toLocaleString("en-US")} to stakers · {ex.reserve.toLocaleString("en-US")} to reserve · {ex.runway.toLocaleString("en-US")} runway.</p>
-      <p className="text-[11px] text-muted-foreground">Recycled so far: 0 sats. This pilot is funded only by the test treasury shown above; no real fees are recycled until mainnet rewards are switched on. Every future top-up will link its Bitcoin and Stacks transactions here.</p>
+      <p className="text-muted-foreground">Fees from {RECYCLE_STREAMS.join(", ")}: {RECYCLE_SPLIT.pool}% would go to the builder fund for the current period, {RECYCLE_SPLIT.reserve}% builds a stacked STX reserve whose PoX Bitcoin returns fund later periods, {RECYCLE_SPLIT.runway}% would cover running the site.</p>
+      <p className="text-muted-foreground">Example: a 2,100 sat skin → {ex.pool.toLocaleString("en-US")} to the builder fund · {ex.reserve.toLocaleString("en-US")} to reserve · {ex.runway.toLocaleString("en-US")} runway.</p>
+      <p className="text-[11px] text-muted-foreground">Paid into the fund from site fees so far: 0 sats. This pilot is funded only by the test treasury shown above; no real fees go into it until mainnet payouts are switched on. Every future top-up will link its Bitcoin and Stacks transactions here.</p>
     </section>
   );
 }

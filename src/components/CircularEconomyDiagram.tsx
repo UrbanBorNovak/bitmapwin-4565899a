@@ -19,9 +19,9 @@ export function CircularEconomyDiagram() {
   const [active, setActive] = useState<string>("hold");
   const step = STEPS.find((s) => s.id === active)!;
   return (
-    <section className="rounded-lg border border-border bg-card/60 p-5 backdrop-blur">
-      <p className="font-mono text-xs tracking-widest text-accent">SOVEREIGN NODE ARCHITECTURE</p>
-      <h2 className="mt-1 text-xl font-semibold text-foreground">What a holder pays, and how any community can run its own node</h2>
+    <section className="rounded-lg border border-border bg-card/60 p-4 backdrop-blur">
+      <p className="font-mono text-xs tracking-widest text-muted-foreground">SOVEREIGN NODE ARCHITECTURE</p>
+      <h2 className="mt-1 text-lg font-semibold text-foreground sm:text-xl">What a holder pays, and how any community can run its own node</h2>
       <div className="mt-4 grid gap-6 md:grid-cols-[1fr_1fr] items-center">
         <svg viewBox="0 0 400 400" className="w-full max-w-md mx-auto" role="img" aria-label="Sovereign node architecture diagram">
           {NODES.map((n, i) => (
@@ -37,21 +37,21 @@ export function CircularEconomyDiagram() {
           <text x={200} y={210} textAnchor="middle" className="fill-muted-foreground font-mono" fontSize={8}>OPEN SOURCE</text>
           {STEPS.map((s) => (
             <g key={s.id} onClick={() => setActive(s.id)} className="cursor-pointer" role="button" aria-label={s.title}>
-              <circle cx={s.x} cy={s.y} r={30} className={active === s.id ? "fill-primary" : "fill-card stroke-primary"} strokeWidth={1.5} />
-              <text x={s.x} y={s.y + 3} textAnchor="middle" fontSize={7} className={active === s.id ? "fill-primary-foreground font-mono" : "fill-foreground font-mono"}>{s.label}</text>
+              <circle cx={s.x} cy={s.y} r={38} className={active === s.id ? "fill-primary" : "fill-card stroke-primary"} strokeWidth={1.5} />
+              <text x={s.x} y={s.y + 3} textAnchor="middle" fontSize={9} className={active === s.id ? "fill-primary-foreground font-mono" : "fill-foreground font-mono"}>{s.label}</text>
             </g>
           ))}
         </svg>
         <div>
-          <p className="font-mono text-xs text-accent">COST · {step.cost.toUpperCase()}</p>
+          <p className="font-mono text-xs text-signal">COST · {step.cost.toUpperCase()}</p>
           <h3 className="mt-1 text-lg font-semibold text-foreground">{step.title}</h3>
           <p className="mt-2 text-sm text-muted-foreground">{step.body}</p>
           <div className="mt-4 rounded border border-border p-3 text-sm text-muted-foreground">
             <p className="font-mono text-xs text-primary">THE OUTER SQUARES</p>
-            Each square is another BITMAP community. The app is open source, so any group can run its own copy with its own sponsors and pool.
+            Each square is another BITMAP community. The app is open source, so any group can run its own copy with its own sponsors and builder fund.
           </div>
           <p className="mt-3 font-mono text-[11px] text-muted-foreground">
-            Pilot runs on testnet only. {FEE_RECYCLING_ACTIVE ? "Fee recycling is active." : "Fee recycling is planned, not active yet."}
+            Pilot runs on testnet only. {FEE_RECYCLING_ACTIVE ? "The Public Goods Fund is active." : "The Public Goods Fund is planned, not active yet."}
           </p>
         </div>
       </div>

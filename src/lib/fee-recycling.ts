@@ -16,6 +16,6 @@ export function recycleNote(sats: number) {
   const { pool, reserve } = splitFee(sats);
   const n = (x: number) => x.toLocaleString("en-US");
   return FEE_RECYCLING_ACTIVE
-    ? `${n(pool)} sats recycled to BITMAP stakers · ${n(reserve)} to the PoX reserve`
-    : `Planned: ${n(pool)} sats to BITMAP stakers · ${n(reserve)} to the PoX reserve (not active yet)`;
+    ? `${n(pool)} sats to the BITMAP builder fund · ${n(reserve)} to the PoX reserve`
+    : `Planned: ${n(pool)} sats to the BITMAP builder fund · ${n(reserve)} to the PoX reserve (not active yet)`;
 }
