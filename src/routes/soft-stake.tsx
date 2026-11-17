@@ -17,6 +17,7 @@ const PAUSER_PROOF = {
 };
 import { useQuery } from "@tanstack/react-query";
 import { FEE_RECYCLING_ACTIVE, RECYCLE_SPLIT, RECYCLE_STREAMS, splitFee } from "@/lib/fee-recycling";
+import { CircularEconomyDiagram } from "@/components/CircularEconomyDiagram";
 import { watchdogStatusFn } from "@/lib/stake-watchdog.functions";
 
 export const Route = createFileRoute("/soft-stake")({
@@ -133,6 +134,7 @@ function SoftStakePage() {
 
       <NetworkPanel />
 
+      <CircularEconomyDiagram />
       <FeeRecyclingPanel />
 
       <WatchdogPanel />
