@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { answerableBounties, explainResult, isInscriptionRef, type Bounty } from "./bounty-client";
+import { answerableBounties, isInscriptionRef, type Bounty } from "./bounty-client";
+import { explainResult, PILOT_ERRORS } from "./stacks-tx-outcome";
 
 const b = (id: number, o: Partial<Bounty> = {}): Bounty => ({ id, poster: "STPOSTER", height: 100, amount: 1000, title: "t", deadline: 50, created: 1, status: "open", winner: null, submissions: [], ...o });
 
@@ -33,9 +34,15 @@ describe("explainResult", () => {
     expect(explainResult("(err u108)")).toBe("You cannot answer your own bounty. Use a different Stacks account.");
   });
   it("explains an empty wallet when posting", () => {
-    expect(explainResult("(err u1)")).toBe("Not enough test sats in this wallet. Use Get 100,000 test sats first.");
+    expect(explainResult("(err u1)")).toBe("Not enough test sats in this wallet. Use the button to get test sats first.");
   });
   it("returns nothing for a successful call", () => {
     expect(explainResult("(ok true)", "success")).toBeNull();
+  });
+});
+
+describe("explainResult for the attestation pilot", () => {
+  it("uses the pilot's own meaning for its codes", () => {
+    expect(explainResult("(err u403)", "abort_by_response", PILOT_ERRORS)).toBe("The pilot is paused right now.");
   });
 });

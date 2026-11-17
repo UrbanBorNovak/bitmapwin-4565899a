@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { EXPLORER_TX } from "@/lib/stacks-pilot";
-import type { TxOutcome } from "@/lib/bounty-client";
+import type { ErrorMap, TxOutcome } from "@/lib/stacks-tx-outcome";
 
 /** Explorer link for a wallet-signed testnet transaction that follows it until it confirms or fails. */
-export function TxStatusLink({ txid, label, onSettled, className = "" }: { txid: string; label: string; onSettled?: (o: TxOutcome) => void; className?: string }) {
+export function TxStatusLink({ txid, label, onSettled, errors, className = "" }: { txid: string; label: string; onSettled?: (o: TxOutcome) => void; errors?: ErrorMap; className?: string }) {
   const [o, setO] = useState<TxOutcome>({ state: "pending", reason: null });
   const settled = useRef(onSettled);
   settled.current = onSettled;
@@ -12,8 +12,8 @@ export function TxStatusLink({ txid, label, onSettled, className = "" }: { txid:
     let timer: ReturnType<typeof setTimeout>;
     const tick = async () => {
       try {
-        const { txOutcome } = await import("@/lib/bounty-client");
-        const next = await txOutcome(txid);
+        const { txOutcome } = await import("@/lib/stacks-tx-outcome");
+        const next = await txOutcome(txid, errors);
         if (stop) return;
         setO(next);
         if (next.state !== "pending") { settled.current?.(next); return; }
@@ -22,7 +22,7 @@ export function TxStatusLink({ txid, label, onSettled, className = "" }: { txid:
     };
     void tick();
     return () => { stop = true; clearTimeout(timer); };
-  }, [txid]);
+  }, [txid]); // eslint-disable-line react-hooks/exhaustive-deps
   const tone = o.state === "success" ? "text-signal" : o.state === "failed" ? "text-destructive" : "text-muted-foreground";
   const state = o.state === "success" ? "CONFIRMED" : o.state === "failed" ? "FAILED" : "WAITING FOR TESTNET BLOCK…";
   return (

@@ -112,42 +112,7 @@ export async function cancelAndRefund(id: number) {
   return callContract(BOUNTY_CONTRACT, "cancel-and-refund", [Cl.uint(id)]);
 }
 
-/** Contract and token error codes, in plain words. ft-transfer? and the test token both use u1. */
-const ERRORS: Record<string, string> = {
-  u1: "Not enough test sats in this wallet. Use Get 100,000 test sats first.",
-  u100: "The reward must be at least 1,000 test sats.",
-  u101: "The bounty must stay open between 6 and 4,320 Bitcoin blocks.",
-  u102: "That bounty does not exist.",
-  u103: "Only the person who posted this bounty can do that.",
-  u104: "This bounty is already paid or refunded.",
-  u105: "The deadline has passed, so new builds can no longer be submitted.",
-  u106: "The deadline has not passed yet, so the reward cannot be taken back.",
-  u107: "That builder has not submitted anything to this bounty.",
-  u108: "You cannot answer your own bounty. Use a different Stacks account.",
-  u109: "This bounty already has 20 builders.",
-};
-
-/** Turns a Clarity tx_result repr such as "(err u105)" into a sentence; null when the call succeeded. */
-export function explainResult(repr: string | null | undefined, status = "abort_by_response"): string | null {
-  const m = /\(err (u\d+)\)/.exec(String(repr ?? ""));
-  if (m) return ERRORS[m[1]!] ?? `The contract refused it (${m[1]}).`;
-  if (status.startsWith("dropped")) return "The network dropped this transaction. Try again.";
-  if (status === "abort_by_post_condition") return "Your wallet's safety check stopped this transaction.";
-  return status === "success" ? null : "The transaction failed.";
-}
-
-export type TxOutcome = { state: "pending" | "success" | "failed"; reason: string | null };
-/** Live outcome of a Stacks testnet transaction. Unknown (not yet indexed) counts as pending. */
-export async function txOutcome(txid: string): Promise<TxOutcome> {
-  const r = await fetch(`${HIRO_TESTNET}/extended/v1/tx/${txid.startsWith("0x") ? txid : `0x${txid}`}`);
-  if (r.status === 404) return { state: "pending", reason: null };
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  const j = await r.json();
-  const status = String(j?.tx_status ?? "pending");
-  if (status === "pending") return { state: "pending", reason: null };
-  if (status === "success") return { state: "success", reason: null };
-  return { state: "failed", reason: explainResult(j?.tx_result?.repr, status) };
-}
+export { explainResult, txOutcome, type TxOutcome } from "@/lib/stacks-tx-outcome";
 
 /** Bounties a builder can still answer: open and not past the deadline. Matches for `height` come first, then the biggest reward. */
 export function answerableBounties(bounties: Bounty[], tip: number, height: number | null, me = ""): Bounty[] {

@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { TxStatusLink } from "@/components/bounty/TxStatusLink";
+import { PILOT_ERRORS } from "@/lib/stacks-tx-outcome";
 import { TIER_LABELS, MAX_STAKE_WEIGHT, type TierProofKey } from "@/lib/stake-tiers";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -71,17 +73,6 @@ function SoftStakePage() {
     const t = setTimeout(() => void refresh(), 400);
     return () => clearTimeout(t);
   }, [stx, height]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Poll pending transactions until they settle, then re-read the contract.
-  useEffect(() => {
-    if (!txs.some((t) => t.status === "pending")) return;
-    const id = setInterval(async () => {
-      const { txStatus } = await import("@/lib/stacks-pilot-client");
-      const next = await Promise.all(txs.map(async (t) => (t.status === "pending" ? { ...t, status: await txStatus(t.txid) } : t)));
-      if (next.some((t, i) => t.status !== txs[i]!.status)) { setTxs(next); void refresh(); }
-    }, 15000);
-    return () => clearInterval(id);
-  }, [txs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async (label: string, fn: () => Promise<void>) => {
     setBusy(label); setMsg(null);
@@ -223,9 +214,7 @@ function SoftStakePage() {
       {txs.length > 0 && (
         <section className="space-y-2 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
           <p className="tracking-widest text-muted-foreground">TESTNET TRANSACTIONS</p>
-          {txs.map((t) => (
-            <p key={t.txid}><span className={t.status === "success" ? "text-signal" : t.status === "failed" ? "text-destructive" : "text-muted-foreground"}>{t.status.toUpperCase()}</span> · {t.label} · <a href={EXPLORER_TX(t.txid)} target="_blank" rel="noreferrer" className="underline">{short(t.txid)}</a></p>
-          ))}
+          {txs.map((t) => <TxStatusLink key={t.txid} txid={t.txid} label={t.label} errors={PILOT_ERRORS} onSettled={() => void refresh()} />)}
         </section>
       )}
 
