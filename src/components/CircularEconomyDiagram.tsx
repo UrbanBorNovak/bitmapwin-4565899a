@@ -6,8 +6,8 @@ type Step = { id: string; label: string; x: number; y: number; title: string; bo
 const STEPS: Step[] = [
   { id: "hold", label: "YOUR WALLET", x: 200, y: 60, title: "Your BITMAP never moves", body: "It stays in your own wallet. Nothing is locked, bridged or handed to anyone.", cost: "0 sats" },
   { id: "prove", label: "BIP-322 PROOF", x: 340, y: 200, title: "Prove you hold it", body: "You sign a free message. No transaction, no Bitcoin fee.", cost: "0 sats" },
-  { id: "stake", label: "STAKE", x: 200, y: 340, title: "Register the stake", body: "One small Stacks network fee to record the stake. This is the only required cost.", cost: "network fee only" },
-  { id: "pool", label: "REWARD POOL", x: 60, y: 200, title: "Sponsors & upgrades fill the pool", body: "Epoch sponsors and optional slab skins are planned to feed the pool; rewards flow back to stakers by weight.", cost: "paid by others" },
+  { id: "stake", label: "ATTEST", x: 200, y: 340, title: "Register your land", body: "One small Stacks network fee to record the attestation. This is the only required cost.", cost: "network fee only" },
+  { id: "pool", label: "BUILDER FUND", x: 60, y: 200, title: "Sponsors & upgrades fund builders", body: "Epoch sponsors and optional slab skins are planned to feed a community fund; it pays registered holders by Proof-of-Build weight.", cost: "paid by others" },
 ];
 
 const NODES = Array.from({ length: 14 }, (_, i) => {
@@ -20,10 +20,10 @@ export function CircularEconomyDiagram() {
   const step = STEPS.find((s) => s.id === active)!;
   return (
     <section className="rounded-lg border border-border bg-card/60 p-5 backdrop-blur">
-      <p className="font-mono text-xs tracking-widest text-accent">THE CIRCULAR ECONOMY</p>
-      <h2 className="mt-1 text-xl font-semibold text-foreground">What a staker pays, and how anyone can run their own</h2>
+      <p className="font-mono text-xs tracking-widest text-accent">SOVEREIGN NODE ARCHITECTURE</p>
+      <h2 className="mt-1 text-xl font-semibold text-foreground">What a holder pays, and how any community can run its own node</h2>
       <div className="mt-4 grid gap-6 md:grid-cols-[1fr_1fr] items-center">
-        <svg viewBox="0 0 400 400" className="w-full max-w-md mx-auto" role="img" aria-label="Circular staking economy diagram">
+        <svg viewBox="0 0 400 400" className="w-full max-w-md mx-auto" role="img" aria-label="Sovereign node architecture diagram">
           {NODES.map((n, i) => (
             <g key={i}>
               <line x1={200} y1={200} x2={n.x} y2={n.y} className="stroke-border" strokeWidth={0.5} strokeDasharray="2 4" />

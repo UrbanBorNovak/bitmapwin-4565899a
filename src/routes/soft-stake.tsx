@@ -24,7 +24,7 @@ export const Route = createFileRoute("/soft-stake")({
   component: SoftStakePage,
   head: () => ({
     meta: [
-      { title: "Soft-stake pilot (testnet) · Earn test sBTC with your BITMAP · BitmapWIN" },
+      { title: "Land Attestation pilot (testnet) · Proof-of-Build for BITMAP holders · BitmapWIN" },
       { name: "description", content: "Testnet pilot: keep your BITMAP in your wallet, prove you hold it, and earn worthless test sBTC on Stacks testnet. Mainnet rewards are off." },
       { property: "og:title", content: "BITMAP soft-stake pilot · Stacks testnet" },
       { property: "og:description", content: "Your BITMAP never moves. Prove ownership with a signature and claim test tokens on Stacks testnet." },
@@ -122,8 +122,8 @@ function SoftStakePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 pt-10 pb-32">
       <header className="space-y-2">
-        <p className="font-mono text-xs tracking-widest text-signal">SOFT-STAKE PILOT · STACKS TESTNET</p>
-        <h1 className="font-display text-3xl">Keep your BITMAP. Earn test sBTC.</h1>
+        <p className="font-mono text-xs tracking-widest text-signal">LAND ATTESTATION PILOT · STACKS TESTNET</p>
+        <h1 className="font-display text-3xl">Your BITMAP stays put. Prove custody, prove you build.</h1>
         <p className="text-muted-foreground">Your BITMAP never leaves your wallet. You sign once to prove you hold it, and a test contract pays you test tokens while you keep holding.</p>
       </header>
 
@@ -177,20 +177,20 @@ function SoftStakePage() {
             <p className="text-muted-foreground">{att.clock === "chain" ? `Held ${att.daysHeld.toLocaleString("en-US")} days since its last on-chain move.` : "Holding time could not be read, so it counts as 0 days."}</p>
             <p className="text-muted-foreground">BOOST ×{att.tier} · base {att.baseWeight.toLocaleString("en-US")} × {att.tier} = {att.weight.toLocaleString("en-US")}{att.reasons.length ? ` · ${att.reasons.map((r) => TIER_LABELS[r as TierProofKey] ?? r).join(", ")}` : " · no boost found"}</p>
             <p className="text-muted-foreground">Submit within about 20 minutes, or sign again.</p>
-            <button onClick={submitStake} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy === "Stake" ? "OPENING WALLET…" : "STAKE ON TESTNET"}</button>
+            <button onClick={submitStake} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy === "Stake" ? "OPENING WALLET…" : "ATTEST ON TESTNET"}</button>
           </div>
         )}
       </section>
 
       <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-xs tracking-widest text-muted-foreground">3 · YOUR STAKE</p>
+          <p className="font-mono text-xs tracking-widest text-muted-foreground">3 · YOUR ATTESTATION</p>
           <button onClick={() => void refresh()} disabled={!stx || !validHeight} className="font-mono text-xs underline disabled:opacity-50">refresh</button>
         </div>
         {!live ? <p className="text-sm text-muted-foreground">Connect both wallets and enter a BITMAP number.</p> : (
           <div className="space-y-3 font-mono text-xs">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="STATUS" value={!live.stake ? "NOT STAKED" : !stakeMine ? "OTHER OWNER" : expired ? "EXPIRED" : "ACTIVE"} />
+              <Stat label="STATUS" value={!live.stake ? "NOT REGISTERED" : !stakeMine ? "OTHER OWNER" : expired ? "EXPIRED" : "ACTIVE"} />
               <Stat label="WEIGHT" value={live.stake ? live.stake.weight.toLocaleString("en-US") : "—"} />
               <Stat label="CLAIMABLE" value={`${live.pending.toLocaleString("en-US")} t-sats`} />
               <Stat label="YOUR TEST sBTC" value={`${live.balance.toLocaleString("en-US")} t-sats`} />
@@ -251,7 +251,7 @@ function NetworkPanel() {
       {!d ? <p className="text-muted-foreground">{q.isError ? "Could not read the testnet contract." : "Reading the contract…"}</p> : (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Stat label="BITMAPS STAKED" value={`${d.staked.toLocaleString("en-US")} (${d.active.toLocaleString("en-US")} active)`} />
+            <Stat label="BITMAPS REGISTERED" value={`${d.staked.toLocaleString("en-US")} (${d.active.toLocaleString("en-US")} active)`} />
             <Stat label="ACTIVE WEIGHT" value={d.activeWeight.toLocaleString("en-US")} />
             <Stat label="REWARDS FUNDED" value={t(d.fundedTotal)} />
             <Stat label="PAID OUT (CLAIMED)" value={t(d.paidOut)} />
@@ -271,7 +271,7 @@ function WatchdogPanel() {
   const getStatus = useServerFn(watchdogStatusFn);
   const q = useQuery({ queryKey: ["stake-watchdog"], queryFn: () => getStatus(), refetchInterval: 60_000, staleTime: 30_000 });
   const d = q.data;
-  const state = !d ? "CHECKING…" : !d.ok ? "NO DATA" : d.paused ? "PILOT PAUSED" : d.error ? "CHECK INCOMPLETE" : d.suspicious > 0 ? "SUSPICIOUS · PAUSING" : "STAKES AND POOL MATCH";
+  const state = !d ? "CHECKING…" : !d.ok ? "NO DATA" : d.paused ? "PILOT PAUSED" : d.error ? "CHECK INCOMPLETE" : d.suspicious > 0 ? "SUSPICIOUS · PAUSING" : "REGISTRY AND FUND MATCH";
   const tone = d?.ok && !d.paused && !d.error && d.suspicious === 0 ? "text-signal" : "text-bitcoin";
   return (
     <section className="space-y-2 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
@@ -330,11 +330,11 @@ function WatchdogPanel() {
 
 function FeeRecyclingPanel() {
   const ex = splitFee(2100);
-  const bar = [["TO STAKERS NOW", RECYCLE_SPLIT.pool, "bg-bitcoin"], ["PoX RESERVE", RECYCLE_SPLIT.reserve, "bg-signal"], ["RUNWAY", RECYCLE_SPLIT.runway, "bg-muted-foreground"]] as const;
+  const bar = [["BUILDER FUND", RECYCLE_SPLIT.pool, "bg-bitcoin"], ["PoX RESERVE", RECYCLE_SPLIT.reserve, "bg-signal"], ["RUNWAY", RECYCLE_SPLIT.runway, "bg-muted-foreground"]] as const;
   return (
     <section className="space-y-3 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="tracking-widest text-muted-foreground">FEE RECYCLING · HOW SITE FEES FEED THE POOL</p>
+        <p className="tracking-widest text-muted-foreground">PUBLIC GOODS FUND · HOW SITE FEES WOULD SUPPORT BUILDERS</p>
         <span className={FEE_RECYCLING_ACTIVE ? "text-signal" : "text-bitcoin"}>{FEE_RECYCLING_ACTIVE ? "ACTIVE" : "NOT ACTIVE YET · MAINNET OFF"}</span>
       </div>
       <div className="flex h-3 overflow-hidden rounded border border-border">
