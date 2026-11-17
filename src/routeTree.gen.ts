@@ -21,6 +21,7 @@ import { Route as BetaRouteImport } from './routes/beta'
 import { Route as BitchatRouteImport } from './routes/bitchat'
 import { Route as BiternamRouteImport } from './routes/biternam'
 import { Route as BotRouteImport } from './routes/bot'
+import { Route as BountiesRouteImport } from './routes/bounties'
 import { Route as BreedRouteImport } from './routes/breed'
 import { Route as BuildRouteImport } from './routes/build'
 import { Route as BuildersRouteImport } from './routes/builders'
@@ -260,6 +261,11 @@ const BiternamRoute = BiternamRouteImport.update({
 const BotRoute = BotRouteImport.update({
   id: '/bot',
   path: '/bot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BountiesRoute = BountiesRouteImport.update({
+  id: '/bounties',
+  path: '/bounties',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BreedRoute = BreedRouteImport.update({
@@ -1186,6 +1192,7 @@ export interface FileRoutesByFullPath {
   '/bitchat': typeof BitchatRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
+  '/bounties': typeof BountiesRoute
   '/breed': typeof BreedRoute
   '/build': typeof BuildRoute
   '/builders': typeof BuildersRoute
@@ -1380,6 +1387,7 @@ export interface FileRoutesByTo {
   '/bitchat': typeof BitchatRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
+  '/bounties': typeof BountiesRoute
   '/breed': typeof BreedRoute
   '/build': typeof BuildRoute
   '/builders': typeof BuildersRoute
@@ -1571,6 +1579,7 @@ export interface FileRoutesById {
   '/bitchat': typeof BitchatRoute
   '/biternam': typeof BiternamRoute
   '/bot': typeof BotRoute
+  '/bounties': typeof BountiesRoute
   '/breed': typeof BreedRoute
   '/build': typeof BuildRoute
   '/builders': typeof BuildersRoute
@@ -1767,6 +1776,7 @@ export interface FileRouteTypes {
     | '/bitchat'
     | '/biternam'
     | '/bot'
+    | '/bounties'
     | '/breed'
     | '/build'
     | '/builders'
@@ -1961,6 +1971,7 @@ export interface FileRouteTypes {
     | '/bitchat'
     | '/biternam'
     | '/bot'
+    | '/bounties'
     | '/breed'
     | '/build'
     | '/builders'
@@ -2151,6 +2162,7 @@ export interface FileRouteTypes {
     | '/bitchat'
     | '/biternam'
     | '/bot'
+    | '/bounties'
     | '/breed'
     | '/build'
     | '/builders'
@@ -2346,6 +2358,7 @@ export interface RootRouteChildren {
   BitchatRoute: typeof BitchatRoute
   BiternamRoute: typeof BiternamRoute
   BotRoute: typeof BotRoute
+  BountiesRoute: typeof BountiesRoute
   BreedRoute: typeof BreedRoute
   BuildRoute: typeof BuildRoute
   BuildersRoute: typeof BuildersRoute
@@ -2559,6 +2572,13 @@ declare module '@tanstack/react-router' {
       path: '/bot'
       fullPath: '/bot'
       preLoaderRoute: typeof BotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bounties': {
+      id: '/bounties'
+      path: '/bounties'
+      fullPath: '/bounties'
+      preLoaderRoute: typeof BountiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/breed': {
@@ -3998,6 +4018,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitchatRoute: BitchatRoute,
   BiternamRoute: BiternamRoute,
   BotRoute: BotRoute,
+  BountiesRoute: BountiesRoute,
   BreedRoute: BreedRoute,
   BuildRoute: BuildRoute,
   BuildersRoute: BuildersRoute,

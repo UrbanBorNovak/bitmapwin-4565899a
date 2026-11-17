@@ -1,0 +1,10 @@
+[project]
+name = "bwbounty"
+[contracts.tok]
+path = "contracts/tok.clar"
+clarity_version = 3
+epoch = 3.0
+[contracts.bounty]
+path = "contracts/bounty.clar"
+clarity_version = 3
+epoch = 3.0

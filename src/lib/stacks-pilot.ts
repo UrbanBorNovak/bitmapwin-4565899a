@@ -21,3 +21,7 @@ export const STX_FAUCET = "https://explorer.hiro.so/sandbox/faucet?chain=testnet
 
 export type Attestation = { epoch: number; height: number; owner: string; weight: number; issued: number };
 
+
+/** BW-BOUNTY-1 Builder Bounties escrow (testnet, test sBTC). No admin, no fee. */
+export const BOUNTY_CONTRACT = "ST2P0SD4JPHFKJ42DDH2VQVS59P7XJFYC4K8NHGWR.bw-bounty-v1";
+export const BOUNTY_DEPLOY_TX = "0xee9686d493d6d7379f7c3f727326a12eca87ba494e8ef105cc2d62131b64671b";

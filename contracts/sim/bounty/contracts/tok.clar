@@ -1,0 +1,13 @@
+;; BitmapWin TEST sBTC - Stacks testnet only. No value. Anyone may mint up to 1,000,000 per call.
+(define-fungible-token tsbtc)
+(define-constant MAX-MINT u1000000)
+(define-public (mint (n uint) (to principal))
+  (begin (asserts! (<= n MAX-MINT) (err u2)) (ft-mint? tsbtc n to)))
+(define-public (transfer (n uint) (from principal) (to principal) (memo (optional (buff 34))))
+  (begin (asserts! (is-eq tx-sender from) (err u1)) (ft-transfer? tsbtc n from to)))
+(define-read-only (get-balance (who principal)) (ok (ft-get-balance tsbtc who)))
+(define-read-only (get-total-supply) (ok (ft-get-supply tsbtc)))
+(define-read-only (get-name) (ok "BitmapWin Test sBTC"))
+(define-read-only (get-symbol) (ok "tsBTC"))
+(define-read-only (get-decimals) (ok u8))
+(define-read-only (get-token-uri) (ok none))

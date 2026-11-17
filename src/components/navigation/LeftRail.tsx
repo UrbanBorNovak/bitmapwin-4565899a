@@ -39,7 +39,7 @@ const LABS: { to: string; label: string }[] = [
   { to: "/world-stats", label: "World stats" }, { to: "/extenders", label: "Extenders" }, { to: "/registry", label: "3D model registry" },
   { to: "/avatars", label: "Avatar studio" }, { to: "/play", label: "Living cards" }, { to: "/codex", label: "Codex" },
   { to: "/stream", label: "World stream" }, { to: "/watch", label: "Toon cinema" },
-  { to: "/soft-stake", label: "Soft-stake pilot (testnet)" }, { to: "/docs", label: "Docs & SDK" }, { to: "/dev-tools", label: "Developer tools" },
+  { to: "/soft-stake", label: "Soft-stake pilot (testnet)" }, { to: "/bounties", label: "Builder Bounties (testnet)" }, { to: "/docs", label: "Docs & SDK" }, { to: "/dev-tools", label: "Developer tools" },
 ];
 
 const isOn = (path: string, m: string[]) => m.some((p) => path === p || path.startsWith(`${p}/`));
