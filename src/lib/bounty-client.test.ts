@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { answerableBounties, isInscriptionRef, type Bounty } from "./bounty-client";
+import { answerableBounties, explainResult, isInscriptionRef, type Bounty } from "./bounty-client";
 
 const b = (id: number, o: Partial<Bounty> = {}): Bounty => ({ id, poster: "STPOSTER", height: 100, amount: 1000, title: "t", deadline: 50, created: 1, status: "open", winner: null, submissions: [], ...o });
 
@@ -22,5 +22,20 @@ describe("isInscriptionRef", () => {
     expect(isInscriptionRef(`${"a".repeat(64)}i0`)).toBe(true);
     expect(isInscriptionRef("abci0")).toBe(false);
     expect(isInscriptionRef(`${"A".repeat(64)}i0`)).toBe(false);
+  });
+});
+
+describe("explainResult", () => {
+  it("explains the deadline refusal", () => {
+    expect(explainResult("(err u105)")).toBe("The deadline has passed, so new builds can no longer be submitted.");
+  });
+  it("explains answering your own bounty", () => {
+    expect(explainResult("(err u108)")).toBe("You cannot answer your own bounty. Use a different Stacks account.");
+  });
+  it("explains an empty wallet when posting", () => {
+    expect(explainResult("(err u1)")).toBe("Not enough test sats in this wallet. Use Get 100,000 test sats first.");
+  });
+  it("returns nothing for a successful call", () => {
+    expect(explainResult("(ok true)", "success")).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BOUNTY_CONTRACT, BOUNTY_DEPLOY_TX, EXPLORER_TX, STX_FAUCET } from "@/lib/stacks-pilot";
 import type { Bounty } from "@/lib/bounty-client";
+import { TxStatusLink } from "@/components/bounty/TxStatusLink";
 
 export const Route = createFileRoute("/bounties")({
   component: BountiesPage,
@@ -35,7 +36,7 @@ function BountiesPage() {
 
   const run = async (label: string, fn: () => Promise<string>) => {
     setBusy(label); setMsg(null);
-    try { const txid = await fn(); setTxs((t) => [{ label, txid }, ...t]); setMsg(`${label} sent. It shows here after the next testnet block.`); }
+    try { const txid = await fn(); setTxs((t) => [{ label, txid }, ...t]); setMsg(`${label}: signed and sent. Waiting for the next testnet block.`); }
     catch (e) { setMsg(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(null); }
   };
@@ -77,7 +78,7 @@ function BountiesPage() {
       {msg && <p className="font-mono text-xs text-signal">{msg}</p>}
       {txs.length > 0 && (
         <ul className="space-y-1 font-mono text-xs">
-          {txs.map((t) => <li key={t.txid}><a className="text-signal hover:underline" href={EXPLORER_TX(t.txid)} target="_blank" rel="noreferrer">{t.label} · {short(t.txid)}</a></li>)}
+          {txs.map((t) => <li key={t.txid}><TxStatusLink txid={t.txid} label={t.label} onSettled={() => { void q.refetch(); void bal.refetch(); }} /></li>)}
         </ul>
       )}
 
