@@ -183,7 +183,7 @@ function L2Bridge() {
           </div>
         </section>
       ) : null}
-      <ClientOnly fallback={null}><L2LoginPanel /></ClientOnly>
+      <ClientOnly fallback={null}><L2LoginPanel folder={folder?.index ?? null} /></ClientOnly>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <aside className="rounded-lg border border-border bg-card/60 p-3 max-h-[560px] overflow-auto space-y-1">

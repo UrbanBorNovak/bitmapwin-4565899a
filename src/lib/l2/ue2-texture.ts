@@ -206,3 +206,30 @@ export function resolveMaterial(pkgs: Ue2Package[], pkg: Ue2Package, ref: number
   }
   return lastFail ?? { ok: false, reason: `${e.className} ${e.name} has no texture`, via: path };
 }
+
+export interface DecodedHeightmap { name: string; width: number; height: number; heights: Uint16Array }
+/** Decode a G16 terrain heightmap Texture (16-bit samples, 32768 = zero height). */
+export function decodeHeightmap(pkg: Ue2Package, exportIndex: number): DecodedHeightmap {
+  const e = pkg.exports[exportIndex];
+  if (!e) throw new Error("heightmap reference points past the object list");
+  if (e.className !== "Texture") throw new Error(`heightmap ${e.name} is a ${e.className}, not a Texture`);
+  if (!pkg.data || e.size <= 0 || e.offset + e.size > pkg.data.length) throw new Error("heightmap data is outside the file");
+  const end = e.offset + e.size;
+  const head = new R(pkg.data, e.offset, end);
+  const props = readProps(head, pkg.names);
+  const format = props.get("Format")?.value ?? TEXF.P8;
+  if (format !== TEXF.G16) throw new Error(`heightmap ${e.name} is ${TEXF_NAME[format] ?? format}, expected G16`);
+  let last: unknown;
+  for (const extra of [0, 4, 8, 12, 16]) {
+    try {
+      const m = readMips(new R(pkg.data, head.pos + extra, end));
+      if (m.w <= 1 || m.h <= 1 || m.w > 4096 || m.h > 4096) throw new Error(`heightmap size ${m.w}×${m.h} looks wrong`);
+      if (m.data.length < m.w * m.h * 2) throw new Error("heightmap data is shorter than its size");
+      const heights = new Uint16Array(m.w * m.h);
+      const dv = new DataView(m.data.buffer, m.data.byteOffset, m.data.byteLength);
+      for (let i = 0; i < heights.length; i++) heights[i] = dv.getUint16(i * 2, true);
+      return { name: e.name, width: m.w, height: m.h, heights };
+    } catch (err) { last = err; }
+  }
+  throw last instanceof Error ? last : new Error("could not read heightmap");
+}

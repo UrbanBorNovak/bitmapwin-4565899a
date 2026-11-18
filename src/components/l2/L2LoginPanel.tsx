@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import type { FolderEntry } from "@/lib/l2/game-folder";
+import { WorldLibrary, type WorldTile } from "@/lib/l2/l2-world-loader";
+import { tileFile, tileOf } from "@/lib/l2/l2-world";
+const L2WorldScene = lazy(() => import("@/components/l2/L2WorldScene"));
 import { channelName, L2Session, STEPS, type L2World, type ErrorKind, type L2Char, type L2Selected, type L2Server, type SessionEvent, type Step } from "@/lib/l2/l2-session";
 import { className, raceName } from "@/lib/l2/l2-classes";
 
 type StepState = "wait" | "active" | "done" | "fail";
 const KIND_LABEL: Record<ErrorKind, string> = { connection: "CONNECTION PROBLEM", protocol: "PROTOCOL PROBLEM", login: "LOGIN REFUSED" };
 
-export default function L2LoginPanel() {
+export default function L2LoginPanel({ folder = null }: { folder?: Map<string, FolderEntry> | null }) {
   const [loginUrl, setLoginUrl] = useState("ws://localhost:2107");
   const [gameUrl, setGameUrl] = useState("ws://localhost:7778");
   const [protocol, setProtocol] = useState(746);
@@ -131,7 +135,7 @@ export default function L2LoginPanel() {
         </div>
       ) : null}
 
-      {world ? <WorldView world={world} onMove={(x, y) => session.current?.moveTo(x, y, world.self.z)}
+      {world ? <WorldView world={world} folder={folder} onMove={(x, y, z) => session.current?.moveTo(x, y, z ?? world.self.z)}
         say={say} setSay={setSay} onSay={() => { session.current?.say(say); setSay(""); }} onLogout={() => session.current?.logout()} /> : null}
 
       <details className="text-xs">
@@ -148,13 +152,61 @@ export default function L2LoginPanel() {
 }
 
 const RANGE = 3000; // game units shown from the centre of the map
-function WorldView({ world, onMove, say, setSay, onSay, onLogout }: { world: L2World; onMove: (x: number, y: number) => void; say: string; setSay: (v: string) => void; onSay: () => void; onLogout: () => void }) {
+function useTile(library: WorldLibrary | null, x: number, y: number) {
+  const { tx, ty } = tileOf(x, y);
+  const [state, setState] = useState<{ key: string; tile?: WorldTile; error?: string } | null>(null);
+  const key = `${tx}_${ty}`;
+  useEffect(() => {
+    if (!library) return;
+    let live = true;
+    setState({ key });
+    void library.loadTile(tx, ty).then((r) => { if (live) setState({ key, ...r }); });
+    return () => { live = false; };
+  }, [library, key, tx, ty]);
+  return { file: tileFile(tx, ty), state: state?.key === key ? state : null };
+}
+
+function World3D({ world, folder, onMove }: { world: L2World; folder: Map<string, FolderEntry> | null; onMove: (x: number, y: number, z: number) => void }) {
+  const library = useMemo(() => (folder ? new WorldLibrary(folder) : null), [folder]);
+  const { file, state } = useTile(library, world.self.x, world.self.y);
+  const [status, setStatus] = useState("");
+  const box = "flex h-[460px] items-center justify-center rounded border border-border bg-background p-4 text-center text-sm text-muted-foreground";
+  let body;
+  if (!folder) body = <div className={box}>Open your game folder at the top of this page (OPEN GAME FOLDER) to draw the world around you from your own map files.</div>;
+  else if (!state || (!state.tile && !state.error)) body = <div className={box}>Reading {file} from your game folder…</div>;
+  else if (state.error) body = <div role="alert" className={box}>{state.error}</div>;
+  else body = (
+    <div data-l2-world className="h-[460px] overflow-hidden rounded border border-border">
+      <Suspense fallback={<div className={box}>Loading the 3D view…</div>}>
+        <L2WorldScene world={world} tile={state.tile!} library={library!} onMove={(p) => onMove(Math.round(p.x), Math.round(p.y), Math.round(p.z))} onStatus={setStatus} />
+      </Suspense>
+    </div>
+  );
+  const t = state?.tile;
+  return (
+    <div className="space-y-1 min-w-0">
+      <div className="font-mono text-[11px] text-muted-foreground">3D · {file} · drag to look around, click the ground to walk there</div>
+      {body}
+      {t ? (
+        <ul className="font-mono text-[11px] text-muted-foreground space-y-0.5">
+          <li>{t.terrain ? `Ground: ${t.terrain.source}` : "Ground: not drawn"} · {t.actors.length.toLocaleString("en-US")} placed props in this tile</li>
+          {status ? <li>{status}</li> : null}
+          {t.notes.map((n) => <li key={n} className="text-destructive">{n}</li>)}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function WorldView({ world, folder, onMove, say, setSay, onSay, onLogout }: { world: L2World; folder: Map<string, FolderEntry> | null; onMove: (x: number, y: number, z?: number) => void; say: string; setSay: (v: string) => void; onSay: () => void; onLogout: () => void }) {
   const me = world.self;
   const near = world.objects.map((o) => ({ ...o, d: Math.hypot(o.x - me.x, o.y - me.y) })).sort((a, b) => a.d - b.d);
   const tone = { npc: "fill-accent", player: "fill-primary", item: "fill-muted-foreground" } as const;
   return (
+    <div className="space-y-3">
     <div className="grid gap-3 lg:grid-cols-[320px_1fr]">
-      <div className="space-y-1">
+      <World3D world={world} folder={folder} onMove={(x, y, z) => onMove(x, y, z)} />
+      <div className="space-y-1 lg:order-first">
         <div className="font-mono text-[11px] text-muted-foreground">MAP · north up · click to walk there</div>
         <svg viewBox={`${-RANGE} ${-RANGE} ${RANGE * 2} ${RANGE * 2}`} className="aspect-square w-full rounded border border-border bg-background"
           onClick={(e) => { const b = e.currentTarget.getBoundingClientRect(); onMove(Math.round(me.x + ((e.clientX - b.left) / b.width - 0.5) * RANGE * 2), Math.round(me.y + ((e.clientY - b.top) / b.height - 0.5) * RANGE * 2)); }}>
@@ -164,6 +216,7 @@ function WorldView({ world, onMove, say, setSay, onSay, onLogout }: { world: L2W
         </svg>
         <div className="font-mono text-[11px] text-muted-foreground">{me.name} · {me.x.toLocaleString("en-US")}, {me.y.toLocaleString("en-US")}, {me.z.toLocaleString("en-US")} · HP {me.hp.toLocaleString("en-US")}/{me.maxHp.toLocaleString("en-US")} · MP {me.mp.toLocaleString("en-US")}/{me.maxMp.toLocaleString("en-US")}</div>
       </div>
+    </div>
       <div className="space-y-2 min-w-0">
         <div className="font-mono text-[11px] text-muted-foreground">NEARBY ({near.length.toLocaleString("en-US")}) · {world.packets.toLocaleString("en-US")} world packets</div>
         <ul className="max-h-40 overflow-auto font-mono text-xs space-y-0.5">
