@@ -3146,7 +3146,6 @@ const WorldScene = memo(function WorldScene({
           <ShadowArchways unit={AVATAR_U} pose={pose} />
           <AirdropBeacon unit={AVATAR_U} pose={pose} block={tipHeight} />
 
-          <SeaIslands unit={AVATAR_U} pose={pose} />
           <OnChainFlows unit={AVATAR_U} pose={pose} />
           <BitField unit={AVATAR_U} pose={pose} />
           <CastleDistrict />
