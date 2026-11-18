@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { L2Session, STEPS, type ErrorKind, type L2Char, type L2Selected, type L2Server, type SessionEvent, type Step } from "@/lib/l2/l2-session";
+import { channelName, L2Session, STEPS, type L2World, type ErrorKind, type L2Char, type L2Selected, type L2Server, type SessionEvent, type Step } from "@/lib/l2/l2-session";
 import { className, raceName } from "@/lib/l2/l2-classes";
 
 type StepState = "wait" | "active" | "done" | "fail";
@@ -17,13 +17,15 @@ export default function L2LoginPanel() {
   const [chars, setChars] = useState<L2Char[] | null>(null);
   const [selected, setSelected] = useState<L2Selected | null>(null);
   const [error, setError] = useState<Extract<SessionEvent, { type: "error" }> | null>(null);
+  const [world, setWorld] = useState<L2World | null>(null);
+  const [say, setSay] = useState("");
   const [log, setLog] = useState<string[]>([]);
   const session = useRef<L2Session | null>(null);
   useEffect(() => () => session.current?.close(), []);
 
   function reset() {
     session.current?.close(); session.current = null;
-    setCurrent(null); setFailed(false); setServers(null); setChars(null); setSelected(null); setError(null); setLog([]);
+    setCurrent(null); setFailed(false); setServers(null); setChars(null); setSelected(null); setWorld(null); setError(null); setLog([]);
   }
   function connect() {
     reset();
@@ -34,6 +36,7 @@ export default function L2LoginPanel() {
         else if (e.type === "servers") setServers({ list: e.servers, last: e.lastServer });
         else if (e.type === "chars") setChars(e.chars);
         else if (e.type === "selected") setSelected(e.char);
+        else if (e.type === "world") setWorld(e.world);
         else if (e.type === "error") { setError(e); setFailed(true); }
         else setLog((l) => [...l.slice(-39), `${e.conn.toUpperCase()} ${e.dir === "in" ? "←" : "→"} 0x${e.opcode.toString(16).padStart(2, "0")} · ${e.size} bytes`]);
       },
@@ -44,14 +47,14 @@ export default function L2LoginPanel() {
   }
 
   const idx = current ? STEPS.findIndex((s) => s.id === current) : -1;
-  const stateOf = (i: number): StepState => (selected ? "done" : i < idx ? "done" : i === idx ? (failed ? "fail" : "active") : "wait");
-  const busy = current != null && !failed && !selected;
+  const stateOf = (i: number): StepState => (world ? "done" : i < idx ? "done" : i === idx ? (failed ? "fail" : "active") : "wait");
+  const busy = current != null && !failed;
   const field = "rounded border border-border bg-background px-2 py-1 font-mono text-xs";
 
   return (
     <section className="rounded-lg border border-border bg-card/60 p-4 space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-mono text-xs">YOUR LOCAL GAMESERVER · LOGIN & CHARACTER SELECT</h2>
+        <h2 className="font-mono text-xs">YOUR LOCAL GAMESERVER · LOGIN, CHARACTER & WORLD</h2>
         <span className="font-mono text-[11px] text-muted-foreground">Interlude-style login (C5 onward) · bridges on this computer only</span>
       </div>
       <form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6" onSubmit={(e) => { e.preventDefault(); if (!busy) connect(); }}>
@@ -67,13 +70,13 @@ export default function L2LoginPanel() {
         <label className="space-y-1 lg:col-span-2"><span className="block font-mono text-[11px] text-muted-foreground">PASSWORD · kept in this page only</span>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" maxLength={16} className={`${field} w-full`} disabled={busy} /></label>
         <div className="flex items-end gap-2 lg:col-span-2">
-          {busy || selected
+          {busy
             ? <button type="button" onClick={reset} className="rounded border border-border px-3 py-1 font-mono text-xs hover:bg-muted">DISCONNECT</button>
             : <button type="submit" disabled={!user || !password} className="rounded border border-primary px-3 py-1 font-mono text-xs text-primary hover:bg-primary/10 disabled:opacity-50">LOG IN</button>}
         </div>
       </form>
 
-      <ol className="grid gap-1 sm:grid-cols-2 lg:grid-cols-5 font-mono text-[11px]">
+      <ol className="grid gap-1 sm:grid-cols-2 lg:grid-cols-6 font-mono text-[11px]">
         {STEPS.map((s, i) => {
           const st = current ? stateOf(i) : "wait";
           const tone = st === "done" ? "border-accent/50 text-accent" : st === "active" ? "border-primary text-primary" : st === "fail" ? "border-destructive text-destructive" : "border-border text-muted-foreground";
@@ -124,9 +127,12 @@ export default function L2LoginPanel() {
         <div className="rounded border border-accent/50 p-3 font-mono text-xs text-accent space-y-1">
           <div>IN · {selected.name}{selected.title ? ` “${selected.title}”` : ""} · Lv {selected.level} · {className(selected.classId)}</div>
           <div className="text-muted-foreground">Position {selected.x.toLocaleString("en-US")}, {selected.y.toLocaleString("en-US")}, {selected.z.toLocaleString("en-US")} · HP {Math.round(selected.hp).toLocaleString("en-US")} · MP {Math.round(selected.mp).toLocaleString("en-US")}</div>
-          <div className="text-muted-foreground">The server accepted this character. Entering the world and drawing it is the next step and isn't built yet.</div>
+          <div className="text-muted-foreground">{world ? "You are in the world." : failed ? "Entering the world stopped — see the error above." : "Entering the world…"}</div>
         </div>
       ) : null}
+
+      {world ? <WorldView world={world} onMove={(x, y) => session.current?.moveTo(x, y, world.self.z)}
+        say={say} setSay={setSay} onSay={() => { session.current?.say(say); setSay(""); }} onLogout={() => session.current?.logout()} /> : null}
 
       <details className="text-xs">
         <summary className="cursor-pointer font-mono text-muted-foreground">How to set up the bridges · packet log ({log.length})</summary>
@@ -138,5 +144,42 @@ export default function L2LoginPanel() {
         </div>
       </details>
     </section>
+  );
+}
+
+const RANGE = 3000; // game units shown from the centre of the map
+function WorldView({ world, onMove, say, setSay, onSay, onLogout }: { world: L2World; onMove: (x: number, y: number) => void; say: string; setSay: (v: string) => void; onSay: () => void; onLogout: () => void }) {
+  const me = world.self;
+  const near = world.objects.map((o) => ({ ...o, d: Math.hypot(o.x - me.x, o.y - me.y) })).sort((a, b) => a.d - b.d);
+  const tone = { npc: "fill-accent", player: "fill-primary", item: "fill-muted-foreground" } as const;
+  return (
+    <div className="grid gap-3 lg:grid-cols-[320px_1fr]">
+      <div className="space-y-1">
+        <div className="font-mono text-[11px] text-muted-foreground">MAP · north up · click to walk there</div>
+        <svg viewBox={`${-RANGE} ${-RANGE} ${RANGE * 2} ${RANGE * 2}`} className="aspect-square w-full rounded border border-border bg-background"
+          onClick={(e) => { const b = e.currentTarget.getBoundingClientRect(); onMove(Math.round(me.x + ((e.clientX - b.left) / b.width - 0.5) * RANGE * 2), Math.round(me.y + ((e.clientY - b.top) / b.height - 0.5) * RANGE * 2)); }}>
+          <circle r={RANGE / 2} className="fill-none stroke-border" strokeWidth={12} />
+          {near.filter((o) => o.d < RANGE * 1.4).map((o) => <circle key={o.objectId} cx={o.x - me.x} cy={o.y - me.y} r={60} className={tone[o.kind]}><title>{o.name}</title></circle>)}
+          <circle r={90} className="fill-primary stroke-foreground" strokeWidth={20} />
+        </svg>
+        <div className="font-mono text-[11px] text-muted-foreground">{me.name} · {me.x.toLocaleString("en-US")}, {me.y.toLocaleString("en-US")}, {me.z.toLocaleString("en-US")} · HP {me.hp.toLocaleString("en-US")}/{me.maxHp.toLocaleString("en-US")} · MP {me.mp.toLocaleString("en-US")}/{me.maxMp.toLocaleString("en-US")}</div>
+      </div>
+      <div className="space-y-2 min-w-0">
+        <div className="font-mono text-[11px] text-muted-foreground">NEARBY ({near.length.toLocaleString("en-US")}) · {world.packets.toLocaleString("en-US")} world packets</div>
+        <ul className="max-h-40 overflow-auto font-mono text-xs space-y-0.5">
+          {near.slice(0, 40).map((o) => <li key={o.objectId}>{o.kind.toUpperCase()} · {o.name} · {Math.round(o.d).toLocaleString("en-US")} away</li>)}
+          {near.length === 0 ? <li className="text-muted-foreground">Nothing reported nearby yet.</li> : null}
+        </ul>
+        <div className="font-mono text-[11px] text-muted-foreground">CHAT</div>
+        <ul className="max-h-32 overflow-auto font-mono text-xs space-y-0.5">
+          {world.chat.map((c, i) => <li key={i}><span className="text-muted-foreground">[{channelName(c.channel)}]</span> {c.from}: {c.text}</li>)}
+        </ul>
+        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); onSay(); }}>
+          <input value={say} onChange={(e) => setSay(e.target.value)} maxLength={100} placeholder="Say something" className="flex-1 rounded border border-border bg-background px-2 py-1 font-mono text-xs" />
+          <button type="submit" className="rounded border border-primary px-3 py-1 font-mono text-xs text-primary hover:bg-primary/10">SAY</button>
+          <button type="button" onClick={onLogout} className="rounded border border-border px-3 py-1 font-mono text-xs hover:bg-muted">LOG OUT</button>
+        </form>
+      </div>
+    </div>
   );
 }

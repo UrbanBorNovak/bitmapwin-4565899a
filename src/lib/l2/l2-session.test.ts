@@ -25,7 +25,7 @@ describe("L2 crypto", () => {
 });
 
 /** A tiny stand-in for an L2J login + game server, speaking the real byte format. */
-function fakeServer(opts: { password: string; failLogin?: boolean; rejectProtocol?: boolean }) {
+function fakeServer(opts: { password: string; failLogin?: boolean; rejectProtocol?: boolean; closeOnEnter?: boolean }) {
   const dyn = new Blowfish(Uint8Array.from({ length: 16 }, (_, i) => i * 7 + 1));
   const seen: string[] = [];
   const sealLogin = (body: Uint8Array) => { const raw = new Uint8Array(Math.ceil((body.length + 4) / 8) * 8); raw.set(body); appendChecksum(raw); dyn.encryptL2(raw); return frame(raw); };
@@ -77,6 +77,17 @@ function fakeServer(opts: { password: string; failLogin?: boolean; rejectProtoco
               const w = new PacketWriter().u8(0x15).str("Bob").i32(1052).str("").i32(1).i32(0).i32(0).i32(1).i32(0).i32(2).i32(1).i32(10).i32(20).i32(-30).bytes(new Uint8Array(16)).i32(0).bytes(new Uint8Array(8)).i32(52);
               const out = w.done(); gc.encrypt(out); reply(frame(out));
             }
+            if (p[0] === 0xd0) seen.push("manor");
+            if (p[0] === 0x03) {
+              seen.push(`enter:${p.length}`);
+              if (opts.closeOnEnter) return void queueMicrotask(() => sock.onclose?.({ code: 1000 }));
+              const u = new PacketWriter().u8(0x04).i32(100).i32(200).i32(-300).i32(0).i32(1052).str("Bob").i32(0).i32(0).i32(2).i32(52).bytes(new Uint8Array(8));
+              for (let i = 0; i < 6; i++) u.i32(20);
+              u.i32(900).i32(850).i32(400).i32(380).bytes(new Uint8Array(40));
+              const npc = new PacketWriter().u8(0x16).i32(77).i32(1000000 + 30001).i32(0).i32(150).i32(250).i32(-300).bytes(new Uint8Array(20));
+              const say = new PacketWriter().u8(0x4a).i32(77).i32(0).str("Guard").str("Welcome").done();
+              for (const b of [u.done(), npc.done(), say]) { gc.encrypt(b); reply(frame(b)); }
+            }
           }
         }
       },
@@ -120,6 +131,20 @@ describe("L2 login session", () => {
     const sel = events.find((e) => e.type === "selected");
     expect(sel && sel.type === "selected" && sel.char).toMatchObject({ name: "Bob", level: 52, x: 10, y: 20, z: -30 });
     expect(events.some((e) => e.type === "error")).toBe(false);
+    await tick(); await tick();
+    expect(srv.seen).toContain("manor");
+    expect(srv.seen).toContain("enter:105");
+    const worlds = events.filter((e) => e.type === "world");
+    const last = worlds.at(-1);
+    expect(last && last.type === "world" && last.world.self).toMatchObject({ name: "Bob", x: 100, y: 200, z: -300, hp: 850, maxHp: 900 });
+    expect(last && last.type === "world" && last.world.objects[0]).toMatchObject({ kind: "npc", npcId: 30001, x: 150 });
+    expect(last && last.type === "world" && last.world.chat[0]).toMatchObject({ from: "Guard", text: "Welcome" });
+    expect(events.some((e) => e.type === "step" && e.step === "in-world")).toBe(true);
+  });
+  it("explains a server that hangs up right after EnterWorld", async () => {
+    const { s, events } = run({ password: "secret", closeOnEnter: true });
+    await tick(); await tick(); s.chooseServer(1); await tick(); await tick(); s.chooseChar(1); await tick(); await tick();
+    expect(events.find((e) => e.type === "error")).toMatchObject({ kind: "connection", step: "entering" });
   });
   it("reports a wrong password as a login error", async () => {
     const { events } = run({ password: "secret" }, "nope");

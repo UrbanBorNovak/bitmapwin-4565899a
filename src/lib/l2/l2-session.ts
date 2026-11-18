@@ -5,13 +5,14 @@ import { decXorPass, GameCrypt, rd32, rsaNoPad, sealLoginPacket, staticLoginCiph
 import { Framer, frame, PacketReader, PacketWriter, utf16z } from "./l2-packets";
 import { isLocalBridgeUrl } from "./game-folder";
 
-export type Step = "login-bridge" | "handshake" | "gameguard" | "account" | "servers" | "ticket" | "game-bridge" | "protocol" | "characters" | "selected";
+export type Step = "login-bridge" | "handshake" | "gameguard" | "account" | "servers" | "ticket" | "game-bridge" | "protocol" | "characters" | "selected" | "entering" | "in-world";
 export const STEPS: { id: Step; label: string }[] = [
   { id: "login-bridge", label: "Reach login bridge" }, { id: "handshake", label: "Login handshake" },
   { id: "gameguard", label: "GameGuard check" }, { id: "account", label: "Account login" },
   { id: "servers", label: "Server list" }, { id: "ticket", label: "Server ticket" },
   { id: "game-bridge", label: "Reach game bridge" }, { id: "protocol", label: "Protocol accepted" },
   { id: "characters", label: "Character list" }, { id: "selected", label: "Character selected" },
+  { id: "entering", label: "Enter world sent" }, { id: "in-world", label: "In the world" },
 ];
 export type ErrorKind = "connection" | "protocol" | "login";
 export interface L2Server { id: number; ip: string; port: number; online: boolean; players: number; maxPlayers: number; pvp: boolean; ageLimit: number }
@@ -22,6 +23,7 @@ export type SessionEvent =
   | { type: "servers"; servers: L2Server[]; lastServer: number }
   | { type: "chars"; chars: L2Char[] }
   | { type: "selected"; char: L2Selected }
+  | { type: "world"; world: L2World }
   | { type: "error"; kind: ErrorKind; step: Step; message: string; hint?: string | undefined }
   | { type: "log"; conn: "login" | "game"; dir: "in" | "out"; opcode: number; size: number };
 
@@ -46,6 +48,23 @@ const LOGIN_FAIL: Record<number, string> = {
 const PLAY_FAIL: Record<number, string> = { 0x01: "The server had a system error.", 0x02: "Wrong account name or password.", 0x04: "Access to this server was denied.", 0x0f: "That game server is full." };
 const GG = [0x29dd954e, 0x77c39cfc, 0x97adb620, 0x07bde0f7];
 const hex = (n: number) => "0x" + n.toString(16).padStart(2, "0");
+
+export interface L2Object { objectId: number; kind: "npc" | "player" | "item"; name: string; x: number; y: number; z: number; npcId?: number }
+export interface L2World {
+  self: { objectId: number; name: string; x: number; y: number; z: number; heading: number; level: number; classId: number; hp: number; maxHp: number; mp: number; maxMp: number };
+  objects: L2Object[]; chat: { from: string; text: string; channel: number }[]; packets: number;
+}
+const CHANNEL = ["ALL", "SHOUT", "WHISPER", "PARTY", "CLAN", "GM", "PETITION", "PETITION", "TRADE", "ALLIANCE", "ANNOUNCE"];
+export const channelName = (c: number) => CHANNEL[c] ?? `#${c}`;
+/** Interlude UserInfo (0x04): position, identity and vitals of the player's own character. */
+export function parseUserInfo(raw: Uint8Array): L2World["self"] {
+  const r = new PacketReader(raw, 1);
+  const x = r.i32("x"), y = r.i32("y"), z = r.i32("z"), heading = r.i32("heading"), objectId = r.i32("object id"), name = r.str("name");
+  r.i32(); r.i32(); const classId = r.i32("class"), level = r.i32("level"); r.i64("exp");
+  for (let i = 0; i < 6; i++) r.i32("base stat");
+  const maxHp = r.i32("max HP"), hp = r.i32("HP"), maxMp = r.i32("max MP"), mp = r.i32("MP");
+  return { objectId, name, x, y, z, heading, level, classId, hp, maxHp, mp, maxMp };
+}
 
 export class ProtocolError extends Error {}
 
@@ -145,7 +164,10 @@ export class L2Session {
     ws.onclose = (e) => {
       if (this.ws !== ws) return;
       if (!opened) return this.fail("connection", `Couldn't reach ${url}.`, bridgeHint);
-      const why = this.step === "characters" && conn === "game"
+      const why = this.step === "entering"
+        ? "The game server closed the connection right after EnterWorld. Check its console: this usually means a protocol revision mismatch or a broken character spawn."
+        : this.step === "in-world" ? "The game server closed the connection while you were in the world."
+        : this.step === "characters" && conn === "game"
         ? "The game server closed the connection after login. It usually means it rejected the session keys: the login and game server must belong together, and the account must not be in use."
         : `The ${conn} connection closed during “${STEPS.find((s) => s.id === this.step)?.label}”${e?.code ? ` (code ${e.code})` : ""}.`;
       this.fail(this.step === "handshake" ? "protocol" : "connection", why, this.step === "handshake" ? "The server hung up before the handshake. Check the bridge points at the right port and the server is running." : undefined);
@@ -272,9 +294,14 @@ export class L2Session {
       const name = r.str("name"), objectId = r.i32(), title = r.str("title"); r.i32(); r.i32(); r.i32();
       r.i32(); const race = r.i32(), classId = r.i32(); r.i32();
       const x = r.i32(), y = r.i32(), z = r.i32(), hp = r.f64(), mp = r.f64(); r.i32(); r.i64(); const level = r.i32();
-      this.finished = true;
-      return this.o.emit({ type: "selected", char: { name, title, objectId, classId, race, level, x, y, z, hp, mp } });
+      this.o.emit({ type: "selected", char: { name, title, objectId, classId, race, level, x, y, z, hp, mp } });
+      // Interlude client order: RequestManorList (0xD0 0x0008), then EnterWorld (0x03 + 104 bytes of client tracert data).
+      this.set("entering");
+      this.send(new PacketWriter().u8(0xd0).u16(0x08).done());
+      this.send(new PacketWriter().u8(0x03).bytes(new Uint8Array(104)).done());
+      return this.expect("your character's world data (UserInfo)", "The server accepted the character but sent nothing back. Check the game server console: missing geodata, a bad spawn or a protocol mismatch usually shows there.");
     }
+    if (this.step === "entering" || this.step === "in-world") return this.handleWorld(raw);
   }
 
   chooseChar(slot: number) {
@@ -283,6 +310,57 @@ export class L2Session {
     this.send(new PacketWriter().u8(0x0d).i32(slot).u16(0).i32(0).i32(0).i32(0).done());
     this.expect("the selected character", "");
   }
+
+  private world: L2World | null = null;
+  private objects = new Map<number, L2Object>();
+  private chat: L2World["chat"] = [];
+  private packets = 0;
+  private emitWorld() { if (this.world) this.o.emit({ type: "world", world: { ...this.world, self: { ...this.world.self }, objects: [...this.objects.values()], chat: [...this.chat], packets: this.packets } }); }
+
+  private handleWorld(raw: Uint8Array) {
+    this.packets++;
+    const op = raw[0]!, r = new PacketReader(raw, 1);
+    if (op === 0x04) {
+      const self = parseUserInfo(raw);
+      if (!this.world) { this.clearTimer(); this.world = { self, objects: [], chat: [], packets: 0 }; this.set("in-world"); }
+      else this.world.self = self;
+      return this.emitWorld();
+    }
+    if (!this.world) {
+      if (op === 0x26) return this.fail("protocol", "The game server closed the session while entering the world (ServerClose).", "Look at the game server console for the reason; a wrong protocol revision or a kicked account are common.");
+      if (op === 0x00 || op === 0x13) throw new ProtocolError(`The server answered EnterWorld with ${hex(op)}, a login-stage packet. It may expect a different protocol revision.`);
+      return; // servers send many packets (skills, macros, quests) before UserInfo
+    }
+    if (op === 0xd3) { const id = r.i32(); return this.send(new PacketWriter().u8(0xa8).i32(id).i32(0).i32(0).done()); } // NetPing → reply
+    if (op === 0x26) return this.fail("connection", "The game server ended the session (ServerClose).", "You may have been kicked, or the server is shutting down.");
+    if (op === 0x7e) { this.close(); return this.o.emit({ type: "error", kind: "connection", step: "in-world", message: "You logged out." }); }
+    try {
+      if (op === 0x16) { // NpcInfo
+        const objectId = r.i32(), npcId = r.i32() - 1000000; r.i32(); const x = r.i32(), y = r.i32(), z = r.i32();
+        this.objects.set(objectId, { objectId, kind: "npc", name: `NPC ${npcId}`, npcId, x, y, z });
+      } else if (op === 0x03) { // CharInfo
+        const x = r.i32(), y = r.i32(), z = r.i32(); r.i32(); const objectId = r.i32(), name = r.str();
+        this.objects.set(objectId, { objectId, kind: "player", name, x, y, z });
+      } else if (op === 0x0b || op === 0x0c) { // SpawnItem / DropItem
+        const objectId = r.i32(); if (op === 0x0c) r.i32(); const itemId = r.i32(), x = r.i32(), y = r.i32(), z = r.i32();
+        this.objects.set(objectId, { objectId, kind: "item", name: `Item ${itemId}`, x, y, z });
+      } else if (op === 0x12) this.objects.delete(r.i32()); // DeleteObject
+      else if (op === 0x01) { // MoveToLocation: object, destination
+        const id = r.i32(), x = r.i32(), y = r.i32(), z = r.i32();
+        if (id === this.world.self.objectId) Object.assign(this.world.self, { x, y, z });
+        else { const o = this.objects.get(id); if (o) Object.assign(o, { x, y, z }); }
+      } else if (op === 0x4a) { // CreatureSay
+        r.i32(); const channel = r.i32(), from = r.str(), text = r.str();
+        this.chat = [...this.chat.slice(-29), { from, text, channel }];
+      } else return;
+    } catch { return; } // partial or variant layouts: skip the packet rather than guess
+    this.emitWorld();
+  }
+
+  say(text: string) { if (this.world && text.trim()) this.send(new PacketWriter().u8(0x38).str(text.slice(0, 100)).i32(0).done()); }
+  /** MoveBackwardToLocation (0x01): ask the server to walk the character to a world point. */
+  moveTo(x: number, y: number, z: number) { if (!this.world) return; const s = this.world.self; this.send(new PacketWriter().u8(0x01).i32(x).i32(y).i32(z).i32(s.x).i32(s.y).i32(s.z).i32(1).done()); }
+  logout() { if (this.world) this.send(new PacketWriter().u8(0x09).done()); }
 
   private log(raw: Uint8Array) { this.o.emit({ type: "log", conn: this.conn, dir: "in", opcode: raw[0]!, size: raw.length }); }
 
