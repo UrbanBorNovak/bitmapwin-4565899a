@@ -1,5 +1,5 @@
 // Browser-side helpers for BW-BOUNTY-1 on Stacks testnet. The contract is the
-// only source of truth: bounties and submissions are read live, nothing is cached.
+// only source of truth: bounties and submissions are read live; only the last good read is kept in memory.
 import { BOUNTY_CONTRACT, HIRO_TESTNET, PILOT_TOKEN } from "@/lib/stacks-pilot";
 
 export type BountyStatus = "open" | "paid" | "refunded";
@@ -44,12 +44,22 @@ async function submitters(): Promise<Map<number, Set<string>>> {
   return out;
 }
 
+let lastSubs = new Map<number, Set<string>>();
+let lastGood: { bounties: Bounty[]; burnHeight: number } | null = null;
+
+/** Live read; if Hiro drops a request, the last good read in this tab is shown instead of an error. */
 export async function readBounties(): Promise<{ bounties: Bounty[]; burnHeight: number }> {
+  try { return (lastGood = await readBountiesLive()); }
+  catch (e) { if (lastGood) return lastGood; throw e; }
+}
+
+async function readBountiesLive(): Promise<{ bounties: Bounty[]; burnHeight: number }> {
   const { Cl } = await import("@stacks/transactions");
+  // Only the bounty list itself is required; block height and submitter history degrade to last-known values.
   const [last, info, subs] = await Promise.all([
     ro("get-last-id", []),
-    retry(() => fetch(`${HIRO_TESTNET}/v2/info`).then((r) => r.json())),
-    submitters(),
+    retry(() => fetch(`${HIRO_TESTNET}/v2/info`).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })).catch(() => null),
+    submitters().then((m) => (lastSubs = m)).catch(() => lastSubs),
   ]);
   const n = Number(last?.value ?? 0);
   const ids = Array.from({ length: n }, (_, i) => n - i);
@@ -69,7 +79,7 @@ export async function readBounties(): Promise<{ bounties: Bounty[]; burnHeight: 
       submissions: found.filter(Boolean) as Submission[],
     } satisfies Bounty;
   }));
-  return { bounties: bounties.filter(Boolean) as Bounty[], burnHeight: Number(info?.burn_block_height ?? 0) };
+  return { bounties: bounties.filter(Boolean) as Bounty[], burnHeight: Number(info?.burn_block_height ?? lastGood?.burnHeight ?? 0) };
 }
 
 export async function testTokenBalance(stx: string): Promise<number> {
@@ -82,8 +92,11 @@ export async function testTokenBalance(stx: string): Promise<number> {
 async function callContract(contract: string, functionName: string, functionArgs: unknown[]): Promise<string> {
   const { request } = await import("@stacks/connect");
   // Same provider pinning as the soft-stake pilot: Xverse otherwise routes stx_* through its Bitcoin side.
-  const w = window as unknown as { StacksProvider?: unknown; LeatherProvider?: unknown; XverseProviders?: { StacksProvider?: unknown } };
-  const provider = w.LeatherProvider ?? w.XverseProviders?.StacksProvider ?? w.StacksProvider;
+  const w = window as unknown as { StacksProvider?: unknown; LeatherProvider?: unknown; XverseProviders?: { BitcoinProvider?: unknown } };
+  // Prefer the wallet picked at connect; Xverse serves stx_* RPC on its BitcoinProvider (its legacy
+  // window.StacksProvider wants callbacks and throws "d is not a function").
+  const { getSelectedProvider } = await import("@stacks/connect");
+  const provider = getSelectedProvider() ?? w.LeatherProvider ?? w.XverseProviders?.BitcoinProvider ?? w.StacksProvider;
   const res = await request((provider ? { provider } : {}) as never, "stx_callContract", {
     contract: contract as `${string}.${string}`, functionName, functionArgs: functionArgs as never, network: "testnet", postConditionMode: "allow",
   });

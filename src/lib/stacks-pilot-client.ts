@@ -19,8 +19,11 @@ export async function callPilot(which: "stake" | "token", functionName: string, 
   const { request } = await import("@stacks/connect");
   // Xverse's default routing sends stx_* calls through its Bitcoin provider,
   // which throws "d is not a function". Pin the dedicated Stacks provider.
-  const w = window as unknown as { StacksProvider?: unknown; LeatherProvider?: unknown; XverseProviders?: { StacksProvider?: unknown } };
-  const provider = w.LeatherProvider ?? w.XverseProviders?.StacksProvider ?? w.StacksProvider;
+  const w = window as unknown as { StacksProvider?: unknown; LeatherProvider?: unknown; XverseProviders?: { BitcoinProvider?: unknown } };
+  // Prefer the wallet picked at connect; Xverse serves stx_* RPC on its BitcoinProvider (its legacy
+  // window.StacksProvider wants callbacks and throws "d is not a function").
+  const { getSelectedProvider } = await import("@stacks/connect");
+  const provider = getSelectedProvider() ?? w.LeatherProvider ?? w.XverseProviders?.BitcoinProvider ?? w.StacksProvider;
   const res = await request((provider ? { provider } : {}) as never, "stx_callContract", {
     contract: (which === "stake" ? PILOT_STAKE : PILOT_TOKEN) as `${string}.${string}`,
     functionName, functionArgs: functionArgs as never, network: "testnet", postConditionMode: "allow",
