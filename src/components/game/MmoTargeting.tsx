@@ -178,3 +178,32 @@ export function MmoPlayerHud() {
     </div>
   );
 }
+
+/** Top-centre target window: name, hostility and a live health bar. */
+export function MmoTargetHud() {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => tick((n) => n + 1), 150);
+    return () => window.clearInterval(id);
+  }, []);
+  const b = mmoTarget.beast;
+  if (!alive(b)) return null;
+  const pct = Math.max(0, Math.min(100, (b.hp / b.maxHp) * 100));
+  return (
+    <div className="hud-panel pointer-events-auto absolute left-1/2 top-16 z-[60] w-64 -translate-x-1/2 px-3 py-2 font-mono text-[11px]">
+      <div className="flex items-center justify-between gap-2">
+        <span className={b.hostile ? "text-destructive" : "text-signal"}>
+          {b.hostile ? "HOSTILE" : "PASSIVE"} · <span className="text-foreground">{b.label.toUpperCase()}</span>
+        </span>
+        <button type="button" aria-label="Clear target" className="text-muted-foreground hover:text-foreground" onClick={() => setTarget(null)}>×</button>
+      </div>
+      <div className="mt-1.5 h-2 w-full overflow-hidden border border-border bg-background/60">
+        <div className={`h-full transition-[width] duration-150 ${b.hostile ? "bg-destructive" : "bg-signal"}`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-1 flex justify-between text-muted-foreground">
+        <span>HP {b.hp.toLocaleString("en-US")} / {b.maxHp.toLocaleString("en-US")}</span>
+        <span>TAB next · ESC clear</span>
+      </div>
+    </div>
+  );
+}
