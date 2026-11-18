@@ -192,3 +192,4 @@
 - [x] Confirm broadcast rejects altered seller payout / delivery outputs.
 - [x] Depth and sales charts follow the selected trait/club scope with labels and empty states.
 - [x] Hover details: exact sats, cumulative counts, sale timestamps and transaction links.
+- L2 Bridge game folder + local gameserver panel: done

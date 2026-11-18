@@ -1,5 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { indexEntries, fromFileList, fromDirectoryHandle, missingUtx, isLocalBridgeUrl, type FolderEntry, type ServerStatus } from "@/lib/l2/game-folder";
 import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
 import { decodeStaticMesh } from "@/lib/l2/ue2-staticmesh";
 import { decodeSkeletalMesh, SKELETAL_CLASSES } from "@/lib/l2/ue2-skeletal";
@@ -31,6 +32,21 @@ function L2Bridge() {
   const [active, setActive] = useState<number | null>(null);
   const [height, setHeight] = useState(521066);
   const [busy, setBusy] = useState(false);
+  const [folder, setFolder] = useState<{ name: string; index: Map<string, FolderEntry> } | null>(null);
+  const [folderQuery, setFolderQuery] = useState("");
+  const tried = useRef(new Set<string>());
+
+  function applyFolder(name: string, entries: FolderEntry[]) {
+    tried.current.clear();
+    setFolder({ name, index: indexEntries(entries) });
+  }
+  async function openFolder() {
+    const w = window as unknown as { showDirectoryPicker?: () => Promise<Parameters<typeof fromDirectoryHandle>[0]> };
+    if (!w.showDirectoryPicker) { document.getElementById("l2-folder-fallback")?.click(); return; }
+    try { setBusy(true); const h = await w.showDirectoryPicker(); applyFolder(h.name, await fromDirectoryHandle(h)); }
+    catch { /* picker cancelled */ } finally { setBusy(false); }
+  }
+  async function openEntries(list: FolderEntry[]) { await ingest(await Promise.all(list.map((e) => e.open()))); }
 
   async function ingest(files: File[]) {
     setBusy(true);
@@ -104,6 +120,18 @@ function L2Bridge() {
     return out;
   }, [picks, textureChoices]);
   const textures = useMemo(() => matResults.map((m, i) => manualTex[i]?.tex ?? (m.ok ? m.texture : null)), [matResults, manualTex]);
+  // With a game folder open, fetch the texture packages a model asks for automatically.
+  useEffect(() => {
+    if (!folder || busy) return;
+    const want = [...new Set(matResults.flatMap((m) => (!m.ok ? [missingUtx(m.reason)] : [])).filter((x): x is string => !!x && !tried.current.has(x)))];
+    const found = want.flatMap((k) => { tried.current.add(k); const e = folder.index.get(k); return e ? [e] : []; });
+    if (found.length) void openEntries(found);
+  }, [matResults, folder, busy]);
+  const folderHits = useMemo(() => {
+    if (!folder) return [];
+    const q = folderQuery.trim().toLowerCase();
+    return [...folder.index.values()].filter((e) => !q || e.path.toLowerCase().includes(q)).slice(0, 80);
+  }, [folder, folderQuery]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 space-y-6">
@@ -122,6 +150,12 @@ function L2Bridge() {
           <input type="file" multiple title="Pick the .usx props together with their .utx texture files" accept=".usx,.ukx,.utx,.unr,.u" disabled={busy}
             onChange={(e) => void ingest([...(e.target.files ?? [])])} className="text-sm" />
         </label>
+        <div className="text-sm space-y-1">
+          <span className="block font-mono text-xs text-muted-foreground">OR THE WHOLE GAME FOLDER · read on demand, never uploaded</span>
+          <button onClick={() => void openFolder()} disabled={busy} className="rounded border border-primary px-3 py-1 font-mono text-xs text-primary hover:bg-primary/10">OPEN GAME FOLDER</button>
+          <input id="l2-folder-fallback" type="file" className="hidden" {...{ webkitdirectory: "", directory: "" }}
+            onChange={(e) => { const fs = [...(e.target.files ?? [])]; if (fs.length) applyFolder(fs[0]!.webkitRelativePath.split("/")[0] ?? "folder", fromFileList(fs)); }} />
+        </div>
         <label className="text-sm space-y-1">
           <span className="block font-mono text-xs text-muted-foreground">GUARDIAN BLOCK</span>
           <input type="number" min={0} value={height} onChange={(e) => setHeight(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
@@ -130,6 +164,25 @@ function L2Bridge() {
         {loaded.length ? <button onClick={() => { setLoaded([]); setActive(null); setMeshIdx(null); }} className="rounded border border-border px-2 py-1 font-mono text-xs hover:bg-muted">CLEAR FILES</button> : null}
         {busy ? <span className="font-mono text-xs text-accent">READING…</span> : null}
       </section>
+
+      {folder ? (
+        <section className="rounded-lg border border-border bg-card/60 p-4 space-y-2">
+          <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+            <span className="text-accent">FOLDER · {folder.name} · {folder.index.size.toLocaleString("en-US")} packages indexed</span>
+            <input value={folderQuery} onChange={(e) => setFolderQuery(e.target.value)} placeholder="Search e.g. LineageNPCs, StaticMeshes/" className="flex-1 min-w-48 rounded border border-border bg-background px-2 py-1" />
+            <button onClick={() => { setFolder(null); tried.current.clear(); }} className="rounded border border-border px-2 py-1 hover:bg-muted">CLOSE FOLDER</button>
+          </div>
+          <p className="text-xs text-muted-foreground">Click a package to open it. Textures a model needs are loaded from this folder automatically.</p>
+          <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-4 max-h-48 overflow-auto">
+            {folderHits.map((e) => (
+              <button key={e.path} onClick={() => void openEntries([e])} disabled={busy} className="truncate rounded px-2 py-1 text-left font-mono text-xs hover:bg-muted" title={e.path}>
+                {e.path.split("/").slice(-2).join("/")} <span className="text-muted-foreground">· {(e.size / 1048576).toLocaleString("en-US", { maximumFractionDigits: 1 })} MB</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+      <GameServerPanel />
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <aside className="rounded-lg border border-border bg-card/60 p-3 max-h-[560px] overflow-auto space-y-1">
@@ -230,5 +283,37 @@ function L2Bridge() {
         </section>
       </div>
     </main>
+  );
+}
+
+function GameServerPanel() {
+  const [url, setUrl] = useState("ws://localhost:8888");
+  const [status, setStatus] = useState<ServerStatus>("idle");
+  const [note, setNote] = useState("");
+  const ws = useRef<WebSocket | null>(null);
+  useEffect(() => () => ws.current?.close(), []);
+  function connect() {
+    if (!isLocalBridgeUrl(url)) { setStatus("error"); setNote("Only a bridge on this computer (localhost) is allowed."); return; }
+    ws.current?.close();
+    setStatus("connecting"); setNote("");
+    const s = new WebSocket(url); s.binaryType = "arraybuffer"; ws.current = s;
+    let bytes = 0;
+    s.onopen = () => { setStatus("open"); setNote("Connected. Waiting for the server's first packet…"); };
+    s.onmessage = (m) => { bytes += m.data instanceof ArrayBuffer ? m.data.byteLength : String(m.data).length; setNote(`Receiving from your server · ${bytes.toLocaleString("en-US")} bytes`); };
+    s.onerror = () => { setStatus("error"); setNote("Couldn't reach it. Is your server and its WebSocket bridge running?"); };
+    s.onclose = () => setStatus((x) => (x === "error" ? x : "closed"));
+  }
+  const tone = status === "open" ? "text-accent" : status === "error" ? "text-destructive" : "text-muted-foreground";
+  return (
+    <section className="rounded-lg border border-border bg-card/60 p-4 space-y-2">
+      <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+        <span>YOUR LOCAL GAMESERVER</span>
+        <input value={url} onChange={(e) => setUrl(e.target.value)} className="w-56 rounded border border-border bg-background px-2 py-1" />
+        {status === "open" ? <button onClick={() => ws.current?.close()} className="rounded border border-border px-2 py-1 hover:bg-muted">DISCONNECT</button>
+          : <button onClick={connect} className="rounded border border-primary px-2 py-1 text-primary hover:bg-primary/10">CONNECT</button>}
+        <span className={tone}>{status.toUpperCase()}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">{note || "Run your own L2J server on this computer with a WebSocket bridge in front of its login port. Browsers can't open its raw ports directly. This site never relays or stores game traffic."}</p>
+    </section>
   );
 }
