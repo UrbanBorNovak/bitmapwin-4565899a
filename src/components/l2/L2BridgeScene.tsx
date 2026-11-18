@@ -1,4 +1,6 @@
-import { Suspense } from "react";
+import { Suspense, useMemo, useEffect } from "react";
+import * as THREE from "three";
+import type { DecodedMesh } from "@/lib/l2/ue2-staticmesh";
 import { OrbitControls, Grid } from "@react-three/drei";
 import { useQuery } from "@tanstack/react-query";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
@@ -23,8 +25,29 @@ function SlabStandIn({ position }: { position: [number, number, number] }) {
   );
 }
 
+function RealMesh({ mesh }: { mesh: DecodedMesh }) {
+  const geo = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(mesh.positions, 3));
+    g.setAttribute("normal", new THREE.BufferAttribute(mesh.normals, 3));
+    if (mesh.uvs) g.setAttribute("uv", new THREE.BufferAttribute(mesh.uvs, 2));
+    g.setIndex(new THREE.BufferAttribute(mesh.indices, 1));
+    g.computeBoundingBox();
+    return g;
+  }, [mesh]);
+  useEffect(() => () => geo.dispose(), [geo]);
+  const box = geo.boundingBox!;
+  const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  const k = 4 / Math.max(size.x, size.y, size.z, 1e-3);
+  return (
+    <group scale={k} position={[-c.x * k, -box.min.y * k, -c.z * k]}>
+      <mesh geometry={geo} castShadow receiveShadow><meshStandardMaterial color="#c9b79a" roughness={0.7} metalness={0.1} side={THREE.DoubleSide} /></mesh>
+    </group>
+  );
+}
+
 /** Decoded L2 actors laid out in a row, each replaced by its Bitcoin model. */
-export default function L2BridgeScene({ actors, guardianHeight }: { actors: BridgeActor[]; guardianHeight: number }) {
+export default function L2BridgeScene({ actors, guardianHeight, mesh }: { actors: BridgeActor[]; guardianHeight: number; mesh?: DecodedMesh | null }) {
   const shown = actors.filter((a) => a.target !== "keep").slice(0, 12);
   return (
     <SafeCanvas camera={{ position: [0, 4, 9], fov: 45 }} shadows>
@@ -33,7 +56,7 @@ export default function L2BridgeScene({ actors, guardianHeight }: { actors: Brid
       <directionalLight position={[5, 8, 4]} intensity={1.6} castShadow />
       <Grid args={[40, 40]} cellColor="#1d3640" sectionColor="#2bd4e6" fadeDistance={30} infiniteGrid />
       <Suspense fallback={null}>
-        {shown.length === 0 ? <Guardian height={guardianHeight} position={[0, 0, 0]} /> : shown.map((a, i) => {
+        {mesh ? <RealMesh mesh={mesh} /> : shown.length === 0 ? <Guardian height={guardianHeight} position={[0, 0, 0]} /> : shown.map((a, i) => {
           const x = (i - (shown.length - 1) / 2) * 2.4;
           return a.target === "guardian"
             ? <Guardian key={a.key} height={guardianHeight + i} position={[x, 0, 0]} />

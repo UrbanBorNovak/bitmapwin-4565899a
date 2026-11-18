@@ -1,6 +1,7 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
+import { decodeStaticMesh } from "@/lib/l2/ue2-staticmesh";
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
@@ -50,6 +51,14 @@ function L2Bridge() {
     [pkg],
   );
 
+  const [meshIdx, setMeshIdx] = useState<number | null>(null);
+  const firstMesh = pkg?.exports.find((e) => e.className === "StaticMesh")?.index ?? null;
+  const pick = meshIdx != null && pkg?.exports[meshIdx]?.className === "StaticMesh" ? meshIdx : firstMesh;
+  const decoded = useMemo(() => {
+    if (!pkg || pick == null) return null;
+    try { return { mesh: decodeStaticMesh(pkg, pick) }; } catch (e) { return { error: e instanceof Error ? e.message : String(e) }; }
+  }, [pkg, pick]);
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       <header className="space-y-2">
@@ -57,7 +66,7 @@ function L2Bridge() {
         <h1 className="font-display text-3xl">L2 Bridge Studio</h1>
         <p className="text-muted-foreground max-w-2xl text-sm">
           Pick files from your own Lineage II client. They are read in this browser only — nothing is uploaded or stored.
-          Character models become BITMAP Guardians and static props become Living Slab stand-ins.
+          Static props (StaticMesh) are drawn with their real geometry. Character models are still shown as BITMAP Guardians.
         </p>
       </header>
 
@@ -93,9 +102,16 @@ function L2Bridge() {
         <section className="space-y-3">
           <div className="h-[460px] rounded-lg border border-border overflow-hidden">
             <ClientOnly fallback={<div className="h-full" />}>
-              <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} /></Suspense>
+              <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} mesh={decoded && "mesh" in decoded ? decoded.mesh : null} /></Suspense>
             </ClientOnly>
           </div>
+          {decoded ? (
+            <div className={`rounded-lg border bg-card/60 p-3 font-mono text-xs ${"mesh" in decoded ? "border-accent/50" : "border-destructive/40 text-destructive"}`}>
+              {"mesh" in decoded && decoded.mesh
+                ? `REAL MESH · ${decoded.mesh.name} · ${decoded.mesh.vertexCount.toLocaleString("en-US")} vertices · ${decoded.mesh.triangleCount.toLocaleString("en-US")} triangles · ${decoded.mesh.sections.toLocaleString("en-US")} sections${decoded.mesh.uvs ? " · UVs" : ""} (untextured)`
+                : `MESH NOT DECODED · ${pkg?.exports[pick!]?.name}: ${"error" in decoded ? decoded.error : ""}`}
+            </div>
+          ) : null}
           {skipped.length ? (
             <div className="rounded-lg border border-destructive/40 bg-card/60 p-3 font-mono text-xs">
               UNSUPPORTED FILES: {skipped.length.toLocaleString("en-US")} of {loaded.length.toLocaleString("en-US")} — see the red notes in the file list.
@@ -118,7 +134,7 @@ function L2Bridge() {
                 <thead className="text-muted-foreground"><tr><th className="text-left">OBJECT</th><th className="text-left">CLASS</th><th className="text-left">SWAP</th><th className="text-left">STATUS</th><th className="text-right">BYTES</th></tr></thead>
                 <tbody>
                   {pkg.exports.filter((e) => filter === "all" || (filter === "3d") === (swapTargetFor(e.className) !== "keep")).slice(0, 300).map((e) => (
-                    <tr key={e.index}><td>{e.name}</td><td>{e.className}</td>
+                    <tr key={e.index} onClick={() => e.className === "StaticMesh" && setMeshIdx(e.index)} className={e.className === "StaticMesh" ? `cursor-pointer hover:bg-muted ${e.index === pick ? "text-primary" : ""}` : ""}><td>{e.name}</td><td>{e.className}</td>
                       <td className={swapTargetFor(e.className) === "keep" ? "text-muted-foreground" : "text-accent"}>{swapTargetFor(e.className)}</td><td className="text-muted-foreground">{CATEGORY_NOTE[categoryFor(e.className)]}</td>
                       <td className="text-right">{e.size.toLocaleString("en-US")}</td></tr>
                   ))}
@@ -128,7 +144,7 @@ function L2Bridge() {
           ) : null}
           <p className="text-xs text-muted-foreground">
             Reads plain Unreal 2 packages and the Lineage2Ver111/121 formats. Encrypted files (Ver2xx Blowfish, Ver41x RSA) are listed as unsupported with how to decrypt them locally.
-            Mesh geometry from the files is not drawn yet — only the object list, with the first 12 actors shown as Bitcoin models.
+            StaticMesh geometry is decoded and drawn without textures; click a StaticMesh row to view it. Skeletal characters are not decoded yet and appear as Guardians.
           </p>
         </section>
       </div>

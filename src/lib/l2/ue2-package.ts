@@ -17,6 +17,8 @@ export interface Ue2Package {
   names: string[];
   exports: Ue2Export[];
   importCount: number;
+  /** Decoded package body (offsets in exports point here). */
+  data?: Uint8Array;
 }
 
 /** Why an envelope cannot be read here, in plain words, plus what the visitor can do. */
@@ -136,7 +138,7 @@ export function readPackage(bytes: Uint8Array, fileName: string): Ue2Package {
     index: i, name: e.name, size: e.size, offset: e.offset,
     className: e.cls === 0 ? "Class" : e.cls < 0 ? importName[-e.cls - 1] ?? "?" : raw[e.cls - 1]?.name ?? "?",
   }));
-  return { envelope: env.kind, version, licensee, names, exports, importCount };
+  return { envelope: env.kind, version, licensee, names, exports, importCount, data: env.data };
 }
 
 /** What the bridge does with each UE2 class. Only "character" and "prop" are placed in 3D. */
@@ -153,7 +155,7 @@ export function categoryFor(className: string): AssetCategory {
 }
 export const CATEGORY_NOTE: Record<AssetCategory, string> = {
   character: "Shown as a BITMAP Guardian (original geometry not drawn)",
-  prop: "Shown as a Living Slab stand-in (original geometry not drawn)",
+  prop: "Real geometry decoded and drawn (click the row)",
   animation: "Unsupported: animation tracks are listed only",
   texture: "Unsupported: textures/materials are listed only",
   sound: "Unsupported: audio is listed only",
