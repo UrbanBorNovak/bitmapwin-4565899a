@@ -1,6 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
-import { readPackage, swapTargetFor, type Ue2Package } from "@/lib/l2/ue2-package";
+import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/labs/l2-bridge")({
 });
 
 const EXT = /\.(usx|ukx|utx|unr|u)$/i;
-interface Loaded { file: string; pkg?: Ue2Package; error?: string }
+interface Loaded { file: string; pkg?: Ue2Package; error?: string; badge?: string; help?: string }
 
 function L2Bridge() {
   const [loaded, setLoaded] = useState<Loaded[]>([]);
@@ -33,12 +33,17 @@ function L2Bridge() {
     setBusy(true);
     const out: Loaded[] = [];
     for (const f of files.filter((x) => EXT.test(x.name)).slice(0, 200)) {
-      try { out.push({ file: f.name, pkg: readPackage(new Uint8Array(await f.arrayBuffer()), f.name) }); }
-      catch (e) { out.push({ file: f.name, error: e instanceof Error ? e.message : String(e) }); }
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      const env = detectEnvelope(bytes);
+      if (env.kind === "unsupported") { out.push({ file: f.name, badge: env.label.replace("Lineage2", "").toUpperCase(), help: envelopeHelp(env.label), error: "unsupported envelope" }); continue; }
+      try { out.push({ file: f.name, pkg: readPackage(bytes, f.name) }); }
+      catch (e) { out.push({ file: f.name, badge: "PARSE ERROR", error: e instanceof Error ? e.message : String(e) }); }
     }
     setLoaded(out); setActive(out.findIndex((l) => l.pkg)); setBusy(false);
   }
 
+  const [filter, setFilter] = useState<"all" | "3d" | "unsupported">("all");
+  const skipped = loaded.filter((l) => !l.pkg);
   const pkg = active != null && active >= 0 ? loaded[active]?.pkg : undefined;
   const actors: BridgeActor[] = useMemo(
     () => (pkg?.exports ?? []).map((e) => ({ key: `${e.index}`, name: e.name, target: swapTargetFor(e.className) })),
@@ -78,8 +83,9 @@ function L2Bridge() {
               className={`w-full text-left rounded px-2 py-1 font-mono text-xs ${i === active ? "bg-primary/15 text-primary" : "hover:bg-muted"}`}>
               <div className="truncate">{l.file}</div>
               <div className="text-muted-foreground">
-                {l.pkg ? `${l.pkg.envelope} · v${l.pkg.version} · ${l.pkg.exports.length.toLocaleString("en-US")} objects` : l.error}
+                {l.pkg ? `${l.pkg.envelope} · v${l.pkg.version} · ${l.pkg.exports.length.toLocaleString("en-US")} objects` : null}
               </div>
+              {!l.pkg ? <div className="text-destructive"><span className="rounded border border-destructive/50 px-1">{l.badge}</span> {l.help ?? l.error}</div> : null}
             </button>
           ))}
         </aside>
@@ -90,14 +96,30 @@ function L2Bridge() {
               <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} /></Suspense>
             </ClientOnly>
           </div>
+          {skipped.length ? (
+            <div className="rounded-lg border border-destructive/40 bg-card/60 p-3 font-mono text-xs">
+              UNSUPPORTED FILES: {skipped.length.toLocaleString("en-US")} of {loaded.length.toLocaleString("en-US")} — see the red notes in the file list.
+            </div>
+          ) : null}
+          {pkg ? (() => { const s = summarize(pkg); return (
+            <div className="rounded-lg border border-border bg-card/60 p-3 font-mono text-xs flex flex-wrap gap-2">
+              {(Object.keys(s) as AssetCategory[]).filter((k) => s[k]).map((k) => (
+                <span key={k} title={CATEGORY_NOTE[k]} className={`rounded border px-2 py-0.5 ${k === "character" || k === "prop" ? "border-accent/50 text-accent" : "border-border text-muted-foreground"}`}>
+                  {k.toUpperCase()} {s[k].toLocaleString("en-US")}{k === "character" || k === "prop" ? "" : " · unsupported"}
+                </span>))}
+              <span className="ml-auto flex gap-1">
+                {(["all", "3d", "unsupported"] as const).map((f) => (
+                  <button key={f} onClick={() => setFilter(f)} className={`rounded px-2 ${filter === f ? "bg-primary/15 text-primary" : "hover:bg-muted"}`}>{f.toUpperCase()}</button>))}
+              </span>
+            </div>); })() : null}
           {pkg ? (
             <div className="rounded-lg border border-border bg-card/60 p-3 max-h-56 overflow-auto">
               <table className="w-full font-mono text-xs">
-                <thead className="text-muted-foreground"><tr><th className="text-left">OBJECT</th><th className="text-left">CLASS</th><th className="text-left">SWAP</th><th className="text-right">BYTES</th></tr></thead>
+                <thead className="text-muted-foreground"><tr><th className="text-left">OBJECT</th><th className="text-left">CLASS</th><th className="text-left">SWAP</th><th className="text-left">STATUS</th><th className="text-right">BYTES</th></tr></thead>
                 <tbody>
-                  {pkg.exports.slice(0, 300).map((e) => (
+                  {pkg.exports.filter((e) => filter === "all" || (filter === "3d") === (swapTargetFor(e.className) !== "keep")).slice(0, 300).map((e) => (
                     <tr key={e.index}><td>{e.name}</td><td>{e.className}</td>
-                      <td className={swapTargetFor(e.className) === "keep" ? "text-muted-foreground" : "text-accent"}>{swapTargetFor(e.className)}</td>
+                      <td className={swapTargetFor(e.className) === "keep" ? "text-muted-foreground" : "text-accent"}>{swapTargetFor(e.className)}</td><td className="text-muted-foreground">{CATEGORY_NOTE[categoryFor(e.className)]}</td>
                       <td className="text-right">{e.size.toLocaleString("en-US")}</td></tr>
                   ))}
                 </tbody>
@@ -105,7 +127,7 @@ function L2Bridge() {
             </div>
           ) : null}
           <p className="text-xs text-muted-foreground">
-            Reads plain Unreal 2 packages and the Lineage2Ver111/121 formats. Newer encrypted files (Ver41x) are listed as unsupported.
+            Reads plain Unreal 2 packages and the Lineage2Ver111/121 formats. Encrypted files (Ver2xx Blowfish, Ver41x RSA) are listed as unsupported with how to decrypt them locally.
             Mesh geometry from the files is not drawn yet — only the object list, with the first 12 actors shown as Bitcoin models.
           </p>
         </section>

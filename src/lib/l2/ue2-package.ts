@@ -19,6 +19,16 @@ export interface Ue2Package {
   importCount: number;
 }
 
+/** Why an envelope cannot be read here, in plain words, plus what the visitor can do. */
+export function envelopeHelp(label: string): string {
+  const v = /^Lineage2Ver(\d{3})$/.exec(label)?.[1];
+  if (v && v.startsWith("4")) return `${label} is RSA-encrypted and zlib-compressed by the official client; decrypt it locally first (e.g. l2encdec -s) and pick the decrypted copy.`;
+  if (v && v.startsWith("2")) return `${label} uses Blowfish encryption, which this reader does not decode; decrypt it locally first.`;
+  if (v) return `${label} is an unknown Lineage II envelope.`;
+  if (label === "too short") return "File is smaller than a package header — probably empty or truncated.";
+  return "No Unreal package or Lineage2Ver header found — this is not a client package (or it is already corrupted).";
+}
+
 export function detectEnvelope(bytes: Uint8Array): { kind: L2Envelope; label: string } {
   if (bytes.length >= 4 && new DataView(bytes.buffer, bytes.byteOffset).getUint32(0, true) === UE2_TAG) return { kind: "plain", label: "UE2" };
   if (bytes.length < L2_HEADER_BYTES) return { kind: "unsupported", label: "too short" };
@@ -26,7 +36,7 @@ export function detectEnvelope(bytes: Uint8Array): { kind: L2Envelope; label: st
   for (let i = 0; i < L2_HEADER_BYTES; i += 2) s += String.fromCharCode(bytes[i]! | (bytes[i + 1]! << 8));
   if (s === "Lineage2Ver111") return { kind: "ver111", label: s };
   if (s === "Lineage2Ver121") return { kind: "ver121", label: s };
-  if (s.startsWith("Lineage2Ver")) return { kind: "unsupported", label: s };
+  if (/^Lineage2Ver\d{3}$/.test(s)) return { kind: "unsupported", label: s };
   return { kind: "unsupported", label: "not a package" };
 }
 
@@ -54,9 +64,10 @@ class Reader {
   constructor(private b: Uint8Array) { this.dv = new DataView(b.buffer, b.byteOffset, b.byteLength); }
   seek(p: number) { if (p < 0 || p > this.b.length) throw new Error("offset out of range"); this.pos = p; }
   u8() { if (this.pos >= this.b.length) throw new Error("unexpected end"); return this.b[this.pos++]!; }
-  u16() { const v = this.dv.getUint16(this.pos, true); this.pos += 2; return v; }
-  u32() { const v = this.dv.getUint32(this.pos, true); this.pos += 4; return v; }
-  i32() { const v = this.dv.getInt32(this.pos, true); this.pos += 4; return v; }
+  need(n: number) { if (this.pos + n > this.b.length) throw new Error(`unexpected end at byte ${this.pos}`); }
+  u16() { this.need(2); const v = this.dv.getUint16(this.pos, true); this.pos += 2; return v; }
+  u32() { this.need(4); const v = this.dv.getUint32(this.pos, true); this.pos += 4; return v; }
+  i32() { this.need(4); const v = this.dv.getInt32(this.pos, true); this.pos += 4; return v; }
   /** UE2 compact index: sign+continue+6 bits, then 7-bit groups. */
   compact(): number {
     const b0 = this.u8();
@@ -74,6 +85,7 @@ class Reader {
   }
   str(version: number): string {
     const len = version >= 64 ? this.compact() : -1;
+    if (Math.abs(len) > 1024) throw new Error(`name length ${len} at byte ${this.pos} looks corrupt (wrong decryption key?)`);
     let s = "";
     if (len < 0 && version >= 64) { // UTF-16
       for (let i = 0; i < -len; i++) { const c = this.u16(); if (c) s += String.fromCharCode(c); }
@@ -96,6 +108,9 @@ export function readPackage(bytes: Uint8Array, fileName: string): Ue2Package {
   const exportCount = r.u32(), exportOffset = r.u32();
   const importCount = r.u32(), importOffset = r.u32();
   if (nameCount > 200000 || exportCount > 200000 || importCount > 200000) throw new Error("Table sizes look corrupt");
+  const len = env.data.length;
+  for (const [t, o] of [["name", nameOffset], ["import", importOffset], ["export", exportOffset]] as const)
+    if (o > len) throw new Error(`${t} table offset ${o} is past end of file (${len} bytes) — file truncated or wrongly decrypted`);
 
   r.seek(nameOffset);
   const names: string[] = [];
@@ -124,12 +139,39 @@ export function readPackage(bytes: Uint8Array, fileName: string): Ue2Package {
   return { envelope: env.kind, version, licensee, names, exports, importCount };
 }
 
+/** What the bridge does with each UE2 class. Only "character" and "prop" are placed in 3D. */
+export type AssetCategory = "character" | "prop" | "animation" | "texture" | "sound" | "world" | "code" | "other";
+export function categoryFor(className: string): AssetCategory {
+  if (/^(SkeletalMesh|Mesh|LodMesh|VertMesh)$/.test(className)) return "character";
+  if (className === "StaticMesh") return "prop";
+  if (/^(MeshAnimation|Animation)$/.test(className)) return "animation";
+  if (/(Texture|Shader|Material|FinalBlend|Combiner|Modifier|Cubemap|Palette)/.test(className)) return "texture";
+  if (/^(Sound|SoundGroup|Music)$/.test(className)) return "sound";
+  if (/^(Level|Model|Polys|Brush|TerrainInfo|ZoneInfo|LevelInfo|LevelSummary)$/.test(className)) return "world";
+  if (/^(Class|Function|State|Struct|Enum|Const|TextBuffer)$/.test(className) || /Property$/.test(className)) return "code";
+  return "other";
+}
+export const CATEGORY_NOTE: Record<AssetCategory, string> = {
+  character: "Shown as a BITMAP Guardian (original geometry not drawn)",
+  prop: "Shown as a Living Slab stand-in (original geometry not drawn)",
+  animation: "Unsupported: animation tracks are listed only",
+  texture: "Unsupported: textures/materials are listed only",
+  sound: "Unsupported: audio is listed only",
+  world: "Unsupported: map/level geometry is listed only",
+  code: "Unsupported: script/class code is listed only",
+  other: "Unsupported: unknown class, listed only",
+};
+export function summarize(pkg: Ue2Package): Record<AssetCategory, number> {
+  const out = { character: 0, prop: 0, animation: 0, texture: 0, sound: 0, world: 0, code: 0, other: 0 };
+  for (const e of pkg.exports) out[categoryFor(e.className)]++;
+  return out;
+}
+
 /** Which Bitcoin model a decoded actor class is swapped for in the bridge. */
 export type SwapTarget = "guardian" | "slab" | "keep";
 export function swapTargetFor(className: string): SwapTarget {
-  if (/^(SkeletalMesh|Mesh|LodMesh|MeshAnimation)$/.test(className)) return "guardian";
-  if (/^StaticMesh$/.test(className)) return "slab";
-  return "keep";
+  const c = categoryFor(className);
+  return c === "character" ? "guardian" : c === "prop" ? "slab" : "keep";
 }
 
 /** UE2 units (~1 cm) to Oasis units: an L2 human (~128 uu) becomes one avatar height. */

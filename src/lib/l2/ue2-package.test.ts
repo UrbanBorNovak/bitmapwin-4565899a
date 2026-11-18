@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeEnvelope, readPackage, swapTargetFor, UE2_TAG, ver121Key } from "./ue2-package";
+import { categoryFor, envelopeHelp, summarize, decodeEnvelope, readPackage, swapTargetFor, UE2_TAG, ver121Key } from "./ue2-package";
 
 function buildPkg(): Uint8Array {
   const b: number[] = [];
@@ -40,5 +40,17 @@ describe("UE2 package reader", () => {
     expect(swapTargetFor("SkeletalMesh")).toBe("guardian");
     expect(swapTargetFor("StaticMesh")).toBe("slab");
     expect(swapTargetFor("Texture")).toBe("keep");
+  });
+  it("swaps skeletal meshes, keeps animations as listed-only", () => {
+    expect(swapTargetFor("MeshAnimation")).toBe("keep");
+    expect(categoryFor("Shader")).toBe("texture");
+    expect(categoryFor("IntProperty")).toBe("code");
+  });
+  it("explains Ver41x and truncated files", () => {
+    expect(envelopeHelp("Lineage2Ver413")).toMatch(/RSA/);
+    expect(() => readPackage(buildPkg().subarray(0, 40), "a.usx")).toThrow(/past end|unexpected end/);
+  });
+  it("counts categories", () => {
+    expect(summarize(readPackage(buildPkg(), "r.usx")).prop).toBe(1);
   });
 });
