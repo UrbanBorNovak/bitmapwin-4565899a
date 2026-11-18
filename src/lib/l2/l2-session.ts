@@ -49,9 +49,9 @@ const PLAY_FAIL: Record<number, string> = { 0x01: "The server had a system error
 const GG = [0x29dd954e, 0x77c39cfc, 0x97adb620, 0x07bde0f7];
 const hex = (n: number) => "0x" + n.toString(16).padStart(2, "0");
 
-export interface L2Object { objectId: number; kind: "npc" | "player" | "item"; name: string; x: number; y: number; z: number; npcId?: number }
+export interface L2Object { objectId: number; kind: "npc" | "player" | "item"; name: string; x: number; y: number; z: number; npcId?: number; heading?: number; race?: number; sex?: number; classId?: number }
 export interface L2World {
-  self: { objectId: number; name: string; x: number; y: number; z: number; heading: number; level: number; classId: number; hp: number; maxHp: number; mp: number; maxMp: number };
+  self: { objectId: number; name: string; x: number; y: number; z: number; heading: number; race: number; sex: number; level: number; classId: number; hp: number; maxHp: number; mp: number; maxMp: number };
   objects: L2Object[]; chat: { from: string; text: string; channel: number }[]; packets: number;
 }
 const CHANNEL = ["ALL", "SHOUT", "WHISPER", "PARTY", "CLAN", "GM", "PETITION", "PETITION", "TRADE", "ALLIANCE", "ANNOUNCE"];
@@ -60,10 +60,10 @@ export const channelName = (c: number) => CHANNEL[c] ?? `#${c}`;
 export function parseUserInfo(raw: Uint8Array): L2World["self"] {
   const r = new PacketReader(raw, 1);
   const x = r.i32("x"), y = r.i32("y"), z = r.i32("z"), heading = r.i32("heading"), objectId = r.i32("object id"), name = r.str("name");
-  r.i32(); r.i32(); const classId = r.i32("class"), level = r.i32("level"); r.i64("exp");
+  const race = r.i32("race"), sex = r.i32("sex"); const classId = r.i32("class"), level = r.i32("level"); r.i64("exp");
   for (let i = 0; i < 6; i++) r.i32("base stat");
   const maxHp = r.i32("max HP"), hp = r.i32("HP"), maxMp = r.i32("max MP"), mp = r.i32("MP");
-  return { objectId, name, x, y, z, heading, level, classId, hp, maxHp, mp, maxMp };
+  return { objectId, name, x, y, z, heading, race, sex, level, classId, hp, maxHp, mp, maxMp };
 }
 
 export class ProtocolError extends Error {}
@@ -336,11 +336,12 @@ export class L2Session {
     if (op === 0x7e) { this.close(); return this.o.emit({ type: "error", kind: "connection", step: "in-world", message: "You logged out." }); }
     try {
       if (op === 0x16) { // NpcInfo
-        const objectId = r.i32(), npcId = r.i32() - 1000000; r.i32(); const x = r.i32(), y = r.i32(), z = r.i32();
-        this.objects.set(objectId, { objectId, kind: "npc", name: `NPC ${npcId}`, npcId, x, y, z });
+        const objectId = r.i32(), npcId = r.i32() - 1000000; r.i32(); const x = r.i32(), y = r.i32(), z = r.i32(), heading = r.i32();
+        this.objects.set(objectId, { objectId, kind: "npc", name: `NPC ${npcId}`, npcId, x, y, z, heading });
       } else if (op === 0x03) { // CharInfo
-        const x = r.i32(), y = r.i32(), z = r.i32(); r.i32(); const objectId = r.i32(), name = r.str();
-        this.objects.set(objectId, { objectId, kind: "player", name, x, y, z });
+        const x = r.i32(), y = r.i32(), z = r.i32(), heading = r.i32(); const objectId = r.i32(), name = r.str();
+        const race = r.i32(), sex = r.i32(), classId = r.i32();
+        this.objects.set(objectId, { objectId, kind: "player", name, x, y, z, heading, race, sex, classId });
       } else if (op === 0x0b || op === 0x0c) { // SpawnItem / DropItem
         const objectId = r.i32(); if (op === 0x0c) r.i32(); const itemId = r.i32(), x = r.i32(), y = r.i32(), z = r.i32();
         this.objects.set(objectId, { objectId, kind: "item", name: `Item ${itemId}`, x, y, z });

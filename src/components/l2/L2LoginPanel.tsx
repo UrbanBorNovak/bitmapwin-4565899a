@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { FolderEntry } from "@/lib/l2/game-folder";
-import { WorldLibrary, type WorldTile } from "@/lib/l2/l2-world-loader";
+import { WorldLibrary, type PropModel, type WorldTile } from "@/lib/l2/l2-world-loader";
+import { findByNames, findNpcByName, playerModelNames, type CatalogEntry } from "@/lib/l2/l2-actor-models";
 import { tileFile, tileOf } from "@/lib/l2/l2-world";
 const L2WorldScene = lazy(() => import("@/components/l2/L2WorldScene"));
 import { channelName, L2Session, STEPS, type L2World, type ErrorKind, type L2Char, type L2Selected, type L2Server, type SessionEvent, type Step } from "@/lib/l2/l2-session";
@@ -166,10 +167,106 @@ function useTile(library: WorldLibrary | null, x: number, y: number) {
   return { file: tileFile(tx, ty), state: state?.key === key ? state : null };
 }
 
+const PICKS_KEY = "l2bridge.npcModels";
+/** Finds and decodes real models for you, other players and nearby NPCs (picks per NPC id stay on this device). */
+function useActorModels(library: WorldLibrary | null, world: L2World) {
+  const [catalog, setCatalog] = useState<{ entries: CatalogEntry[]; unreadable: string[] } | null>(null);
+  const [scan, setScan] = useState("");
+  const [picks, setPicks] = useState<Record<string, string>>({});
+  const [models, setModels] = useState<Map<string, PropModel | string>>(new Map());
+  useEffect(() => { try { setPicks(JSON.parse(localStorage.getItem(PICKS_KEY) ?? "{}")); } catch { /* ignore */ } }, []);
+  useEffect(() => {
+    if (!library) return;
+    let live = true; setCatalog(null);
+    void library.characterCatalog((d, t) => { if (live) setScan(`Looking for character models: ${d.toLocaleString("en-US")} of ${t.toLocaleString("en-US")} .ukx files`); }).then((c) => { if (live) setCatalog(c); });
+    return () => { live = false; };
+  }, [library]);
+  const byKey = useMemo(() => new Map((catalog?.entries ?? []).map((c) => [c.key, c])), [catalog]);
+  const me = world.self;
+  const wants = useMemo(() => {
+    const out: { objectId: number; entry: CatalogEntry | null; why: string }[] = [];
+    if (!catalog) return out;
+    const player = (id: number, race?: number, sex?: number, cls?: number) => {
+      if (race == null || sex == null || cls == null) { out.push({ objectId: id, entry: null, why: "race/gender not sent by the server" }); return; }
+      const names = playerModelNames(race, sex, cls), e = findByNames(catalog.entries, names);
+      out.push({ objectId: id, entry: e, why: e ? "" : `no ${names.join(" / ")} model in your .ukx files` });
+    };
+    player(me.objectId, me.race, me.sex, me.classId);
+    for (const o of world.objects) {
+      if (o.kind === "player") player(o.objectId, o.race, o.sex, o.classId);
+      else if (o.kind === "npc") {
+        const pick = o.npcId != null ? picks[String(o.npcId)] : undefined;
+        const e = (pick ? byKey.get(pick) : null) ?? findNpcByName(catalog.entries, o.name);
+        out.push({ objectId: o.objectId, entry: e ?? null, why: e ? "" : "pick a model below (the client's NPC list is encrypted and not read)" });
+      }
+    }
+    return out;
+  }, [catalog, byKey, picks, me.objectId, me.race, me.sex, me.classId, world.objects]);
+  const needKeys = useMemo(() => [...new Set(wants.flatMap((w) => (w.entry ? [w.entry.key] : [])))].sort().join("|"), [wants]);
+  useEffect(() => {
+    if (!library || !needKeys) return;
+    let live = true;
+    void (async () => {
+      for (const k of needKeys.split("|")) {
+        const c = byKey.get(k); if (!c) continue;
+        const m = await library.characterModel(c);
+        if (!live) return;
+        setModels((prev) => (prev.get(k) === m ? prev : new Map(prev).set(k, m)));
+      }
+    })();
+    return () => { live = false; };
+  }, [library, needKeys, byKey]);
+  const actorModels = useMemo(() => {
+    const m = new Map<number, PropModel>();
+    for (const w of wants) { const v = w.entry ? models.get(w.entry.key) : undefined; if (v && typeof v !== "string") m.set(w.objectId, v); }
+    return m;
+  }, [wants, models]);
+  const setPick = (npcId: number, key: string) => setPicks((prev) => {
+    const next = { ...prev }; if (key) next[String(npcId)] = key; else delete next[String(npcId)];
+    try { localStorage.setItem(PICKS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    return next;
+  });
+  return { catalog, scan, wants, models, actorModels, picks, setPick };
+}
+
+function ModelReport({ world, a }: { world: L2World; a: ReturnType<typeof useActorModels> }) {
+  if (!a.catalog) return <div className="font-mono text-[11px] text-muted-foreground">{a.scan || "Looking for character models…"}</div>;
+  const name = (id: number) => (id === world.self.objectId ? `${world.self.name} (you)` : world.objects.find((o) => o.objectId === id)?.name ?? `#${id}`);
+  const npcTypes = [...new Map(world.objects.filter((o) => o.kind === "npc" && o.npcId != null).map((o) => [o.npcId!, o])).values()].slice(0, 12);
+  return (
+    <div className="space-y-1 font-mono text-[11px] text-muted-foreground">
+      <div>CHARACTER MODELS · {a.catalog.entries.length.toLocaleString("en-US")} found in your .ukx files · {a.actorModels.size.toLocaleString("en-US")} drawn{a.catalog.unreadable.length ? ` · ${a.catalog.unreadable.length.toLocaleString("en-US")} files unreadable` : ""}</div>
+      <ul className="max-h-32 overflow-auto space-y-0.5">
+        {a.wants.slice(0, 30).map((w) => {
+          const m = w.entry ? a.models.get(w.entry.key) : undefined;
+          const missingTex = m && typeof m !== "string" ? (m.issues ?? []).filter(Boolean).length : 0;
+          const text = !w.entry ? `marker only — ${w.why}` : m === undefined ? `${w.entry.name} · loading…` : typeof m === "string" ? `marker only — ${m}` : `${w.entry.name}${missingTex ? ` · ${missingTex} of ${m.mesh.groups.length} sections untextured: ${(m.issues ?? []).find(Boolean)}` : ""}`;
+          return <li key={w.objectId} className={typeof m === "string" ? "text-destructive" : undefined}>{name(w.objectId)} → {text}</li>;
+        })}
+      </ul>
+      {npcTypes.length && a.catalog.entries.length ? (
+        <div className="space-y-1">
+          <div>NPC MODEL PICKS (saved on this device)</div>
+          {npcTypes.map((o) => (
+            <label key={o.npcId} className="flex items-center gap-2">
+              <span className="w-28 shrink-0 truncate">NPC {o.npcId}</span>
+              <select value={a.picks[String(o.npcId)] ?? ""} onChange={(e) => a.setPick(o.npcId!, e.target.value)} className="min-w-0 flex-1 rounded border border-border bg-background px-1 py-0.5">
+                <option value="">— match by name —</option>
+                {a.catalog!.entries.map((c) => <option key={c.key} value={c.key}>{c.name} ({c.pkg})</option>)}
+              </select>
+            </label>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function World3D({ world, folder, onMove }: { world: L2World; folder: Map<string, FolderEntry> | null; onMove: (x: number, y: number, z: number) => void }) {
   const library = useMemo(() => (folder ? new WorldLibrary(folder) : null), [folder]);
   const { file, state } = useTile(library, world.self.x, world.self.y);
   const [status, setStatus] = useState("");
+  const actors = useActorModels(library, world);
   const box = "flex h-[460px] items-center justify-center rounded border border-border bg-background p-4 text-center text-sm text-muted-foreground";
   let body;
   if (!folder) body = <div className={box}>Open your game folder at the top of this page (OPEN GAME FOLDER) to draw the world around you from your own map files.</div>;
@@ -178,7 +275,7 @@ function World3D({ world, folder, onMove }: { world: L2World; folder: Map<string
   else body = (
     <div data-l2-world className="h-[460px] overflow-hidden rounded border border-border">
       <Suspense fallback={<div className={box}>Loading the 3D view…</div>}>
-        <L2WorldScene world={world} tile={state.tile!} library={library!} onMove={(p) => onMove(Math.round(p.x), Math.round(p.y), Math.round(p.z))} onStatus={setStatus} />
+        <L2WorldScene world={world} tile={state.tile!} library={library!} actorModels={actors.actorModels} onMove={(p) => onMove(Math.round(p.x), Math.round(p.y), Math.round(p.z))} onStatus={setStatus} />
       </Suspense>
     </div>
   );
@@ -194,6 +291,7 @@ function World3D({ world, folder, onMove }: { world: L2World; folder: Map<string
           {t.notes.map((n) => <li key={n} className="text-destructive">{n}</li>)}
         </ul>
       ) : null}
+      {folder ? <ModelReport world={world} a={actors} /> : null}
     </div>
   );
 }

@@ -54,22 +54,37 @@ function Terrain({ tile, origin, onPick }: { tile: WorldTile; origin: O; onPick:
   return <mesh geometry={geo} onClick={click} receiveShadow><meshStandardMaterial vertexColors roughness={0.95} side={THREE.DoubleSide} /></mesh>;
 }
 
-function PropGroup({ model, actors, origin }: { model: PropModel; actors: StaticActor[]; origin: O }) {
-  const ref = useRef<THREE.InstancedMesh>(null);
-  const geo = useMemo(() => {
-    const g = new THREE.BufferGeometry(), m = model.mesh;
-    g.setAttribute("position", new THREE.BufferAttribute(m.positions, 3)); g.setAttribute("normal", new THREE.BufferAttribute(m.normals, 3));
-    if (m.uvs) g.setAttribute("uv", new THREE.BufferAttribute(m.uvs, 2));
-    g.setIndex(new THREE.BufferAttribute(m.indices, 1)); m.groups.forEach((gr, i) => g.addGroup(gr.start, gr.count, i));
-    return g;
-  }, [model]);
-  const mats = useMemo(() => Array.from({ length: Math.max(1, model.mesh.groups.length) }, (_, i) => {
+function makeMaterials(model: PropModel) {
+  return Array.from({ length: Math.max(1, model.mesh.groups.length) }, (_, i) => {
     const t = model.textures[i];
     if (!t || !model.mesh.uvs) return new THREE.MeshStandardMaterial({ color: "#8f8a80", roughness: 0.85 });
     const tex = new THREE.DataTexture(t.rgba, t.width, t.height, THREE.RGBAFormat);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true; tex.needsUpdate = true;
     return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, alphaTest: t.hasAlpha ? 0.5 : 0, side: THREE.DoubleSide });
-  }), [model]);
+  });
+}
+
+function geometryOf(m: PropModel["mesh"]) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(m.positions, 3)); g.setAttribute("normal", new THREE.BufferAttribute(m.normals, 3));
+  if (m.uvs) g.setAttribute("uv", new THREE.BufferAttribute(m.uvs, 2));
+  g.setIndex(new THREE.BufferAttribute(m.indices, 1)); m.groups.forEach((gr, i) => g.addGroup(gr.start, gr.count, i));
+  return g;
+}
+
+/** One character drawn with its own decoded model (bind pose), feet on the ground, turned to its heading. */
+function CharacterModel({ model, at, heading }: { model: PropModel; at: [number, number, number]; heading: number }) {
+  const geo = useMemo(() => { const g = geometryOf(model.mesh); g.computeBoundingBox(); return g; }, [model]);
+  const mats = useMemo(() => makeMaterials(model), [model]);
+  useEffect(() => () => { geo.dispose(); mats.forEach((m) => { m.map?.dispose(); m.dispose(); }); }, [geo, mats]);
+  const lift = -(geo.boundingBox?.min.y ?? 0);
+  return <mesh geometry={geo} material={model.mesh.groups.length ? mats : mats[0]!} position={[at[0], at[1] + lift, at[2]]} rotation-y={-(heading / 65536) * Math.PI * 2} castShadow />;
+}
+
+function PropGroup({ model, actors, origin }: { model: PropModel; actors: StaticActor[]; origin: O }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const geo = useMemo(() => geometryOf(model.mesh), [model]);
+  const mats = useMemo(() => makeMaterials(model), [model]);
   useEffect(() => () => { geo.dispose(); mats.forEach((m) => { m.map?.dispose(); m.dispose(); }); }, [geo, mats]);
   useEffect(() => {
     const im = ref.current; if (!im) return;
@@ -127,7 +142,7 @@ function Follow({ target, controls }: { target: [number, number, number]; contro
 }
 
 const KIND_COLOR = { npc: "#2bd4e6", player: "#f7931a", item: "#d7d2c4" } as const;
-export default function L2WorldScene({ world, tile, library, onMove, onStatus }: { world: L2World; tile: WorldTile; library: WorldLibrary; onMove: (p: O) => void; onStatus: (s: string) => void }) {
+export default function L2WorldScene({ world, tile, library, actorModels, onMove, onStatus }: { world: L2World; tile: WorldTile; library: WorldLibrary; actorModels: Map<number, PropModel>; onMove: (p: O) => void; onStatus: (s: string) => void }) {
   const me = world.self;
   // Origin fixed per tile so float precision stays good and geometry isn't rebuilt as you walk.
   const origin = useMemo(() => ({ x: me.x, y: me.y, z: me.z }), [tile]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -145,9 +160,13 @@ export default function L2WorldScene({ world, tile, library, onMove, onStatus }:
       <Props tile={tile} library={library} origin={origin} center={me} onStatus={onStatus} />
       {world.objects.map((o) => {
         const p = toScene({ ...o, z: Math.max(o.z, ground(o) ?? -Infinity) }, origin);
+        const m = actorModels.get(o.objectId);
+        if (m) return <CharacterModel key={o.objectId} model={m} at={p} heading={o.heading ?? 0} />;
         return <mesh key={o.objectId} position={[p[0], p[1] + 25, p[2]]}><capsuleGeometry args={[10, 30, 4, 8]} /><meshStandardMaterial color={KIND_COLOR[o.kind]} /></mesh>;
       })}
-      <mesh position={[meAt[0], meAt[1] + 30, meAt[2]]} castShadow><capsuleGeometry args={[12, 36, 4, 10]} /><meshStandardMaterial color="#f7931a" emissive="#7a3a00" /></mesh>
+      {actorModels.get(me.objectId)
+        ? <CharacterModel model={actorModels.get(me.objectId)!} at={meAt} heading={me.heading} />
+        : <mesh position={[meAt[0], meAt[1] + 30, meAt[2]]} castShadow><capsuleGeometry args={[12, 36, 4, 10]} /><meshStandardMaterial color="#f7931a" emissive="#7a3a00" /></mesh>}
       <mesh position={[meAt[0], meAt[1] + 2, meAt[2]]} rotation-x={-Math.PI / 2}><ringGeometry args={[22, 30, 32]} /><meshBasicMaterial color="#f7931a" /></mesh>
       <OrbitControls ref={controls} maxPolarAngle={Math.PI * 0.48} minDistance={150} maxDistance={8000} />
       <Follow target={meAt} controls={controls} />
