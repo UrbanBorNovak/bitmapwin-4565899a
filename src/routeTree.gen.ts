@@ -146,6 +146,7 @@ import { Route as EmbedOasisRouteImport } from './routes/embed.oasis'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
 import { Route as ExtendersAdrenalineRouteImport } from './routes/extenders.adrenaline'
+import { Route as LabsL2BridgeRouteImport } from './routes/labs.l2-bridge'
 import { Route as MapBlockRouteImport } from './routes/map_.$block'
 import { Route as PetIdRouteImport } from './routes/pet.$id'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
@@ -889,6 +890,11 @@ const ExtendersAdrenalineRoute = ExtendersAdrenalineRouteImport.update({
   path: '/adrenaline',
   getParentRoute: () => ExtendersRoute,
 } as any)
+const LabsL2BridgeRoute = LabsL2BridgeRouteImport.update({
+  id: '/labs/l2-bridge',
+  path: '/labs/l2-bridge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapBlockRoute = MapBlockRouteImport.update({
   id: '/map_/$block',
   path: '/map/$block',
@@ -1314,6 +1320,7 @@ export interface FileRoutesByFullPath {
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
+  '/labs/l2-bridge': typeof LabsL2BridgeRoute
   '/map/$block': typeof MapBlockRoute
   '/pet/$id': typeof PetIdRoute
   '/play/atlas': typeof PlayAtlasRoute
@@ -1505,6 +1512,7 @@ export interface FileRoutesByTo {
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
+  '/labs/l2-bridge': typeof LabsL2BridgeRoute
   '/map/$block': typeof MapBlockRoute
   '/pet/$id': typeof PetIdRoute
   '/play/atlas': typeof PlayAtlasRoute
@@ -1701,6 +1709,7 @@ export interface FileRoutesById {
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
+  '/labs/l2-bridge': typeof LabsL2BridgeRoute
   '/map_/$block': typeof MapBlockRoute
   '/pet/$id': typeof PetIdRoute
   '/play/atlas': typeof PlayAtlasRoute
@@ -1898,6 +1907,7 @@ export interface FileRouteTypes {
     | '/embed/oasis'
     | '/extenders/$slug'
     | '/extenders/adrenaline'
+    | '/labs/l2-bridge'
     | '/map/$block'
     | '/pet/$id'
     | '/play/atlas'
@@ -2089,6 +2099,7 @@ export interface FileRouteTypes {
     | '/embed/oasis'
     | '/extenders/$slug'
     | '/extenders/adrenaline'
+    | '/labs/l2-bridge'
     | '/map/$block'
     | '/pet/$id'
     | '/play/atlas'
@@ -2284,6 +2295,7 @@ export interface FileRouteTypes {
     | '/embed/oasis'
     | '/extenders/$slug'
     | '/extenders/adrenaline'
+    | '/labs/l2-bridge'
     | '/map_/$block'
     | '/pet/$id'
     | '/play/atlas'
@@ -2471,6 +2483,7 @@ export interface RootRouteChildren {
   DistrictSlugRoute: typeof DistrictSlugRoute
   DocsAgentsRoute: typeof DocsAgentsRoute
   EmbedOasisRoute: typeof EmbedOasisRoute
+  LabsL2BridgeRoute: typeof LabsL2BridgeRoute
   MapBlockRoute: typeof MapBlockRoute
   PetIdRoute: typeof PetIdRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
@@ -3449,6 +3462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExtendersAdrenalineRouteImport
       parentRoute: typeof ExtendersRoute
     }
+    '/labs/l2-bridge': {
+      id: '/labs/l2-bridge'
+      path: '/labs/l2-bridge'
+      fullPath: '/labs/l2-bridge'
+      preLoaderRoute: typeof LabsL2BridgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/map_/$block': {
       id: '/map_/$block'
       path: '/map/$block'
@@ -4132,6 +4152,7 @@ const rootRouteChildren: RootRouteChildren = {
   DistrictSlugRoute: DistrictSlugRoute,
   DocsAgentsRoute: DocsAgentsRoute,
   EmbedOasisRoute: EmbedOasisRoute,
+  LabsL2BridgeRoute: LabsL2BridgeRoute,
   MapBlockRoute: MapBlockRoute,
   PetIdRoute: PetIdRoute,
   ProfileAddressRoute: ProfileAddressRoute,
