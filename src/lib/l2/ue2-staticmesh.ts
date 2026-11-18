@@ -23,6 +23,12 @@ export interface DecodedMesh {
   groups: { start: number; count: number }[];
   /** Object references from the mesh's Materials list (0 = none). */
   materials: number[];
+  /** Material slot index drawn by each group (characters); defaults to the group index. */
+  slots?: number[];
+  /** Per group: why its material cannot be matched before any lookup (null = look it up). */
+  materialIssues?: (string | null)[];
+  /** Where the material list came from, in plain words. */
+  materialSource?: string;
 }
 
 const MAX_VERTS = 2_000_000;

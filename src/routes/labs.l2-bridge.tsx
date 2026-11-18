@@ -3,7 +3,7 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
 import { decodeStaticMesh } from "@/lib/l2/ue2-staticmesh";
 import { decodeSkeletalMesh, SKELETAL_CLASSES } from "@/lib/l2/ue2-skeletal";
-import { decodeTexture, resolveMaterial, type MaterialResult } from "@/lib/l2/ue2-texture";
+import { decodeTexture, resolveMaterial, type DecodedTexture, type MaterialResult } from "@/lib/l2/ue2-texture";
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
@@ -77,11 +77,33 @@ function L2Bridge() {
     try { return { tex: decodeTexture(pkg, pick) }; } catch (e) { return { error: e instanceof Error ? e.message : String(e) }; }
   }, [pkg, pick, isTexture]);
   const allPkgs = useMemo(() => loaded.flatMap((l) => (l.pkg ? [l.pkg] : [])), [loaded]);
+  const shownMesh = decoded && "mesh" in decoded ? decoded.mesh ?? null : null;
   const matResults: MaterialResult[] = useMemo(() => {
-    if (!pkg || !decoded || !("mesh" in decoded) || !decoded.mesh) return [];
-    return decoded.mesh.materials.map((ref) => resolveMaterial(allPkgs, pkg, ref));
-  }, [decoded, pkg, allPkgs]);
-  const textures = useMemo(() => matResults.map((m) => (m.ok ? m.texture : null)), [matResults]);
+    if (!pkg || !shownMesh) return [];
+    return shownMesh.materials.map((ref, i) => {
+      const issue = shownMesh.materialIssues?.[i];
+      return issue ? { ok: false as const, reason: issue, via: [] } : resolveMaterial(allPkgs, pkg, ref);
+    });
+  }, [shownMesh, pkg, allPkgs]);
+  // Every Texture object in the loaded files, for picking a skin by hand when a material can't be matched.
+  const textureChoices = useMemo(() => {
+    const out: { key: string; label: string; name: string; p: Ue2Package; idx: number }[] = [];
+    loaded.forEach((l, pi) => l.pkg?.exports.forEach((e, ei) => { if (e.className === "Texture" && out.length < 3000) out.push({ key: `${pi}:${ei}`, label: `${e.name} · ${l.file}`, name: e.name.toLowerCase(), p: l.pkg!, idx: ei }); }));
+    const stem = (shownMesh?.name ?? "").toLowerCase().split(/[_.]/)[0] ?? "";
+    return stem.length >= 3 ? [...out.filter((c) => c.name.startsWith(stem)), ...out.filter((c) => !c.name.startsWith(stem))] : out;
+  }, [loaded, shownMesh]);
+  const meshKey = `${active}:${pick}`;
+  const [manual, setManual] = useState<{ key: string; map: Record<number, string> }>({ key: "", map: {} });
+  const picks = manual.key === meshKey ? manual.map : {};
+  const manualTex = useMemo(() => {
+    const out: Record<number, { tex?: DecodedTexture; error?: string; name: string }> = {};
+    for (const [g, k] of Object.entries(picks)) {
+      const c = textureChoices.find((x) => x.key === k); if (!c) continue;
+      try { out[Number(g)] = { tex: decodeTexture(c.p, c.idx), name: c.label }; } catch (e) { out[Number(g)] = { error: e instanceof Error ? e.message : String(e), name: c.label }; }
+    }
+    return out;
+  }, [picks, textureChoices]);
+  const textures = useMemo(() => matResults.map((m, i) => manualTex[i]?.tex ?? (m.ok ? m.texture : null)), [matResults, manualTex]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 space-y-6">
@@ -90,13 +112,13 @@ function L2Bridge() {
         <h1 className="font-display text-3xl">L2 Bridge Studio</h1>
         <p className="text-muted-foreground max-w-2xl text-sm">
           Pick files from your own Lineage II client. They are read in this browser only — nothing is uploaded or stored.
-          Static props (StaticMesh) are drawn with their real geometry. Characters from .ukx files are drawn in their rest pose, and textures from .utx files can be viewed on their own.
+          Static props (StaticMesh) are drawn with their real geometry. Characters from .ukx files are drawn in their rest pose with textures from any .utx files you add, and textures can be viewed on their own.
         </p>
       </header>
 
       <section className="rounded-lg border border-border bg-card/60 backdrop-blur p-4 flex flex-wrap items-end gap-4">
         <label className="text-sm space-y-1">
-          <span className="block font-mono text-xs text-muted-foreground">CLIENT FILES (.usx .ukx .utx .unr) · add .utx files for textures</span>
+          <span className="block font-mono text-xs text-muted-foreground">CLIENT FILES (.usx .ukx .utx .unr) · add .utx files to texture props and characters</span>
           <input type="file" multiple title="Pick the .usx props together with their .utx texture files" accept=".usx,.ukx,.utx,.unr,.u" disabled={busy}
             onChange={(e) => void ingest([...(e.target.files ?? [])])} className="text-sm" />
         </label>
@@ -144,13 +166,29 @@ function L2Bridge() {
                 : `MESH NOT DECODED · ${pkg?.exports[pick!]?.name}: ${"error" in decoded ? decoded.error : ""}`}
               {"mesh" in decoded && decoded.mesh ? (
                 <div className="mt-2 space-y-0.5">
-                  {isSkeletal ? <div className="text-muted-foreground">Drawn untextured in its rest pose; bones and animation are not read yet.</div> : null}
+                  {isSkeletal ? <div className="text-muted-foreground">Drawn in its rest pose; bones and animation are not read yet. Materials: {decoded.mesh.materialSource}.</div> : null}
                   {!isSkeletal && matResults.length === 0 ? <div className="text-muted-foreground">MATERIALS · none listed in this mesh — drawn untextured</div> : null}
-                  {matResults.map((m, i) => (
-                    <div key={i} className={m.ok ? "text-accent" : "text-muted-foreground"}>
-                      {`SECTION ${i} · `}{m.ok ? `${m.texture.name} · ${m.texture.format} ${m.texture.width}×${m.texture.height}${m.texture.hasAlpha ? " · alpha" : ""}` : `untextured — ${m.reason}`}
-                      {m.via.length > 1 ? <span className="text-muted-foreground">{` (${m.via.join(" → ")})`}</span> : null}
-                    </div>))}
+                  {matResults.map((m, i) => {
+                    const slot = decoded.mesh!.slots?.[i];
+                    const hand = manualTex[i];
+                    return (
+                      <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className={hand?.tex || (!hand && m.ok) ? "text-accent" : "text-muted-foreground"}>
+                          {`SECTION ${i}${slot != null && slot !== i ? ` (slot ${slot})` : ""} · `}
+                          {hand ? (hand.tex ? `${hand.tex.name} · picked by hand` : `picked texture not decoded — ${hand.error}`)
+                            : m.ok ? `${m.texture.name} · ${m.texture.format} ${m.texture.width}×${m.texture.height}${m.texture.hasAlpha ? " · alpha" : ""}` : `untextured — ${m.reason}`}
+                          {!hand && m.via.length > 1 ? <span className="text-muted-foreground">{` (${m.via.join(" → ")})`}</span> : null}
+                        </span>
+                        {textureChoices.length && (!m.ok || hand) ? (
+                          <select aria-label={`Texture for section ${i}`} value={picks[i] ?? ""}
+                            onChange={(e) => { const v = e.target.value; setManual({ key: meshKey, map: Object.fromEntries(Object.entries({ ...picks, [i]: v }).filter(([, x]) => x)) }); }}
+                            className="max-w-xs rounded border border-border bg-background px-1 py-0.5 font-mono text-xs text-foreground">
+                            <option value="">{hand ? "use the model's own material" : "pick a loaded texture…"}</option>
+                            {textureChoices.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                          </select>) : null}
+                      </div>);
+                  })}
+                  {matResults.some((m) => !m.ok) && !textureChoices.length ? <div className="text-muted-foreground">No textures loaded yet — add the matching .utx files to texture this model.</div> : null}
                   {!decoded.mesh.uvs && matResults.some((m) => m.ok) ? <div className="text-destructive">This mesh has no UVs, so textures cannot be placed.</div> : null}
                 </div>) : null}
             </div>
@@ -164,7 +202,7 @@ function L2Bridge() {
             <div className="rounded-lg border border-border bg-card/60 p-3 font-mono text-xs flex flex-wrap gap-2">
               {(Object.keys(s) as AssetCategory[]).filter((k) => s[k]).map((k) => (
                 <span key={k} title={CATEGORY_NOTE[k]} className={`rounded border px-2 py-0.5 ${k === "character" || k === "prop" ? "border-accent/50 text-accent" : "border-border text-muted-foreground"}`}>
-                  {k.toUpperCase()} {s[k].toLocaleString("en-US")}{k === "character" || k === "prop" ? "" : k === "texture" ? " · used by props" : " · unsupported"}
+                  {k.toUpperCase()} {s[k].toLocaleString("en-US")}{k === "character" || k === "prop" ? "" : k === "texture" ? " · used by models" : " · unsupported"}
                 </span>))}
               <span className="ml-auto flex gap-1">
                 {(["all", "3d", "unsupported"] as const).map((f) => (
@@ -187,7 +225,7 @@ function L2Bridge() {
           ) : null}
           <p className="text-xs text-muted-foreground">
             Reads plain Unreal 2 packages and the Lineage2Ver111/121 formats. Encrypted files (Ver2xx Blowfish, Ver41x RSA) are listed as unsupported with how to decrypt them locally.
-            StaticMesh geometry is decoded and drawn with its textures (DXT1/3/5, RGBA8, RGB8, L8 and paletted P8) found in any loaded file, following Shader, FinalBlend, Combiner and TexModifier materials; click a StaticMesh, SkeletalMesh or Texture row to view it. Lighting effects, scrolling and blending are not reproduced. Characters (.ukx SkeletalMesh) are drawn in their rest pose without textures or animation; textures from .utx files can be viewed on their own.
+            StaticMesh geometry is decoded and drawn with its textures (DXT1/3/5, RGBA8, RGB8, L8 and paletted P8) found in any loaded file, following Shader, FinalBlend, Combiner and TexModifier materials; click a StaticMesh, SkeletalMesh or Texture row to view it. Lighting effects, scrolling and blending are not reproduced. Characters (.ukx SkeletalMesh) are drawn in their rest pose without animation, textured from their own material list; when a section's material can't be matched the reason is shown and you can pick a loaded texture for it by hand.
           </p>
         </section>
       </div>

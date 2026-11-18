@@ -5,10 +5,14 @@
  * 10 B) and Faces (u16 wedge×3 + u8 mat + u8 aux + u32 smoothing, 12 B). Each array is fully
  * cross-checked (indices in range, finite values), so a wrong guess fails instead of drawing garbage.
  * Bones, weights and animation are not read: the model is shown in its bind (rest) pose.
+ * Materials: faces are grouped by their material slot; the slot list comes from a Materials/Textures/
+ * Skins property, else from the ULodMesh binary Textures array (compact count + object refs that all
+ * point at material classes) found before the points. Slot N uses list entry N. Anything that cannot
+ * be matched is reported per section instead of guessed.
  */
 import type { Ue2Package } from "./ue2-package";
-import type { DecodedMesh } from "./ue2-staticmesh";
-import { R, readProps } from "./ue2-props";
+import { readMaterialList, type DecodedMesh } from "./ue2-staticmesh";
+import { R, readProps, type Prop } from "./ue2-props";
 
 export const SKELETAL_CLASSES = /^(SkeletalMesh|LodMesh|VertMesh|Mesh)$/;
 const MAX_SCAN = 32 * 1024 * 1024;
@@ -47,6 +51,34 @@ function faces(b: Uint8Array, dv: DataView, p: number, end: number, nW: number) 
   return { n: c.v, start: s, end: e };
 }
 
+export const MATERIAL_CLASS = /^(Texture|Shader|FinalBlend|Combiner|Tex[A-Z]\w*|Material\w*|ConstantColor|ColorModifier|OpacityModifier|Cubemap|FadeColor|VertexColor|ParticleMaterial|ScriptedTexture)$/;
+
+function classOfRef(pkg: Ue2Package, ref: number): string | null {
+  if (ref > 0) return pkg.exports[ref - 1]?.className ?? null;
+  if (ref < 0) return pkg.imports?.[-ref - 1]?.className ?? null;
+  return null;
+}
+
+/** First compact-count list of object refs in [start,end) whose every non-empty entry is a material class. */
+export function scanMaterialList(pkg: Ue2Package, start: number, end: number, minSlots: number): number[] | null {
+  if (!pkg.data) return null;
+  for (let p = start; p < end - 1; p++) {
+    try {
+      const r = new R(pkg.data, p, end);
+      const n = r.compact();
+      if (n < Math.max(1, minSlots) || n > 64) continue;
+      const refs: number[] = [];
+      for (let i = 0; i < n; i++) {
+        const ref = r.compact();
+        if (ref !== 0) { const c = classOfRef(pkg, ref); if (!c || !MATERIAL_CLASS.test(c)) break; }
+        refs.push(ref);
+      }
+      if (refs.length === n && refs.some((x) => x !== 0)) return refs;
+    } catch { /* ran past the end */ }
+  }
+  return null;
+}
+
 /** Find Points → Wedges → Faces inside [start,end). Returns the candidate with the most faces. */
 export function scanSkeletal(b: Uint8Array, start: number, end: number) {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
@@ -76,10 +108,12 @@ export function decodeSkeletalMesh(pkg: Ue2Package, exportIndex: number): Decode
   if (e.size > MAX_SCAN) throw new Error("object is too large to scan in the browser");
   const end = e.offset + e.size;
   const head = new R(pkg.data, e.offset, end);
-  try { readProps(head, pkg.names); } catch { head.pos = e.offset; }
+  let props = new Map<string, Prop>();
+  try { props = readProps(head, pkg.names); } catch { head.pos = e.offset; }
   const hit = scanSkeletal(pkg.data, head.pos, end);
   if (!hit) throw new Error("could not find points, wedges and faces in this mesh — this layout is not supported yet");
-  const dv = new DataView(pkg.data.buffer, pkg.data.byteOffset, pkg.data.byteLength);
+  const data = pkg.data;
+  const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const nW = hit.w.n, positions = new Float32Array(nW * 3), uvs = new Float32Array(nW * 2);
   let rad = 0;
   for (let i = 0; i < nW; i++) {
@@ -89,12 +123,18 @@ export function decodeSkeletalMesh(pkg: Ue2Package, exportIndex: number): Decode
     uvs[i * 2] = dv.getFloat32(o + 2, true); uvs[i * 2 + 1] = dv.getFloat32(o + 6, true);
     rad = Math.max(rad, Math.hypot(x, y, z));
   }
-  const nF = hit.f.n, indices = new Uint32Array(nF * 3), mats: number[] = [];
-  for (let i = 0; i < nF; i++) {
-    const o = hit.f.start + i * 12;
-    indices[i * 3] = dv.getUint16(o, true); indices[i * 3 + 1] = dv.getUint16(o + 4, true); indices[i * 3 + 2] = dv.getUint16(o + 2, true); // flip winding for Y-up
-    mats.push(pkg.data[o + 6]!);
-  }
+  // Faces sorted by material slot so each slot is one contiguous draw group.
+  const nF = hit.f.n, indices = new Uint32Array(nF * 3);
+  const matOf = (f: number) => data[hit.f.start + f * 12 + 6]!;
+  const order = Array.from({ length: nF }, (_, i) => i).sort((a, b) => matOf(a) - matOf(b) || a - b);
+  const groups: { start: number; count: number }[] = [], slots: number[] = [];
+  order.forEach((f, k) => {
+    const o = hit.f.start + f * 12;
+    indices[k * 3] = dv.getUint16(o, true); indices[k * 3 + 1] = dv.getUint16(o + 4, true); indices[k * 3 + 2] = dv.getUint16(o + 2, true); // flip winding for Y-up
+    const m = matOf(f);
+    if (slots[slots.length - 1] !== m) { slots.push(m); groups.push({ start: k * 3, count: 0 }); }
+    groups[groups.length - 1]!.count += 3;
+  });
   const normals = new Float32Array(nW * 3);
   for (let i = 0; i < nF * 3; i += 3) {
     const [a, b, c] = [indices[i]! * 3, indices[i + 1]! * 3, indices[i + 2]! * 3];
@@ -104,6 +144,20 @@ export function decodeSkeletalMesh(pkg: Ue2Package, exportIndex: number): Decode
     for (const k of [a, b, c]) { normals[k]! += nx; normals[k + 1]! += ny; normals[k + 2]! += nz; }
   }
   for (let i = 0; i < nW; i++) { const l = Math.hypot(normals[i * 3]!, normals[i * 3 + 1]!, normals[i * 3 + 2]!) || 1; normals[i * 3]! /= l; normals[i * 3 + 1]! /= l; normals[i * 3 + 2]! /= l; }
-  const sections = new Set(mats).size;
-  return { name: e.name, positions, normals, uvs, indices, sections, vertexCount: hit.pts.n, triangleCount: nF, radius: rad, groups: [], materials: [] };
+
+  const maxSlot = slots.length ? slots[slots.length - 1]! : 0;
+  let list: number[] | null = null, listFrom = "";
+  for (const k of ["Materials", "Textures", "Skins"]) { const l = readMaterialList(pkg, props.get(k)); if (l.length) { list = l; listFrom = `${k} property`; break; } }
+  if (!list) { list = scanMaterialList(pkg, head.pos, hit.pts.start, maxSlot + 1) ?? scanMaterialList(pkg, head.pos, hit.pts.start, 1); if (list) listFrom = "mesh Textures list"; }
+  const materials: number[] = [], materialIssues: (string | null)[] = [];
+  for (const s of slots) {
+    if (!list) { materials.push(0); materialIssues.push("this model's material list could not be found in its data. Lineage II often assigns character skins from the game's item data at run time, so pick a texture by hand"); continue; }
+    if (s >= list.length) { materials.push(0); materialIssues.push(`faces use material slot ${s}, but the model lists only ${list.length} material${list.length === 1 ? "" : "s"}`); continue; }
+    if (list[s] === 0) { materials.push(0); materialIssues.push(`material slot ${s} is empty in the model`); continue; }
+    materials.push(list[s]!); materialIssues.push(null);
+  }
+  return {
+    name: e.name, positions, normals, uvs, indices, sections: slots.length, vertexCount: hit.pts.n, triangleCount: nF, radius: rad,
+    groups, materials, slots, materialIssues, materialSource: list ? `${list.length} material${list.length === 1 ? "" : "s"} from the ${listFrom}` : "no material list found",
+  };
 }
