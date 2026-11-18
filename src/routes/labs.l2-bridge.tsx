@@ -1,12 +1,13 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { indexEntries, fromFileList, fromDirectoryHandle, missingUtx, isLocalBridgeUrl, type FolderEntry, type ServerStatus } from "@/lib/l2/game-folder";
+import { indexEntries, fromFileList, fromDirectoryHandle, missingUtx, type FolderEntry } from "@/lib/l2/game-folder";
 import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
 import { decodeStaticMesh } from "@/lib/l2/ue2-staticmesh";
 import { decodeSkeletalMesh, SKELETAL_CLASSES } from "@/lib/l2/ue2-skeletal";
 import { decodeTexture, resolveMaterial, type DecodedTexture, type MaterialResult } from "@/lib/l2/ue2-texture";
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
+import L2LoginPanel from "@/components/l2/L2LoginPanel";
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
 
 export const Route = createFileRoute("/labs/l2-bridge")({
@@ -182,7 +183,7 @@ function L2Bridge() {
           </div>
         </section>
       ) : null}
-      <GameServerPanel />
+      <ClientOnly fallback={null}><L2LoginPanel /></ClientOnly>
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <aside className="rounded-lg border border-border bg-card/60 p-3 max-h-[560px] overflow-auto space-y-1">
@@ -286,34 +287,3 @@ function L2Bridge() {
   );
 }
 
-function GameServerPanel() {
-  const [url, setUrl] = useState("ws://localhost:8888");
-  const [status, setStatus] = useState<ServerStatus>("idle");
-  const [note, setNote] = useState("");
-  const ws = useRef<WebSocket | null>(null);
-  useEffect(() => () => ws.current?.close(), []);
-  function connect() {
-    if (!isLocalBridgeUrl(url)) { setStatus("error"); setNote("Only a bridge on this computer (localhost) is allowed."); return; }
-    ws.current?.close();
-    setStatus("connecting"); setNote("");
-    const s = new WebSocket(url); s.binaryType = "arraybuffer"; ws.current = s;
-    let bytes = 0;
-    s.onopen = () => { setStatus("open"); setNote("Connected. Waiting for the server's first packet…"); };
-    s.onmessage = (m) => { bytes += m.data instanceof ArrayBuffer ? m.data.byteLength : String(m.data).length; setNote(`Receiving from your server · ${bytes.toLocaleString("en-US")} bytes`); };
-    s.onerror = () => { setStatus("error"); setNote("Couldn't reach it. Is your server and its WebSocket bridge running?"); };
-    s.onclose = () => setStatus((x) => (x === "error" ? x : "closed"));
-  }
-  const tone = status === "open" ? "text-accent" : status === "error" ? "text-destructive" : "text-muted-foreground";
-  return (
-    <section className="rounded-lg border border-border bg-card/60 p-4 space-y-2">
-      <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-        <span>YOUR LOCAL GAMESERVER</span>
-        <input value={url} onChange={(e) => setUrl(e.target.value)} className="w-56 rounded border border-border bg-background px-2 py-1" />
-        {status === "open" ? <button onClick={() => ws.current?.close()} className="rounded border border-border px-2 py-1 hover:bg-muted">DISCONNECT</button>
-          : <button onClick={connect} className="rounded border border-primary px-2 py-1 text-primary hover:bg-primary/10">CONNECT</button>}
-        <span className={tone}>{status.toUpperCase()}</span>
-      </div>
-      <p className="text-xs text-muted-foreground">{note || "Run your own L2J server on this computer with a WebSocket bridge in front of its login port. Browsers can't open its raw ports directly. This site never relays or stores game traffic."}</p>
-    </section>
-  );
-}
