@@ -19,6 +19,10 @@ export interface Ue2Package {
   importCount: number;
   /** Decoded package body (offsets in exports point here). */
   data?: Uint8Array;
+  /** Import table: object name, class and outer (0 = top level, <0 = import, >0 = export). */
+  imports?: { name: string; className: string; outer: number }[];
+  /** Source file name. */
+  file?: string;
 }
 
 /** Why an envelope cannot be read here, in plain words, plus what the visitor can do. */
@@ -119,9 +123,10 @@ export function readPackage(bytes: Uint8Array, fileName: string): Ue2Package {
   for (let i = 0; i < nameCount; i++) { names.push(r.str(version)); r.u32(); }
 
   r.seek(importOffset);
-  const importClass: string[] = [], importName: string[] = [];
+  const imports: { name: string; className: string; outer: number }[] = [];
   for (let i = 0; i < importCount; i++) {
-    r.compact(); importClass.push(names[r.compact()] ?? "?"); r.i32(); importName.push(names[r.compact()] ?? "?");
+    r.compact(); const className = names[r.compact()] ?? "?"; const outer = r.i32(); const name = names[r.compact()] ?? "?";
+    imports.push({ name, className, outer });
   }
 
   r.seek(exportOffset);
@@ -136,9 +141,9 @@ export function readPackage(bytes: Uint8Array, fileName: string): Ue2Package {
   }
   const exports = raw.map((e, i) => ({
     index: i, name: e.name, size: e.size, offset: e.offset,
-    className: e.cls === 0 ? "Class" : e.cls < 0 ? importName[-e.cls - 1] ?? "?" : raw[e.cls - 1]?.name ?? "?",
+    className: e.cls === 0 ? "Class" : e.cls < 0 ? imports[-e.cls - 1]?.name ?? "?" : raw[e.cls - 1]?.name ?? "?",
   }));
-  return { envelope: env.kind, version, licensee, names, exports, importCount, data: env.data };
+  return { envelope: env.kind, version, licensee, names, exports, importCount, data: env.data, imports, file: fileName };
 }
 
 /** What the bridge does with each UE2 class. Only "character" and "prop" are placed in 3D. */
@@ -155,9 +160,9 @@ export function categoryFor(className: string): AssetCategory {
 }
 export const CATEGORY_NOTE: Record<AssetCategory, string> = {
   character: "Shown as a BITMAP Guardian (original geometry not drawn)",
-  prop: "Real geometry decoded and drawn (click the row)",
+  prop: "Real geometry and textures decoded and drawn (click the row)",
   animation: "Unsupported: animation tracks are listed only",
-  texture: "Unsupported: textures/materials are listed only",
+  texture: "Applied to props that use it (Texture, Shader, FinalBlend, Combiner, TexModifier); not shown on its own",
   sound: "Unsupported: audio is listed only",
   world: "Unsupported: map/level geometry is listed only",
   code: "Unsupported: script/class code is listed only",

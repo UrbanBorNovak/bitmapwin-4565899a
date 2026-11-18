@@ -2,6 +2,7 @@ import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
 import { decodeStaticMesh } from "@/lib/l2/ue2-staticmesh";
+import { resolveMaterial, type MaterialResult } from "@/lib/l2/ue2-texture";
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
@@ -40,7 +41,14 @@ function L2Bridge() {
       try { out.push({ file: f.name, pkg: readPackage(bytes, f.name) }); }
       catch (e) { out.push({ file: f.name, badge: "PARSE ERROR", error: e instanceof Error ? e.message : String(e) }); }
     }
-    setLoaded(out); setActive(out.findIndex((l) => l.pkg)); setBusy(false);
+    setLoaded((prev) => {
+      const keep = prev.filter((p) => !out.some((o) => o.file === p.file));
+      const next = [...keep, ...out];
+      const firstNew = next.findIndex((l) => l.pkg && out.some((o) => o.file === l.file) && l.pkg.exports.some((e) => e.className === "StaticMesh"));
+      setActive((a) => (firstNew >= 0 ? firstNew : a != null && a >= 0 ? a : next.findIndex((l) => l.pkg)));
+      return next;
+    });
+    setBusy(false);
   }
 
   const [filter, setFilter] = useState<"all" | "3d" | "unsupported">("all");
@@ -58,6 +66,12 @@ function L2Bridge() {
     if (!pkg || pick == null) return null;
     try { return { mesh: decodeStaticMesh(pkg, pick) }; } catch (e) { return { error: e instanceof Error ? e.message : String(e) }; }
   }, [pkg, pick]);
+  const allPkgs = useMemo(() => loaded.flatMap((l) => (l.pkg ? [l.pkg] : [])), [loaded]);
+  const matResults: MaterialResult[] = useMemo(() => {
+    if (!pkg || !decoded || !("mesh" in decoded) || !decoded.mesh) return [];
+    return decoded.mesh.materials.map((ref) => resolveMaterial(allPkgs, pkg, ref));
+  }, [decoded, pkg, allPkgs]);
+  const textures = useMemo(() => matResults.map((m) => (m.ok ? m.texture : null)), [matResults]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 space-y-6">
@@ -72,8 +86,8 @@ function L2Bridge() {
 
       <section className="rounded-lg border border-border bg-card/60 backdrop-blur p-4 flex flex-wrap items-end gap-4">
         <label className="text-sm space-y-1">
-          <span className="block font-mono text-xs text-muted-foreground">CLIENT FILES (.usx .ukx .utx .unr)</span>
-          <input type="file" multiple accept=".usx,.ukx,.utx,.unr,.u" disabled={busy}
+          <span className="block font-mono text-xs text-muted-foreground">CLIENT FILES (.usx .ukx .utx .unr) · add .utx files for textures</span>
+          <input type="file" multiple title="Pick the .usx props together with their .utx texture files" accept=".usx,.ukx,.utx,.unr,.u" disabled={busy}
             onChange={(e) => void ingest([...(e.target.files ?? [])])} className="text-sm" />
         </label>
         <label className="text-sm space-y-1">
@@ -81,6 +95,7 @@ function L2Bridge() {
           <input type="number" min={0} value={height} onChange={(e) => setHeight(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
             className="w-32 rounded border border-border bg-background px-2 py-1 font-mono" />
         </label>
+        {loaded.length ? <button onClick={() => { setLoaded([]); setActive(null); setMeshIdx(null); }} className="rounded border border-border px-2 py-1 font-mono text-xs hover:bg-muted">CLEAR FILES</button> : null}
         {busy ? <span className="font-mono text-xs text-accent">READING…</span> : null}
       </section>
 
@@ -88,7 +103,7 @@ function L2Bridge() {
         <aside className="rounded-lg border border-border bg-card/60 p-3 max-h-[560px] overflow-auto space-y-1">
           {loaded.length === 0 ? <p className="text-sm text-muted-foreground">No files yet. Pick some from your Lineage II folder (e.g. StaticMeshes, Animations).</p> : null}
           {loaded.map((l, i) => (
-            <button key={l.file + i} onClick={() => l.pkg && setActive(i)}
+            <button key={l.file + i} onClick={() => { if (l.pkg) { setActive(i); setMeshIdx(null); } }}
               className={`w-full text-left rounded px-2 py-1 font-mono text-xs ${i === active ? "bg-primary/15 text-primary" : "hover:bg-muted"}`}>
               <div className="truncate">{l.file}</div>
               <div className="text-muted-foreground">
@@ -102,14 +117,24 @@ function L2Bridge() {
         <section className="space-y-3">
           <div className="h-[460px] rounded-lg border border-border overflow-hidden">
             <ClientOnly fallback={<div className="h-full" />}>
-              <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} mesh={decoded && "mesh" in decoded ? decoded.mesh : null} /></Suspense>
+              <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} mesh={decoded && "mesh" in decoded ? decoded.mesh : null} textures={textures} /></Suspense>
             </ClientOnly>
           </div>
           {decoded ? (
             <div className={`rounded-lg border bg-card/60 p-3 font-mono text-xs ${"mesh" in decoded ? "border-accent/50" : "border-destructive/40 text-destructive"}`}>
               {"mesh" in decoded && decoded.mesh
-                ? `REAL MESH · ${decoded.mesh.name} · ${decoded.mesh.vertexCount.toLocaleString("en-US")} vertices · ${decoded.mesh.triangleCount.toLocaleString("en-US")} triangles · ${decoded.mesh.sections.toLocaleString("en-US")} sections${decoded.mesh.uvs ? " · UVs" : ""} (untextured)`
+                ? `REAL MESH · ${decoded.mesh.name} · ${decoded.mesh.vertexCount.toLocaleString("en-US")} vertices · ${decoded.mesh.triangleCount.toLocaleString("en-US")} triangles · ${decoded.mesh.sections.toLocaleString("en-US")} sections${decoded.mesh.uvs ? " · UVs" : ""} `
                 : `MESH NOT DECODED · ${pkg?.exports[pick!]?.name}: ${"error" in decoded ? decoded.error : ""}`}
+              {"mesh" in decoded && decoded.mesh ? (
+                <div className="mt-2 space-y-0.5">
+                  {matResults.length === 0 ? <div className="text-muted-foreground">MATERIALS · none listed in this mesh — drawn untextured</div> : null}
+                  {matResults.map((m, i) => (
+                    <div key={i} className={m.ok ? "text-accent" : "text-muted-foreground"}>
+                      {`SECTION ${i} · `}{m.ok ? `${m.texture.name} · ${m.texture.format} ${m.texture.width}×${m.texture.height}${m.texture.hasAlpha ? " · alpha" : ""}` : `untextured — ${m.reason}`}
+                      {m.via.length > 1 ? <span className="text-muted-foreground">{` (${m.via.join(" → ")})`}</span> : null}
+                    </div>))}
+                  {!decoded.mesh.uvs && matResults.some((m) => m.ok) ? <div className="text-destructive">This mesh has no UVs, so textures cannot be placed.</div> : null}
+                </div>) : null}
             </div>
           ) : null}
           {skipped.length ? (
@@ -121,7 +146,7 @@ function L2Bridge() {
             <div className="rounded-lg border border-border bg-card/60 p-3 font-mono text-xs flex flex-wrap gap-2">
               {(Object.keys(s) as AssetCategory[]).filter((k) => s[k]).map((k) => (
                 <span key={k} title={CATEGORY_NOTE[k]} className={`rounded border px-2 py-0.5 ${k === "character" || k === "prop" ? "border-accent/50 text-accent" : "border-border text-muted-foreground"}`}>
-                  {k.toUpperCase()} {s[k].toLocaleString("en-US")}{k === "character" || k === "prop" ? "" : " · unsupported"}
+                  {k.toUpperCase()} {s[k].toLocaleString("en-US")}{k === "character" || k === "prop" ? "" : k === "texture" ? " · used by props" : " · unsupported"}
                 </span>))}
               <span className="ml-auto flex gap-1">
                 {(["all", "3d", "unsupported"] as const).map((f) => (
@@ -144,7 +169,7 @@ function L2Bridge() {
           ) : null}
           <p className="text-xs text-muted-foreground">
             Reads plain Unreal 2 packages and the Lineage2Ver111/121 formats. Encrypted files (Ver2xx Blowfish, Ver41x RSA) are listed as unsupported with how to decrypt them locally.
-            StaticMesh geometry is decoded and drawn without textures; click a StaticMesh row to view it. Skeletal characters are not decoded yet and appear as Guardians.
+            StaticMesh geometry is decoded and drawn with its textures (DXT1/3/5, RGBA8, RGB8, L8 and paletted P8) found in any loaded file, following Shader, FinalBlend, Combiner and TexModifier materials; click a StaticMesh row to view it. Lighting effects, scrolling and blending are not reproduced. Skeletal characters are not decoded yet and appear as Guardians.
           </p>
         </section>
       </div>

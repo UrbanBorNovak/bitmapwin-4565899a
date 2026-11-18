@@ -6,6 +6,8 @@
  * fails with a clear message instead of drawing garbage.
  */
 import type { Ue2Package } from "./ue2-package";
+import { R, readProps, PT, type Prop } from "./ue2-props";
+export { skipProperties } from "./ue2-props";
 
 export interface DecodedMesh {
   name: string;
@@ -17,53 +19,21 @@ export interface DecodedMesh {
   vertexCount: number;
   triangleCount: number;
   radius: number;
+  /** Index ranges per section (section i uses materials[i]); empty when ranges look wrong. */
+  groups: { start: number; count: number }[];
+  /** Object references from the mesh's Materials list (0 = none). */
+  materials: number[];
 }
 
 const MAX_VERTS = 2_000_000;
-
-class R {
-  pos: number; dv: DataView;
-  constructor(public b: Uint8Array, start: number, public end: number) { this.pos = start; this.dv = new DataView(b.buffer, b.byteOffset, b.byteLength); }
-  need(n: number) { if (n < 0 || this.pos + n > this.end) throw new Error(`mesh data ends early at byte ${this.pos}`); }
-  u8() { this.need(1); return this.b[this.pos++]!; }
-  u16() { this.need(2); const v = this.dv.getUint16(this.pos, true); this.pos += 2; return v; }
-  i32() { this.need(4); const v = this.dv.getInt32(this.pos, true); this.pos += 4; return v; }
-  f32() { this.need(4); const v = this.dv.getFloat32(this.pos, true); this.pos += 4; return v; }
-  skip(n: number) { this.need(n); this.pos += n; }
-  compact(): number {
-    const b0 = this.u8(); let v = b0 & 0x3f;
-    if (b0 & 0x40) { let s = 6; for (let i = 0; i < 4; i++) { const b = this.u8(); v |= (b & 0x7f) << s; s += 7; if (!(b & 0x80)) break; } }
-    return b0 & 0x80 ? -v : v;
-  }
-  count(what: string, elemBytes: number, max = MAX_VERTS): number {
-    const n = this.compact();
-    if (n < 0 || n > max || this.pos + n * elemBytes > this.end) throw new Error(`${what} count ${n} looks wrong — this StaticMesh layout is not supported yet`);
-    return n;
-  }
-}
-
-/** Skip UE2 tagged properties up to the "None" terminator. */
-export function skipProperties(r: R, names: string[]) {
-  for (let guard = 0; guard < 4096; guard++) {
-    const name = names[r.compact()];
-    if (name === undefined) throw new Error("property name index out of range");
-    if (name === "None") return;
-    const info = r.u8();
-    const type = info & 0x0f, sizeCode = (info >> 4) & 7, isArray = (info & 0x80) !== 0;
-    if (type === 10) r.compact(); // struct name
-    const size = [1, 2, 4, 12, 16][sizeCode] ?? (sizeCode === 5 ? r.u8() : sizeCode === 6 ? r.u16() : r.i32());
-    if (isArray && type !== 3) { const b = r.u8(); if (b & 0x80) r.skip(b & 0x40 ? 3 : 1); }
-    if (type !== 3) r.skip(size);
-  }
-  throw new Error("too many properties");
-}
 
 function tryLayout(r: R, name: string, extraAfterBounds: number): DecodedMesh {
   r.skip(25 + 16); // UPrimitive: FBox + FSphere
   r.skip(extraAfterBounds);
   const nSec = r.count("section", 14, 4096);
   if (nSec === 0) throw new Error("mesh has no sections");
-  r.skip(nSec * 14);
+  const secs: { first: number; faces: number }[] = [];
+  for (let i = 0; i < nSec; i++) { r.i32(); const first = r.u16(); r.u16(); r.u16(); r.u16(); const faces = r.u16(); secs.push({ first, faces }); }
   r.skip(25); // FBox
   const nV = r.count("vertex", 24);
   if (nV === 0) throw new Error("mesh has no vertices");
@@ -91,7 +61,9 @@ function tryLayout(r: R, name: string, extraAfterBounds: number): DecodedMesh {
   const tri = Math.floor(nI / 3);
   const indices = new Uint32Array(tri * 3);
   for (let i = 0; i < nI; i++) { const v = r.u16(); if (i < tri * 3) { if (v >= nV) throw new Error("triangle points past the vertex list"); indices[i] = v; } }
-  return { name, positions, normals, uvs, indices, sections: nSec, vertexCount: nV, triangleCount: tri, radius: rad };
+  const groups = secs.map((x) => ({ start: x.first, count: x.faces * 3 }));
+  const ok = groups.every((g) => g.count > 0 && g.start + g.count <= tri * 3);
+  return { name, positions, normals, uvs, indices, sections: nSec, vertexCount: nV, triangleCount: tri, radius: rad, groups: ok ? groups : [], materials: [] };
 }
 
 /** Decode one StaticMesh export from a decoded package body. */
@@ -102,11 +74,39 @@ export function decodeStaticMesh(pkg: Ue2Package, exportIndex: number): DecodedM
   if (!pkg.data || e.size <= 0 || e.offset + e.size > pkg.data.length) throw new Error("object data is outside the file");
   const end = e.offset + e.size;
   const head = new R(pkg.data, e.offset, end);
-  skipProperties(head, pkg.names);
+  const props = readProps(head, pkg.names);
   let last: unknown;
   // Lineage II licensee builds add a few words after the bounds; try the common layouts.
   for (const extra of [0, 4, 8, 12, 16]) {
-    try { return tryLayout(new R(pkg.data, head.pos, end), e.name, extra); } catch (err) { last = err; }
+    try { const m = tryLayout(new R(pkg.data, head.pos, end), e.name, extra); m.materials = readMaterialList(pkg, props.get("Materials")); return m; } catch (err) { last = err; }
   }
   throw last instanceof Error ? last : new Error("could not decode mesh");
+}
+
+/**
+ * Materials is an array of StaticMeshMaterial { Material, EnableCollision, ... }.
+ * Elements are read either as tagged properties or as packed binary (object ref + fixed tail);
+ * the binary tail width is chosen only when it consumes the array exactly.
+ */
+export function readMaterialList(pkg: Ue2Package, prop: Prop | undefined): number[] {
+  if (!prop || prop.type !== PT.array || !pkg.data) return [];
+  const end = prop.offset + prop.size;
+  try {
+    const r = new R(pkg.data, prop.offset, end);
+    const n = r.compact();
+    if (n <= 0 || n > 256) return [];
+    const start = r.pos;
+    const peek = new R(pkg.data, start, end);
+    if (pkg.names[peek.compact()] === "Material") {
+      const out: number[] = [];
+      for (let i = 0; i < n; i++) out.push(readProps(r, pkg.names).get("Material")?.value ?? 0);
+      return out;
+    }
+    for (const tail of [1, 4, 0, 2, 5, 8]) {
+      const t = new R(pkg.data, start, end); const out: number[] = [];
+      try { for (let i = 0; i < n; i++) { out.push(t.compact()); t.skip(tail); } } catch { continue; }
+      if (t.pos === end) return out;
+    }
+  } catch { /* unreadable list → untextured */ }
+  return [];
 }
