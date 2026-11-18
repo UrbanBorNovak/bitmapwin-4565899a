@@ -159,10 +159,10 @@ export function categoryFor(className: string): AssetCategory {
   return "other";
 }
 export const CATEGORY_NOTE: Record<AssetCategory, string> = {
-  character: "Shown as a BITMAP Guardian (original geometry not drawn)",
+  character: "Rest-pose geometry decoded and drawn (click the row); no animation yet",
   prop: "Real geometry and textures decoded and drawn (click the row)",
   animation: "Unsupported: animation tracks are listed only",
-  texture: "Applied to props that use it (Texture, Shader, FinalBlend, Combiner, TexModifier); not shown on its own",
+  texture: "Applied to props; plain Texture rows can be clicked to view on their own",
   sound: "Unsupported: audio is listed only",
   world: "Unsupported: map/level geometry is listed only",
   code: "Unsupported: script/class code is listed only",

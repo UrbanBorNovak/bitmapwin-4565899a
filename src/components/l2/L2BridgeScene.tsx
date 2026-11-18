@@ -62,8 +62,24 @@ function RealMesh({ mesh, textures }: { mesh: DecodedMesh; textures: (DecodedTex
   );
 }
 
+function TexturePanel({ t }: { t: DecodedTexture }) {
+  const tex = useMemo(() => {
+    const x = new THREE.DataTexture(t.rgba, t.width, t.height, THREE.RGBAFormat);
+    x.colorSpace = THREE.SRGBColorSpace; x.magFilter = THREE.LinearFilter; x.minFilter = THREE.LinearMipmapLinearFilter; x.generateMipmaps = true; x.flipY = false; x.needsUpdate = true;
+    return x;
+  }, [t]);
+  useEffect(() => () => tex.dispose(), [tex]);
+  const k = 4 / Math.max(t.width, t.height);
+  return (
+    <mesh position={[0, (t.height * k) / 2 + 0.2, 0]} scale={[1, -1, 1]}>
+      <planeGeometry args={[t.width * k, t.height * k]} />
+      <meshBasicMaterial map={tex} side={THREE.DoubleSide} alphaTest={t.hasAlpha ? 0.5 : 0} toneMapped={false} />
+    </mesh>
+  );
+}
+
 /** Decoded L2 actors laid out in a row, each replaced by its Bitcoin model. */
-export default function L2BridgeScene({ actors, guardianHeight, mesh, textures = [] }: { actors: BridgeActor[]; guardianHeight: number; mesh?: DecodedMesh | null; textures?: (DecodedTexture | null)[] }) {
+export default function L2BridgeScene({ actors, guardianHeight, mesh, textures = [], texture = null }: { actors: BridgeActor[]; guardianHeight: number; mesh?: DecodedMesh | null; textures?: (DecodedTexture | null)[]; texture?: DecodedTexture | null }) {
   const shown = actors.filter((a) => a.target !== "keep").slice(0, 12);
   return (
     <SafeCanvas camera={{ position: [0, 4, 9], fov: 45 }} shadows>
@@ -72,7 +88,7 @@ export default function L2BridgeScene({ actors, guardianHeight, mesh, textures =
       <directionalLight position={[5, 8, 4]} intensity={1.6} castShadow />
       <Grid args={[40, 40]} cellColor="#1d3640" sectionColor="#2bd4e6" fadeDistance={30} infiniteGrid />
       <Suspense fallback={null}>
-        {mesh ? <RealMesh mesh={mesh} textures={textures} /> : shown.length === 0 ? <Guardian height={guardianHeight} position={[0, 0, 0]} /> : shown.map((a, i) => {
+        {texture ? <TexturePanel t={texture} /> : mesh ? <RealMesh mesh={mesh} textures={textures} /> : shown.length === 0 ? <Guardian height={guardianHeight} position={[0, 0, 0]} /> : shown.map((a, i) => {
           const x = (i - (shown.length - 1) / 2) * 2.4;
           return a.target === "guardian"
             ? <Guardian key={a.key} height={guardianHeight + i} position={[x, 0, 0]} />

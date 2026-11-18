@@ -2,7 +2,8 @@ import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { readPackage, swapTargetFor, detectEnvelope, envelopeHelp, categoryFor, summarize, CATEGORY_NOTE, type AssetCategory, type Ue2Package } from "@/lib/l2/ue2-package";
 import { decodeStaticMesh } from "@/lib/l2/ue2-staticmesh";
-import { resolveMaterial, type MaterialResult } from "@/lib/l2/ue2-texture";
+import { decodeSkeletalMesh, SKELETAL_CLASSES } from "@/lib/l2/ue2-skeletal";
+import { decodeTexture, resolveMaterial, type MaterialResult } from "@/lib/l2/ue2-texture";
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
@@ -60,12 +61,21 @@ function L2Bridge() {
   );
 
   const [meshIdx, setMeshIdx] = useState<number | null>(null);
-  const firstMesh = pkg?.exports.find((e) => e.className === "StaticMesh")?.index ?? null;
-  const pick = meshIdx != null && pkg?.exports[meshIdx]?.className === "StaticMesh" ? meshIdx : firstMesh;
+  const viewable = (c: string) => c === "StaticMesh" || SKELETAL_CLASSES.test(c) || c === "Texture";
+  const firstMesh = pkg?.exports.find((e) => e.className === "StaticMesh" || SKELETAL_CLASSES.test(e.className))?.index
+    ?? pkg?.exports.find((e) => e.className === "Texture")?.index ?? null;
+  const pick = meshIdx != null && pkg?.exports[meshIdx] && viewable(pkg.exports[meshIdx]!.className) ? meshIdx : firstMesh;
+  const pickClass = pick != null ? pkg?.exports[pick]?.className ?? "" : "";
+  const isTexture = pickClass === "Texture";
+  const isSkeletal = SKELETAL_CLASSES.test(pickClass);
   const decoded = useMemo(() => {
-    if (!pkg || pick == null) return null;
-    try { return { mesh: decodeStaticMesh(pkg, pick) }; } catch (e) { return { error: e instanceof Error ? e.message : String(e) }; }
-  }, [pkg, pick]);
+    if (!pkg || pick == null || isTexture) return null;
+    try { return { mesh: isSkeletal ? decodeSkeletalMesh(pkg, pick) : decodeStaticMesh(pkg, pick) }; } catch (e) { return { error: e instanceof Error ? e.message : String(e) }; }
+  }, [pkg, pick, isTexture, isSkeletal]);
+  const shownTexture = useMemo(() => {
+    if (!pkg || pick == null || !isTexture) return null;
+    try { return { tex: decodeTexture(pkg, pick) }; } catch (e) { return { error: e instanceof Error ? e.message : String(e) }; }
+  }, [pkg, pick, isTexture]);
   const allPkgs = useMemo(() => loaded.flatMap((l) => (l.pkg ? [l.pkg] : [])), [loaded]);
   const matResults: MaterialResult[] = useMemo(() => {
     if (!pkg || !decoded || !("mesh" in decoded) || !decoded.mesh) return [];
@@ -80,7 +90,7 @@ function L2Bridge() {
         <h1 className="font-display text-3xl">L2 Bridge Studio</h1>
         <p className="text-muted-foreground max-w-2xl text-sm">
           Pick files from your own Lineage II client. They are read in this browser only — nothing is uploaded or stored.
-          Static props (StaticMesh) are drawn with their real geometry. Character models are still shown as BITMAP Guardians.
+          Static props (StaticMesh) are drawn with their real geometry. Characters from .ukx files are drawn in their rest pose, and textures from .utx files can be viewed on their own.
         </p>
       </header>
 
@@ -117,17 +127,25 @@ function L2Bridge() {
         <section className="space-y-3">
           <div className="h-[460px] rounded-lg border border-border overflow-hidden">
             <ClientOnly fallback={<div className="h-full" />}>
-              <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} mesh={decoded && "mesh" in decoded ? decoded.mesh : null} textures={textures} /></Suspense>
+              <Suspense fallback={<div className="h-full" />}><L2BridgeScene actors={actors} guardianHeight={height} mesh={decoded && "mesh" in decoded ? decoded.mesh : null} textures={textures} texture={shownTexture && "tex" in shownTexture ? shownTexture.tex : null} /></Suspense>
             </ClientOnly>
           </div>
+          {shownTexture ? (
+            <div className={`rounded-lg border bg-card/60 p-3 font-mono text-xs ${"tex" in shownTexture ? "border-accent/50 text-accent" : "border-destructive/40 text-destructive"}`}>
+              {"tex" in shownTexture && shownTexture.tex
+                ? `REAL TEXTURE · ${shownTexture.tex.name} · ${shownTexture.tex.format} ${shownTexture.tex.width}×${shownTexture.tex.height}${shownTexture.tex.hasAlpha ? " · alpha" : ""}`
+                : `TEXTURE NOT DECODED · ${pkg?.exports[pick!]?.name}: ${"error" in shownTexture ? shownTexture.error : ""}`}
+            </div>
+          ) : null}
           {decoded ? (
             <div className={`rounded-lg border bg-card/60 p-3 font-mono text-xs ${"mesh" in decoded ? "border-accent/50" : "border-destructive/40 text-destructive"}`}>
               {"mesh" in decoded && decoded.mesh
-                ? `REAL MESH · ${decoded.mesh.name} · ${decoded.mesh.vertexCount.toLocaleString("en-US")} vertices · ${decoded.mesh.triangleCount.toLocaleString("en-US")} triangles · ${decoded.mesh.sections.toLocaleString("en-US")} sections${decoded.mesh.uvs ? " · UVs" : ""} `
+                ? `${isSkeletal ? "REAL CHARACTER (REST POSE)" : "REAL MESH"} · ${decoded.mesh.name} · ${decoded.mesh.vertexCount.toLocaleString("en-US")} vertices · ${decoded.mesh.triangleCount.toLocaleString("en-US")} triangles · ${decoded.mesh.sections.toLocaleString("en-US")} sections${decoded.mesh.uvs ? " · UVs" : ""} `
                 : `MESH NOT DECODED · ${pkg?.exports[pick!]?.name}: ${"error" in decoded ? decoded.error : ""}`}
               {"mesh" in decoded && decoded.mesh ? (
                 <div className="mt-2 space-y-0.5">
-                  {matResults.length === 0 ? <div className="text-muted-foreground">MATERIALS · none listed in this mesh — drawn untextured</div> : null}
+                  {isSkeletal ? <div className="text-muted-foreground">Drawn untextured in its rest pose; bones and animation are not read yet.</div> : null}
+                  {!isSkeletal && matResults.length === 0 ? <div className="text-muted-foreground">MATERIALS · none listed in this mesh — drawn untextured</div> : null}
                   {matResults.map((m, i) => (
                     <div key={i} className={m.ok ? "text-accent" : "text-muted-foreground"}>
                       {`SECTION ${i} · `}{m.ok ? `${m.texture.name} · ${m.texture.format} ${m.texture.width}×${m.texture.height}${m.texture.hasAlpha ? " · alpha" : ""}` : `untextured — ${m.reason}`}
@@ -159,7 +177,7 @@ function L2Bridge() {
                 <thead className="text-muted-foreground"><tr><th className="text-left">OBJECT</th><th className="text-left">CLASS</th><th className="text-left">SWAP</th><th className="text-left">STATUS</th><th className="text-right">BYTES</th></tr></thead>
                 <tbody>
                   {pkg.exports.filter((e) => filter === "all" || (filter === "3d") === (swapTargetFor(e.className) !== "keep")).slice(0, 300).map((e) => (
-                    <tr key={e.index} onClick={() => e.className === "StaticMesh" && setMeshIdx(e.index)} className={e.className === "StaticMesh" ? `cursor-pointer hover:bg-muted ${e.index === pick ? "text-primary" : ""}` : ""}><td>{e.name}</td><td>{e.className}</td>
+                    <tr key={e.index} onClick={() => viewable(e.className) && setMeshIdx(e.index)} className={viewable(e.className) ? `cursor-pointer hover:bg-muted ${e.index === pick ? "text-primary" : ""}` : ""}><td>{e.name}</td><td>{e.className}</td>
                       <td className={swapTargetFor(e.className) === "keep" ? "text-muted-foreground" : "text-accent"}>{swapTargetFor(e.className)}</td><td className="text-muted-foreground">{CATEGORY_NOTE[categoryFor(e.className)]}</td>
                       <td className="text-right">{e.size.toLocaleString("en-US")}</td></tr>
                   ))}
@@ -169,7 +187,7 @@ function L2Bridge() {
           ) : null}
           <p className="text-xs text-muted-foreground">
             Reads plain Unreal 2 packages and the Lineage2Ver111/121 formats. Encrypted files (Ver2xx Blowfish, Ver41x RSA) are listed as unsupported with how to decrypt them locally.
-            StaticMesh geometry is decoded and drawn with its textures (DXT1/3/5, RGBA8, RGB8, L8 and paletted P8) found in any loaded file, following Shader, FinalBlend, Combiner and TexModifier materials; click a StaticMesh row to view it. Lighting effects, scrolling and blending are not reproduced. Skeletal characters are not decoded yet and appear as Guardians.
+            StaticMesh geometry is decoded and drawn with its textures (DXT1/3/5, RGBA8, RGB8, L8 and paletted P8) found in any loaded file, following Shader, FinalBlend, Combiner and TexModifier materials; click a StaticMesh, SkeletalMesh or Texture row to view it. Lighting effects, scrolling and blending are not reproduced. Characters (.ukx SkeletalMesh) are drawn in their rest pose without textures or animation; textures from .utx files can be viewed on their own.
           </p>
         </section>
       </div>
