@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { castSkill, classById, useOasisClass } from "@/lib/oasis-classes";
 import { touchPad } from "@/lib/touch-input";
+import { mmoPlayer } from "@/lib/mmo-combat";
+import { alive, mmoTarget } from "@/lib/mmo-target";
 
 /**
  * Lineage 2 style shortcut bar: F1–F8 slots with keybind labels and a
@@ -25,7 +27,11 @@ export function ClassSkillBar() {
 
   const skillIcons = ["✦", "⛨", "◎"];
   const slots: Slot[] = [
-    { key: "F1", code: "F1", icon: "⚔", name: "Attack", cd: 0.6, run: () => window.dispatchEvent(new Event("oasis:attack")) },
+    { key: "F1", code: "F1", icon: "⚔", name: "Attack", cd: 0.6, run: () => {
+      // With a selected creature, F1 toggles Lineage 2 auto-attack; otherwise it swings once.
+      if (alive(mmoTarget.beast)) { mmoPlayer.autoAttack = !mmoPlayer.autoAttack; mmoPlayer.sitting = false; mmoTarget.approach = mmoPlayer.autoAttack; }
+      else window.dispatchEvent(new Event("oasis:attack"));
+    } },
     ...(cls?.skills ?? []).slice(0, 3).map((s, i) => ({
       key: `F${i + 2}`,
       code: `F${i + 2}`,
@@ -45,6 +51,8 @@ export function ClassSkillBar() {
       key: "F6", code: "F6", icon: "⚡", name: "Duel", cd: 1,
       run: () => window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyG", key: "g" })),
     },
+    { key: "Z", code: "KeyZ", icon: "⌂", name: "Sit", cd: 0.5, run: () => { mmoPlayer.sitting = !mmoPlayer.sitting; if (mmoPlayer.sitting) mmoPlayer.autoAttack = false; } },
+    { key: "X", code: "KeyX", icon: "✧", name: "Shot", cd: 0.3, run: () => { mmoPlayer.soulshot = !mmoPlayer.soulshot; } },
     { key: "F7", code: "F7", icon: "👁", name: "View", cd: 0.3, run: () => window.dispatchEvent(new Event("oasis:camera-toggle")) },
     {
       key: "F8", code: "F8", icon: "⛶", name: "Full", cd: 0.3,
@@ -101,7 +109,7 @@ export function ClassSkillBar() {
               }}
               className={`relative grid size-9 touch-none select-none place-items-center overflow-hidden border bg-background/70 font-mono sm:size-10 ${
                 s.skill !== undefined ? "border-bitcoin/60" : "border-border"
-              } ${flash === s.code ? "ring-2 ring-signal" : ""}`}
+              } ${flash === s.code ? "ring-2 ring-signal" : ""} ${(s.code === "F1" && mmoPlayer.autoAttack) || (s.code === "KeyZ" && mmoPlayer.sitting) || (s.code === "KeyX" && mmoPlayer.soulshot) ? "border-primary text-primary" : ""}`}
             >
               <span className={`text-base leading-none ${left > 0 ? "text-muted-foreground" : "text-foreground"}`}>{s.icon}</span>
               {left > 0 ? (

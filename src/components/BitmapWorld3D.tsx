@@ -35,8 +35,10 @@ import {
 } from "react";
 import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { MmoTargeting3D, MmoTargetHud } from "@/components/game/MmoTargeting";
-import { pickAt, setTarget as setMmoTarget } from "@/lib/mmo-target";
+import { MmoPlayerHud, MmoTargeting3D, MmoTargetHud } from "@/components/game/MmoTargeting";
+import { mmoPlayer } from "@/lib/mmo-combat";
+import { mmoTarget, pickAt, setTarget as setMmoTarget } from "@/lib/mmo-target";
+const lastPickAt = { t: 0 };
 import { liveBeasts } from "@/lib/world-entities";
 import {
   MapControls,
@@ -3329,6 +3331,9 @@ const WorldScene = memo(function WorldScene({
             // Clicking a creature selects it and walks up to it; open ground walks to the mark.
             const picked = pickAt({ x: event.point.x, z: event.point.z }, liveBeasts());
             if (picked) {
+              // Double-click the same creature engages auto-attack (Lineage 2 style).
+              if (mmoTarget.beast === picked && event.nativeEvent.timeStamp - lastPickAt.t < 400) mmoPlayer.autoAttack = true;
+              lastPickAt.t = event.nativeEvent.timeStamp;
               setMmoTarget(picked, true);
               return;
             }
@@ -4983,7 +4988,7 @@ function BitmapWorld3DInner({
         ) : null}
 
         <OasisLoading />
-        {cameraMode !== "map" ? <MmoTargetHud /> : null}
+        {cameraMode !== "map" ? <><MmoTargetHud /><MmoPlayerHud /></> : null}
         {contextLost ? <button type="button" className="hud-panel absolute inset-x-4 top-1/2 z-[80] mx-auto w-fit -translate-y-1/2 border-bitcoin px-4 py-3 font-mono text-xs text-bitcoin" onClick={() => window.location.reload()}>GRAPHICS CONTEXT LOST — TAP TO RELOAD</button> : null}
 
         {/* THE OASIS SCORE — synthesised locally, so it costs nothing to stream. */}
