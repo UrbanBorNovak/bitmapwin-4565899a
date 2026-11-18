@@ -35,6 +35,9 @@ import {
 } from "react";
 import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { MmoTargeting3D, MmoTargetHud } from "@/components/game/MmoTargeting";
+import { pickAt, setTarget as setMmoTarget } from "@/lib/mmo-target";
+import { liveBeasts } from "@/lib/world-entities";
 import {
   MapControls,
   useAnimations,
@@ -3322,8 +3325,15 @@ const WorldScene = memo(function WorldScene({
           // equipped weapon, never opens a district card. In third person a tap
           // still walks to the spot and opens the tile.
           if (cameraMode === "first") return;
-          if (cameraMode !== "map" && pose.current)
+          if (cameraMode !== "map" && pose.current) {
+            // Clicking a creature selects it and walks up to it; open ground walks to the mark.
+            const picked = pickAt({ x: event.point.x, z: event.point.z }, liveBeasts());
+            if (picked) {
+              setMmoTarget(picked, true);
+              return;
+            }
             pose.current.target = { x: event.point.x, z: event.point.z };
+          }
           onSelect(height);
         }}
       >
@@ -3331,7 +3341,10 @@ const WorldScene = memo(function WorldScene({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {cameraMode !== "map" ? (
-        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "minigun"} />
+        <>
+          <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "minigun"} />
+          <MmoTargeting3D pose={pose} />
+        </>
       ) : (
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
@@ -4970,6 +4983,7 @@ function BitmapWorld3DInner({
         ) : null}
 
         <OasisLoading />
+        {cameraMode !== "map" ? <MmoTargetHud /> : null}
         {contextLost ? <button type="button" className="hud-panel absolute inset-x-4 top-1/2 z-[80] mx-auto w-fit -translate-y-1/2 border-bitcoin px-4 py-3 font-mono text-xs text-bitcoin" onClick={() => window.location.reload()}>GRAPHICS CONTEXT LOST — TAP TO RELOAD</button> : null}
 
         {/* THE OASIS SCORE — synthesised locally, so it costs nothing to stream. */}
