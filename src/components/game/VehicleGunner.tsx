@@ -185,7 +185,8 @@ export function VehicleGunner({
         shoot(false);
         return;
       }
-      if (event.code === "KeyG") {
+      // Skip the hotbar's synthetic Duel G: only a real G press toggles crew fire.
+      if (event.code === "KeyG" && event.isTrusted) {
         event.preventDefault();
         autoFire.current = !autoFire.current;
         onStatus(autoFire.current ? `${gun.label} · CREW WEAPONS FREE` : `${gun.label} · CREW HOLD`);

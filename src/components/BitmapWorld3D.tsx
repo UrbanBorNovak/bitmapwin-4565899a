@@ -3702,6 +3702,9 @@ function BitmapWorld3DInner({
         return;
       }
       if (key === "g") {
+        // The hotbar's F6 Duel slot sends a synthetic G for the saber duel;
+        // only a real G press eats ice cream.
+        if (!event.isTrusted) return;
         eat("ice-cream");
         return;
       }
