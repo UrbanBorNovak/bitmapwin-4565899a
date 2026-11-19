@@ -84,8 +84,10 @@ export function ClassSkillBar() {
       e.preventDefault();
       fire(s);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Capture phase: the hotbar claims its keys (preventDefault) before the
+    // world's own shortcuts run, so Z/X never also fire the legacy actions.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   });
 
   const now = performance.now();

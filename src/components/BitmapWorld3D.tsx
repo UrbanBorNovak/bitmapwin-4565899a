@@ -3629,6 +3629,9 @@ function BitmapWorld3DInner({
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const key = event.key.toLowerCase();
+      // The MMO hotbar (ClassSkillBar) owns Z = Sit and X = Soulshot when it is
+      // mounted; it marks those presses handled, so skip the legacy actions.
+      if (event.defaultPrevented && (key === "z" || key === "x")) return;
       if (key === "t") {
         void workLand();
         return;
