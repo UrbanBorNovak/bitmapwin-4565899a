@@ -8,6 +8,7 @@ import { decodeTexture, resolveMaterial, type DecodedTexture, type MaterialResul
 import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 import L2LoginPanel from "@/components/l2/L2LoginPanel";
+import L2PlayHub from "@/components/l2/L2PlayHub";
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
 
 export const Route = createFileRoute("/labs/l2-bridge")({
@@ -144,6 +145,8 @@ function L2Bridge() {
           Static props (StaticMesh) are drawn with their real geometry. Characters from .ukx files are drawn in their rest pose with textures from any .utx files you add, and textures can be viewed on their own.
         </p>
       </header>
+
+      <ClientOnly fallback={null}><L2PlayHub /></ClientOnly>
 
       <section className="rounded-lg border border-border bg-card/60 backdrop-blur p-4 flex flex-wrap items-end gap-4">
         <label className="text-sm space-y-1">
