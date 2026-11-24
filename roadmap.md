@@ -1,5 +1,10 @@
 # Roadmap
 
+## Regal ecosystem homepage
+- [x] Restyle the homepage with fantasy artwork, gold-trimmed glass and editorial world cards.
+- [x] Reuse verified activity for status/news lists without invented server or player counts.
+- [x] Verify homepage search, navigation and desktop/phone layouts.
+
 ## On-chain baby prompt details
 - [x] Include each loaded pet's own palette and body geometry in every copied prompt.
 - [x] Verify both inscription formats, late loading and missing fields in three passing tests; desktop copying checked with a mocked clipboard and phone panel inspected.
