@@ -51,7 +51,7 @@ export default function L2AccountRegistration() {
     finally { setPassword(""); setConfirm(""); setBusy(false); setStage(""); }
   }
   const field = "w-full border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
-  return <section className="border-y border-border py-6 space-y-4" aria-labelledby="l2-register-title">
+  return <section className="border-y border-border bg-background px-4 py-6 space-y-4" aria-labelledby="l2-register-title">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><p className="font-mono text-xs text-primary">BITCOIN IDENTITY</p><h2 id="l2-register-title" className="font-display text-2xl">Create your L2 account</h2></div>
       <Button variant="ghost" size="icon" title="Check registration availability" aria-label="Check registration availability" disabled={status.isFetching} onClick={() => void status.refetch()}><RefreshCw /></Button>
