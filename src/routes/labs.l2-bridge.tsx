@@ -9,6 +9,7 @@ import type { BridgeActor } from "@/components/l2/L2BridgeScene";
 
 import L2LoginPanel from "@/components/l2/L2LoginPanel";
 import L2PlayHub from "@/components/l2/L2PlayHub";
+import L2AccountRegistration from "@/components/l2/L2AccountRegistration";
 const L2BridgeScene = lazy(() => import("@/components/l2/L2BridgeScene"));
 
 export const Route = createFileRoute("/labs/l2-bridge")({
@@ -147,6 +148,7 @@ function L2Bridge() {
       </header>
 
       <ClientOnly fallback={null}><L2PlayHub /></ClientOnly>
+      <ClientOnly fallback={null}><L2AccountRegistration /></ClientOnly>
 
       <section className="rounded-lg border border-border bg-card/60 backdrop-blur p-4 flex flex-wrap items-end gap-4">
         <label className="text-sm space-y-1">

@@ -1,5 +1,11 @@
 # Roadmap
 
+## Bitcoin-linked L2 registration
+- [ ] Add wallet-signed account registration beside the L2 login.
+- [ ] Supply a loopback-only account bridge with single-use challenges and private wallet links.
+- [ ] Verify validation, signature/replay handling, and desktop/mobile states.
+- [ ] Connect and test the owner's live L2 server (requires bridge URL and shared secret).
+
 ## Regal ecosystem homepage
 - [x] Restyle the homepage with fantasy artwork, gold-trimmed glass and editorial world cards.
 - [x] Reuse verified activity for status/news lists without invented server or player counts.
