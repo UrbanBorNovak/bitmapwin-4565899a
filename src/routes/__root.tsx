@@ -119,6 +119,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "google-site-verification", content: "MxwI74YqqE6NFjku4b8_wFVg6dVt4ocAjHDzO-B2UwM" },
+      { name: "msvalidate.01", content: "2C8D732645C3A5F666F9FF15E63B8F79" },
       { title: "Bitmap Unhinged — Bitcoin Digital Land" },
       {
         name: "description",
