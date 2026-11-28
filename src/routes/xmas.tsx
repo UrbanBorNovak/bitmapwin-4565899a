@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/lib/auth";
 import { ADVENT_DOORS, doorOpensAt, isDoorOpen } from "@/lib/advent";
 import { XmasTeaser } from "@/components/xmas/XmasTeaser";
+import { Snowfall } from "@/components/xmas/Snowfall";
 
 export const Route = createFileRoute("/xmas")({
   head: () => ({
@@ -44,6 +45,7 @@ function XmasPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [openDay, setOpenDay] = useState<number | null>(null);
+  const [snow, setSnow] = useState(true);
 
   async function refresh() {
     const { data } = await supabase.rpc("advent_signup_count");
@@ -68,34 +70,38 @@ function XmasPage() {
   const door = openDay ? ADVENT_DOORS.find((d) => d.day === openDay) : null;
 
   return (
-    <main className="min-h-screen bg-background text-foreground px-4 py-10 font-mono">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <header className="border border-border p-6 bg-card/60 backdrop-blur-sm">
-          <p className="text-xs tracking-widest text-accent">// TERMINAL 24 · DECEMBER ANOMALY FEED</p>
+    <main className="relative min-h-screen bg-background text-foreground px-4 py-10 font-mono">
+      <Snowfall enabled={snow} />
+      <div className="relative z-10 mx-auto max-w-5xl space-y-8">
+        <header className="frost-panel p-6">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+            <p className="min-w-0 text-xs tracking-widest text-signal">❄ // WINTER HOLIDAYS · TERMINAL 24 · DECEMBER ANOMALY FEED</p>
+            <button onClick={() => setSnow((v) => !v)} aria-pressed={snow} className="shrink-0 text-[10px] tracking-widest text-muted-foreground hover:text-signal">[ SNOW {snow ? "ON" : "OFF"} ]</button>
+          </div>
           <h1 className="mt-2 font-display text-3xl md:text-5xl font-bold">UNHINGED ADVENT CALENDAR</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground font-sans">
             Every day in December, something goes badly wrong in the Oasis and Biternam. One door, one story, one disaster. Sign up to get your Advent Ration Card.
           </p>
           <div className="mt-5 flex flex-wrap gap-6 text-sm">
-            <div><span className="text-muted-foreground">FIRST DOOR IN </span><span className="text-accent">{now === null ? "…" : now >= start ? "OPEN NOW" : countdown(start - now)}</span></div>
+            <div><span className="text-muted-foreground">FIRST DOOR IN </span><span className="text-signal">{now === null ? "…" : now >= start ? "OPEN NOW" : countdown(start - now)}</span></div>
             <div><span className="text-muted-foreground">SIGNED UP </span><span className="text-primary">{count ?? "…"}</span></div>
           </div>
         </header>
 
         <XmasTeaser />
 
-        <section className="border border-border p-6 bg-card/60">
-          <h2 className="text-sm tracking-widest text-accent">ADVENT RATION CARD</h2>
+        <section className="frost-panel p-6">
+          <h2 className="text-sm tracking-widest text-signal">❄ WINTER HOLIDAY RATION CARD</h2>
           {loading ? <p className="mt-3 text-sm text-muted-foreground">CHECKING…</p> : !user ? (
             <div className="mt-3 space-y-3">
               <p className="text-sm text-muted-foreground font-sans">Sign in to claim your card.</p>
               <Link to="/auth" className="btn-term">[ SIGN IN ]</Link>
             </div>
           ) : card ? (
-            <div className="mt-3 inline-block border border-primary px-6 py-4">
+            <div className="frost-door-open mt-3 inline-block px-6 py-4">
               <p className="text-xs text-muted-foreground">CARD NO.</p>
               <p className="text-4xl text-primary">#{String(card).padStart(4, "0")}</p>
-              <p className="mt-1 text-xs text-accent">YOU'RE ON THE LIST. CHAOS STARTS DEC 1.</p>
+              <p className="mt-1 text-xs text-signal">YOU'RE ON THE LIST. CHAOS STARTS DEC 1.</p>
             </div>
           ) : (
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -108,22 +114,22 @@ function XmasPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-sm tracking-widest text-accent">THE 24 DOORS</h2>
+          <h2 className="mb-3 text-sm tracking-widest text-signal">❄ THE 24 FROZEN DOORS</h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {ADVENT_DOORS.map((d) => {
               const open = now !== null && isDoorOpen(d.day, now);
               return (
                 <button key={d.day} disabled={!open} onClick={() => setOpenDay(d.day)}
-                  className={`aspect-square border p-2 text-left transition ${open ? "border-primary hover:bg-primary/10" : "border-border opacity-50"}`}>
+                  className={`aspect-square p-2 text-left transition backdrop-blur-sm ${open ? "frost-door-open hover:-translate-y-0.5" : "frost-door-locked opacity-70"} ${openDay === d.day ? "ring-2 ring-primary" : ""}`}>
                   <span className="text-2xl">{String(d.day).padStart(2, "0")}</span>
-                  <span className="block text-[10px] text-muted-foreground">{open ? "OPEN" : "LOCKED"}</span>
+                  <span className="block text-[10px] text-muted-foreground">{open ? "🎁 THAWED" : "❄ FROZEN"}</span>
                 </button>
               );
             })}
           </div>
           {door && (
-            <div className="mt-4 border border-primary p-5 bg-card/60">
-              <p className="text-xs text-accent">DAY {door.day}</p>
+            <div className="frost-panel mt-4 p-5">
+              <p className="text-xs text-signal">DAY {door.day}</p>
               <h3 className="mt-1 font-display text-xl">{door.title}</h3>
               <p className="mt-2 text-sm font-sans">{door.story}</p>
             </div>
